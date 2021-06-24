@@ -1,0 +1,45 @@
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout boxc repository
+      uses: actions/checkout@v2
+      with:
+        repository: UNC-Libraries/Carolina-Digital-Repository.git
+        ref: 359e459ad6c3a02b7aa68d7bfab5a90ad8cfb38f
+        path: boxc
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+      working-directory: boxc
+    - name: Checkout cdm2bxc repository
+      uses: actions/checkout@v2
+      with:
+        path: cdm2bxc
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Cache Maven packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    - name: Build boxc with Maven
+      run: mvn -B -U clean install -DskipTests -am -pl persistence
+      working-directory: boxc
+    - name: Build cdm2bxc
+      run: mvn -B -U clean install
+      working-directory: cdm2bxc
