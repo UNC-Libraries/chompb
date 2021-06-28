@@ -16,29 +16,22 @@
 package edu.unc.lib.boxc.migration.cdm.exceptions;
 
 /**
- * Exception indicating that a MigrationProject is in an invalid state
- *
  * @author bbpennel
  */
-public class InvalidProjectStateException extends MigrationException {
+public class MigrationException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    /**
-     */
-    public InvalidProjectStateException() {
+    public MigrationException() {
     }
 
-    /**
-     * @param message
-     */
-    public InvalidProjectStateException(String message) {
+    public MigrationException(String message) {
         super(message);
     }
 
     /**
      * @param cause
      */
-    public InvalidProjectStateException(Throwable cause) {
+    public MigrationException(Throwable cause) {
         super(cause);
     }
 
@@ -46,7 +39,7 @@ public class InvalidProjectStateException extends MigrationException {
      * @param message
      * @param cause
      */
-    public InvalidProjectStateException(String message, Throwable cause) {
+    public MigrationException(String message, Throwable cause) {
         super(message, cause);
     }
 }
