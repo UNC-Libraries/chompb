@@ -18,6 +18,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -29,6 +30,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -70,20 +72,35 @@ public class CdmFieldService {
     }
 
     /**
-     * Retrieve field information for the project's collection from CDM
-     * @param project
+     * Get the URL for retrieving field info for the given collection
+     * @param cdmBaseUri
+     * @param collectionId
      * @return
      */
-    public CdmFieldInfo retrieveFieldsForCollection(MigrationProject project) throws IOException {
-        String infoUri = URIUtil.join(cdmBaseUri, "dmwebservices/index.php?q=dmGetCollectionFieldInfo/"
-                        + project.getProjectProperties().getCdmCollectionId() + "/json");
+    public static String getFieldInfoUrl(String collectionId) {
+        return "dmwebservices/index.php?q=dmGetCollectionFieldInfo/" + collectionId + "/json";
+    }
+
+    /**
+     * Retrieve field information for the project's collection from CDM
+     * @param collectionId
+     * @return
+     */
+    public CdmFieldInfo retrieveFieldsForCollection(String collectionId) throws IOException {
+        String infoUri = URIUtil.join(cdmBaseUri, getFieldInfoUrl(collectionId));
 
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
 
         ObjectMapper mapper = new ObjectMapper();
         HttpGet getMethod = new HttpGet(infoUri);
         try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
-            JsonParser parser = mapper.getFactory().createParser(resp.getEntity().getContent());
+            //Error looking up collection
+            String body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.ISO_8859_1);
+            if (body.contains("Error looking up collection")) {
+                throw new MigrationException("No collection with ID '" + collectionId
+                        + "' found on server at " + infoUri);
+            }
+            JsonParser parser = mapper.getFactory().createParser(body);
             if (parser.nextToken() != JsonToken.START_ARRAY) {
                 throw new MigrationException("Unexpected response from URL " + infoUri
                         + "\nIt must be a JSON array, please check the response.");

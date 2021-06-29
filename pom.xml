@@ -14,6 +14,8 @@
     <description>Utilities for migrating content from CDM to Box-c</description>
     <properties>
         <picocli.version>4.6.1</picocli.version>
+        <wiremock.version>2.27.2</wiremock.version>
+
         <build-tools.path></build-tools.path>
     </properties>
 
@@ -81,6 +83,10 @@
     <dependencies>
         <dependency>
             <groupId>edu.unc.lib.cdr</groupId>
+            <artifactId>common-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>edu.unc.lib.cdr</groupId>
             <artifactId>metadata</artifactId>
         </dependency>
         <!-- CLI -->
@@ -145,6 +151,12 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock-jre8</artifactId>
+            <version>${wiremock.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

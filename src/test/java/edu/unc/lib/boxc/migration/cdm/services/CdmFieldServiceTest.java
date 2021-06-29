@@ -52,6 +52,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
  */
 public class CdmFieldServiceTest {
     private static final String CDM_BASE_URL = "http://example.com:88/";
+    private static final String PROJECT_NAME = "proj";
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -68,7 +69,8 @@ public class CdmFieldServiceTest {
     public void setup() throws Exception {
         initMocks(this);
         tmpFolder.create();
-        project = MigrationProjectFactory.createMigrationProject(tmpFolder.getRoot().toPath(), "proj", null, "user");
+        project = MigrationProjectFactory.createMigrationProject(
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         service = new CdmFieldService();
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);
@@ -81,7 +83,7 @@ public class CdmFieldServiceTest {
     public void retrieveCdmFieldsTest() throws Exception {
         when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/cdm_fields_resp.json"));
 
-        CdmFieldInfo fieldInfo = service.retrieveFieldsForCollection(project);
+        CdmFieldInfo fieldInfo = service.retrieveFieldsForCollection(PROJECT_NAME);
         List<CdmFieldEntry> fields = fieldInfo.getFields();
 
         assertHasFieldWithValue("title", "title", "Title", false, fields);
@@ -96,7 +98,7 @@ public class CdmFieldServiceTest {
         when(respEntity.getContent()).thenReturn(new ByteArrayInputStream("well that's not right".getBytes()));
 
         try {
-            service.retrieveFieldsForCollection(project);
+            service.retrieveFieldsForCollection(PROJECT_NAME);
             fail();
         } catch (MigrationException e) {
             assertTrue(e.getMessage().contains("Failed to parse response from URL"));
@@ -105,11 +107,24 @@ public class CdmFieldServiceTest {
     }
 
     @Test
+    public void retrieveCdmCollectionNotFoundTest() throws Exception {
+        when(respEntity.getContent()).thenReturn(new ByteArrayInputStream(
+                ("Error looking up collection /" + PROJECT_NAME + "<br>\n").getBytes()));
+        try {
+            service.retrieveFieldsForCollection(PROJECT_NAME);
+            fail();
+        } catch (MigrationException e) {
+            assertTrue("Unexpected message: " + e.getMessage(),
+                    e.getMessage().contains("No collection with ID '" + PROJECT_NAME));
+        }
+    }
+
+    @Test
     public void retrieveCdmFieldsIncorrectStructureTest() throws Exception {
         when(respEntity.getContent()).thenReturn(new ByteArrayInputStream("{ 'oh' : 'no' }".getBytes()));
 
         try {
-            service.retrieveFieldsForCollection(project);
+            service.retrieveFieldsForCollection(PROJECT_NAME);
             fail();
         } catch (MigrationException e) {
             assertTrue(e.getMessage().contains("Unexpected response from URL"));
@@ -121,7 +136,7 @@ public class CdmFieldServiceTest {
     public void retrieveCdmFieldsConnectionFailureTest() throws Exception {
         when(httpClient.execute(any(HttpGet.class))).thenThrow(new IOException("Fail"));
 
-        service.retrieveFieldsForCollection(project);
+        service.retrieveFieldsForCollection(PROJECT_NAME);
     }
 
     @Test
@@ -261,7 +276,7 @@ public class CdmFieldServiceTest {
     public void retrieveValidateAndReloadRoundTripTest() throws Exception {
         when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/cdm_fields_resp.json"));
 
-        CdmFieldInfo fieldInfoRetrieved = service.retrieveFieldsForCollection(project);
+        CdmFieldInfo fieldInfoRetrieved = service.retrieveFieldsForCollection(PROJECT_NAME);
         service.persistFieldsToProject(project, fieldInfoRetrieved);
 
         service.validateFieldsFile(project);
@@ -284,6 +299,5 @@ public class CdmFieldServiceTest {
         assertEquals(expectedDesc, entry.getDescription());
         assertEquals(expectedExport, entry.getExportAs());
         assertEquals(expectedSkip, entry.getSkipExport());
-
     }
 }
