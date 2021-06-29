@@ -80,7 +80,7 @@ public class AbstractCommandIT {
     protected void executeExpectFailure(String[] args) {
         int result = migrationCommand.execute(args);
         output = out.toString();
-        if (result != 1) {
+        if (result == 0) {
             System.setOut(originalOut);
             log.error(output);
             fail("Expected command to result in failure: " + String.join(" ", args));
