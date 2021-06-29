@@ -15,12 +15,15 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 import edu.unc.lib.boxc.migration.cdm.util.BannerUtility;
 import edu.unc.lib.boxc.migration.cdm.util.CLIConstants;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 /**
  * Main class for the CLI utils
@@ -29,9 +32,22 @@ import picocli.CommandLine.Command;
  *
  */
 @Command(subcommands = {
-        InitializeProjectCommand.class
+        InitializeProjectCommand.class,
+        CdmFieldsCommand.class
     })
 public class CLIMain implements Callable<Integer> {
+    @Option(names = { "-w", "--work-dir" },
+            description = "Directory which the operations will happen relative to. Defaults to the current directory")
+    private String workingDirectory;
+
+    /**
+     * @return Get the effective working directory
+     */
+    protected Path getWorkingDirectory() {
+        Path currentPath = Paths.get(workingDirectory == null ? "." : workingDirectory);
+        return currentPath.toAbsolutePath().normalize();
+    }
+
     protected CLIMain() {
     }
 

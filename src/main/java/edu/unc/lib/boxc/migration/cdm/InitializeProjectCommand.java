@@ -19,7 +19,6 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -53,9 +52,6 @@ public class InitializeProjectCommand implements Callable<Integer> {
             description = "Identifier of the CDM collection to migrate. Use if the name of the project directory"
                     + " does not match the CDM Collection ID.")
     private String cdmCollectionId;
-    @Option(names = { "-w", "--work-dir" },
-            description = "Directory which the operations will happen relative to. Defaults to the current directory")
-    private String workingDirectory;
     @Option(names = { "-p", "--project-name" },
             description = {
                 "If specified, a new directory named with the provided value will be created for the project.",
@@ -77,7 +73,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         long start = System.nanoTime();
 
-        Path currentPath = Paths.get(workingDirectory == null ? "." : workingDirectory).toAbsolutePath().normalize();
+        Path currentPath = parentCommand.getWorkingDirectory();
         String projDisplayName = projectName == null ? currentPath.getFileName().toString() : projectName;
         String collId = cdmCollectionId == null ? projDisplayName : cdmCollectionId;
 

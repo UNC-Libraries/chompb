@@ -25,12 +25,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -39,12 +35,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
@@ -54,46 +47,22 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import picocli.CommandLine;
 
 /**
  * @author bbpennel
  */
-public class InitializeProjectCommandIT {
-    private static final Logger log = getLogger(InitializeProjectCommandIT.class);
+public class InitializeProjectCommandIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "my_coll";
-    private final static String USERNAME = "theuser";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
-    private Path baseDir;
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
 
-    private final String initialUser = System.getProperty("user.name");
-    private final PrintStream originalOut = System.out;
-    private final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    private String output;
-    CommandLine migrationCommand;
-
     private CdmFieldService fieldService;
-
     private String cdmBaseUrl;
 
     @Before
     public void setUp() throws Exception {
-        tmpFolder.create();
-        baseDir = tmpFolder.getRoot().toPath();
-        System.setProperty("user.name", USERNAME);
-
-        out.reset();
-        System.setOut(new PrintStream(out));
-
-        migrationCommand = new CommandLine(new CLIMain());
-
         fieldService = new CdmFieldService();
-
-        output = null;
 
         cdmBaseUrl = "http://localhost:" + wireMockRule.port();
         String validRespBody = IOUtils.toString(this.getClass().getResourceAsStream("/cdm_fields_resp.json"),
@@ -111,16 +80,12 @@ public class InitializeProjectCommandIT {
                         .withBody(validRespBody)));
     }
 
-    @After
-    public void cleanup() {
-        System.setOut(originalOut);
-        System.setProperty("user.name", initialUser);
-    }
-
     @Test
     public void initValidProjectTest() throws Exception {
-        String[] initArgs = new String[] { "init", "--cdm-url", cdmBaseUrl,
+        String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
+                "init",
+                "--cdm-url", cdmBaseUrl,
                 "-p", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
@@ -137,8 +102,10 @@ public class InitializeProjectCommandIT {
     public void initValidProjectUsingCurrentDirTest() throws Exception {
         Path projDir = baseDir.resolve("aproject");
         Files.createDirectory(projDir);
-        String[] initArgs = new String[] { "init", "--cdm-url", cdmBaseUrl,
+        String[] initArgs = new String[] {
                 "-w", projDir.toString(),
+                "init",
+                "--cdm-url", cdmBaseUrl,
                 "-c", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
@@ -153,8 +120,10 @@ public class InitializeProjectCommandIT {
 
     @Test
     public void initCdmCollectioNotFoundTest() throws Exception {
-        String[] initArgs = new String[] { "init", "--cdm-url", cdmBaseUrl,
+        String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
+                "init",
+                "--cdm-url", cdmBaseUrl,
                 "-p", "unknowncoll" };
         executeExpectFailure(initArgs);
 
@@ -171,8 +140,10 @@ public class InitializeProjectCommandIT {
     public void initCdmProjectAlreadyExistsTest() throws Exception {
         Path projDir = baseDir.resolve("aproject");
         Files.createDirectory(projDir);
-        String[] initArgs = new String[] { "init", "--cdm-url", cdmBaseUrl,
+        String[] initArgs = new String[] {
                 "-w", projDir.toString(),
+                "init",
+                "--cdm-url", cdmBaseUrl,
                 "-c", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
@@ -189,26 +160,6 @@ public class InitializeProjectCommandIT {
         assertTrue("Description folder not created", Files.exists(project.getDescriptionsPath()));
 
         assertCdmFieldsPresent(project);
-    }
-
-    private void executeExpectSuccess(String[] args) {
-        int result = migrationCommand.execute(args);
-        output = out.toString();
-        if (result != 0) {
-            System.setOut(originalOut);
-            log.error(output);
-            fail("Expected command to result in success: " + String.join(" ", args));
-        }
-    }
-
-    private void executeExpectFailure(String[] args) {
-        int result = migrationCommand.execute(args);
-        output = out.toString();
-        if (result != 1) {
-            System.setOut(originalOut);
-            log.error(output);
-            fail("Expected command to result in failure: " + String.join(" ", args));
-        }
     }
 
     private void assertPropertiesSet(MigrationProjectProperties properties, String expName, String expCollId) {
