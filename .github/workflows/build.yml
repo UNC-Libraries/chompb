@@ -18,8 +18,8 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: UNC-Libraries/Carolina-Digital-Repository.git
-        ref: f580221852b673e1af442859d229393e80518b13
         path: boxc
+        ref: main
     - name: Checkout submodules
       run: git submodule update --init --recursive
       working-directory: boxc
