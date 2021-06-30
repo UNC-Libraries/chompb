@@ -13,23 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.unc.lib.boxc.migration.cdm.util;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
-import org.slf4j.Logger;
+package edu.unc.lib.boxc.migration.cdm.exceptions;
 
 /**
- * Constants common to CLIs
- *
  * @author bbpennel
- *
  */
-public class CLIConstants {
+public class MigrationException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
-    private CLIConstants() {
+    public MigrationException() {
     }
 
-    public static final String OUTPUT_LOGGER_NAME = "output";
-    public static final Logger outputLogger = getLogger(OUTPUT_LOGGER_NAME);
+    public MigrationException(String message) {
+        super(message);
+    }
+
+    /**
+     * @param cause
+     */
+    public MigrationException(Throwable cause) {
+        super(cause);
+    }
+
+    /**
+     * @param message
+     * @param cause
+     */
+    public MigrationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

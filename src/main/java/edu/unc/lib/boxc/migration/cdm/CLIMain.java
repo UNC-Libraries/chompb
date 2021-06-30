@@ -15,16 +15,15 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.OUTPUT_LOGGER;
-import static org.slf4j.LoggerFactory.getLogger;
-
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-import org.slf4j.Logger;
-
 import edu.unc.lib.boxc.migration.cdm.util.BannerUtility;
+import edu.unc.lib.boxc.migration.cdm.util.CLIConstants;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 /**
  * Main class for the CLI utils
@@ -33,16 +32,28 @@ import picocli.CommandLine.Command;
  *
  */
 @Command(subcommands = {
+        InitializeProjectCommand.class,
+        CdmFieldsCommand.class
     })
 public class CLIMain implements Callable<Integer> {
-    private static final Logger output = getLogger(OUTPUT_LOGGER);
+    @Option(names = { "-w", "--work-dir" },
+            description = "Directory which the operations will happen relative to. Defaults to the current directory")
+    private String workingDirectory;
+
+    /**
+     * @return Get the effective working directory
+     */
+    protected Path getWorkingDirectory() {
+        Path currentPath = Paths.get(workingDirectory == null ? "." : workingDirectory);
+        return currentPath.toAbsolutePath().normalize();
+    }
 
     protected CLIMain() {
     }
 
     @Override
     public Integer call() throws Exception {
-        output.info(BannerUtility.getBanner());
+        CLIConstants.outputLogger.info(BannerUtility.getBanner());
         return 0;
     }
 
