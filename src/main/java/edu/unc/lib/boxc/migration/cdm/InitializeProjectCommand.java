@@ -45,8 +45,9 @@ public class InitializeProjectCommand implements Callable<Integer> {
     private CLIMain parentCommand;
 
     @Option(names = { "--cdm-url" },
-            description = "Base URL to the CDM web service API",
-            defaultValue = "http://localhost:82/")
+            description = "Base URL to the CDM web service API. Falls back to CDM_BASE_URL env variable. "
+                    + "Default: ${DEFAULT-VALUE}",
+            defaultValue = "${env:CDM_BASE_URL:-http://localhost:82/}")
     private String cdmBaseUri;
     @Option(names = { "-c", "--cdm-coll-id" },
             description = "Identifier of the CDM collection to migrate. Use if the name of the project directory"
@@ -66,7 +67,6 @@ public class InitializeProjectCommand implements Callable<Integer> {
         httpClient = HttpClients.createMinimal();
         fieldService = new CdmFieldService();
         fieldService.setHttpClient(httpClient);
-        fieldService.setCdmBaseUri(cdmBaseUri);
     }
 
     @Override
