@@ -25,6 +25,7 @@ import java.nio.file.Path;
 public class MigrationProject {
     public static final String PROJECT_PROPERTIES_FILENAME = "project.json";
     public static final String DESCRIPTION_DIRNAME = "descriptions";
+    public static final String EXPORT_DIRNAME = "exports";
     public static final String FIELD_NAMES_FILENAME = "cdm_fields.csv";
 
     private Path projectPath;
@@ -56,6 +57,13 @@ public class MigrationProject {
     }
 
     /**
+     * @return Path to directory where CDM Record exports should be stored
+     */
+    public Path getExportPath() {
+        return projectPath.resolve(EXPORT_DIRNAME);
+    }
+
+    /**
      * @return Properties describing this project
      */
     public MigrationProjectProperties getProjectProperties() {
@@ -71,5 +79,12 @@ public class MigrationProject {
      */
     public Path getDescriptionsPath() {
         return projectPath.resolve(DESCRIPTION_DIRNAME);
+    }
+
+    /**
+     * @return Name of the project
+     */
+    public String getProjectName() {
+        return properties.getName();
     }
 }
