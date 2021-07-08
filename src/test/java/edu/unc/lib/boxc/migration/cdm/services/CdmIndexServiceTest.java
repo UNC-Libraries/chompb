@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -62,6 +63,7 @@ public class CdmIndexServiceTest {
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+        Files.createDirectories(project.getExportPath());
 
         fieldService = new CdmFieldService();
         service = new CdmIndexService();
@@ -71,12 +73,10 @@ public class CdmIndexServiceTest {
 
     @Test
     public void indexExportOneFileTest() throws Exception {
-        Files.createDirectories(project.getExportPath());
         Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
                 project.getExportPath().resolve("export_all.xml"));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
+        setExportedDate();
 
         service.createDatabase(false);
         service.indexAll();
@@ -125,14 +125,12 @@ public class CdmIndexServiceTest {
 
     @Test
     public void indexExportMultiFileTest() throws Exception {
-        Files.createDirectories(project.getExportPath());
         Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
                 project.getExportPath().resolve("export_1.xml"));
         Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
                 project.getExportPath().resolve("export_2.xml"));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
+        setExportedDate();
 
         service.createDatabase(false);
         service.indexAll();
@@ -173,7 +171,6 @@ public class CdmIndexServiceTest {
 
     @Test
     public void exportIncompleteTest() throws Exception {
-        Files.createDirectories(project.getExportPath());
         Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
                 project.getExportPath().resolve("export_1.xml"));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
@@ -190,12 +187,10 @@ public class CdmIndexServiceTest {
 
     @Test
     public void indexAlreadyExistsTest() throws Exception {
-        Files.createDirectories(project.getExportPath());
         Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
                 project.getExportPath().resolve("export_1.xml"));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
+        setExportedDate();
 
         service.createDatabase(false);
         try {
@@ -209,12 +204,10 @@ public class CdmIndexServiceTest {
 
     @Test
     public void indexAlreadyExistsForceFlagTest() throws Exception {
-        Files.createDirectories(project.getExportPath());
         Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
                 project.getExportPath().resolve("export_1.xml"));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
+        setExportedDate();
 
         service.createDatabase(false);
         service.indexAll();
@@ -232,12 +225,10 @@ public class CdmIndexServiceTest {
 
     @Test
     public void removeIndexTest() throws Exception {
-        Files.createDirectories(project.getExportPath());
         Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
                 project.getExportPath().resolve("export_1.xml"));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
+        setExportedDate();
 
         service.createDatabase(false);
         service.indexAll();
@@ -251,11 +242,9 @@ public class CdmIndexServiceTest {
 
     @Test
     public void invalidExportFileTest() throws Exception {
-        Files.createDirectories(project.getExportPath());
         FileUtils.write(project.getExportPath().resolve("export_1.xml").toFile(), "uh oh", ISO_8859_1);
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
+        setExportedDate();
 
         service.createDatabase(false);
         try {
@@ -263,6 +252,24 @@ public class CdmIndexServiceTest {
             fail();
         } catch (MigrationException e) {
             assertTrue(e.getMessage().contains("Failed to parse export file"));
+        }
+    }
+
+    @Test
+    public void missingConfiguredFieldTest() throws Exception {
+        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
+                project.getExportPath().resolve("export_all.xml"));
+        String fieldString = FileUtils.readFileToString(new File("src/test/resources/gilmer_fields.csv"), ISO_8859_1);
+        fieldString += "\nmystery,mystery,Mysterious,false";
+        FileUtils.writeStringToFile(project.getFieldsPath().toFile(), fieldString, ISO_8859_1);
+        setExportedDate();
+
+        try {
+            service.createDatabase(false);
+            service.indexAll();
+            fail();
+        } catch (InvalidProjectStateException e) {
+            assertTrue(e.getMessage().contains("Missing configured field mystery"));
         }
     }
 
@@ -274,6 +281,11 @@ public class CdmIndexServiceTest {
     private void assertDateIndexedNotPresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
         assertNull(props.getIndexedDate());
+    }
+
+    private void setExportedDate() throws Exception {
+        project.getProjectProperties().setExportedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
     }
 
     private void assertRowCount(int expected) throws Exception {

@@ -17,7 +17,9 @@ package edu.unc.lib.boxc.migration.cdm.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +32,8 @@ import org.apache.jena.ext.com.google.common.collect.Streams;
  */
 public class CdmFieldInfo {
     public static final String CDM_ID = "cdmid";
+    public static final Set<String> IGNORE_FIELDS = new HashSet<>(Arrays.asList(
+            "dmoclcno", "dmcreated", "dmmodified", "dmrecord"));
     public static final List<String> RESERVED_FIELDS = Arrays.asList(
             CDM_ID, "cdmcreated", "cdmmodified", "cdmfile", "cdmpath");
 
@@ -52,7 +56,7 @@ public class CdmFieldInfo {
      */
     public List<String> listExportFields() {
         Stream<String> exportFields = getFields().stream()
-                .filter(f -> !f.getSkipExport())
+                .filter(f -> !f.getSkipExport() && !IGNORE_FIELDS.contains(f.getExportAs()))
                 .map(CdmFieldEntry::getExportAs);
         return Streams.concat(exportFields, RESERVED_FIELDS.stream()).collect(Collectors.toList());
     }

@@ -117,8 +117,13 @@ public class CdmIndexService {
             PreparedStatement stmt = conn.prepareStatement(insertTemplate);
             for (int i = 0; i < exportFields.size(); i++) {
                 String exportField = exportFields.get(i);
-                String value = recordEl.getChildTextTrim(exportField);
-                value = value == null? "" : value;
+                Element childEl = recordEl.getChild(exportField);
+                if (childEl == null) {
+                    throw new InvalidProjectStateException("Missing configured field " + exportField
+                            + " in export document, aborting indexing due to configuration mismatch");
+                }
+                String value = childEl.getTextTrim();
+                value = value == null ? "" : value;
                 stmt.setString(i + 1, value);
             }
             stmt.executeUpdate();
