@@ -27,6 +27,7 @@ public class MigrationProject {
     public static final String DESCRIPTION_DIRNAME = "descriptions";
     public static final String EXPORT_DIRNAME = "exports";
     public static final String FIELD_NAMES_FILENAME = "cdm_fields.csv";
+    public static final String INDEX_FILENAME = "cdm_index.db";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -79,6 +80,13 @@ public class MigrationProject {
      */
     public Path getDescriptionsPath() {
         return projectPath.resolve(DESCRIPTION_DIRNAME);
+    }
+
+    /**
+     * @return Path of the index containing exported CDM data
+     */
+    public Path getIndexPath() {
+        return projectPath.resolve(INDEX_FILENAME);
     }
 
     /**

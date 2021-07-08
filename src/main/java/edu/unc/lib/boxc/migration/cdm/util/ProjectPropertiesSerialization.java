@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 
 /**
@@ -63,5 +64,14 @@ public class ProjectPropertiesSerialization {
      */
     public static void write(Path path, MigrationProjectProperties properties) throws IOException {
         PROJECT_WRITER.writeValue(path.toFile(), properties);
+    }
+
+    /**
+     * Serializes the provided MigrationProject to the appropriate path
+     * @param project
+     * @throws IOException
+     */
+    public static void write(MigrationProject project) throws IOException {
+        write(project.getProjectPropertiesPath(), project.getProjectProperties());
     }
 }

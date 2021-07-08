@@ -35,6 +35,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmExportService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -77,6 +78,8 @@ public class CdmExportCommand implements Callable<Integer> {
             Path currentPath = parentCommand.getWorkingDirectory();
             MigrationProject project = MigrationProjectFactory.loadMigrationProject(currentPath);
             exportService.exportAll(project);
+
+            ProjectPropertiesSerialization.write(project.getProjectPropertiesPath(), project.getProjectProperties());
 
             outputLogger.info("Exported project {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);

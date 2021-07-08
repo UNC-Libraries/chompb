@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
@@ -82,6 +83,8 @@ public class CdmExportService {
         // Retrieve the export results
         Path exportFilePath = project.getExportPath().resolve("export_all.xml");
         downloadExport(project, exportFilePath);
+
+        project.getProjectProperties().setExportedDate(Instant.now());
     }
 
     private void initializeExportDir(MigrationProject project) throws IOException {

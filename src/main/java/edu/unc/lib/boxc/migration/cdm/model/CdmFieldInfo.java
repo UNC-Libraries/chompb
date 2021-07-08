@@ -16,7 +16,12 @@
 package edu.unc.lib.boxc.migration.cdm.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.jena.ext.com.google.common.collect.Streams;
 
 /**
  * Information describing the fields present in a CDM collection
@@ -24,6 +29,10 @@ import java.util.List;
  * @author bbpennel
  */
 public class CdmFieldInfo {
+    public static final String CDM_ID = "cdmid";
+    public static final List<String> RESERVED_FIELDS = Arrays.asList(
+            CDM_ID, "cdmcreated", "cdmmodified", "cdmfile", "cdmpath");
+
     private List<CdmFieldEntry> fields;
 
     public CdmFieldInfo() {
@@ -36,6 +45,16 @@ public class CdmFieldInfo {
 
     public void setFields(List<CdmFieldEntry> fields) {
         this.fields = fields;
+    }
+
+    /**
+     * @return List of all the exported fields, including reserved CDM fields
+     */
+    public List<String> listExportFields() {
+        Stream<String> exportFields = getFields().stream()
+                .filter(f -> !f.getSkipExport())
+                .map(CdmFieldEntry::getExportAs);
+        return Streams.concat(exportFields, RESERVED_FIELDS.stream()).collect(Collectors.toList());
     }
 
     /**
