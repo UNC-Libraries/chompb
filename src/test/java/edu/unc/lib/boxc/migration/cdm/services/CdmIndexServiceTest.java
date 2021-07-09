@@ -41,6 +41,7 @@ import org.junit.rules.TemporaryFolder;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
@@ -196,7 +197,7 @@ public class CdmIndexServiceTest {
         try {
             service.createDatabase(false);
             fail();
-        } catch (InvalidProjectStateException e) {
+        } catch (StateAlreadyExistsException e) {
             assertTrue(e.getMessage().contains("Cannot create index, an index file already exists"));
             assertDateIndexedNotPresent();
         }

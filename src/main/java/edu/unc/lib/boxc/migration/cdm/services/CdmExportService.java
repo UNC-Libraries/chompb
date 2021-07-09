@@ -37,6 +37,7 @@ import edu.unc.lib.boxc.common.util.URIUtil;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 
 /**
  * Service for exporting CDM item records
@@ -85,6 +86,7 @@ public class CdmExportService {
         downloadExport(project, exportFilePath);
 
         project.getProjectProperties().setExportedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
     }
 
     private void initializeExportDir(MigrationProject project) throws IOException {

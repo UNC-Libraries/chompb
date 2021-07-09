@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
@@ -81,13 +82,10 @@ public class CdmIndexService {
                 indexDocument(doc, conn, insertTemplate, exportFields);
             }
         } catch (IOException e) {
-            log.error("Failed to read export files", e);
             throw new MigrationException("Failed to read export files: " + e.getMessage());
         } catch (SQLException e) {
-            log.error("Failed to update database", e);
             throw new MigrationException("Failed to update database: " + e.getMessage());
         } catch (JDOMException e) {
-            log.error("Failed to parse export file", e);
             throw new MigrationException("Failed to parse export file: " + e.getMessage());
         } finally {
             closeDbConnection(conn);
@@ -173,7 +171,7 @@ public class CdmIndexService {
                     throw new MigrationException("Failed to overwrite index file", e);
                 }
             } else {
-                throw new InvalidProjectStateException("Cannot create index, an index file already exists."
+                throw new StateAlreadyExistsException("Cannot create index, an index file already exists."
                         + " Use the force flag to overwrite.");
             }
         }
