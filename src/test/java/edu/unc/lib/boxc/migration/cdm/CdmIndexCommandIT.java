@@ -84,7 +84,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
 
         // Index a second time, should fail and index should be unchanged
         executeExpectFailure(args);
-        assertTrue(output.contains("Cannot create index, an index file already exists"));
+        assertOutputContains("Cannot create index, an index file already exists");
         assertTrue(Files.exists(project.getIndexPath()));
         assertEquals(indexSize, Files.size(project.getIndexPath()));
         assertDateIndexedPresent();
@@ -119,7 +119,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "index"};
         executeExpectFailure(args);
-        assertTrue(output.contains("Failed to parse export file"));
+        assertOutputContains("Failed to parse export file");
         assertDateIndexedNotPresent();
         assertTrue("Index file should be cleaned up", Files.notExists(project.getIndexPath()));
     }

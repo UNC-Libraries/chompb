@@ -127,8 +127,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-p", "unknowncoll" };
         executeExpectFailure(initArgs);
 
-        assertTrue("Collection should not be found on server, but output was " + output,
-                output.contains("No collection with ID 'unknowncoll' found on server"));
+        assertOutputContains("No collection with ID 'unknowncoll' found on server");
 
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(baseDir)) {
             assertFalse("Project directory should not have been created, so base dir should be empty",
@@ -149,8 +148,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
 
         // Run it a second time, should cause a failure
         executeExpectFailure(initArgs);
-        assertTrue("Error response should indicate already initialized, but output was: " + output,
-                output.contains("the directory already contains a migration project"));
+        assertOutputContains("the directory already contains a migration project");
 
         // The migration project should still be there
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projDir);
