@@ -27,6 +27,8 @@ public class MigrationProjectProperties {
     private String cdmCollectionId;
     private Instant createdDate;
     private String creator;
+    private Instant exportedDate;
+    private Instant indexedDate;
 
     public MigrationProjectProperties() {
     }
@@ -62,6 +64,28 @@ public class MigrationProjectProperties {
 
     public void setCreatedDate(Instant createdDate) {
         this.createdDate = createdDate;
+    }
+
+    /**
+     * @return timestamp of the last full successful CDM record export
+     */
+    public Instant getExportedDate() {
+        return exportedDate;
+    }
+
+    public void setExportedDate(Instant exportedDate) {
+        this.exportedDate = exportedDate;
+    }
+
+    /**
+     * @return timestamp of the last full successful CDM record indexing
+     */
+    public Instant getIndexedDate() {
+        return indexedDate;
+    }
+
+    public void setIndexedDate(Instant indexedDate) {
+        this.indexedDate = indexedDate;
     }
 
     /**

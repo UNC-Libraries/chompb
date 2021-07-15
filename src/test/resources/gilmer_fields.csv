@@ -1,0 +1,61 @@
+cdm_nick,export_as,description,skip_export
+title,title,Title,false
+altern,altern,Alternative Title,false
+creato,creato,Creator,false
+contri,contri,Contributor,false
+date,date,Creation Date,false
+data,data,Date,false
+search,search,Search by Decade,true
+descri,descri,Description,false
+subjec,subjec,Subject (tgm),false
+subjea,subjea,Subject Topical,false
+subjeb,subjeb,Subject Name,false
+subjed,subjed,Subject Geographic,false
+titla,titla,Title Note,false
+dcmi,dcmi,DCMI Type,false
+captio,captio,Caption,false
+contra,contra,Contributor Note,false
+notes,notes,Notes,false
+type,type,Original Form,false
+resour,resour,Resource Type,false
+covera,covera,Geographic Location,false
+langub,langub,Language Code,false
+langua,langua,Language,false
+format,format,Physical Description of Original,false
+medium,medium,Medium of Original,false
+source,source,Collection in Repository,false
+digitb,digitb,Digital Collection,false
+publis,publis,Repository,false
+host,host,Host,false
+educat,educat,N.C. Ed. Standard,false
+identi,identi,URL,false
+local,local,Local Identifier,false
+creata,creata,Creator Identifier,false
+sponso,sponso,Citation,false
+file,file,filename,false
+rights,rights,Copyright,false
+orderi,orderi,Usage Rights,false
+initia,initia,Raw Scan Filename,false
+digita,digita,Digital Scan Date Raw Scan,false
+digitc,digitc,Digital Scan Date filename,false
+creatb,creatb,Creator Raw Scan,false
+creatc,creatc,Creator filename,false
+hardwa,hardwa,Hardware Raw Scan,false
+hardwb,hardwb,Hardware filename,false
+softwa,softwa,Software Raw Scan,false
+softwb,softwb,Software filename,false
+pixel,pixel,Pixel Array Raw Scan,false
+pixea,pixea,Pixel Array filename,false
+bit,bit,Bit Depth Raw Scan,false
+bia,bia,Bit Depth filename,false
+color,color,Color Space Raw Scan,false
+coloa,coloa,Color Space filename,false
+fila,fila,File Format Raw Scan,false
+filb,filb,File Format filename,false
+full,full,path,false
+fullrs,fullrs,Full resolution,false
+dmoclcno,dmoclcno,OCLC number,false
+dmcreated,dmcreated,Date created,false
+dmmodified,dmmodified,Date modified,false
+dmrecord,dmrecord,CONTENTdm number,false
+find,find,CONTENTdm file name,false

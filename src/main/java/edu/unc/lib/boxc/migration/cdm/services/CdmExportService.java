@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
@@ -36,6 +37,7 @@ import edu.unc.lib.boxc.common.util.URIUtil;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 
 /**
  * Service for exporting CDM item records
@@ -82,6 +84,9 @@ public class CdmExportService {
         // Retrieve the export results
         Path exportFilePath = project.getExportPath().resolve("export_all.xml");
         downloadExport(project, exportFilePath);
+
+        project.getProjectProperties().setExportedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
     }
 
     private void initializeExportDir(MigrationProject project) throws IOException {
