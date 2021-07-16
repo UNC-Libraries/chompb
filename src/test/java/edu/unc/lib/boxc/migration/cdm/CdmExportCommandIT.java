@@ -103,7 +103,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         assertFalse("Description folder should not be created", Files.exists(project.getExportPath()));
-        assertTrue(output.contains("Must provided a CDM username"));
+        assertOutputContains("Must provided a CDM username");
     }
 
     @Test
@@ -118,7 +118,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         assertFalse("Description folder should not be created", Files.exists(project.getExportPath()));
-        assertTrue(output.contains("Must provided a CDM password"));
+        assertOutputContains("Must provided a CDM password");
     }
 
     @Test
@@ -139,7 +139,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
 
         assertFalse("Description folder should not be created", Files.exists(project.getExportPath()));
-        assertTrue(output.contains("Failed to request export"));
+        assertOutputContains("Failed to request export");
     }
 
     private Path createProject() throws Exception {

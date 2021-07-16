@@ -15,8 +15,6 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static org.junit.Assert.assertTrue;
-
 import java.nio.file.Path;
 
 import org.junit.After;
@@ -86,7 +84,6 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
                 "fields", "validate"};
         executeExpectFailure(cmdArgs);
 
-        assertTrue("Unexpected validation failure message: " + output,
-                output.contains("Duplicate export_as value 'titla'"));
+        assertOutputContains("Duplicate export_as value 'titla'");
     }
 }

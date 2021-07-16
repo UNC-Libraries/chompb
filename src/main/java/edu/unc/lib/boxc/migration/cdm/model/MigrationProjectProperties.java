@@ -29,6 +29,7 @@ public class MigrationProjectProperties {
     private String creator;
     private Instant exportedDate;
     private Instant indexedDate;
+    private Instant destinationsGeneratedDate;
 
     public MigrationProjectProperties() {
     }
@@ -97,5 +98,16 @@ public class MigrationProjectProperties {
 
     public void setCreator(String creator) {
         this.creator = creator;
+    }
+
+    /**
+     * @return timestamp the destination mapping was last generated
+     */
+    public Instant getDestinationsGeneratedDate() {
+        return destinationsGeneratedDate;
+    }
+
+    public void setDestinationsGeneratedDate(Instant destinationsGeneratedDate) {
+        this.destinationsGeneratedDate = destinationsGeneratedDate;
     }
 }
