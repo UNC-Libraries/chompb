@@ -29,6 +29,7 @@ public class MigrationProject {
     public static final String FIELD_NAMES_FILENAME = "cdm_fields.csv";
     public static final String INDEX_FILENAME = "cdm_index.db";
     public static final String DESTINATIONS_FILENAME = "destinations.csv";
+    public static final String SOURCE_MAPPING_FILENAME = "source_files.csv";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -95,6 +96,13 @@ public class MigrationProject {
      */
     public Path getDestinationMappingsPath() {
         return projectPath.resolve(DESTINATIONS_FILENAME);
+    }
+
+    /**
+     * @return Path of the source files mapping file
+     */
+    public Path getSourceFilesMappingPath() {
+        return projectPath.resolve(SOURCE_MAPPING_FILENAME);
     }
 
     /**
