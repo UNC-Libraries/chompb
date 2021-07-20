@@ -111,8 +111,29 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
-        assertTrue(output.contains("26,276_183_E.tif,,"));
+        assertTrue(output.contains("26,276_183B_E.tif,,"));
         assertTrue(output.contains("27,276_203_E.tif,,"));
+    }
+
+    @Test
+    public void generateNestedPatternMatchDryRunTest() throws Exception {
+        indexExportSamples();
+        Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
+        Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "--dry-run",
+                "-b", basePath.toString(),
+                "-p", "(\\d+)\\_(\\d+)_E.tif",
+                "-t", "00$1_op0$2_0001_e.tif" };
+        executeExpectSuccess(args);
+
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
+        assertTrue(output.contains("26,276_183B_E.tif,,"));
+        assertTrue(output.contains("27,276_203_E.tif," + srcPath3 + ","));
     }
 
     private void indexExportSamples() throws Exception {

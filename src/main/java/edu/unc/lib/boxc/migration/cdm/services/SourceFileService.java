@@ -34,6 +34,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -85,7 +86,7 @@ public class SourceFileService {
      */
     public void generateMapping(SourceFileMappingOptions options) throws IOException {
         assertProjectStateValid();
-        ensureMappingState(options.isForce());
+        ensureMappingState(options);
 
         // Gather listing of all potential source file paths to match against
         Map<String, List<String>> candidatePaths = gatherCandidatePaths(options);
@@ -121,6 +122,9 @@ public class SourceFileService {
                 Matcher fieldMatcher = fieldMatchingPattern.matcher(dbFilename);
                 if (fieldMatcher.matches()) {
                     String transformed = fieldMatcher.replaceFirst(options.getFilenameTemplate());
+                    if (options.isLowercaseTemplate()) {
+                        transformed = transformed.toLowerCase();
+                    }
 
                     List<String> paths = candidatePaths.get(transformed);
                     if (paths == null) {
@@ -152,6 +156,10 @@ public class SourceFileService {
             throw new MigrationException("Error interacting with export index", e);
         } finally {
             CdmIndexService.closeDbConnection(conn);
+        }
+        if (!options.getDryRun()) {
+            project.getProjectProperties().setSourceFilesUpdatedDate(Instant.now());
+            ProjectPropertiesSerialization.write(project);
         }
     }
 
@@ -196,9 +204,12 @@ public class SourceFileService {
         return candidatePaths;
     }
 
-    private void ensureMappingState(boolean force) {
+    private void ensureMappingState(SourceFileMappingOptions options) {
+        if (options.getDryRun()) {
+            return;
+        }
         if (Files.exists(project.getSourceFilesMappingPath())) {
-            if (force) {
+            if (options.isForce()) {
                 try {
                     removeMappings();
                 } catch (IOException e) {

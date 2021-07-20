@@ -110,7 +110,7 @@ public class CdmIndexServiceTest {
             assertEquals("2005-11-23", rs.getString("cdmcreated"));
             assertEquals("Plan of Battery McIntosh", rs.getString("title"));
             assertEquals("Paper", rs.getString("medium"));
-            assertEquals("276_183_E.tif", rs.getString("file"));
+            assertEquals("276_183B_E.tif", rs.getString("file"));
 
             rs.next();
             assertEquals(27, rs.getInt("cdmid"));

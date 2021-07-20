@@ -17,6 +17,8 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -35,6 +37,7 @@ import org.junit.rules.TemporaryFolder;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
@@ -82,6 +85,7 @@ public class SourceFileServiceTest {
             fail();
         } catch (InvalidProjectStateException e) {
             assertExceptionContains("Project must be indexed", e);
+            assertMappedDateNotPresent();
         }
     }
 
@@ -97,6 +101,7 @@ public class SourceFileServiceTest {
             fail();
         } catch (IllegalArgumentException e) {
             assertExceptionContains("Base path must be a directory", e);
+            assertMappedDateNotPresent();
         }
     }
 
@@ -111,6 +116,7 @@ public class SourceFileServiceTest {
             fail();
         } catch (IllegalArgumentException e) {
             assertExceptionContains("Base path must be a directory", e);
+            assertMappedDateNotPresent();
         }
     }
 
@@ -122,8 +128,10 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = SourceFileService.loadMappings(project);
         assertMappingPresent(info, "25", "276_182_E.tif", null);
-        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
     }
 
     @Test
@@ -136,15 +144,17 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = SourceFileService.loadMappings(project);
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
     }
 
     @Test
     public void generateTransformedMatchTest() throws Exception {
         indexExportSamples();
         SourceFileMappingOptions options = makeDefaultOptions();
-        options.setFieldMatchingPattern("(\\d+)\\_(\\d+)\\_E.tif");
+        options.setFieldMatchingPattern("(\\d+)\\_([^_]+)\\_E.tif");
         options.setFilenameTemplate("00$1_op0$2_0001_e.tif");
         Path srcPath1 = addSourceFile("00276_op0182_0001_e.tif");
         Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
@@ -153,8 +163,10 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = SourceFileService.loadMappings(project);
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", srcPath3);
+
+        assertMappedDatePresent();
     }
 
     @Test
@@ -163,21 +175,23 @@ public class SourceFileServiceTest {
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*.tif");
         Path srcPath1 = addSourceFile("nested/path/276_182_E.tif");
-        Path srcPath2 = addSourceFile("276_183_E.tif");
+        Path srcPath2 = addSourceFile("276_183B_E.tif");
 
         service.generateMapping(options);
 
         SourceFilesInfo info = SourceFileService.loadMappings(project);
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183_E.tif", srcPath2);
+        assertMappingPresent(info, "26", "276_183B_E.tif", srcPath2);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
     }
 
     @Test
     public void generateTransformedNestedMatchTest() throws Exception {
         indexExportSamples();
         SourceFileMappingOptions options = makeDefaultOptions();
-        options.setFieldMatchingPattern("(\\d+)\\_(\\d+)\\_E.tif");
+        options.setFieldMatchingPattern("(\\d+)\\_([^_]+)\\_E.tif");
         options.setFilenameTemplate("00$1_op0$2_0001_e.tif");
         Path srcPath1 = addSourceFile("nested/path/00276_op0182_0001_e.tif");
         // Add extra file that does not match the pattern
@@ -187,8 +201,10 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = SourceFileService.loadMappings(project);
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
     }
 
     @Test
@@ -198,14 +214,16 @@ public class SourceFileServiceTest {
         options.setPathPattern("**/*.tif");
         Path srcPath1 = addSourceFile("nested/path/276_182_E.tif");
         Path srcPath1Dupe = addSourceFile("nested/276_182_E.tif");
-        Path srcPath2 = addSourceFile("276_183_E.tif");
+        Path srcPath2 = addSourceFile("276_183B_E.tif");
 
         service.generateMapping(options);
 
         SourceFilesInfo info = SourceFileService.loadMappings(project);
         assertMappingPresent(info, "25", "276_182_E.tif", null, srcPath1, srcPath1Dupe);
-        assertMappingPresent(info, "26", "276_183_E.tif", srcPath2);
+        assertMappingPresent(info, "26", "276_183B_E.tif", srcPath2);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
     }
 
     @Test
@@ -218,6 +236,8 @@ public class SourceFileServiceTest {
         service.generateMapping(options);
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+
+        assertMappedDateNotPresent();
     }
 
     @Test
@@ -230,11 +250,11 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = SourceFileService.loadMappings(project);
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         // Add extra matching source file, which should not show up during rejected run
-        Path srcPath2 = addSourceFile("276_183_E.tif");
+        Path srcPath2 = addSourceFile("276_183B_E.tif");
         try {
             service.generateMapping(options);
             fail();
@@ -244,7 +264,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info2 = SourceFileService.loadMappings(project);
         assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info2, "26", "276_183_E.tif", null);
+        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
 
         // Try again with force
@@ -253,8 +273,28 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info3 = SourceFileService.loadMappings(project);
         assertMappingPresent(info3, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info3, "26", "276_183_E.tif", srcPath2);
+        assertMappingPresent(info3, "26", "276_183B_E.tif", srcPath2);
         assertMappingPresent(info3, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
+    }
+
+    @Test
+    public void generateMatchesLowercaseTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setLowercaseTemplate(true);
+        Path srcPath1 = addSourceFile("276_182_e.tif");
+        Path srcPath2 = addSourceFile("276_183b_e.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info, "26", "276_183B_E.tif", srcPath2);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
     }
 
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
@@ -307,5 +347,15 @@ public class SourceFileServiceTest {
     private void setIndexedDate() throws Exception {
         project.getProjectProperties().setIndexedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
+    }
+
+    private void assertMappedDatePresent() throws Exception {
+        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
+        assertNotNull(props.getSourceFilesUpdatedDate());
+    }
+
+    private void assertMappedDateNotPresent() throws Exception {
+        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
+        assertNull(props.getSourceFilesUpdatedDate());
     }
 }

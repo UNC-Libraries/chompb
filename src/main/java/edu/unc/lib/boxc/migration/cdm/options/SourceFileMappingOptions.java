@@ -66,10 +66,16 @@ public class SourceFileMappingOptions {
             description = {
                     "Template used to produce expected source file filenames.",
                     "It should be used with matching groups from --field-pattern.",
+                    "NOTE: Use single quotes to wrap this value, or escape the $ characters as \\$.",
                     "Given the field pattern above, it could be templated out to: 00276_op0214_0001_e.tif",
                     "With the template: 00$1_op0$2_0001_e.tif"},
             defaultValue = "$1")
     private String filenameTemplate;
+
+    @Option(names = {"-l", "--lower-template"},
+            description = "Convert the filename produced from the --file-temp option to lowercase "
+                    + "prior to attempting to match against source files.")
+    private boolean lowercaseTemplate;
 
     @Option(names = {"-u", "--update"},
             description = {
@@ -126,6 +132,14 @@ public class SourceFileMappingOptions {
 
     public void setFilenameTemplate(String filenameTemplate) {
         this.filenameTemplate = filenameTemplate;
+    }
+
+    public boolean isLowercaseTemplate() {
+        return lowercaseTemplate;
+    }
+
+    public void setLowercaseTemplate(boolean lowercaseTemplate) {
+        this.lowercaseTemplate = lowercaseTemplate;
     }
 
     public boolean getUpdate() {
