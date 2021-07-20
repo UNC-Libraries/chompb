@@ -20,34 +20,43 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 
 /**
  * Service for interacting with source files
@@ -76,6 +85,7 @@ public class SourceFileService {
      */
     public void generateMapping(SourceFileMappingOptions options) throws IOException {
         assertProjectStateValid();
+        ensureMappingState(options.isForce());
 
         // Gather listing of all potential source file paths to match against
         Map<String, List<String>> candidatePaths = gatherCandidatePaths(options);
@@ -90,14 +100,14 @@ public class SourceFileService {
                     new BufferedWriter(new OutputStreamWriter(System.out)) :
                     Files.newBufferedWriter(project.getSourceFilesMappingPath());
             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(CSV_HEADERS));
-        ){
+        ) {
+            Path basePath = options.getBasePath();
             // Query for all values of the export field to be used for matching
             conn = indexService.openDbConnection();
-            PreparedStatement stmt = conn.prepareStatement("select cdmid, ? from ?");
-            stmt.setString(1, options.getExportField());
-            stmt.setString(2, CdmIndexService.TB_NAME);
+            Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
-            ResultSet rs = stmt.executeQuery();
+            ResultSet rs = stmt.executeQuery("select cdmid, " + options.getExportField()
+                + " from " + CdmIndexService.TB_NAME);
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 String dbFilename = rs.getString(2);
@@ -113,14 +123,24 @@ public class SourceFileService {
                     String transformed = fieldMatcher.replaceFirst(options.getFilenameTemplate());
 
                     List<String> paths = candidatePaths.get(transformed);
-                    if (paths.size() > 1) {
-                        log.debug("Encountered multiple potential matches for {} from field {}", cdmId, dbFilename);
-                        csvPrinter.printRecord(cdmId, dbFilename, null, String.join(",", paths));
-                    } else if (paths.size() == 1) {
-                        log.debug("Found match for {} from field {}", cdmId, dbFilename);
-                        csvPrinter.printRecord(cdmId, dbFilename, paths.get(0), null);
+                    if (paths == null) {
+                        log.debug("Transformed field '{}' => '{}' for {} did not match and source filenames",
+                                dbFilename, transformed, cdmId);
+                        csvPrinter.printRecord(cdmId, dbFilename, null, null);
                     } else {
-                        throw new MigrationException("No paths returned for matching field value " + dbFilename);
+                        if (paths.size() > 1) {
+                            log.debug("Encountered multiple potential matches for {} from field {}", cdmId, dbFilename);
+                            String joined = paths.stream()
+                                    .map(s -> basePath.resolve(Paths.get(s)).toString())
+                                    .collect(Collectors.joining(","));
+                            csvPrinter.printRecord(cdmId, dbFilename, null, joined);
+                        } else if (paths.size() == 1) {
+                            log.debug("Found match for {} from field {}", cdmId, dbFilename);
+                            csvPrinter.printRecord(cdmId, dbFilename,
+                                    basePath.resolve(Paths.get(paths.get(0))).toString(), null);
+                        } else {
+                            throw new MigrationException("No paths returned for matching field value " + dbFilename);
+                        }
                     }
                 } else {
                     log.debug("Field {} for object {} with field {} does not match the field value pattern",
@@ -141,19 +161,21 @@ public class SourceFileService {
             throw new IllegalArgumentException("Base path must be a directory");
         }
 
+        final PathMatcher pathMatcher;
         final String pathPattern;
         if (StringUtils.isBlank(options.getPathPattern())) {
             pathPattern = null;
+            pathMatcher = null;
         } else {
             if (Paths.get(options.getPathPattern()).isAbsolute()) {
                 throw new IllegalArgumentException("Path pattern must be relative");
             }
             pathPattern = options.getPathPattern();
+            pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + pathPattern);
         }
 
         // Mapping of filenames to relative paths versus the base path for those files
         Map<String, List<String>> candidatePaths = new HashMap<>();
-        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(pathPattern);
         Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
@@ -174,9 +196,63 @@ public class SourceFileService {
         return candidatePaths;
     }
 
+    private void ensureMappingState(boolean force) {
+        if (Files.exists(project.getSourceFilesMappingPath())) {
+            if (force) {
+                try {
+                    removeMappings();
+                } catch (IOException e) {
+                    throw new MigrationException("Failed to overwrite source mapping file", e);
+                }
+            } else {
+                throw new StateAlreadyExistsException("Cannot create source mapping, a file already exists."
+                        + " Use the force flag to overwrite.");
+            }
+        }
+    }
+
+    public void removeMappings() throws IOException {
+        try {
+            Files.delete(project.getSourceFilesMappingPath());
+        } catch (NoSuchFileException e) {
+            log.debug("File does not exist, skipping deletion");
+        }
+        // Clear date property in case it was set
+        project.getProjectProperties().setSourceFilesUpdatedDate(null);
+        ProjectPropertiesSerialization.write(project);
+    }
+
     private void assertProjectStateValid() {
         if (project.getProjectProperties().getIndexedDate() == null) {
             throw new InvalidProjectStateException("Project must be indexed prior to generating source mappings");
+        }
+    }
+
+    /**
+     * @param project
+     * @return the source file mapping info for the provided project
+     * @throws IOException
+     */
+    public static SourceFilesInfo loadMappings(MigrationProject project) throws IOException {
+        Path path = project.getSourceFilesMappingPath();
+        try (
+            Reader reader = Files.newBufferedReader(path);
+            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                    .withFirstRecordAsHeader()
+                    .withHeader(CSV_HEADERS)
+                    .withTrim());
+        ) {
+            SourceFilesInfo info = new SourceFilesInfo();
+            List<SourceFileMapping> mappings = info.getMappings();
+            for (CSVRecord csvRecord : csvParser) {
+                SourceFileMapping mapping = new SourceFileMapping();
+                mapping.setCdmId(csvRecord.get(0));
+                mapping.setMatchingValue(csvRecord.get(1));
+                mapping.setSourcePath(csvRecord.get(2));
+                mapping.setPotentialMatches(csvRecord.get(3));
+                mappings.add(mapping);
+            }
+            return info;
         }
     }
 

@@ -129,7 +129,7 @@ public class DestinationsService {
 
     /**
      * @param project
-     * @return the destiantion mapping info for the provided project
+     * @return the destination mapping info for the provided project
      * @throws IOException
      */
     public static DestinationsInfo loadMappings(MigrationProject project) throws IOException {

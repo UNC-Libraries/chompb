@@ -1,0 +1,311 @@
+/**
+ * Copyright 2008 The University of North Carolina at Chapel Hill
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package edu.unc.lib.boxc.migration.cdm.services;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
+import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+
+/**
+ * @author bbpennel
+ */
+public class SourceFileServiceTest {
+    private static final String PROJECT_NAME = "proj";
+
+    @Rule
+    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+
+    private MigrationProject project;
+    private CdmIndexService indexService;
+    private CdmFieldService fieldService;
+    private SourceFileService service;
+
+    private Path basePath;
+
+    @Before
+    public void setup() throws Exception {
+        project = MigrationProjectFactory.createMigrationProject(
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+        Files.createDirectories(project.getExportPath());
+
+        fieldService = new CdmFieldService();
+        indexService = new CdmIndexService();
+        indexService.setProject(project);
+        indexService.setFieldService(fieldService);
+        service = new SourceFileService();
+        service.setIndexService(indexService);
+        service.setProject(project);
+
+        basePath = tmpFolder.newFolder().toPath();
+    }
+
+    @Test
+    public void generateNoIndexTest() throws Exception {
+        SourceFileMappingOptions options = makeDefaultOptions();
+
+        try {
+            service.generateMapping(options);
+            fail();
+        } catch (InvalidProjectStateException e) {
+            assertExceptionContains("Project must be indexed", e);
+        }
+    }
+
+    @Test
+    public void generateBasePathIsNotADirectoryTest() throws Exception {
+        setIndexedDate();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        Files.delete(basePath);
+        Files.createFile(basePath);
+
+        try {
+            service.generateMapping(options);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertExceptionContains("Base path must be a directory", e);
+        }
+    }
+
+    @Test
+    public void generateBasePathDoesNotExistTest() throws Exception {
+        setIndexedDate();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        Files.delete(basePath);
+
+        try {
+            service.generateMapping(options);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertExceptionContains("Base path must be a directory", e);
+        }
+    }
+
+    @Test
+    public void generateNoSourceFilesTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        service.generateMapping(options);
+
+        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        assertMappingPresent(info, "25", "276_182_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateExactMatchTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateTransformedMatchTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setFieldMatchingPattern("(\\d+)\\_(\\d+)\\_E.tif");
+        options.setFilenameTemplate("00$1_op0$2_0001_e.tif");
+        Path srcPath1 = addSourceFile("00276_op0182_0001_e.tif");
+        Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", srcPath3);
+    }
+
+    @Test
+    public void generateNestedMatchesTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setPathPattern("**/*.tif");
+        Path srcPath1 = addSourceFile("nested/path/276_182_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info, "26", "276_183_E.tif", srcPath2);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateTransformedNestedMatchTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setFieldMatchingPattern("(\\d+)\\_(\\d+)\\_E.tif");
+        options.setFilenameTemplate("00$1_op0$2_0001_e.tif");
+        Path srcPath1 = addSourceFile("nested/path/00276_op0182_0001_e.tif");
+        // Add extra file that does not match the pattern
+        addSourceFile("nested/path/276_182_E.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateMultipleMatchesForSameObjectTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setPathPattern("**/*.tif");
+        Path srcPath1 = addSourceFile("nested/path/276_182_E.tif");
+        Path srcPath1Dupe = addSourceFile("nested/276_182_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        assertMappingPresent(info, "25", "276_182_E.tif", null, srcPath1, srcPath1Dupe);
+        assertMappingPresent(info, "26", "276_183_E.tif", srcPath2);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateDryRunTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setDryRun(true);
+        addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+    }
+
+    @Test
+    public void generateMappingExistsTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        // Add extra matching source file, which should not show up during rejected run
+        Path srcPath2 = addSourceFile("276_183_E.tif");
+        try {
+            service.generateMapping(options);
+            fail();
+        } catch (MigrationException e) {
+            assertTrue(e.getMessage().contains("Cannot create source mapping, a file already exists"));
+        }
+
+        SourceFilesInfo info2 = SourceFileService.loadMappings(project);
+        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+
+        // Try again with force
+        options.setForce(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info3 = SourceFileService.loadMappings(project);
+        assertMappingPresent(info3, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info3, "26", "276_183_E.tif", srcPath2);
+        assertMappingPresent(info3, "27", "276_203_E.tif", null);
+    }
+
+    private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
+            Path... potentialPaths) {
+        List<SourceFileMapping> mappings = info.getMappings();
+        SourceFileMapping mapping = mappings.stream().filter(m -> m.getCdmId().equals(cdmid)).findFirst().get();
+
+        assertEquals(sourcePath, mapping.getSourcePath());
+        assertEquals(matchingVal, mapping.getMatchingValue());
+        if (potentialPaths.length > 0) {
+            for (Path potentialPath : potentialPaths) {
+                assertTrue("Mapping did not contain expected potential path: " + potentialPath,
+                        mapping.getPotentialMatches().contains(potentialPath.toString()));
+            }
+        }
+    }
+
+    private Path addSourceFile(String relPath) throws IOException {
+        Path srcPath = basePath.resolve(relPath);
+        // Create parent directories in case they don't exist
+        Files.createDirectories(srcPath.getParent());
+        Files.createFile(srcPath);
+        return srcPath;
+    }
+
+    private SourceFileMappingOptions makeDefaultOptions() {
+        SourceFileMappingOptions options = new SourceFileMappingOptions();
+        options.setBasePath(basePath);
+        options.setExportField("file");
+        options.setFieldMatchingPattern("(.+)");
+        options.setFilenameTemplate("$1");
+        return options;
+    }
+
+    private void indexExportSamples() throws Exception {
+        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
+                project.getExportPath().resolve("export_all.xml"));
+        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
+
+        project.getProjectProperties().setExportedDate(Instant.now());
+        indexService.createDatabase(true);
+        indexService.indexAll();
+    }
+
+    private void assertExceptionContains(String expected, Exception e) {
+        assertTrue("Expected message exception to contain '" + expected + "', but was: " + e.getMessage(),
+                e.getMessage().contains(expected));
+    }
+
+    private void setIndexedDate() throws Exception {
+        project.getProjectProperties().setIndexedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
+    }
+}

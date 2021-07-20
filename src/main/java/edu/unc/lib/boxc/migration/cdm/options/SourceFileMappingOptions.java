@@ -28,7 +28,7 @@ public class SourceFileMappingOptions {
 
     @Option(names = {"-b", "--base-path"},
             description = {
-                    "Base file path to search in for source files to match with.",
+                    "Required. Base file path to search in for source files to match with.",
                     "By default, all files which are immediate children of base path will be used.",
                     "To change this behavior, use the -g option."})
     private Path basePath;
@@ -48,7 +48,8 @@ public class SourceFileMappingOptions {
     @Option(names = {"-n", "--field-name"},
             description = {
                     "Name of the CDM export field which will be transformed by the field matching pattern "
-                    + "to produce the source file filename for matching purposes."})
+                    + "to produce the source file filename for matching purposes."},
+            defaultValue = "file")
     private String exportField;
 
     @Option(names = {"-p", "--field-pattern"},
@@ -57,7 +58,8 @@ public class SourceFileMappingOptions {
                     + "for use in the filename template. Use matching groups for this.",
                     "Must match the entire value of the export field.",
                     "For example, to extract numeric portions of the value: 276_214_E.tif",
-                    "You could provide the pattern: (\\d+)\\_(\\d+)_E.tif"})
+                    "You could provide the pattern: (\\d+)\\_(\\d+)_E.tif"},
+            defaultValue = "(.+)")
     private String fieldMatchingPattern;
 
     @Option(names = {"-t", "--file-template"},
@@ -65,7 +67,8 @@ public class SourceFileMappingOptions {
                     "Template used to produce expected source file filenames.",
                     "It should be used with matching groups from --field-pattern.",
                     "Given the field pattern above, it could be templated out to: 00276_op0214_0001_e.tif",
-                    "With the template: 00$1_op0$2_0001_e.tif"})
+                    "With the template: 00$1_op0$2_0001_e.tif"},
+            defaultValue = "$1")
     private String filenameTemplate;
 
     @Option(names = {"-u", "--update"},
@@ -73,20 +76,24 @@ public class SourceFileMappingOptions {
                     "If provided, then any source file matches produced will be used to update an existing"
                     + " source file mapping file, instead of attempting to create a new one.",
                     "This can be used to build up the mapping in multiple passes"})
-    private Boolean update;
+    private boolean update;
 
     @Option(names = {"-d", "--dry-run"},
             description = {
                     "If provided, then the output of the matching will be displayed in the console rather "
                     + "than written to file"})
-    private Boolean dryRun;
+    private boolean dryRun;
+
+    @Option(names = { "-f", "--force"},
+            description = "Overwrite mapping file if one already exists")
+    private boolean force;
 
     public Path getBasePath() {
         return basePath;
     }
 
-    public void setBasePath(Path basePathPattern) {
-        this.basePath = basePathPattern;
+    public void setBasePath(Path basePath) {
+        this.basePath = basePath;
     }
 
     public String getPathPattern() {
@@ -121,19 +128,27 @@ public class SourceFileMappingOptions {
         this.filenameTemplate = filenameTemplate;
     }
 
-    public Boolean getUpdate() {
+    public boolean getUpdate() {
         return update;
     }
 
-    public void setUpdate(Boolean update) {
+    public void setUpdate(boolean update) {
         this.update = update;
     }
 
-    public Boolean getDryRun() {
+    public boolean getDryRun() {
         return dryRun;
     }
 
-    public void setDryRun(Boolean dryRun) {
+    public void setDryRun(boolean dryRun) {
         this.dryRun = dryRun;
+    }
+
+    public boolean isForce() {
+        return force;
+    }
+
+    public void setForce(boolean force) {
+        this.force = force;
     }
 }
