@@ -110,9 +110,9 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-        assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
-        assertTrue(output.contains("26,276_183B_E.tif,,"));
-        assertTrue(output.contains("27,276_203_E.tif,,"));
+        assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
+        assertOutputContains("26,276_183B_E.tif,,");
+        assertOutputContains("27,276_203_E.tif,,");
     }
 
     @Test
@@ -131,9 +131,34 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-        assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
-        assertTrue(output.contains("26,276_183B_E.tif,,"));
-        assertTrue(output.contains("27,276_203_E.tif," + srcPath3 + ","));
+        assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
+        assertOutputContains("26,276_183B_E.tif,,");
+        assertOutputContains("27,276_203_E.tif," + srcPath3 + ",");
+    }
+
+    @Test
+    public void generateUpdateAddSourceFileDryRunTest() throws Exception {
+        indexExportSamples();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        Path srcPath2 = addSourceFile("276_183B_E.tif");
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-u",
+                "--dry-run",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args2);
+
+        assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
+        assertOutputContains("26,276_183B_E.tif," + srcPath2.toString() + ",");
+        assertOutputContains("27,276_203_E.tif,,");
     }
 
     private void indexExportSamples() throws Exception {

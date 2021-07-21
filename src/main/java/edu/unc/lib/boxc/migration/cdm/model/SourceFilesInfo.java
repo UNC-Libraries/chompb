@@ -44,6 +44,14 @@ public class SourceFilesInfo {
         this.mappings = mappings;
     }
 
+    /**
+     * @param cdmId
+     * @return mapping with matching cdm id, or null if no match
+     */
+    public SourceFileMapping getMappingByCdmId(String cdmId) {
+        return this.mappings.stream().filter(m -> m.getCdmId().equals(cdmId)).findFirst().orElseGet(null);
+    }
+
     public static class SourceFileMapping {
         private String cdmId;
         private String matchingValue;
@@ -87,6 +95,18 @@ public class SourceFilesInfo {
                 this.potentialMatches = null;
             } else {
                 this.potentialMatches = Arrays.asList(potentialMatches.split(","));
+            }
+        }
+
+        public void setPotentialMatches(List<String> potentialMatches) {
+            this.potentialMatches = potentialMatches;
+        }
+
+        public String getPotentialMatchesString() {
+            if (potentialMatches == null) {
+                return null;
+            } else {
+                return String.join(",", potentialMatches);
             }
         }
     }

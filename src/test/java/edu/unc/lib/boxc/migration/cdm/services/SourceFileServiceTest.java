@@ -297,6 +297,224 @@ public class SourceFileServiceTest {
         assertMappedDatePresent();
     }
 
+    @Test
+    public void generateUpdateNoExistingFileTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setUpdate(true);
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
+    }
+
+    @Test
+    public void generateUpdateExistingNoChangesTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
+
+        options.setUpdate(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateUpdateAddNewSourceFileTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        Path srcPath2 = addSourceFile("276_183B_E.tif");
+        options.setUpdate(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info2, "26", "276_183B_E.tif", srcPath2);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateUpdateChangeSourceFileTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setPathPattern("**/*");
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        Files.delete(srcPath1);
+        addSourceFile("nested/276_182_E.tif");
+        options.setUpdate(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        // Should still list the original source path
+        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateUpdateChangeSourceFileWithForceTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setPathPattern("**/*");
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        Files.delete(srcPath1);
+        Path srcPath2 = addSourceFile("nested/276_182_E.tif");
+        options.setUpdate(true);
+        options.setForce(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        // Should be using the new path
+        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath2);
+        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateUpdateAddPotentialMatchToExistingMatchTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setPathPattern("**/*");
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        addSourceFile("nested/276_182_E.tif");
+        options.setUpdate(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        // Should be using the new path
+        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateUpdateAddPotentialMatchTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setPathPattern("**/*");
+
+        service.generateMapping(options);
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "276_182_E.tif", null);
+        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+        Path srcPath2 = addSourceFile("nested/276_182_E.tif");
+        options.setUpdate(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        // Should be using the new path
+        assertMappingPresent(info2, "25", "276_182_E.tif", null, srcPath1, srcPath2);
+        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateUpdateAddPotentialMatchWithExistingPotentialTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setPathPattern("**/*");
+
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+        Path srcPath2 = addSourceFile("nested/276_182_E.tif");
+
+        service.generateMapping(options);
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "276_182_E.tif", null, srcPath1, srcPath2);
+        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        Path srcPath3 = addSourceFile("another/276_182_E.tif");
+        options.setUpdate(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        // Should be using the new path
+        assertMappingPresent(info2, "25", "276_182_E.tif", null, srcPath1, srcPath2, srcPath3);
+        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void generateUpdateAddNewRecordsTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        // Add more exported objects
+        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
+                project.getExportPath().resolve("export_2.xml"));
+        indexService.createDatabase(true);
+        indexService.indexAll();
+
+        Path srcPath2 = addSourceFile("276_245a_E.tif");
+        options.setUpdate(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
+        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+        assertMappingPresent(info2, "28", "276_241_E.tif", null);
+        assertMappingPresent(info2, "29", "276_245a_E.tif", srcPath2);
+    }
+
+    @Test
+    public void generateUpdateDryRunAddNewSourceFileTest() throws Exception {
+        indexExportSamples();
+        SourceFileMappingOptions options = makeDefaultOptions();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        addSourceFile("276_183B_E.tif");
+        options.setUpdate(true);
+        options.setDryRun(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
+        // Mapping should be unchanged
+        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+    }
+
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
             Path... potentialPaths) {
         List<SourceFileMapping> mappings = info.getMappings();

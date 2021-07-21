@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -37,11 +38,14 @@ import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -93,13 +97,22 @@ public class SourceFileService {
 
         Pattern fieldMatchingPattern = Pattern.compile(options.getFieldMatchingPattern());
 
+        Path mappingPath = getMappingPath();
+        boolean needsMerge = false;
+        if (options.getUpdate() && Files.exists(mappingPath)) {
+            mappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
+            // Cleanup temp path if it already exists
+            Files.deleteIfExists(mappingPath);
+            needsMerge = true;
+        }
+
         // Iterate through exported objects in this collection to match against
         Connection conn = null;
         try (
             // Write to system.out if doing a dry run, otherwise write to mappings file
-            BufferedWriter writer = options.getDryRun() ?
+            BufferedWriter writer = (options.getDryRun() && !needsMerge) ?
                     new BufferedWriter(new OutputStreamWriter(System.out)) :
-                    Files.newBufferedWriter(getMappingPath());
+                    Files.newBufferedWriter(mappingPath);
             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(CSV_HEADERS));
         ) {
             Path basePath = options.getBasePath();
@@ -157,6 +170,12 @@ public class SourceFileService {
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
+
+        // Performing update operation with existing mapping, need to merge values
+        if (needsMerge) {
+            mergeUpdates(options, mappingPath);
+        }
+
         if (!options.getDryRun()) {
             setUpdatedDate(Instant.now());
         }
@@ -204,7 +223,7 @@ public class SourceFileService {
     }
 
     private void ensureMappingState(SourceFileMappingOptions options) {
-        if (options.getDryRun()) {
+        if (options.getDryRun() || options.getUpdate()) {
             return;
         }
         if (Files.exists(getMappingPath())) {
@@ -247,13 +266,111 @@ public class SourceFileService {
     }
 
     /**
-     * @return the source file mapping info for the provided project
+     * Merge existing mappings with updated mappings, writing to temporary files as intermediates
+     * @param options
+     * @param updatesPath
+     */
+    private void mergeUpdates(SourceFileMappingOptions options, Path updatesPath) throws IOException {
+        Path originalPath = getMappingPath();
+        Path mergedPath = originalPath.getParent().resolve("~" + originalPath.getFileName().toString() + "_merged");
+        // Cleanup temp merged path if it already exists
+        Files.deleteIfExists(mergedPath);
+
+        // Load the new mappings into memory
+        SourceFilesInfo updateInfo = loadMappings(updatesPath);
+
+        // Iterate through the existing mappings, merging in the updated mappings when appropriate
+        try (
+            Reader reader = Files.newBufferedReader(originalPath);
+            CSVParser originalParser = new CSVParser(reader, CSVFormat.DEFAULT
+                    .withFirstRecordAsHeader()
+                    .withHeader(CSV_HEADERS)
+                    .withTrim());
+            // Write to system.out if doing a dry run, otherwise write to mappings file
+            BufferedWriter writer = options.getDryRun() ?
+                    new BufferedWriter(new OutputStreamWriter(System.out)) :
+                    Files.newBufferedWriter(mergedPath);
+            CSVPrinter mergedPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(CSV_HEADERS));
+        ) {
+            Set<String> origIds = new HashSet<>();
+            for (CSVRecord originalRecord : originalParser) {
+                SourceFileMapping origMapping = new SourceFileMapping();
+                origMapping.setCdmId(originalRecord.get(0));
+                origMapping.setMatchingValue(originalRecord.get(1));
+                origMapping.setSourcePath(originalRecord.get(2));
+                origMapping.setPotentialMatches(originalRecord.get(3));
+
+                SourceFileMapping updateMapping = updateInfo.getMappingByCdmId(origMapping.getCdmId());
+                if (updateMapping == null) {
+                    // No updates, so write original
+                    writeMapping(mergedPrinter, origMapping);
+                } else if (updateMapping.getSourcePath() != null) {
+                    if (options.isForce() || origMapping.getSourcePath() == null) {
+                        // overwrite entry with updated mapping source path if using force or original didn't have match
+                        writeMapping(mergedPrinter, updateMapping);
+                    } else {
+                        // retain original source path
+                        writeMapping(mergedPrinter, origMapping);
+                    }
+                } else if (updateMapping.getPotentialMatches() != null) {
+                    if (origMapping.getSourcePath() != null) {
+                        // Prefer existing match, write original
+                        writeMapping(mergedPrinter, origMapping);
+                    } else {
+                        // merge potential matches
+                        if (origMapping.getPotentialMatches() != null) {
+                            Set<String> merged = Stream.concat(
+                                        origMapping.getPotentialMatches().stream(),
+                                        updateMapping.getPotentialMatches().stream())
+                                    .collect(Collectors.toSet());
+                            updateMapping.setPotentialMatches(new ArrayList<>(merged));
+                        }
+                        // Write entry with updated potential matches
+                        writeMapping(mergedPrinter, updateMapping);
+                    }
+                } else {
+                    // No change, retain original
+                    writeMapping(mergedPrinter, origMapping);
+                }
+                origIds.add(originalRecord.get(0));
+            }
+
+            // Add in any records that were updated but not present in the original document
+            Set<String> updateIds = updateInfo.getMappings().stream()
+                    .map(SourceFileMapping::getCdmId).collect(Collectors.toSet());
+            updateIds.removeAll(origIds);
+            for (String id : updateIds) {
+                writeMapping(mergedPrinter, updateInfo.getMappingByCdmId(id));
+            }
+        }
+
+        // swap the merged mappings to be the main mappings, unless we're doing a dry run
+        if (!options.getDryRun()) {
+            Files.move(mergedPath, originalPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+        Files.delete(updatesPath);
+    }
+
+    private void writeMapping(CSVPrinter csvPrinter, SourceFileMapping mapping) throws IOException {
+        csvPrinter.printRecord(mapping.getCdmId(), mapping.getMatchingValue(),
+                mapping.getSourcePath(), mapping.getPotentialMatchesString());
+    }
+
+    /**
+     * @return the source file mapping info for the configured project
      * @throws IOException
      */
     public SourceFilesInfo loadMappings() throws IOException {
-        Path path = getMappingPath();
+        return loadMappings(getMappingPath());
+    }
+
+    /**
+     * @return the source file mapping info for the provided project
+     * @throws IOException
+     */
+    public static SourceFilesInfo loadMappings(Path mappingPath) throws IOException {
         try (
-            Reader reader = Files.newBufferedReader(path);
+            Reader reader = Files.newBufferedReader(mappingPath);
             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
                     .withHeader(CSV_HEADERS)
