@@ -30,6 +30,7 @@ public class MigrationProject {
     public static final String INDEX_FILENAME = "cdm_index.db";
     public static final String DESTINATIONS_FILENAME = "destinations.csv";
     public static final String SOURCE_MAPPING_FILENAME = "source_files.csv";
+    public static final String ACCESS_MAPPING_FILENAME = "access_files.csv";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -103,6 +104,13 @@ public class MigrationProject {
      */
     public Path getSourceFilesMappingPath() {
         return projectPath.resolve(SOURCE_MAPPING_FILENAME);
+    }
+
+    /**
+     * @return Path of the access files mapping file
+     */
+    public Path getAccessFilesMappingPath() {
+        return projectPath.resolve(ACCESS_MAPPING_FILENAME);
     }
 
     /**

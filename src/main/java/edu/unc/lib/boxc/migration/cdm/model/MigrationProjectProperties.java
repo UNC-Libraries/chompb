@@ -31,6 +31,7 @@ public class MigrationProjectProperties {
     private Instant indexedDate;
     private Instant destinationsGeneratedDate;
     private Instant sourceFilesUpdatedDate;
+    private Instant accessFilesUpdatedDate;
 
     public MigrationProjectProperties() {
     }
@@ -121,5 +122,16 @@ public class MigrationProjectProperties {
 
     public void setSourceFilesUpdatedDate(Instant sourceFilesGeneratedDate) {
         this.sourceFilesUpdatedDate = sourceFilesGeneratedDate;
+    }
+
+    /**
+     * @return timestamp the access files mapping was last updated
+     */
+    public Instant getAccessFilesUpdatedDate() {
+        return accessFilesUpdatedDate;
+    }
+
+    public void setAccessFilesUpdatedDate(Instant accessFilesUpdatedDate) {
+        this.accessFilesUpdatedDate = accessFilesUpdatedDate;
     }
 }

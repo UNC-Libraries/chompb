@@ -73,7 +73,7 @@ public class SourceFileService {
     public static final String[] CSV_HEADERS = new String[] {
             ID_FIELD, EXPORT_MATCHING_FIELD, SOURCE_FILE_FIELD, POTENTIAL_MATCHES_FIELD };
 
-    private MigrationProject project;
+    protected MigrationProject project;
     private CdmIndexService indexService;
 
     public SourceFileService() {
@@ -99,7 +99,7 @@ public class SourceFileService {
             // Write to system.out if doing a dry run, otherwise write to mappings file
             BufferedWriter writer = options.getDryRun() ?
                     new BufferedWriter(new OutputStreamWriter(System.out)) :
-                    Files.newBufferedWriter(project.getSourceFilesMappingPath());
+                    Files.newBufferedWriter(getMappingPath());
             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(CSV_HEADERS));
         ) {
             Path basePath = options.getBasePath();
@@ -158,8 +158,7 @@ public class SourceFileService {
             CdmIndexService.closeDbConnection(conn);
         }
         if (!options.getDryRun()) {
-            project.getProjectProperties().setSourceFilesUpdatedDate(Instant.now());
-            ProjectPropertiesSerialization.write(project);
+            setUpdatedDate(Instant.now());
         }
     }
 
@@ -208,15 +207,15 @@ public class SourceFileService {
         if (options.getDryRun()) {
             return;
         }
-        if (Files.exists(project.getSourceFilesMappingPath())) {
+        if (Files.exists(getMappingPath())) {
             if (options.isForce()) {
                 try {
                     removeMappings();
                 } catch (IOException e) {
-                    throw new MigrationException("Failed to overwrite source mapping file", e);
+                    throw new MigrationException("Failed to overwrite mapping file", e);
                 }
             } else {
-                throw new StateAlreadyExistsException("Cannot create source mapping, a file already exists."
+                throw new StateAlreadyExistsException("Cannot create mapping, a file already exists."
                         + " Use the force flag to overwrite.");
             }
         }
@@ -224,13 +223,21 @@ public class SourceFileService {
 
     public void removeMappings() throws IOException {
         try {
-            Files.delete(project.getSourceFilesMappingPath());
+            Files.delete(getMappingPath());
         } catch (NoSuchFileException e) {
             log.debug("File does not exist, skipping deletion");
         }
         // Clear date property in case it was set
-        project.getProjectProperties().setSourceFilesUpdatedDate(null);
+        setUpdatedDate(null);
+    }
+
+    protected void setUpdatedDate(Instant timestamp) throws IOException {
+        project.getProjectProperties().setSourceFilesUpdatedDate(timestamp);
         ProjectPropertiesSerialization.write(project);
+    }
+
+    protected Path getMappingPath() {
+        return project.getSourceFilesMappingPath();
     }
 
     private void assertProjectStateValid() {
@@ -240,12 +247,11 @@ public class SourceFileService {
     }
 
     /**
-     * @param project
      * @return the source file mapping info for the provided project
      * @throws IOException
      */
-    public static SourceFilesInfo loadMappings(MigrationProject project) throws IOException {
-        Path path = project.getSourceFilesMappingPath();
+    public SourceFilesInfo loadMappings() throws IOException {
+        Path path = getMappingPath();
         try (
             Reader reader = Files.newBufferedReader(path);
             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT

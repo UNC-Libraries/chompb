@@ -126,7 +126,7 @@ public class SourceFileServiceTest {
         SourceFileMappingOptions options = makeDefaultOptions();
         service.generateMapping(options);
 
-        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", null);
         assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
@@ -142,7 +142,7 @@ public class SourceFileServiceTest {
 
         service.generateMapping(options);
 
-        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
         assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
@@ -161,7 +161,7 @@ public class SourceFileServiceTest {
 
         service.generateMapping(options);
 
-        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
         assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", srcPath3);
@@ -179,7 +179,7 @@ public class SourceFileServiceTest {
 
         service.generateMapping(options);
 
-        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
         assertMappingPresent(info, "26", "276_183B_E.tif", srcPath2);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
@@ -199,7 +199,7 @@ public class SourceFileServiceTest {
 
         service.generateMapping(options);
 
-        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
         assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
@@ -218,7 +218,7 @@ public class SourceFileServiceTest {
 
         service.generateMapping(options);
 
-        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", null, srcPath1, srcPath1Dupe);
         assertMappingPresent(info, "26", "276_183B_E.tif", srcPath2);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
@@ -248,7 +248,7 @@ public class SourceFileServiceTest {
 
         service.generateMapping(options);
 
-        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
         assertMappingPresent(info, "26", "276_183B_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
@@ -259,10 +259,10 @@ public class SourceFileServiceTest {
             service.generateMapping(options);
             fail();
         } catch (MigrationException e) {
-            assertTrue(e.getMessage().contains("Cannot create source mapping, a file already exists"));
+            assertTrue(e.getMessage().contains("Cannot create mapping, a file already exists"));
         }
 
-        SourceFilesInfo info2 = SourceFileService.loadMappings(project);
+        SourceFilesInfo info2 = service.loadMappings();
         assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
         assertMappingPresent(info2, "26", "276_183B_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
@@ -271,7 +271,7 @@ public class SourceFileServiceTest {
         options.setForce(true);
         service.generateMapping(options);
 
-        SourceFilesInfo info3 = SourceFileService.loadMappings(project);
+        SourceFilesInfo info3 = service.loadMappings();
         assertMappingPresent(info3, "25", "276_182_E.tif", srcPath1);
         assertMappingPresent(info3, "26", "276_183B_E.tif", srcPath2);
         assertMappingPresent(info3, "27", "276_203_E.tif", null);
@@ -289,7 +289,7 @@ public class SourceFileServiceTest {
 
         service.generateMapping(options);
 
-        SourceFilesInfo info = SourceFileService.loadMappings(project);
+        SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
         assertMappingPresent(info, "26", "276_183B_E.tif", srcPath2);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
