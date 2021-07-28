@@ -25,6 +25,7 @@ import java.nio.file.Path;
 public class MigrationProject {
     public static final String PROJECT_PROPERTIES_FILENAME = "project.json";
     public static final String DESCRIPTION_DIRNAME = "descriptions";
+    public static final String EXPANDED_DESCS_DIRNAME = ".expanded_descs";
     public static final String EXPORT_DIRNAME = "exports";
     public static final String FIELD_NAMES_FILENAME = "cdm_fields.csv";
     public static final String INDEX_FILENAME = "cdm_index.db";
@@ -84,6 +85,14 @@ public class MigrationProject {
     public Path getDescriptionsPath() {
         return projectPath.resolve(DESCRIPTION_DIRNAME);
     }
+
+    /**
+     * @return Path where the expanded descriptions files should be stored
+     */
+    public Path getExpandedDescriptionsPath() {
+        return projectPath.resolve(EXPANDED_DESCS_DIRNAME);
+    }
+
 
     /**
      * @return Path of the index containing exported CDM data
