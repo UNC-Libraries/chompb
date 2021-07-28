@@ -70,7 +70,8 @@ public class DescriptionsServiceTest {
     public void expandCollectionsOneFile() throws Exception {
         Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
                 project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
-        service.expandDescriptions();
+        int extracted = service.expandDescriptions();
+        assertEquals(3, extracted);
 
         assertTrue(Files.exists(project.getExpandedDescriptionsPath()));
         assertModsPopulated("Redoubt C", "25");
@@ -85,7 +86,8 @@ public class DescriptionsServiceTest {
                 project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
         Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods2.xml"),
                 project.getDescriptionsPath().resolve("gilmer_mods2.xml"));
-        service.expandDescriptions();
+        int extracted = service.expandDescriptions();
+        assertEquals(6, extracted);
 
         assertTrue(Files.exists(project.getExpandedDescriptionsPath()));
         assertModsPopulated("Redoubt C", "25");
@@ -182,7 +184,8 @@ public class DescriptionsServiceTest {
         assertExpandedDescriptionFilesCount(2);
 
         // Expect deleted record to regenerate, and no errors from duplicates
-        service.expandDescriptions();
+        int extracted = service.expandDescriptions();
+        assertEquals(3, extracted);
         assertModsPopulated("Redoubt C", "25");
         assertModsPopulated("Plan of Battery McIntosh", "26");
         assertModsPopulated("Fort DeRussy on Red River, Louisiana", "27");

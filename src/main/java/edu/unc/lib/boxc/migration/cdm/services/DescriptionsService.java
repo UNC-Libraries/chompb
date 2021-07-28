@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import static edu.unc.lib.boxc.common.xml.SecureXMLFactory.createXMLInputFactory;
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
 
 import java.io.ByteArrayInputStream;
@@ -79,15 +80,20 @@ public class DescriptionsService {
      * Expand the modsCollection files located in the descriptions folder out into individual MODS records by cdm id
      * @throws IOException
      */
-    public void expandDescriptions() throws IOException {
+    public int expandDescriptions() throws IOException {
+        int recordsExtracted = 0;
         try (DirectoryStream<Path> pathStream = Files.newDirectoryStream(project.getDescriptionsPath(), "*.xml")) {
-            pathStream.forEach(this::expandModsCollectionFile);
+            for (Path path : pathStream) {
+                recordsExtracted += expandModsCollectionFile(path);
+            }
         }
+        return recordsExtracted;
     }
 
-    private void expandModsCollectionFile(Path collFile) {
+    private int expandModsCollectionFile(Path collFile) {
         // Enable so that namespace properties will be added to the split out MODS documents if needed
         xmlOutput.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, Boolean.TRUE);
+        int recordsExtracted = 0;
 
         try (InputStream xmlStream = Files.newInputStream(collFile)) {
             XMLEventReader xmlReader = createXMLInputFactory().createXMLEventReader(xmlStream);
@@ -99,6 +105,7 @@ public class DescriptionsService {
             int openTags = 0;
             String cdmId = null;
 
+            outputLogger.info("Expanding description file {}", collFile);
             log.debug("Beginning expansion of MODS collection file {}", collFile);
             while (xmlReader.hasNext()) {
                 XMLEvent e = xmlReader.nextEvent();
@@ -169,6 +176,8 @@ public class DescriptionsService {
                             // Pass through xmlOutputter to fix indentation issues and add xml declaration
                             Document doc = xmlBuilder.build(new ByteArrayInputStream(modsWriter.toString().getBytes()));
                             xmlOutputter.output(doc, Files.newOutputStream(descPath));
+
+                            recordsExtracted++;
                         } else {
                             log.warn("MODS record does not contain a CDM ID, skipping: {}", modsWriter);
                         }
@@ -178,6 +187,7 @@ public class DescriptionsService {
         } catch (IOException | XMLStreamException | JDOMException e) {
             throw new MigrationException(e.getMessage(), e);
         }
+        return recordsExtracted;
     }
 
     private boolean isCdmIdentifier(StartElement element) {
