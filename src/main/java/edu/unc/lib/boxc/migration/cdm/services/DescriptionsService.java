@@ -26,6 +26,7 @@ import java.io.StringWriter;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 
 /**
  * Service for interacting with MODS description files
@@ -86,6 +88,10 @@ public class DescriptionsService {
             for (Path path : pathStream) {
                 recordsExtracted += expandModsCollectionFile(path);
             }
+        }
+        if (recordsExtracted > 0) {
+            project.getProjectProperties().setDescriptionsExpandedDate(Instant.now());
+            ProjectPropertiesSerialization.write(project);
         }
         return recordsExtracted;
     }

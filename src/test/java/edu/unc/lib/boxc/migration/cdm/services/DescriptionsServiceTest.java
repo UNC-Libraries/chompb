@@ -18,6 +18,8 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -41,6 +43,8 @@ import org.junit.rules.TemporaryFolder;
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 
 /**
  * @author bbpennel
@@ -72,6 +76,7 @@ public class DescriptionsServiceTest {
                 project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
         int extracted = service.expandDescriptions();
         assertEquals(3, extracted);
+        assertDatePresent();
 
         assertTrue(Files.exists(project.getExpandedDescriptionsPath()));
         assertModsPopulated("Redoubt C", "25");
@@ -88,6 +93,7 @@ public class DescriptionsServiceTest {
                 project.getDescriptionsPath().resolve("gilmer_mods2.xml"));
         int extracted = service.expandDescriptions();
         assertEquals(6, extracted);
+        assertDatePresent();
 
         assertTrue(Files.exists(project.getExpandedDescriptionsPath()));
         assertModsPopulated("Redoubt C", "25");
@@ -113,6 +119,7 @@ public class DescriptionsServiceTest {
             assertTrue(e.getMessage().contains("Root element is not a mods:collection"));
         }
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
+        assertDateNotPresent();
     }
 
     @Test
@@ -129,6 +136,7 @@ public class DescriptionsServiceTest {
             assertTrue(e.getMessage().contains("Children of mods:collection must be mods:mods"));
         }
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
+        assertDateNotPresent();
     }
 
     @Test
@@ -147,6 +155,7 @@ public class DescriptionsServiceTest {
             assertTrue("Unexpected message: " + e.getMessage(), e.getMessage().contains("ParseError"));
         }
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
+        assertDateNotPresent();
     }
 
     @Test
@@ -158,6 +167,7 @@ public class DescriptionsServiceTest {
 
         service.expandDescriptions();
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
+        assertDateNotPresent();
     }
 
     @Test
@@ -171,6 +181,7 @@ public class DescriptionsServiceTest {
             assertTrue("Unexpected message: " + e.getMessage(), e.getMessage().contains("ParseError"));
         }
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
+        assertDateNotPresent();
     }
 
     @Test
@@ -190,6 +201,7 @@ public class DescriptionsServiceTest {
         assertModsPopulated("Plan of Battery McIntosh", "26");
         assertModsPopulated("Fort DeRussy on Red River, Louisiana", "27");
         assertExpandedDescriptionFilesCount(3);
+        assertDatePresent();
     }
 
     private void assertModsPopulated(String expectedTitle, String expectedId) throws Exception {
@@ -218,5 +230,15 @@ public class DescriptionsServiceTest {
             }
         }
         assertEquals("Unexpected number of expanded MODS files", expected, fileCount);
+    }
+
+    private void assertDatePresent() throws Exception {
+        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
+        assertNotNull(props.getDescriptionsExpandedDate());
+    }
+
+    private void assertDateNotPresent() throws Exception {
+        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
+        assertNull(props.getDescriptionsExpandedDate());
     }
 }
