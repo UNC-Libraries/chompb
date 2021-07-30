@@ -85,7 +85,7 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "descriptions", "expand" };
         executeExpectFailure(args);
-        assertOutputContains("ParseError");
+        assertOutputContains("Unexpected EOF");
 
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
     }

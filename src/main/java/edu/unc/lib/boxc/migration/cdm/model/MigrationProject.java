@@ -32,6 +32,7 @@ public class MigrationProject {
     public static final String DESTINATIONS_FILENAME = "destinations.csv";
     public static final String SOURCE_MAPPING_FILENAME = "source_files.csv";
     public static final String ACCESS_MAPPING_FILENAME = "access_files.csv";
+    public static final String SIPS_DIRNAME = "sips";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -93,7 +94,6 @@ public class MigrationProject {
         return projectPath.resolve(EXPANDED_DESCS_DIRNAME);
     }
 
-
     /**
      * @return Path of the index containing exported CDM data
      */
@@ -120,6 +120,13 @@ public class MigrationProject {
      */
     public Path getAccessFilesMappingPath() {
         return projectPath.resolve(ACCESS_MAPPING_FILENAME);
+    }
+
+    /**
+     * @return Path of the SIPS directory
+     */
+    public Path getSipsPath() {
+        return projectPath.resolve(SIPS_DIRNAME);
     }
 
     /**

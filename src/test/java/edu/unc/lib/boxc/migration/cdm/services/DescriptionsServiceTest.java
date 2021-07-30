@@ -152,7 +152,7 @@ public class DescriptionsServiceTest {
             service.expandDescriptions();
             fail();
         } catch (MigrationException e) {
-            assertTrue("Unexpected message: " + e.getMessage(), e.getMessage().contains("ParseError"));
+            assertTrue("Unexpected message: " + e.getMessage(), e.getMessage().contains("Unexpected close tag"));
         }
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
         assertDateNotPresent();
@@ -178,7 +178,7 @@ public class DescriptionsServiceTest {
             service.expandDescriptions();
             fail();
         } catch (MigrationException e) {
-            assertTrue("Unexpected message: " + e.getMessage(), e.getMessage().contains("ParseError"));
+            assertTrue("Unexpected message: " + e.getMessage(), e.getMessage().contains("Unexpected EOF"));
         }
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
         assertDateNotPresent();

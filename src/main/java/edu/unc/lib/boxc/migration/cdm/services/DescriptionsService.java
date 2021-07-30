@@ -66,7 +66,7 @@ public class DescriptionsService {
     private static final QName COLLECTION_NAME = new QName(MODS_V3_NS.getURI(), "modsCollection");
     private static final QName MODS_NAME = new QName(MODS_V3_NS.getURI(), "mods");
 
-    private static final String CDM_NUMBER_LABEL = "CONTENTdm number";
+    public static final String CDM_NUMBER_LABEL = "CONTENTdm number";
     private static final String LOCAL_TYPE_VALUE = "local";
 
 
