@@ -29,6 +29,8 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -57,6 +59,7 @@ import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.model.api.SoftwareAgentConstants.SoftwareAgent;
 import edu.unc.lib.boxc.model.api.ids.PID;
+import edu.unc.lib.boxc.model.api.ids.PIDConstants;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
@@ -73,6 +76,12 @@ import edu.unc.lib.boxc.operations.impl.events.PremisLoggerFactoryImpl;
  * @author bbpennel
  */
 public class SipServiceHelper {
+    private final static Pattern DEPOSIT_ID_PATTERN = Pattern.compile(
+            ".*Generated SIP for deposit with ID ([0-9a-f\\-]+).*", Pattern.DOTALL);
+    private final static Pattern SIP_PATH_PATTERN = Pattern.compile(".*SIP path: ([^\\s]+).*", Pattern.DOTALL);
+    private final static Pattern NEW_COLL_PATTERN =
+            Pattern.compile(".*Added new collection ([^\\s]+) with box-c id ([^\\s]+).*", Pattern.DOTALL);
+
     private Path sourceFilesBasePath;
     private Path accessFilesBasePath;
     private MigrationProject project;
@@ -265,6 +274,28 @@ public class SipServiceHelper {
 
     public Model getSipModel(SipService.MigrationSip sip) throws IOException {
         return RDFModelUtil.createModel(Files.newInputStream(sip.getModelPath()), "N3");
+    }
+
+    public MigrationSip extractSipFromOutput(String output) {
+        MigrationSip sip = new MigrationSip();
+        Matcher idMatcher = DEPOSIT_ID_PATTERN.matcher(output);
+        assertTrue("No id found, output was: " + output, idMatcher.matches());
+        String depositId = idMatcher.group(1);
+
+        Matcher pathMatcher = SIP_PATH_PATTERN.matcher(output);
+        assertTrue(pathMatcher.matches());
+        Path sipPath = Paths.get(pathMatcher.group(1));
+        assertTrue(Files.exists(sipPath));
+
+        Matcher collMatcher = NEW_COLL_PATTERN.matcher(output);
+        if (collMatcher.matches()) {
+            sip.setNewCollectionId(collMatcher.group(1));
+            sip.setNewCollectionPid(PIDs.get(collMatcher.group(2)));
+        }
+
+        sip.setDepositPid(PIDs.get(PIDConstants.DEPOSITS_QUALIFIER, depositId));
+        sip.setSipPath(sipPath);
+        return sip;
     }
 
     public Path getSourceFilesBasePath() {

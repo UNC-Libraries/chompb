@@ -21,10 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -39,10 +36,8 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SipService.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.model.api.ids.PIDConstants;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
-import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 
 /**
  * @author bbpennel
@@ -50,11 +45,6 @@ import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 public class SipsCommandIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "my_coll";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
-    private final static Pattern DEPOSIT_ID_PATTERN = Pattern.compile(
-            ".*Generated SIP for deposit with ID ([0-9a-f\\-]+).*", Pattern.DOTALL);
-    private final static Pattern SIP_PATH_PATTERN = Pattern.compile(".*SIP path: ([^\\s]+).*", Pattern.DOTALL);
-    private final static Pattern NEW_COLL_PATTERN =
-            Pattern.compile(".*Added new collection ([^\\s]+) with box-c id ([^\\s]+).*", Pattern.DOTALL);
 
     private MigrationProject project;
     private SipServiceHelper testHelper;
@@ -194,24 +184,6 @@ public class SipsCommandIT extends AbstractCommandIT {
     }
 
     private MigrationSip extractSipFromOutput() {
-        MigrationSip sip = new MigrationSip();
-        Matcher idMatcher = DEPOSIT_ID_PATTERN.matcher(output);
-        assertTrue("No id found, output was: " + output, idMatcher.matches());
-        String depositId = idMatcher.group(1);
-
-        Matcher pathMatcher = SIP_PATH_PATTERN.matcher(output);
-        assertTrue(pathMatcher.matches());
-        Path sipPath = Paths.get(pathMatcher.group(1));
-        assertTrue(Files.exists(sipPath));
-
-        Matcher collMatcher = NEW_COLL_PATTERN.matcher(output);
-        if (collMatcher.matches()) {
-            sip.setNewCollectionId(collMatcher.group(1));
-            sip.setNewCollectionPid(PIDs.get(collMatcher.group(2)));
-        }
-
-        sip.setDepositPid(PIDs.get(PIDConstants.DEPOSITS_QUALIFIER, depositId));
-        sip.setSipPath(sipPath);
-        return sip;
+        return testHelper.extractSipFromOutput(output);
     }
 }

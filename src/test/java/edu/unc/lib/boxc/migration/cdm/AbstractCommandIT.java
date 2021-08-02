@@ -78,10 +78,9 @@ public class AbstractCommandIT {
         output = out.toString();
         if (result != 0) {
             System.setOut(originalOut);
-            log.error(output);
             // Can't see the output from the command without this
             System.out.println(output);
-            fail("Expected command to result in success: " + String.join(" ", args));
+            fail("Expected command to result in success: " + String.join(" ", args) + "\nWith output:\n" + output);
         }
     }
 
