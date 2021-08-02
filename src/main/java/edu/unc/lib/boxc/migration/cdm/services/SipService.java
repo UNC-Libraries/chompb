@@ -175,12 +175,8 @@ public class SipService {
                 }
 
                 // Generate migration PREMIS event
-                Path premisPath = destEntry.depositDirManager.getPremisPath(workPid);
-                PremisLogger premisLogger = premisLoggerFactory.createPremisLogger(workPid, premisPath.toFile());
-                premisLogger.buildEvent(Premis.Ingestion)
-                        .addEventDetail("Object migrated as a part of the CONTENTdm to Box-c 5 migration")
-                        .addSoftwareAgent(AgentPids.forSoftware(SoftwareAgent.migrationUtil))
-                        .writeAndClose();
+                addPremisEvent(destEntry, workPid, options);
+                addPremisEvent(destEntry, fileObjPid, options);
 
                 // Add work to deposit or new collection
                 destBag.add(workBag);
@@ -202,6 +198,16 @@ public class SipService {
             CdmIndexService.closeDbConnection(conn);
             destEntries.stream().forEach(DestinationSipEntry::close);
         }
+    }
+
+    private void addPremisEvent(DestinationSipEntry destEntry, PID pid, SipGenerationOptions options) {
+        Path premisPath = destEntry.depositDirManager.getPremisPath(pid);
+        PremisLogger premisLogger = premisLoggerFactory.createPremisLogger(pid, premisPath.toFile());
+        premisLogger.buildEvent(Premis.Ingestion)
+                .addEventDetail("Object migrated as a part of the CONTENTdm to Box-c 5 migration")
+                .addSoftwareAgent(AgentPids.forSoftware(SoftwareAgent.migrationUtil))
+                .addAuthorizingAgent(AgentPids.forPerson(options.getUsername()))
+                .writeAndClose();
     }
 
     private void exportDepositModel(DestinationSipEntry entry) throws IOException {

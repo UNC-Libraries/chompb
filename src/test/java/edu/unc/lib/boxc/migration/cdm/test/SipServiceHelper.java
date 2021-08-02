@@ -161,6 +161,8 @@ public class SipServiceHelper {
 
         PID workPid = PIDs.get(objResc.getURI());
         assertMigrationEventPresent(dirManager, workPid);
+        PID fileObjPid = PIDs.get(fileObjResc.getURI());
+        assertMigrationEventPresent(dirManager, fileObjPid);
 
         assertModsPresentWithCdmId(dirManager, workPid, cdmId);
     }

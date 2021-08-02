@@ -36,6 +36,7 @@ import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,6 +65,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
     @Before
     public void setup() throws Exception {
+        System.setProperty("user.name", "someuser");
         filesBasePath = tmpFolder.newFolder().toPath();
         cdmBaseUrl = "http://localhost:" + wireMockRule.port();
         String validRespBody = IOUtils.toString(this.getClass().getResourceAsStream("/cdm_fields_resp.json"),
@@ -82,6 +84,11 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(exportBody)));
+    }
+
+    @After
+    public void after() throws Exception {
+        System.clearProperty("user.name");
     }
 
     @Test

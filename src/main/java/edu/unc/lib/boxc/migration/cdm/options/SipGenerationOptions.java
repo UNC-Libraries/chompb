@@ -29,11 +29,25 @@ public class SipGenerationOptions {
                     "This includes missing source files and MODS descriptions."})
     private boolean force;
 
+    @Option(names = { "-u", "--user"},
+            description = {"Username of user performing the SIP, which will be recorded in PREMIS.",
+                    "Defaults to current user: ${DEFAULT-VALUE}"},
+            defaultValue = "${sys:user.name}")
+    private String username;
+
     public boolean isForce() {
         return force;
     }
 
     public void setForce(boolean force) {
         this.force = force;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

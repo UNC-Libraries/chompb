@@ -49,6 +49,7 @@ import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
  */
 public class SipServiceTest {
     private static final String PROJECT_NAME = "proj";
+    private static final String USERNAME = "migr_user";
     private static final String DEST_UUID = "bfe93126-849a-43a5-b9d9-391e18ffacc6";
     private static final String DEST_UUID2 = "8ae56bbc-400e-496d-af4b-3c585e20dba1";
 
@@ -62,7 +63,7 @@ public class SipServiceTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME);
 
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         service = testHelper.createSipsService();
@@ -71,7 +72,7 @@ public class SipServiceTest {
     @Test
     public void generateSipsDataNotIndexed() throws Exception {
         try {
-            service.generateSips(new SipGenerationOptions());
+            service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue("Unexpected message: " + e.getMessage(),
@@ -86,7 +87,7 @@ public class SipServiceTest {
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
         try {
-            service.generateSips(new SipGenerationOptions());
+            service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue("Unexpected message: " + e.getMessage(),
@@ -101,7 +102,7 @@ public class SipServiceTest {
         testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
 
         try {
-            service.generateSips(new SipGenerationOptions());
+            service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue("Unexpected message: " + e.getMessage(),
@@ -116,7 +117,7 @@ public class SipServiceTest {
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
         try {
-            service.generateSips(new SipGenerationOptions());
+            service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue("Unexpected message: " + e.getMessage(),
@@ -131,7 +132,7 @@ public class SipServiceTest {
         testHelper.populateDescriptions("gilmer_mods1.xml");
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
 
-        List<MigrationSip> sips = service.generateSips(new SipGenerationOptions());
+        List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
         MigrationSip sip = sips.get(0);
 
@@ -160,7 +161,7 @@ public class SipServiceTest {
         testHelper.populateDescriptions("gilmer_mods1.xml");
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
 
-        List<MigrationSip> sips = service.generateSips(new SipGenerationOptions());
+        List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
         MigrationSip sip = sips.get(0);
 
@@ -196,7 +197,7 @@ public class SipServiceTest {
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
         List<Path> accessLocs = testHelper.populateAccessFiles("276_182_E.tif", "276_203_E.tif");
 
-        List<MigrationSip> sips = service.generateSips(new SipGenerationOptions());
+        List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
         MigrationSip sip = sips.get(0);
 
@@ -227,7 +228,7 @@ public class SipServiceTest {
         testHelper.populateSourceFiles("276_182_E.tif", "276_203_E.tif");
 
         try {
-            service.generateSips(new SipGenerationOptions());
+            service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue("Unexpected message: " + e.getMessage(),
@@ -243,8 +244,7 @@ public class SipServiceTest {
         // Only populating 2 out of 3 source files expected from the export
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_203_E.tif");
 
-        SipGenerationOptions options = new SipGenerationOptions();
-        options.setForce(true);
+        SipGenerationOptions options = makeOptions(true);
 
         List<MigrationSip> sips = service.generateSips(options);
         assertEquals(1, sips.size());
@@ -276,7 +276,7 @@ public class SipServiceTest {
         testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
 
         try {
-            service.generateSips(new SipGenerationOptions());
+            service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue("Unexpected message: " + e.getMessage(),
@@ -293,8 +293,7 @@ public class SipServiceTest {
         Files.delete(testHelper.getDescriptionsService().getExpandedDescriptionFilePath("27"));
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
 
-        SipGenerationOptions options = new SipGenerationOptions();
-        options.setForce(true);
+        SipGenerationOptions options = makeOptions(true);
 
         List<MigrationSip> sips = service.generateSips(options);
         assertEquals(1, sips.size());
@@ -328,7 +327,7 @@ public class SipServiceTest {
         testHelper.populateDescriptions("gilmer_mods1.xml");
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
 
-        List<MigrationSip> sips = service.generateSips(new SipGenerationOptions());
+        List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(2, sips.size());
         MigrationSip sip1 = sips.get(0);
 
@@ -359,5 +358,16 @@ public class SipServiceTest {
 
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren2, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager2, model2, stagingLocs.get(1), null, "26");
+    }
+
+    private  SipGenerationOptions makeOptions() {
+        return makeOptions(false);
+    }
+
+    private  SipGenerationOptions makeOptions(boolean force) {
+        SipGenerationOptions options = new SipGenerationOptions();
+        options.setUsername(USERNAME);
+        options.setForce(force);
+        return options;
     }
 }
