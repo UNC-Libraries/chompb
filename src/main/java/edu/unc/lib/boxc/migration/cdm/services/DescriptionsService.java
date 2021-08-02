@@ -26,6 +26,10 @@ import java.io.StringWriter;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Instant;
 
 import javax.xml.namespace.QName;
@@ -39,6 +43,7 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
 import org.jdom2.Document;
+import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
@@ -47,7 +52,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 
@@ -68,6 +75,8 @@ public class DescriptionsService {
 
     public static final String CDM_NUMBER_LABEL = "CONTENTdm number";
     private static final String LOCAL_TYPE_VALUE = "local";
+
+    public static final String GENERATED_MODS_FILENAME = "generated_mods.xml";
 
 
     private MigrationProject project;
@@ -219,6 +228,59 @@ public class DescriptionsService {
         int cdmIdNum = Integer.parseInt(cdmId);
         String subdir = Integer.toString(cdmIdNum / EXPANDED_FILES_PER_DIR);
         return project.getExpandedDescriptionsPath().resolve(subdir).resolve(cdmId + ".xml");
+    }
+
+    /**
+     * Generates a modsCollection document with dummy records for all objects in this project
+     * @return
+     */
+    public int generateDocuments(boolean force) {
+        CdmIndexService indexService = new CdmIndexService();
+        indexService.setProject(project);
+
+        int cnt = 0;
+        Connection conn = null;
+        try {
+            Path path = project.getDescriptionsPath().resolve(GENERATED_MODS_FILENAME);
+            if (Files.exists(path)) {
+                if (force) {
+                    Files.delete(path);
+                } else {
+                    throw new InvalidProjectStateException(GENERATED_MODS_FILENAME + " already exists, "
+                            + "use the force flag to overwrite.");
+                }
+            }
+
+            conn = indexService.openDbConnection();
+            Document doc = new Document();
+            Element collEl = new Element("modsCollection", MODS_V3_NS);
+            doc.setRootElement(collEl);
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME);
+            while (rs.next()) {
+                String cdmId = rs.getString(1);
+                collEl.addContent(new Element("mods", MODS_V3_NS)
+                        .addContent(new Element("identifier", MODS_V3_NS)
+                                .setAttribute("displayLabel", CDM_NUMBER_LABEL)
+                                .setAttribute("type", LOCAL_TYPE_VALUE)
+                                .setText(cdmId)));
+                cnt++;
+            }
+
+            xmlOutputter.output(doc, Files.newOutputStream(path));
+        } catch (SQLException | IOException e) {
+            throw new MigrationException("Failed to generate SIP", e);
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+        return cnt;
+    }
+
+    /**
+     * @return Get the path to the file where generated MODS records are written
+     */
+    public Path getGeneratedModsPath() {
+        return project.getDescriptionsPath().resolve(GENERATED_MODS_FILENAME);
     }
 
     /**

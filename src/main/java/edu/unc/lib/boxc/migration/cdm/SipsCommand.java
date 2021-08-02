@@ -76,7 +76,7 @@ public class SipsCommand {
                 outputLogger.info("    * SIP path: {}", sip.getSipPath());
                 if (sip.getNewCollectionPid() != null) {
                     outputLogger.info("    * Added new collection {} with box-c id {}",
-                            sip.getNewCollectionId(), sip.getNewCollectionPid());
+                            sip.getNewCollectionId(), sip.getNewCollectionPid().getId());
                 }
             }
             outputLogger.info("Completed operation for project {} in {}s", project.getProjectName(),
