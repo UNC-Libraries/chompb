@@ -39,7 +39,8 @@ import picocli.CommandLine.Option;
         DestinationsCommand.class,
         SourceFilesCommand.class,
         AccessFilesCommand.class,
-        DescriptionsCommand.class
+        DescriptionsCommand.class,
+        SipsCommand.class
     })
 public class CLIMain implements Callable<Integer> {
     @Option(names = { "-w", "--work-dir" },

@@ -15,6 +15,7 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
 import static edu.unc.lib.boxc.model.api.rdf.CdrDeposit.stagingLocation;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -54,7 +55,6 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
-import edu.unc.lib.boxc.migration.cdm.util.CLIConstants;
 import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.SoftwareAgentConstants.SoftwareAgent;
 import edu.unc.lib.boxc.model.api.ids.PID;
@@ -122,7 +122,7 @@ public class SipService {
                 if (Files.notExists(expDescPath)) {
                     String message = "Cannot transform object " + cdmId + ", it does not have a MODS description";
                     if (options.isForce()) {
-                        CLIConstants.outputLogger.info(message);
+                        outputLogger.info(message);
                         continue;
                     } else {
                         throw new InvalidProjectStateException(message);
@@ -132,7 +132,7 @@ public class SipService {
                 if (sourceMapping == null || sourceMapping.getSourcePath() == null) {
                     String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
                     if (options.isForce()) {
-                        CLIConstants.outputLogger.info(message);
+                        outputLogger.info(message);
                         continue;
                     } else {
                         throw new InvalidProjectStateException(message);
@@ -339,13 +339,18 @@ public class SipService {
      */
     public static class MigrationSip {
         private PID depositPid;
+        private String newCollectionId;
         private PID newCollectionPid;
         private Path sipPath;
+
+        public MigrationSip() {
+        }
 
         public MigrationSip(DestinationSipEntry entry) {
             this.depositPid = entry.getDepositPid();
             this.sipPath = entry.depositDirManager.getDepositDir();
             this.newCollectionPid = entry.getNewCollectionPid();
+            this.newCollectionId = entry.newCollectionId;
         }
 
         /**
@@ -368,6 +373,17 @@ public class SipService {
 
         public void setNewCollectionPid(PID newCollectionPid) {
             this.newCollectionPid = newCollectionPid;
+        }
+
+        /**
+         * @return User provided identifier for the new collection
+         */
+        public String getNewCollectionId() {
+            return newCollectionId;
+        }
+
+        public void setNewCollectionId(String newCollectionId) {
+            this.newCollectionId = newCollectionId;
         }
 
         /**
