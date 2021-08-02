@@ -21,20 +21,24 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
+import org.jdom2.Document;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
@@ -43,6 +47,7 @@ import edu.unc.lib.boxc.migration.cdm.services.SipService.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
+import edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil;
 
 /**
  * @author bbpennel
@@ -178,6 +183,7 @@ public class SipServiceTest {
         Resource collResc = depBagChildren.iterator().next().asResource();
         assertTrue(collResc.hasProperty(RDF.type, Cdr.Collection));
         assertTrue(collResc.hasProperty(CdrDeposit.label, "001234"));
+        testHelper.assertMigrationEventPresent(dirManager, sip.getNewCollectionPid());
         Bag collBag = model.getBag(collResc);
         List<RDFNode> collChildren = collBag.iterator().toList();
 
@@ -187,6 +193,50 @@ public class SipServiceTest {
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(collChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        assertEquals(3, collChildren.size());
+    }
+
+    @Test
+    public void generateSipsNewCollectionDestinationWithDescription() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        String newCollId = "00123a";
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        // Add a mods file at the expected path
+        Path newCollDescPath = project.getNewCollectionDescriptionsPath().resolve(newCollId + ".xml");
+        String newCollDesc = "<mods:mods xmlns:mods=\"http://www.loc.gov/mods/v3\"><mods:titleInfo>"
+                + "<mods:title>New Collection</mods:title></mods:titleInfo></mods:mods>";
+        FileUtils.write(newCollDescPath.toFile(), newCollDesc, StandardCharsets.UTF_8);
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(1, depBagChildren.size());
+
+        Resource collResc = depBagChildren.iterator().next().asResource();
+        assertTrue(collResc.hasProperty(RDF.type, Cdr.Collection));
+        assertTrue(collResc.hasProperty(CdrDeposit.label, newCollId));
+        testHelper.assertMigrationEventPresent(dirManager, sip.getNewCollectionPid());
+        // Check that desc file was copied over
+        Path path = dirManager.getModsPath(sip.getNewCollectionPid());
+        Document doc = SecureXMLFactory.createSAXBuilder().build(path.toFile());
+        String title = doc.getRootElement().getChild("titleInfo", JDOMNamespaceUtil.MODS_V3_NS)
+                .getChildText("title", JDOMNamespaceUtil.MODS_V3_NS);
+        assertEquals("New Collection", title);
+
+        Bag collBag = model.getBag(collResc);
+        List<RDFNode> collChildren = collBag.iterator().toList();
+        assertEquals(3, collChildren.size());
     }
 
     @Test

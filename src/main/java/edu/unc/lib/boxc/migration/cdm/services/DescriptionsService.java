@@ -221,6 +221,14 @@ public class DescriptionsService {
         return project.getExpandedDescriptionsPath().resolve(subdir).resolve(cdmId + ".xml");
     }
 
+    /**
+     * @param collId user supplied id for the new collection
+     * @return Path for individual MODS file for a new destination collection
+     */
+    public Path getNewCollectionDescriptionPath(String collId) {
+        return project.getNewCollectionDescriptionsPath().resolve(collId + ".xml");
+    }
+
     public void setProject(MigrationProject project) {
         this.project = project;
     }

@@ -45,7 +45,8 @@ public class DescriptionsCommand {
     private DescriptionsService descService;
 
     @Command(name = "expand",
-            description = "Expand user provided modsCollection files into separate ")
+            description = { "Expand user provided modsCollection files into separate XML files.",
+                "The XML files produced will be named based on the CDM ID value found in each document."})
     public int expand() throws Exception {
         long start = System.nanoTime();
 

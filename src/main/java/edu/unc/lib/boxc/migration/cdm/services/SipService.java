@@ -96,7 +96,7 @@ public class SipService {
      */
     public List<MigrationSip> generateSips(SipGenerationOptions options) {
         validateProjectState();
-        initializeDestinations();
+        initializeDestinations(options);
 
         Connection conn = null;
         try {
@@ -243,7 +243,7 @@ public class SipService {
         }
     }
 
-    private void initializeDestinations() {
+    private void initializeDestinations(SipGenerationOptions options) {
         try {
             DestinationsInfo destInfo = DestinationsService.loadMappings(project);
 
@@ -259,6 +259,19 @@ public class SipService {
                             depositPid.getId(), mapping.getDestination());
                     DestinationSipEntry entry = new DestinationSipEntry(depositPid, mapping);
                     entry.initializeDepositModel();
+                    // Add description for new collection if one was provided
+                    if (entry.getNewCollectionPid() != null) {
+                        Path descPath = descriptionsService.getNewCollectionDescriptionPath(k);
+                        if (Files.exists(descPath)) {
+                            Path sipDescPath = entry.depositDirManager.getModsPath(entry.getNewCollectionPid());
+                            try {
+                                Files.copy(descPath, sipDescPath);
+                            } catch (IOException e) {
+                                throw new MigrationException("Failed to copy description", e);
+                            }
+                        }
+                        addPremisEvent(entry, entry.getNewCollectionPid(), options);
+                    }
                     destEntries.add(entry);
                     return entry;
                 });

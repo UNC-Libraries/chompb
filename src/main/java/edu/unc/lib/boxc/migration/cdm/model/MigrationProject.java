@@ -23,8 +23,9 @@ import java.nio.file.Path;
  * @author bbpennel
  */
 public class MigrationProject {
-    public static final String PROJECT_PROPERTIES_FILENAME = "project.json";
+    public static final String PROJECT_PROPERTIES_FILENAME = ".project.json";
     public static final String DESCRIPTION_DIRNAME = "descriptions";
+    public static final String COLLS_DESCRIPTION_DIRNAME = "newCollectionDescriptions";
     public static final String EXPANDED_DESCS_DIRNAME = ".expanded_descs";
     public static final String EXPORT_DIRNAME = "exports";
     public static final String FIELD_NAMES_FILENAME = "cdm_fields.csv";
@@ -81,10 +82,17 @@ public class MigrationProject {
     }
 
     /**
-     * @return Path of the MODS descriptions directory
+     * @return Path of the MODS descriptions directory. Files added to this path should be modsCollections
      */
     public Path getDescriptionsPath() {
         return projectPath.resolve(DESCRIPTION_DIRNAME);
+    }
+
+    /**
+     * @return Path of the directory where MODS descriptions for new repository collections should be added
+     */
+    public Path getNewCollectionDescriptionsPath() {
+        return projectPath.resolve(COLLS_DESCRIPTION_DIRNAME);
     }
 
     /**
