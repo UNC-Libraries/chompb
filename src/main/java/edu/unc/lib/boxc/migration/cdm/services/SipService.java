@@ -260,6 +260,8 @@ public class SipService {
     private void initializeDestinations(SipGenerationOptions options) {
         try {
             DestinationsInfo destInfo = DestinationsService.loadMappings(project);
+            // Cleanup previously generated SIPs
+            FileUtils.deleteDirectory(project.getSipsPath().toFile());
 
             cdmId2DestMap = new HashMap<>();
             Map<String, DestinationSipEntry> destMap = new HashMap<>();
