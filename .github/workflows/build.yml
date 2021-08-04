@@ -38,7 +38,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build boxc with Maven
-      run: mvn -B -U clean install -DskipTests -am -pl persistence
+      run: mvn -B -U clean install -DskipTests -am -pl deposit-utils,operations
       working-directory: boxc
     - name: Build cdm2bxc
       run: mvn -B -U clean install
