@@ -157,6 +157,8 @@ public class SipServiceTest {
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+
+        assertPersistedSipInfoMatches(sip);
     }
 
     @Test
@@ -194,6 +196,8 @@ public class SipServiceTest {
         Resource workResc3 = testHelper.getResourceByCreateTime(collChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         assertEquals(3, collChildren.size());
+
+        assertPersistedSipInfoMatches(sip);
     }
 
     @Test
@@ -237,6 +241,8 @@ public class SipServiceTest {
         Bag collBag = model.getBag(collResc);
         List<RDFNode> collChildren = collBag.iterator().toList();
         assertEquals(3, collChildren.size());
+
+        assertPersistedSipInfoMatches(sip);
     }
 
     @Test
@@ -267,6 +273,8 @@ public class SipServiceTest {
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), accessLocs.get(1), "27");
+
+        assertPersistedSipInfoMatches(sip);
     }
 
     @Test
@@ -314,6 +322,8 @@ public class SipServiceTest {
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(1), null, "27");
+
+        assertPersistedSipInfoMatches(sip);
     }
 
     @Test
@@ -363,6 +373,8 @@ public class SipServiceTest {
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+
+        assertPersistedSipInfoMatches(sip);
     }
 
     @Test
@@ -395,6 +407,8 @@ public class SipServiceTest {
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
 
+        assertPersistedSipInfoMatches(sip1);
+
         MigrationSip sip2 = sips.get(1);
 
         assertTrue(Files.exists(sip2.getSipPath()));
@@ -408,6 +422,11 @@ public class SipServiceTest {
 
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren2, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager2, model2, stagingLocs.get(1), null, "26");
+
+        assertPersistedSipInfoMatches(sip2);
+
+        List<MigrationSip> listedSips = service.listSips();
+        assertEquals(2, listedSips.size());
     }
 
     private  SipGenerationOptions makeOptions() {
@@ -419,5 +438,13 @@ public class SipServiceTest {
         options.setUsername(USERNAME);
         options.setForce(force);
         return options;
+    }
+
+    private void assertPersistedSipInfoMatches(MigrationSip expectedSip) {
+        MigrationSip sipInfo = service.loadSipInfo(expectedSip.getSipPath());
+        assertEquals(expectedSip.getDepositPid(), sipInfo.getDepositPid());
+        assertEquals(expectedSip.getDestinationPid(), sipInfo.getDestinationPid());
+        assertEquals(expectedSip.getNewCollectionLabel(), sipInfo.getNewCollectionLabel());
+        assertEquals(expectedSip.getNewCollectionPid(), sipInfo.getNewCollectionPid());
     }
 }

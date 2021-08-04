@@ -22,6 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -42,6 +43,11 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelManager;
@@ -58,11 +64,13 @@ import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.SoftwareAgentConstants.SoftwareAgent;
 import edu.unc.lib.boxc.model.api.ids.PID;
+import edu.unc.lib.boxc.model.api.ids.PIDConstants;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import edu.unc.lib.boxc.model.api.rdf.Premis;
 import edu.unc.lib.boxc.model.fcrepo.ids.AgentPids;
+import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 import edu.unc.lib.boxc.operations.api.events.PremisLogger;
 import edu.unc.lib.boxc.operations.api.events.PremisLoggerFactory;
 
@@ -75,6 +83,9 @@ public class SipService {
     private static final Logger log = getLogger(SipService.class);
     public static final String SIP_TDB_PATH = "tdb_model";
     public static final String MODEL_EXPORT_NAME = "model.n3";
+    public static final String SIP_INFO_NAME = "sip_info.json";
+    private static final ObjectReader SIP_INFO_READER = new ObjectMapper().readerFor(MigrationSip.class);
+    private static final ObjectWriter SIP_INFO_WRITER = new ObjectMapper().writerFor(MigrationSip.class);
 
     private CdmIndexService indexService;
     private SourceFileService sourceFileService;
@@ -187,7 +198,10 @@ public class SipService {
             for (DestinationSipEntry entry : destEntries) {
                 entry.commitModel();
                 exportDepositModel(entry);
-                sips.add(new MigrationSip(entry));
+                MigrationSip sip = new MigrationSip(entry);
+                sips.add(sip);
+                // Serialize the SIP info out to file
+                SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
                 // Cleanup the TDB directory not that it has been exported
                 FileUtils.deleteDirectory(entry.getTdbPath().toFile());
             }
@@ -287,6 +301,7 @@ public class SipService {
         private PID depositPid;
         private PID newCollectionPid;
         private String newCollectionId;
+        private PID destinationPid;
         private DepositModelManager depositModelManager;
         private DepositDirectoryManager depositDirManager;
         private Model writeModel;
@@ -300,6 +315,7 @@ public class SipService {
                 log.info("Generated new collection {} from id {}", newCollectionPid.getId(), mapping.getCollectionId());
             }
             this.depositModelManager = new DepositModelManager(getTdbPath());
+            this.destinationPid = PIDs.get(mapping.getDestination());
         }
 
         public void initializeDepositModel() {
@@ -350,6 +366,14 @@ public class SipService {
         public PID getNewCollectionPid() {
             return newCollectionPid;
         }
+
+        public String getNewCollectionId() {
+            return newCollectionId;
+        }
+
+        public PID getDestinationPid() {
+            return destinationPid;
+        }
     }
 
     /**
@@ -358,9 +382,10 @@ public class SipService {
      */
     public static class MigrationSip {
         private PID depositPid;
-        private String newCollectionId;
+        private String newCollectionLabel;
         private PID newCollectionPid;
         private Path sipPath;
+        private PID destinationPid;
 
         public MigrationSip() {
         }
@@ -369,12 +394,14 @@ public class SipService {
             this.depositPid = entry.getDepositPid();
             this.sipPath = entry.depositDirManager.getDepositDir();
             this.newCollectionPid = entry.getNewCollectionPid();
-            this.newCollectionId = entry.newCollectionId;
+            this.newCollectionLabel = entry.getNewCollectionId();
+            this.destinationPid = entry.getDestinationPid();
         }
 
         /**
          * @return PID of the deposit contained within this SIP
          */
+        @JsonIgnore
         public PID getDepositPid() {
             return depositPid;
         }
@@ -383,9 +410,18 @@ public class SipService {
             this.depositPid = depositPid;
         }
 
+        public void setDepositId(String depositId) {
+            this.depositPid = PIDs.get(PIDConstants.DEPOSITS_QUALIFIER, depositId);
+        }
+
+        public String getDepositId() {
+            return depositPid.getId();
+        }
+
         /**
          * @return PID of the new collection being created by this SIP, if one was created
          */
+        @JsonIgnore
         public PID getNewCollectionPid() {
             return newCollectionPid;
         }
@@ -394,15 +430,25 @@ public class SipService {
             this.newCollectionPid = newCollectionPid;
         }
 
-        /**
-         * @return User provided identifier for the new collection
-         */
         public String getNewCollectionId() {
-            return newCollectionId;
+            return newCollectionPid == null ? null : newCollectionPid.getId();
         }
 
         public void setNewCollectionId(String newCollectionId) {
-            this.newCollectionId = newCollectionId;
+            if (newCollectionId != null) {
+                this.newCollectionPid = PIDs.get(newCollectionId);
+            }
+        }
+
+        /**
+         * @return User provided identifier for the new collection
+         */
+        public String getNewCollectionLabel() {
+            return newCollectionLabel;
+        }
+
+        public void setNewCollectionLabel(String newCollectionLabel) {
+            this.newCollectionLabel = newCollectionLabel;
         }
 
         /**
@@ -419,8 +465,57 @@ public class SipService {
         /**
          * @return Path to the file containing the serialized deposit model for this SIP
          */
+        @JsonIgnore
         public Path getModelPath() {
             return sipPath.resolve(MODEL_EXPORT_NAME);
+        }
+
+        /**
+         * @return PID of the box-c container this SIP should be submitted to
+         */
+        @JsonIgnore
+        public PID getDestinationPid() {
+            return destinationPid;
+        }
+
+        public void setDestinationPid(PID destinationPid) {
+            this.destinationPid = destinationPid;
+        }
+
+        public String getDestinationId() {
+            return destinationPid.getId();
+        }
+
+        public void setDestinationId(String destinationId) {
+            this.destinationPid = PIDs.get(destinationId);
+        }
+    }
+
+    /**
+     * @param sipPath path of the SIP directory
+     * @return Deserialized SIP info for the provided SIP
+     */
+    public MigrationSip loadSipInfo(Path sipPath) {
+        Path infoPath = sipPath.resolve(SIP_INFO_NAME);
+        try {
+            return SIP_INFO_READER.readValue(infoPath.toFile());
+        } catch (IOException e) {
+            throw new MigrationException("Unable to read sip info at path " + infoPath, e);
+        }
+    }
+
+    /**
+     * @return List of information about SIPs in this project
+     */
+    public List<MigrationSip> listSips() {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(project.getSipsPath())) {
+            List<MigrationSip> sips = new ArrayList<>();
+            for (Path sipPath : stream) {
+                sips.add(loadSipInfo(sipPath));
+            }
+            return sips;
+        } catch (IOException e) {
+            throw new MigrationException("Failed to list SIPs", e);
         }
     }
 
