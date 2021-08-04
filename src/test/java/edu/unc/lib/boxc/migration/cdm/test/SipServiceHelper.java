@@ -291,8 +291,8 @@ public class SipServiceHelper {
 
         Matcher collMatcher = NEW_COLL_PATTERN.matcher(output);
         if (collMatcher.matches()) {
-            sip.setNewCollectionId(collMatcher.group(1));
-            sip.setNewCollectionPid(PIDs.get(collMatcher.group(2)));
+            sip.setNewCollectionLabel(collMatcher.group(1));
+            sip.setNewCollectionId(collMatcher.group(2));
         }
 
         sip.setDepositPid(PIDs.get(PIDConstants.DEPOSITS_QUALIFIER, depositId));

@@ -28,7 +28,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -55,12 +54,6 @@ public class SipsCommandIT extends AbstractCommandIT {
         project = MigrationProjectFactory.createMigrationProject(
                 baseDir, COLLECTION_ID, null, USERNAME);
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
-        System.setProperty("user.name", "someuser");
-    }
-
-    @After
-    public void after() throws Exception {
-        System.clearProperty("user.name");
     }
 
     @Test
@@ -166,7 +159,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         MigrationSip sip = extractSipFromOutput();
-        assertEquals(newCollId, sip.getNewCollectionId());
+        assertEquals(newCollId, sip.getNewCollectionLabel());
         assertNotNull(sip.getNewCollectionPid());
 
         DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
