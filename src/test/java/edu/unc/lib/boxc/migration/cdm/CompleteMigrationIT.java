@@ -24,11 +24,13 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -43,11 +45,17 @@ import org.junit.Test;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
+import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.DepositField;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
+import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import edu.unc.lib.boxc.persist.api.PackagingType;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+import redis.embedded.RedisServer;
 
 /**
  * Test which runs a single collection through a full set of migration steps
@@ -56,16 +64,21 @@ import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 public class CompleteMigrationIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "my_coll";
     private final static String CDM_PASSWORD = "supersecret";
+    private final static String GROUPS = "my:admin:group";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
+    private final static int REDIS_PORT = 46380;
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
     private String cdmBaseUrl;
     private Path filesBasePath;
 
+    private RedisServer redisServer;
+    private DepositStatusFactory depositStatusFactory;
+    private JedisPool jedisPool;
+
     @Before
     public void setup() throws Exception {
-        System.setProperty("user.name", "someuser");
         filesBasePath = tmpFolder.newFolder().toPath();
         cdmBaseUrl = "http://localhost:" + wireMockRule.port();
         String validRespBody = IOUtils.toString(this.getClass().getResourceAsStream("/cdm_fields_resp.json"),
@@ -84,11 +97,32 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(exportBody)));
+
+        redisServer = new RedisServer(REDIS_PORT);
+        System.setProperty("REDIS_HOST", "localhost");
+        System.setProperty("REDIS_PORT", Integer.toString(REDIS_PORT));
+        redisServer.start();
+    }
+
+    public void initDepositStatusFactory() {
+        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
+        jedisPoolConfig.setMaxIdle(15);
+        jedisPoolConfig.setMaxTotal(25);
+        jedisPoolConfig.setMinIdle(2);
+
+        jedisPool = new JedisPool(jedisPoolConfig, "localhost", REDIS_PORT);
+        depositStatusFactory = new DepositStatusFactory();
+        depositStatusFactory.setJedisPool(jedisPool);
     }
 
     @After
     public void after() throws Exception {
-        System.clearProperty("user.name");
+        System.clearProperty("REDIS_HOST");
+        System.clearProperty("REDIS_PORT");
+        redisServer.stop();
+        if (jedisPool != null) {
+            jedisPool.close();
+        }
     }
 
     @Test
@@ -168,5 +202,23 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath2, null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, sourcePath3, null, "27");
+
+        String[] argsSubmit = new String[] {
+                "-w", projPath.toString(),
+                "submit",
+                "-g", GROUPS };
+        executeExpectSuccess(argsSubmit);
+
+        initDepositStatusFactory();
+        assertDepositStatusSet(sip);
+    }
+
+    private void assertDepositStatusSet(MigrationSip sip) {
+        Map<String, String> status = depositStatusFactory.get(sip.getDepositId());
+        String sourceUri = status.get(DepositField.sourceUri.name());
+        assertEquals(sip.getSipPath(), Paths.get(URI.create(sourceUri)));
+        assertEquals(USERNAME + "@ad.unc.edu", status.get(DepositField.depositorEmail.name()));
+        assertEquals("unc:onyen:theuser;my:admin:group", status.get(DepositField.permissionGroups.name()));
+        assertEquals(PackagingType.BAG_WITH_N3.getUri(), status.get(DepositField.packagingType.name()));
     }
 }
