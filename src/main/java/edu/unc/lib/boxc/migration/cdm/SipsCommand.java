@@ -92,6 +92,31 @@ public class SipsCommand {
         }
     }
 
+    @Command(name = "list",
+            description = "List the SIPs that have been generated for this project")
+    public int generate() throws Exception {
+        try {
+            initialize();
+
+            List<MigrationSip> sips = sipService.listSips();
+            outputLogger.info("Listing {} SIP(s)", sips.size());
+            outputLogger.info("========================");
+            for (MigrationSip sip : sips) {
+                outputLogger.info("SIP/Deposit ID: {}", sip.getDepositId());
+                outputLogger.info("    Path: {}", sip.getSipPath());
+                if (sip.getNewCollectionPid() != null) {
+                    outputLogger.info("    New collection: {} ({})",
+                            sip.getNewCollectionLabel(), sip.getNewCollectionId());
+                }
+            }
+            return 0;
+        } catch (Exception e) {
+            log.error("Failed to list SIPs", e);
+            outputLogger.info("Failed to list SIPs: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
     private void initialize() throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);

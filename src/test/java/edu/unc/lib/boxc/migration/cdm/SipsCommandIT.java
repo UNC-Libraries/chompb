@@ -143,6 +143,14 @@ public class SipsCommandIT extends AbstractCommandIT {
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+
+        String[] argsList = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "sips", "list" };
+        executeExpectSuccess(argsList);
+
+        assertOutputContains("SIP/Deposit ID: " + sip.getDepositId());
+        assertOutputContains("    Path: " + sip.getSipPath());
     }
 
     @Test
@@ -181,6 +189,16 @@ public class SipsCommandIT extends AbstractCommandIT {
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(collChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+
+        String[] argsList = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "sips", "list" };
+        executeExpectSuccess(argsList);
+
+        assertOutputContains("SIP/Deposit ID: " + sip.getDepositId());
+        assertOutputContains("    Path: " + sip.getSipPath());
+        assertOutputContains("    New collection: " + sip.getNewCollectionLabel()
+                + " (" + sip.getNewCollectionId() + ")");
     }
 
     private MigrationSip extractSipFromOutput() {

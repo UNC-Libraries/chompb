@@ -15,6 +15,7 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -66,6 +67,11 @@ public class AbstractCommandIT {
         output = null;
 
         migrationCommand = new CommandLine(new CLIMain());
+    }
+
+    protected void assertOutputDoesNotContain(String expected) {
+        assertFalse("Expected output not to contain:\n" + expected
+                + "\nBut was:\n" + output, output.contains(expected));
     }
 
     protected void assertOutputContains(String expected) {

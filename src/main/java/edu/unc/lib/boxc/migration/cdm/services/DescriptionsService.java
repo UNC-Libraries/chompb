@@ -256,10 +256,15 @@ public class DescriptionsService {
             Element collEl = new Element("modsCollection", MODS_V3_NS);
             doc.setRootElement(collEl);
             Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME);
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", title from "
+                    + CdmIndexService.TB_NAME);
             while (rs.next()) {
                 String cdmId = rs.getString(1);
+                String title = rs.getString(2);
                 collEl.addContent(new Element("mods", MODS_V3_NS)
+                        .addContent(new Element("titleInfo", MODS_V3_NS)
+                                .addContent(new Element("title", MODS_V3_NS)
+                                .setText(title)))
                         .addContent(new Element("identifier", MODS_V3_NS)
                                 .setAttribute("displayLabel", CDM_NUMBER_LABEL)
                                 .setAttribute("type", LOCAL_TYPE_VALUE)

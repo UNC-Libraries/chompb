@@ -147,7 +147,8 @@ public class SipServiceHelper {
 
         // Check for source file
         Resource origResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamOriginal).getResource();
-        origResc.hasLiteral(CdrDeposit.stagingLocation, stagingPath.toUri().toString());
+        assertTrue(origResc.hasLiteral(CdrDeposit.stagingLocation, stagingPath.toUri().toString()));
+        assertTrue(origResc.hasLiteral(CdrDeposit.label, stagingPath.getFileName().toString()));
 
         if (accessPath == null) {
             // Verify no access copy

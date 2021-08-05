@@ -17,7 +17,6 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
-import static edu.unc.lib.boxc.model.api.rdf.CdrDeposit.stagingLocation;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -171,7 +170,9 @@ public class SipService {
 
                 // Link source file
                 Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
-                origResc.addLiteral(stagingLocation, sourceMapping.getSourcePath().toUri().toString());
+                Path sourcePath = sourceMapping.getSourcePath();
+                origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
+                origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
 
                 // Link access file
                 if (accessFilesInfo != null) {
@@ -179,7 +180,8 @@ public class SipService {
                     if (accessMapping != null && accessMapping.getSourcePath() != null) {
                         Resource accessResc = DepositModelHelpers.addDatastream(
                                 fileObjResc, DatastreamType.ACCESS_COPY);
-                        accessResc.addLiteral(stagingLocation, accessMapping.getSourcePath().toUri().toString());
+                        accessResc.addLiteral(CdrDeposit.stagingLocation,
+                                accessMapping.getSourcePath().toUri().toString());
                         String mimetype = accessFileService.getMimetype(accessMapping.getSourcePath());
                         accessResc.addLiteral(CdrDeposit.mimetype, mimetype);
                     }
