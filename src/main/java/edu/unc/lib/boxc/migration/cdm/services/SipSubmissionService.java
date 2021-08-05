@@ -31,8 +31,8 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.deposit.impl.submit.PreconstructedDepositHandler;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.SipSubmissionOptions;
-import edu.unc.lib.boxc.migration.cdm.services.SipService.MigrationSip;
 import edu.unc.lib.boxc.persist.api.PackagingType;
 
 /**

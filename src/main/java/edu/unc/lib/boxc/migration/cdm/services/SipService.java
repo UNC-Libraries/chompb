@@ -42,34 +42,31 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
-import edu.unc.lib.boxc.deposit.impl.model.DepositModelManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.DestinationSipEntry;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.SoftwareAgentConstants.SoftwareAgent;
 import edu.unc.lib.boxc.model.api.ids.PID;
-import edu.unc.lib.boxc.model.api.ids.PIDConstants;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import edu.unc.lib.boxc.model.api.rdf.Premis;
 import edu.unc.lib.boxc.model.fcrepo.ids.AgentPids;
-import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 import edu.unc.lib.boxc.operations.api.events.PremisLogger;
 import edu.unc.lib.boxc.operations.api.events.PremisLoggerFactory;
 
@@ -156,7 +153,7 @@ public class SipService {
                 workBag.addLiteral(CdrDeposit.createTime, cdmCreated);
 
                 // Copy description to SIP
-                Path sipDescPath = destEntry.depositDirManager.getModsPath(workPid);
+                Path sipDescPath = destEntry.getDepositDirManager().getModsPath(workPid);
                 Files.copy(expDescPath, sipDescPath);
 
                 // Create FileObject
@@ -217,7 +214,7 @@ public class SipService {
     }
 
     private void addPremisEvent(DestinationSipEntry destEntry, PID pid, SipGenerationOptions options) {
-        Path premisPath = destEntry.depositDirManager.getPremisPath(pid);
+        Path premisPath = destEntry.getDepositDirManager().getPremisPath(pid);
         PremisLogger premisLogger = premisLoggerFactory.createPremisLogger(pid, premisPath.toFile());
         premisLogger.buildEvent(Premis.Ingestion)
                 .addEventDetail("Object migrated as a part of the CONTENTdm to Box-c 5 migration")
@@ -227,11 +224,11 @@ public class SipService {
     }
 
     private void exportDepositModel(DestinationSipEntry entry) throws IOException {
-        Model model = entry.depositModelManager.getReadModel(entry.getDepositPid());
-        Path modelExportPath = entry.depositDirManager.getDepositDir().resolve(MODEL_EXPORT_NAME);
+        Model model = entry.getDepositModelManager().getReadModel(entry.getDepositPid());
+        Path modelExportPath = entry.getDepositDirManager().getDepositDir().resolve(MODEL_EXPORT_NAME);
         Writer writer = Files.newBufferedWriter(modelExportPath);
         model.write(writer, "N3");
-        entry.depositModelManager.close();
+        entry.getDepositModelManager().close();
     }
 
     private void validateProjectState() {
@@ -275,13 +272,14 @@ public class SipService {
                     PID depositPid = pidMinter.mintDepositRecordPid();
                     log.info("Initializing SIP for deposit {} to destination {}",
                             depositPid.getId(), mapping.getDestination());
-                    DestinationSipEntry entry = new DestinationSipEntry(depositPid, mapping);
+                    DestinationSipEntry entry = new DestinationSipEntry(
+                            depositPid, mapping, project.getSipsPath(), pidMinter);
                     entry.initializeDepositModel();
                     // Add description for new collection if one was provided
                     if (entry.getNewCollectionPid() != null) {
                         Path descPath = descriptionsService.getNewCollectionDescriptionPath(k);
                         if (Files.exists(descPath)) {
-                            Path sipDescPath = entry.depositDirManager.getModsPath(entry.getNewCollectionPid());
+                            Path sipDescPath = entry.getDepositDirManager().getModsPath(entry.getNewCollectionPid());
                             try {
                                 Files.copy(descPath, sipDescPath);
                             } catch (IOException e) {
@@ -298,200 +296,6 @@ public class SipService {
             }
         } catch (IOException e) {
             throw new MigrationException("Failed to load destination mappings", e);
-        }
-    }
-
-    private class DestinationSipEntry {
-        private PID depositPid;
-        private PID newCollectionPid;
-        private String newCollectionId;
-        private PID destinationPid;
-        private DepositModelManager depositModelManager;
-        private DepositDirectoryManager depositDirManager;
-        private Model writeModel;
-
-        public DestinationSipEntry(PID depositPid, DestinationMapping mapping) {
-            this.depositPid = depositPid;
-            this.depositDirManager = new DepositDirectoryManager(depositPid, project.getSipsPath(), true);
-            if (!StringUtils.isBlank(mapping.getCollectionId())) {
-                this.newCollectionPid = pidMinter.mintContentPid();
-                this.newCollectionId = mapping.getCollectionId();
-                log.info("Generated new collection {} from id {}", newCollectionPid.getId(), mapping.getCollectionId());
-            }
-            this.depositModelManager = new DepositModelManager(getTdbPath());
-            this.destinationPid = PIDs.get(mapping.getDestination());
-        }
-
-        public void initializeDepositModel() {
-            Model model = getWriteModel();
-            Bag depRootBag = model.createBag(depositPid.getRepositoryPath());
-            // Populate the new collection object
-            if (newCollectionPid != null) {
-                Bag newCollBag = model.createBag(newCollectionPid.getRepositoryPath());
-                depRootBag.add(newCollBag);
-                newCollBag.addProperty(RDF.type, Cdr.Collection);
-                newCollBag.addLiteral(CdrDeposit.label, newCollectionId);
-            }
-            commitModel();
-        }
-
-        public Path getTdbPath() {
-            return depositDirManager.getDepositDir().resolve(SIP_TDB_PATH);
-        }
-
-        public Model getWriteModel() {
-            if (writeModel == null) {
-                writeModel = depositModelManager.getWriteModel(depositPid);
-            }
-            return writeModel;
-        }
-
-        public void commitModel() {
-            depositModelManager.commit();
-            writeModel = null;
-        }
-
-        public void close() {
-            depositModelManager.close();
-        }
-
-        public Bag getDestinationBag() {
-            if (newCollectionPid != null) {
-                return getWriteModel().getBag(newCollectionPid.getRepositoryPath());
-            } else {
-                return getWriteModel().getBag(depositPid.getRepositoryPath());
-            }
-        }
-
-        public PID getDepositPid() {
-            return depositPid;
-        }
-
-        public PID getNewCollectionPid() {
-            return newCollectionPid;
-        }
-
-        public String getNewCollectionId() {
-            return newCollectionId;
-        }
-
-        public PID getDestinationPid() {
-            return destinationPid;
-        }
-    }
-
-    /**
-     * Object representing a migration SIP
-     * @author bbpennel
-     */
-    public static class MigrationSip {
-        private PID depositPid;
-        private String newCollectionLabel;
-        private PID newCollectionPid;
-        private Path sipPath;
-        private PID destinationPid;
-
-        public MigrationSip() {
-        }
-
-        public MigrationSip(DestinationSipEntry entry) {
-            this.depositPid = entry.getDepositPid();
-            this.sipPath = entry.depositDirManager.getDepositDir();
-            this.newCollectionPid = entry.getNewCollectionPid();
-            this.newCollectionLabel = entry.getNewCollectionId();
-            this.destinationPid = entry.getDestinationPid();
-        }
-
-        /**
-         * @return PID of the deposit contained within this SIP
-         */
-        @JsonIgnore
-        public PID getDepositPid() {
-            return depositPid;
-        }
-
-        public void setDepositPid(PID depositPid) {
-            this.depositPid = depositPid;
-        }
-
-        public void setDepositId(String depositId) {
-            this.depositPid = PIDs.get(PIDConstants.DEPOSITS_QUALIFIER, depositId);
-        }
-
-        public String getDepositId() {
-            return depositPid.getId();
-        }
-
-        /**
-         * @return PID of the new collection being created by this SIP, if one was created
-         */
-        @JsonIgnore
-        public PID getNewCollectionPid() {
-            return newCollectionPid;
-        }
-
-        public void setNewCollectionPid(PID newCollectionPid) {
-            this.newCollectionPid = newCollectionPid;
-        }
-
-        public String getNewCollectionId() {
-            return newCollectionPid == null ? null : newCollectionPid.getId();
-        }
-
-        public void setNewCollectionId(String newCollectionId) {
-            if (newCollectionId != null) {
-                this.newCollectionPid = PIDs.get(newCollectionId);
-            }
-        }
-
-        /**
-         * @return User provided identifier for the new collection
-         */
-        public String getNewCollectionLabel() {
-            return newCollectionLabel;
-        }
-
-        public void setNewCollectionLabel(String newCollectionLabel) {
-            this.newCollectionLabel = newCollectionLabel;
-        }
-
-        /**
-         * @return Path to the directory containing the SIP
-         */
-        public Path getSipPath() {
-            return sipPath;
-        }
-
-        public void setSipPath(Path sipPath) {
-            this.sipPath = sipPath;
-        }
-
-        /**
-         * @return Path to the file containing the serialized deposit model for this SIP
-         */
-        @JsonIgnore
-        public Path getModelPath() {
-            return sipPath.resolve(MODEL_EXPORT_NAME);
-        }
-
-        /**
-         * @return PID of the box-c container this SIP should be submitted to
-         */
-        @JsonIgnore
-        public PID getDestinationPid() {
-            return destinationPid;
-        }
-
-        public void setDestinationPid(PID destinationPid) {
-            this.destinationPid = destinationPid;
-        }
-
-        public String getDestinationId() {
-            return destinationPid.getId();
-        }
-
-        public void setDestinationId(String destinationId) {
-            this.destinationPid = PIDs.get(destinationId);
         }
     }
 

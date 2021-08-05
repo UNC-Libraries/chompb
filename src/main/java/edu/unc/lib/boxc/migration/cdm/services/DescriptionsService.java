@@ -123,11 +123,11 @@ public class DescriptionsService {
             outputLogger.info("Expanding description file {}", collFile);
             log.debug("Beginning expansion of MODS collection file {}", collFile);
             while (xmlReader.hasNext()) {
-                XMLEvent e = xmlReader.nextEvent();
+                XMLEvent event = xmlReader.nextEvent();
 
                 if (!inCollection) {
-                    if (e.isStartElement()) {
-                        StartElement el = e.asStartElement();
+                    if (event.isStartElement()) {
+                        StartElement el = event.asStartElement();
                         // Make sure that this document begins with bulk md tag
                         if (el.getName().equals(COLLECTION_NAME)) {
                             log.debug("Starting MODS collection");
@@ -137,8 +137,8 @@ public class DescriptionsService {
                         }
                     }
                 } else if (!inMods) {
-                    if (e.isStartElement()) {
-                        StartElement el = e.asStartElement();
+                    if (event.isStartElement()) {
+                        StartElement el = event.asStartElement();
                         // Make sure that this document begins with bulk md tag
                         if (el.getName().equals(MODS_NAME)) {
                             log.debug("Starting MODS record");
@@ -147,31 +147,31 @@ public class DescriptionsService {
                             cdmId = null;
                             modsWriter = new StringWriter();
                             xmlWriter = xmlOutput.createXMLEventWriter(modsWriter);
-                            xmlWriter.add(e);
+                            xmlWriter.add(event);
                         } else {
                             throw new MigrationException("Children of mods:collection must be mods:mods, but found "
                                     + el.getName());
                         }
-                    } else if (e.isEndElement()) {
+                    } else if (event.isEndElement()) {
                         log.debug("Finished processing MODS collection");
                         break;
                     }
                 } else {
-                    xmlWriter.add(e);
-                    if (inCdmIdentifier && e.isCharacters()) {
-                        Characters chars = e.asCharacters();
+                    xmlWriter.add(event);
+                    if (inCdmIdentifier && event.isCharacters()) {
+                        Characters chars = event.asCharacters();
                         cdmId = chars.getData();
                         log.debug("Found cdmid {}", cdmId);
                         inCdmIdentifier = false;
-                    } else if (e.isStartElement()) {
-                        StartElement el = e.asStartElement();
+                    } else if (event.isStartElement()) {
+                        StartElement el = event.asStartElement();
                         // Track number of tags open so we can tell when the mods element ends
                         openTags++;
 
                         if (cdmId == null && isCdmIdentifier(el)) {
                             inCdmIdentifier = true;
                         }
-                    } else if (e.isEndElement()) {
+                    } else if (event.isEndElement()) {
                         openTags--;
                     }
                     // Closing of the MODS element, time to write

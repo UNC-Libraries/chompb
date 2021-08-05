@@ -46,6 +46,7 @@ import org.jdom2.Element;
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateDestinationMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
@@ -54,7 +55,6 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
-import edu.unc.lib.boxc.migration.cdm.services.SipService.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.model.api.SoftwareAgentConstants.SoftwareAgent;
@@ -261,7 +261,7 @@ public class SipServiceHelper {
         assertEquals(AgentPids.forSoftware(SoftwareAgent.cdmToBxcMigrationUtil).getRepositoryPath(),
                 agentResc.getURI());
         Resource authResc = migrationEventResc.getProperty(Premis.hasEventRelatedAgentAuthorizor).getResource();
-        assertNotNull("Migration authorizor not set", authResc);
+        assertNotNull("Migration authorizer not set", authResc);
     }
 
     public void assertModsPresentWithCdmId(DepositDirectoryManager dirManager, PID pid, String cdmId)
@@ -277,7 +277,7 @@ public class SipServiceHelper {
         assertEquals(cdmId, cdmIdEl.getText());
     }
 
-    public Model getSipModel(SipService.MigrationSip sip) throws IOException {
+    public Model getSipModel(MigrationSip sip) throws IOException {
         return RDFModelUtil.createModel(Files.newInputStream(sip.getModelPath()), "N3");
     }
 

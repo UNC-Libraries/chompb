@@ -33,8 +33,8 @@ import org.junit.Test;
 
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.services.SipService.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
