@@ -221,7 +221,7 @@ public class SipService {
         PremisLogger premisLogger = premisLoggerFactory.createPremisLogger(pid, premisPath.toFile());
         premisLogger.buildEvent(Premis.Ingestion)
                 .addEventDetail("Object migrated as a part of the CONTENTdm to Box-c 5 migration")
-                .addSoftwareAgent(AgentPids.forSoftware(SoftwareAgent.migrationUtil))
+                .addSoftwareAgent(AgentPids.forSoftware(SoftwareAgent.cdmToBxcMigrationUtil))
                 .addAuthorizingAgent(AgentPids.forPerson(options.getUsername()))
                 .writeAndClose();
     }

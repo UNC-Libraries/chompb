@@ -258,8 +258,10 @@ public class SipServiceHelper {
                 migrationEventResc.hasProperty(Premis.note, "Object migrated as a part of the CONTENTdm to Box-c 5 migration"));
         Resource agentResc = migrationEventResc.getProperty(Premis.hasEventRelatedAgentExecutor).getResource();
         assertNotNull("Migration agent not set", agentResc);
-        assertEquals(AgentPids.forSoftware(SoftwareAgent.migrationUtil).getRepositoryPath(),
+        assertEquals(AgentPids.forSoftware(SoftwareAgent.cdmToBxcMigrationUtil).getRepositoryPath(),
                 agentResc.getURI());
+        Resource authResc = migrationEventResc.getProperty(Premis.hasEventRelatedAgentAuthorizor).getResource();
+        assertNotNull("Migration authorizor not set", authResc);
     }
 
     public void assertModsPresentWithCdmId(DepositDirectoryManager dirManager, PID pid, String cdmId)
