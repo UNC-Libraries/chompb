@@ -19,7 +19,7 @@ jobs:
       with:
         repository: UNC-Libraries/Carolina-Digital-Repository.git
         path: boxc
-        ref: f0c721b34c0aaa1391657e52084d14b51a8a4821
+        ref: main
     - name: Checkout submodules
       run: git submodule update --init --recursive
       working-directory: boxc
