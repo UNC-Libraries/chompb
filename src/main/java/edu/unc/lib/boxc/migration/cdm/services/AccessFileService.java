@@ -16,6 +16,8 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import java.io.IOException;
+import java.net.URLConnection;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 
@@ -39,5 +41,21 @@ public class AccessFileService extends SourceFileService {
     @Override
     protected Path getMappingPath() {
         return project.getAccessFilesMappingPath();
+    }
+
+    /**
+     * @param path
+     * @return Mimetype of the provided file
+     * @throws IOException
+     */
+    public String getMimetype(Path path) throws IOException {
+        String mimetype = URLConnection.guessContentTypeFromName(path.getFileName().toString());
+        if (mimetype == null || "application/octet-stream".equals(mimetype)) {
+            mimetype = Files.probeContentType(path);
+        }
+        if (mimetype == null) {
+            mimetype = "application/octet-stream";
+        }
+        return mimetype;
     }
 }

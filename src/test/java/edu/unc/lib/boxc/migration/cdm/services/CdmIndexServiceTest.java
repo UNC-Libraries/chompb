@@ -107,7 +107,7 @@ public class CdmIndexServiceTest {
 
             rs.next();
             assertEquals(26, rs.getInt("cdmid"));
-            assertEquals("2005-11-23", rs.getString("cdmcreated"));
+            assertEquals("2005-11-24", rs.getString("cdmcreated"));
             assertEquals("Plan of Battery McIntosh", rs.getString("title"));
             assertEquals("Paper", rs.getString("medium"));
             assertEquals("276_183B_E.tif", rs.getString("file"));
@@ -156,13 +156,13 @@ public class CdmIndexServiceTest {
 
             rs.next();
             assertEquals(28, rs.getInt("cdmid"));
-            assertEquals("2005-12-08", rs.getString("cdmcreated"));
+            assertEquals("2005-12-09", rs.getString("cdmcreated"));
             assertEquals("6337 x 9075", rs.getString("pixel"));
             assertEquals("276_241_E.tif", rs.getString("file"));
 
             rs.next();
             assertEquals(29, rs.getInt("cdmid"));
-            assertEquals("2005-12-08", rs.getString("cdmcreated"));
+            assertEquals("2005-12-10", rs.getString("cdmcreated"));
             assertEquals("United States--History--Civil War, 1861-1865.;", rs.getString("subjea"));
             assertEquals("276_245a_E.tif", rs.getString("file"));
         } finally {

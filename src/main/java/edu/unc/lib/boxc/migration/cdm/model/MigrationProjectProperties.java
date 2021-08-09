@@ -32,6 +32,7 @@ public class MigrationProjectProperties {
     private Instant destinationsGeneratedDate;
     private Instant sourceFilesUpdatedDate;
     private Instant accessFilesUpdatedDate;
+    private Instant descriptionsExpandedDate;
 
     public MigrationProjectProperties() {
     }
@@ -133,5 +134,16 @@ public class MigrationProjectProperties {
 
     public void setAccessFilesUpdatedDate(Instant accessFilesUpdatedDate) {
         this.accessFilesUpdatedDate = accessFilesUpdatedDate;
+    }
+
+    /**
+     * @return timestamp that description files were expanded
+     */
+    public Instant getDescriptionsExpandedDate() {
+        return descriptionsExpandedDate;
+    }
+
+    public void setDescriptionsExpandedDate(Instant descriptionsExpandedDate) {
+        this.descriptionsExpandedDate = descriptionsExpandedDate;
     }
 }

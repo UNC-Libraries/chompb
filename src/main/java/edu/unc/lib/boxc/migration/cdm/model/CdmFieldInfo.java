@@ -32,10 +32,11 @@ import org.apache.jena.ext.com.google.common.collect.Streams;
  */
 public class CdmFieldInfo {
     public static final String CDM_ID = "cdmid";
+    public static final String CDM_CREATED = "cdmcreated";
     public static final Set<String> IGNORE_FIELDS = new HashSet<>(Arrays.asList(
             "dmoclcno", "dmcreated", "dmmodified", "dmrecord"));
     public static final List<String> RESERVED_FIELDS = Arrays.asList(
-            CDM_ID, "cdmcreated", "cdmmodified", "cdmfile", "cdmpath");
+            CDM_ID, CDM_CREATED, "cdmmodified", "cdmfile", "cdmpath");
 
     private List<CdmFieldEntry> fields;
 

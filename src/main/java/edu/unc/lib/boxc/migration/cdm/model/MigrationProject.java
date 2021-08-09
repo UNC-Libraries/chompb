@@ -23,14 +23,17 @@ import java.nio.file.Path;
  * @author bbpennel
  */
 public class MigrationProject {
-    public static final String PROJECT_PROPERTIES_FILENAME = "project.json";
+    public static final String PROJECT_PROPERTIES_FILENAME = ".project.json";
     public static final String DESCRIPTION_DIRNAME = "descriptions";
+    public static final String COLLS_DESCRIPTION_DIRNAME = "newCollectionDescriptions";
+    public static final String EXPANDED_DESCS_DIRNAME = ".expanded_descs";
     public static final String EXPORT_DIRNAME = "exports";
     public static final String FIELD_NAMES_FILENAME = "cdm_fields.csv";
     public static final String INDEX_FILENAME = "cdm_index.db";
     public static final String DESTINATIONS_FILENAME = "destinations.csv";
     public static final String SOURCE_MAPPING_FILENAME = "source_files.csv";
     public static final String ACCESS_MAPPING_FILENAME = "access_files.csv";
+    public static final String SIPS_DIRNAME = "sips";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -79,10 +82,24 @@ public class MigrationProject {
     }
 
     /**
-     * @return Path of the MODS descriptions directory
+     * @return Path of the MODS descriptions directory. Files added to this path should be modsCollections
      */
     public Path getDescriptionsPath() {
         return projectPath.resolve(DESCRIPTION_DIRNAME);
+    }
+
+    /**
+     * @return Path of the directory where MODS descriptions for new repository collections should be added
+     */
+    public Path getNewCollectionDescriptionsPath() {
+        return projectPath.resolve(COLLS_DESCRIPTION_DIRNAME);
+    }
+
+    /**
+     * @return Path where the expanded descriptions files should be stored
+     */
+    public Path getExpandedDescriptionsPath() {
+        return projectPath.resolve(EXPANDED_DESCS_DIRNAME);
     }
 
     /**
@@ -111,6 +128,13 @@ public class MigrationProject {
      */
     public Path getAccessFilesMappingPath() {
         return projectPath.resolve(ACCESS_MAPPING_FILENAME);
+    }
+
+    /**
+     * @return Path of the SIPS directory
+     */
+    public Path getSipsPath() {
+        return projectPath.resolve(SIPS_DIRNAME);
     }
 
     /**
