@@ -16,7 +16,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import static edu.unc.lib.boxc.common.xml.SecureXMLFactory.createXMLInputFactory;
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
 
 import java.io.ByteArrayInputStream;
@@ -129,7 +128,6 @@ public class DescriptionsService {
             int openTags = 0;
             String cdmId = null;
 
-            outputLogger.info("Expanding description file {}", collFile);
             log.debug("Beginning expansion of MODS collection file {}", collFile);
             while (xmlReader.hasNext()) {
                 XMLEvent event = xmlReader.nextEvent();

@@ -204,7 +204,11 @@ public class SipService {
                 // Serialize the SIP info out to file
                 SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
                 // Cleanup the TDB directory not that it has been exported
-                FileUtils.deleteDirectory(entry.getTdbPath().toFile());
+                try {
+                    FileUtils.deleteDirectory(entry.getTdbPath().toFile());
+                } catch (IOException e) {
+                    log.warn("Failed to cleanup TDB directory", e);
+                }
             }
 
             project.getProjectProperties().setSipsGeneratedDate(Instant.now());

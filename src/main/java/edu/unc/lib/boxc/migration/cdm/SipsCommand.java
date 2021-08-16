@@ -82,8 +82,13 @@ public class SipsCommand {
             outputLogger.info("Completed operation for project {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
-        } catch (MigrationException | IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             outputLogger.info("Cannot generate SIPs: {}", e.getMessage());
+            return 1;
+        } catch (MigrationException e) {
+            log.error("Failed to generate SIPs", e);
+            outputLogger.info("Cannot generate SIPs: {}", e.getCause() != null ?
+                    e.getCause().getMessage() : e.getMessage());
             return 1;
         } catch (Exception e) {
             log.error("Failed to generate SIPs", e);

@@ -23,6 +23,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Before;
@@ -77,6 +79,15 @@ public class AbstractCommandIT {
     protected void assertOutputContains(String expected) {
         assertTrue("Expected output to contain:\n" + expected
                 + "\nBut was:\n" + output, output.contains(expected));
+    }
+
+    /**
+     * @param expected Value which the output should match, may be a regex
+     */
+    protected void assertOutputMatches(String expected) {
+        Matcher matcher = Pattern.compile(expected, Pattern.DOTALL).matcher(output);
+        assertTrue("Expected output to match:\n" + expected
+                + "\nBut was:\n" + output, matcher.matches());
     }
 
     protected void executeExpectSuccess(String[] args) {
