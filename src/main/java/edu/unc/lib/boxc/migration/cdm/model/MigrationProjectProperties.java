@@ -16,6 +16,8 @@
 package edu.unc.lib.boxc.migration.cdm.model;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Properties representing the state of a migration project
@@ -33,8 +35,11 @@ public class MigrationProjectProperties {
     private Instant sourceFilesUpdatedDate;
     private Instant accessFilesUpdatedDate;
     private Instant descriptionsExpandedDate;
+    private Instant sipsGeneratedDate;
+    private Set<String> sipsSubmitted;
 
     public MigrationProjectProperties() {
+        sipsSubmitted = new HashSet<>();
     }
 
     /**
@@ -145,5 +150,27 @@ public class MigrationProjectProperties {
 
     public void setDescriptionsExpandedDate(Instant descriptionsExpandedDate) {
         this.descriptionsExpandedDate = descriptionsExpandedDate;
+    }
+
+    /**
+     * @return timestamp SIPS were last generated
+     */
+    public Instant getSipsGeneratedDate() {
+        return sipsGeneratedDate;
+    }
+
+    public void setSipsGeneratedDate(Instant sipsGeneratedDate) {
+        this.sipsGeneratedDate = sipsGeneratedDate;
+    }
+
+    /**
+     * @return IDs of SIPs which have been submitted
+     */
+    public Set<String> getSipsSubmitted() {
+        return sipsSubmitted;
+    }
+
+    public void setSipsSubmitted(Set<String> sipsSubmitted) {
+        this.sipsSubmitted = sipsSubmitted;
     }
 }

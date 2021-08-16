@@ -18,6 +18,9 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
+import java.util.Set;
+
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.auth.api.models.AgentPrincipals;
@@ -33,6 +36,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.SipSubmissionOptions;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.persist.api.PackagingType;
 
 /**
@@ -59,12 +63,22 @@ public class SipSubmissionService {
         AgentPrincipals principals = new AgentPrincipalsImpl(options.getUsername(),
                 new AccessGroupSetImpl(options.getGroups()));
 
+        Set<String> previouslySubmitted = project.getProjectProperties().getSipsSubmitted();
         for (MigrationSip sip : sipService.listSips()) {
             if (options.getSipIds() != null && !options.getSipIds().contains(sip.getDepositId())) {
                 outputLogger.info("Skipping SIP {}", sip.getDepositId());
                 continue;
             }
-            submitSip(sip, principals);
+            if (options.isForce() || previouslySubmitted.contains(sip.getDepositId())) {
+                submitSip(sip, principals);
+
+                project.getProjectProperties().getSipsSubmitted().add(sip.getDepositId());
+                try {
+                    ProjectPropertiesSerialization.write(project);
+                } catch (IOException e) {
+                    throw new MigrationException("Failed to update properties", e);
+                }
+            }
         }
     }
 

@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +60,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.SoftwareAgentConstants.SoftwareAgent;
 import edu.unc.lib.boxc.model.api.ids.PID;
@@ -204,6 +206,10 @@ public class SipService {
                 // Cleanup the TDB directory not that it has been exported
                 FileUtils.deleteDirectory(entry.getTdbPath().toFile());
             }
+
+            project.getProjectProperties().setSipsGeneratedDate(Instant.now());
+            ProjectPropertiesSerialization.write(project);
+
             return sips;
         } catch (SQLException | IOException e) {
             throw new MigrationException("Failed to generate SIP", e);
