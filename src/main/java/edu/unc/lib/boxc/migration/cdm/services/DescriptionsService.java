@@ -92,10 +92,19 @@ public class DescriptionsService {
      * @throws IOException
      */
     public int expandDescriptions() throws IOException {
+        return expandDescriptions(false);
+    }
+
+    /**
+     * Expand the modsCollection files located in the descriptions folder out into individual MODS records by cdm id
+     * @param dryRun if true, no files will be written
+     * @throws IOException
+     */
+    public int expandDescriptions(boolean dryRun) throws IOException {
         int recordsExtracted = 0;
         try (DirectoryStream<Path> pathStream = Files.newDirectoryStream(project.getDescriptionsPath(), "*.xml")) {
             for (Path path : pathStream) {
-                recordsExtracted += expandModsCollectionFile(path);
+                recordsExtracted += expandModsCollectionFile(path, dryRun);
             }
         }
         if (recordsExtracted > 0) {
@@ -105,7 +114,7 @@ public class DescriptionsService {
         return recordsExtracted;
     }
 
-    private int expandModsCollectionFile(Path collFile) {
+    private int expandModsCollectionFile(Path collFile, boolean dryRun) {
         // Enable so that namespace properties will be added to the split out MODS documents if needed
         xmlOutput.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, Boolean.TRUE);
         int recordsExtracted = 0;
@@ -182,15 +191,18 @@ public class DescriptionsService {
 
                         // Write the MODS record to a file
                         if (cdmId != null) {
-                            Path descPath = getExpandedDescriptionFilePath(cdmId);
-                            // Make sure the directory exists and overwrite any existing file
-                            Files.createDirectories(descPath.getParent());
-                            if (Files.deleteIfExists(descPath)) {
-                                log.debug("Overwriting existing MODS file {}", descPath);
+                            if (!dryRun) {
+                                Path descPath = getExpandedDescriptionFilePath(cdmId);
+                                // Make sure the directory exists and overwrite any existing file
+                                Files.createDirectories(descPath.getParent());
+                                if (Files.deleteIfExists(descPath)) {
+                                    log.debug("Overwriting existing MODS file {}", descPath);
+                                }
+                                // Pass through xmlOutputter to fix indentation issues and add xml declaration
+                                Document doc = xmlBuilder.build(new ByteArrayInputStream(
+                                        modsWriter.toString().getBytes()));
+                                xmlOutputter.output(doc, Files.newOutputStream(descPath));
                             }
-                            // Pass through xmlOutputter to fix indentation issues and add xml declaration
-                            Document doc = xmlBuilder.build(new ByteArrayInputStream(modsWriter.toString().getBytes()));
-                            xmlOutputter.output(doc, Files.newOutputStream(descPath));
 
                             recordsExtracted++;
                         } else {
