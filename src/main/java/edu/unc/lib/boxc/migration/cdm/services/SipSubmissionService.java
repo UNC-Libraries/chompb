@@ -69,7 +69,7 @@ public class SipSubmissionService {
                 outputLogger.info("Skipping SIP {}", sip.getDepositId());
                 continue;
             }
-            if (options.isForce() || previouslySubmitted.contains(sip.getDepositId())) {
+            if (options.isForce() || !previouslySubmitted.contains(sip.getDepositId())) {
                 submitSip(sip, principals);
 
                 project.getProjectProperties().getSipsSubmitted().add(sip.getDepositId());

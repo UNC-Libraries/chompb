@@ -61,6 +61,7 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.SoftwareAgentConstants.SoftwareAgent;
 import edu.unc.lib.boxc.model.api.ids.PID;
@@ -268,6 +269,14 @@ public class SipService {
 
     private void initializeDestinations(SipGenerationOptions options) {
         try {
+            DestinationsValidator validator = new DestinationsValidator();
+            validator.setProject(project);
+            List<String> errors = validator.validateMappings(options.isForce());
+            if (!errors.isEmpty()) {
+                throw new MigrationException("Invalid destination mappings file, encountered the following errors:\n"
+                        + String.join("\n", errors));
+            }
+
             DestinationsInfo destInfo = DestinationsService.loadMappings(project);
             // Cleanup previously generated SIPs
             FileUtils.deleteDirectory(project.getSipsPath().toFile());

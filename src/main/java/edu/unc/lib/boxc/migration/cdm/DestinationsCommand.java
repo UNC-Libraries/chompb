@@ -20,6 +20,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -29,8 +30,10 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateDestinationMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
 /**
@@ -65,6 +68,34 @@ public class DestinationsCommand {
         } catch (Exception e) {
             log.error("Failed to export project", e);
             outputLogger.info("Failed to export project: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
+    @Command(name = "validate",
+            description = "Validate the destination mapping file for this project")
+    public int validate(@Option(names = { "-f", "--force"},
+            description = "Ignore incomplete, overlapping and duplicate mappings") boolean force) throws Exception {
+        try {
+            initialize();
+            DestinationsValidator validator = new DestinationsValidator();
+            validator.setProject(project);
+            List<String> errors = validator.validateMappings(force);
+            if (errors.isEmpty()) {
+                outputLogger.info("PASS: Destination mapping at path {} is valid",
+                        project.getDestinationMappingsPath());
+                return 0;
+            } else {
+                outputLogger.info("FAIL: Destination mapping at path {} is invalid due to the following issues:",
+                        project.getDestinationMappingsPath());
+                for (String error : errors) {
+                    outputLogger.info("    - " + error);
+                }
+                return 1;
+            }
+        } catch (MigrationException e) {
+            log.error("Failed to validate destination mappings", e);
+            outputLogger.info("FAIL: Failed to validate destination mappings: {}", e.getMessage());
             return 1;
         }
     }

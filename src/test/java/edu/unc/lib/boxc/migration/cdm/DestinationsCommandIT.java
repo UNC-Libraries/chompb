@@ -17,9 +17,11 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import static org.junit.Assert.assertEquals;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,7 +35,7 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 /**
  * @author bbpennel
  */
-public class DestinationMappingCommandIT extends AbstractCommandIT {
+public class DestinationsCommandIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "my_coll";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
 
@@ -134,6 +136,51 @@ public class DestinationMappingCommandIT extends AbstractCommandIT {
                 "--force"};
         executeExpectSuccess(args3);
         assertDefaultMapping(DEST_UUID, "00abc");
+    }
+
+    @Test
+    public void validateValidTest() throws Exception {
+        setIndexedDate();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "generate",
+                "-dd", DEST_UUID,
+                "-dc", "00123" };
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "validate" };
+        executeExpectSuccess(args2);
+
+        assertOutputContains("PASS: Destination mapping at path " + project.getDestinationMappingsPath() + " is valid");
+    }
+
+    @Test
+    public void validateInvalidTest() throws Exception {
+        setIndexedDate();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "generate",
+                "-dd", DEST_UUID,
+                "-dc", "00123" };
+        executeExpectSuccess(args);
+
+        // Add a duplicate destination mapping
+        FileUtils.write(project.getDestinationMappingsPath().toFile(),
+                "25," + DEST_UUID + ",", StandardCharsets.UTF_8, true);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "validate" };
+        executeExpectFailure(args2);
+
+        assertOutputContains("FAIL: Destination mapping at path " + project.getDestinationMappingsPath()
+                + " is invalid");
+        assertOutputContains("- Destination at line 3 has been previously mapped with a new collection");
+        assertEquals("Must only be two errors: " + output, 2, output.split("    - ").length);
     }
 
     private void assertDefaultMapping(String expectedDest, String expectedColl) throws Exception {

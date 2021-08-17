@@ -49,6 +49,7 @@ import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
+import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 
 /**
  * Service which displays overall the status of a migration project
@@ -169,6 +170,16 @@ public class ProjectStatusService {
 
     private void reportDestinationStats(int totalObjects) {
         try {
+            DestinationsValidator validator = new DestinationsValidator();
+            validator.setProject(project);
+            int numErrors = validator.validateMappings(false).size();
+            if (numErrors == 0) {
+                showField("Destinations Valid", "Yes");
+            } else {
+                showField("Destinations Valid", "No (" + numErrors + " errors)");
+                return;
+            }
+
             DestinationsInfo destInfo = DestinationsService.loadMappings(project);
             int objsMapped = 0;
             int missingDest = 0;

@@ -187,9 +187,41 @@ public class StatusCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Destination Mappings\n +Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Destination Mappings\n.*\n +Objects Mapped: +3 \\(100.0%\\).*");
+        assertOutputMatches(".*Destinations Valid: +Yes\n.*");
         assertOutputMatches(".*To Default: +2 \\(66.7%\\).*");
         assertOutputMatches(".*Destinations: +2\n.*");
         assertOutputMatches(".*New Collections: +1\n.*");
+
+        assertOutputMatches(".*Source File Mappings\n +Last Updated: +Not completed.*");
+        assertOutputMatches(".*Access File Mappings\n +Last Updated: +Not completed.*");
+        assertOutputMatches(".*Submission Information Packages\n +Last Generated: +Not completed.*");
+    }
+
+    @Test
+    public void reportDestinationsInvalid() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        String newCollId = "00123test";
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
+        FileUtils.write(project.getDestinationMappingsPath().toFile(),
+                "26,abdcdfg,", StandardCharsets.US_ASCII, true);
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "status" };
+        executeExpectSuccess(args);
+
+        assertOutputContains("Status for project " + PROJECT_ID);
+
+        assertOutputContains("CDM Collection Fields");
+        assertOutputContains("CDM Collection Exports");
+
+        assertOutputContains("Index of CDM Objects");
+        assertOutputMatches(".*Total Objects: +3\n.*");
+
+        assertOutputContains("Descriptions");
+
+        assertOutputMatches(".*Destination Mappings\n +Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Destinations Valid: +No \\(1 errors\\)\n.*");
 
         assertOutputMatches(".*Source File Mappings\n +Last Updated: +Not completed.*");
         assertOutputMatches(".*Access File Mappings\n +Last Updated: +Not completed.*");
