@@ -19,11 +19,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
+import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.util.BannerUtility;
 import edu.unc.lib.boxc.migration.cdm.util.CLIConstants;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ScopeType;
 
 /**
  * Main class for the CLI utils
@@ -46,8 +48,19 @@ import picocli.CommandLine.Option;
     })
 public class CLIMain implements Callable<Integer> {
     @Option(names = { "-w", "--work-dir" },
+            scope = ScopeType.INHERIT,
             description = "Directory which the operations will happen relative to. Defaults to the current directory")
     private String workingDirectory;
+
+    @Option(names = { "-v", "--verbose" },
+            scope = ScopeType.INHERIT,
+            description = "Set output to verbose level of verbosity")
+    private boolean verbose;
+
+    @Option(names = { "-q", "--quiet" },
+            scope = ScopeType.INHERIT,
+            description = "Set output to quiet level of verbosity")
+    private boolean quiet;
 
     /**
      * @return Get the effective working directory
@@ -55,6 +68,19 @@ public class CLIMain implements Callable<Integer> {
     protected Path getWorkingDirectory() {
         Path currentPath = Paths.get(workingDirectory == null ? "." : workingDirectory);
         return currentPath.toAbsolutePath().normalize();
+    }
+
+    /**
+     * @return Verbosity level to use with this command
+     */
+    protected Verbosity getVerbosity() {
+        if (verbose) {
+            return Verbosity.VERBOSE;
+        }
+        if (quiet) {
+            return Verbosity.QUIET;
+        }
+        return Verbosity.NORMAL;
     }
 
     protected CLIMain() {

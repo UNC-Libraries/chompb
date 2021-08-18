@@ -28,8 +28,10 @@ import org.slf4j.Logger;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateDestinationMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.status.DestinationsStatusService;
 import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -86,16 +88,40 @@ public class DestinationsCommand {
                         project.getDestinationMappingsPath());
                 return 0;
             } else {
-                outputLogger.info("FAIL: Destination mapping at path {} is invalid due to the following issues:",
-                        project.getDestinationMappingsPath());
-                for (String error : errors) {
-                    outputLogger.info("    - " + error);
+                if (parentCommand.getVerbosity().equals(Verbosity.QUIET)) {
+                    outputLogger.info("FAIL: Destination mapping is invalid with {} errors", errors.size());
+                } else {
+                    outputLogger.info("FAIL: Destination mapping at path {} is invalid due to the following issues:",
+                            project.getDestinationMappingsPath());
+                    for (String error : errors) {
+                        outputLogger.info("    - " + error);
+                    }
                 }
                 return 1;
             }
         } catch (MigrationException e) {
             log.error("Failed to validate destination mappings", e);
             outputLogger.info("FAIL: Failed to validate destination mappings: {}", e.getMessage());
+            return 1;
+        }
+    }
+
+    @Command(name = "status",
+            description = "Display status of the destination mappings for this project")
+    public int status() throws Exception {
+        try {
+            initialize();
+            DestinationsStatusService statusService = new DestinationsStatusService();
+            statusService.setProject(project);
+            statusService.report(parentCommand.getVerbosity());
+
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Status failed: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Status failed", e);
+            outputLogger.info("Status failed: {}", e.getMessage(), e);
             return 1;
         }
     }

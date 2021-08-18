@@ -22,45 +22,28 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.Iterators;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
-import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
-import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
-import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
-import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 
 /**
  * Service which displays overall the status of a migration project
  *
  * @author bbpennel
  */
-public class ProjectStatusService {
-    private static final String INDENT = "    ";
-    private static final int MIN_LABEL_WIDTH = 20;
-
-    private MigrationProject project;
+public class ProjectStatusService extends AbstractStatusService {
     private CdmFieldService fieldService;
 
     public void report() {
@@ -70,7 +53,7 @@ public class ProjectStatusService {
         showField("Initialized", properties.getCreatedDate().toString());
         showField("User", properties.getCreator());
         showField("CDM Collection ID", properties.getCdmCollectionId());
-        outputLogger.info("");
+        sectionDivider();
 
         outputLogger.info("CDM Collection Fields");
         fieldService = new CdmFieldService();
@@ -85,7 +68,7 @@ public class ProjectStatusService {
         } catch (IOException e) {
             throw new MigrationException("Failed to load fields", e);
         }
-        outputLogger.info("");
+        sectionDivider();
 
         outputLogger.info("CDM Collection Exports");
         Instant exported = properties.getExportedDate();
@@ -94,7 +77,7 @@ public class ProjectStatusService {
             return;
         }
         showField("Export files", countXmlDocuments(project.getExportPath()));
-        outputLogger.info("");
+        sectionDivider();
 
         outputLogger.info("Index of CDM Objects");
         Instant indexed = properties.getIndexedDate();
@@ -104,15 +87,11 @@ public class ProjectStatusService {
         }
         int totalObjects = countIndexedObjects();
         showField("Total Objects", totalObjects);
-        outputLogger.info("");
+        sectionDivider();
 
         outputLogger.info("Destination Mappings");
-        Instant destsGenerated = properties.getDestinationsGeneratedDate();
-        showField("Last Generated", destsGenerated == null ? "Not completed" : destsGenerated);
-        if (destsGenerated != null) {
-            reportDestinationStats(totalObjects);
-        }
-        outputLogger.info("");
+        reportDestinationStats(totalObjects);
+        sectionDivider();
 
         outputLogger.info("Descriptions");
         DescriptionsService descService = new DescriptionsService();
@@ -126,7 +105,7 @@ public class ProjectStatusService {
         } catch (IOException e) {
             outputLogger.info("Failed to list MODS records: {}", e.getMessage());
         }
-        outputLogger.info("");
+        sectionDivider();
 
         outputLogger.info("Source File Mappings");
         Instant sourceUpdated = properties.getSourceFilesUpdatedDate();
@@ -134,7 +113,7 @@ public class ProjectStatusService {
         if (sourceUpdated != null) {
             reportSourceMappings(totalObjects);
         }
-        outputLogger.info("");
+        sectionDivider();
 
         outputLogger.info("Access File Mappings");
         Instant accessUpdated = properties.getAccessFilesUpdatedDate();
@@ -142,7 +121,7 @@ public class ProjectStatusService {
         if (accessUpdated != null) {
             reportAccessMappings(totalObjects);
         }
-        outputLogger.info("");
+        sectionDivider();
 
         outputLogger.info("Submission Information Packages");
         Instant sipsGenerated = properties.getSipsGeneratedDate();
@@ -155,64 +134,10 @@ public class ProjectStatusService {
         }
     }
 
-    private int countIndexedObjects() {
-        CdmIndexService indexService = new CdmIndexService();
-        indexService.setFieldService(fieldService);
-        indexService.setProject(project);
-        try (Connection conn = indexService.openDbConnection()) {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME);
-            return rs.getInt(1);
-        } catch (SQLException e) {
-            throw new MigrationException("Failed to determine number of objects", e);
-        }
-    }
-
     private void reportDestinationStats(int totalObjects) {
-        try {
-            DestinationsValidator validator = new DestinationsValidator();
-            validator.setProject(project);
-            int numErrors = validator.validateMappings(false).size();
-            if (numErrors == 0) {
-                showField("Destinations Valid", "Yes");
-            } else {
-                showField("Destinations Valid", "No (" + numErrors + " errors)");
-                return;
-            }
-
-            DestinationsInfo destInfo = DestinationsService.loadMappings(project);
-            int objsMapped = 0;
-            int missingDest = 0;
-            Set<String> dests = new HashSet<>();
-            Set<String> newColls = new HashSet<>();
-            boolean hasDefault = false;
-            for (DestinationMapping destMapping : destInfo.getMappings()) {
-                String dest = destMapping.getDestination();
-                boolean isDefault = DestinationsInfo.DEFAULT_ID.equals(destMapping.getId());
-                if (isDefault) {
-                    hasDefault = dest != null;
-                }
-                if (dest != null) {
-                    dests.add(dest + "|" + destMapping.getCollectionId());
-                    if (!isDefault) {
-                        objsMapped++;
-                    }
-                    if (!StringUtils.isBlank(destMapping.getCollectionId())) {
-                        newColls.add(destMapping.getCollectionId());
-                    }
-                } else {
-                    missingDest++;
-                }
-            }
-            int totalMapped = hasDefault ? totalObjects - missingDest : objsMapped;
-            showFieldWithPercent("Objects Mapped", totalMapped, totalObjects);
-            int toDefault = hasDefault ? totalObjects - objsMapped : 0;
-            showFieldWithPercent("To Default", toDefault, totalObjects);
-            showField("Destinations", dests.size());
-            showField("New Collections", newColls.size());
-        } catch (IOException e) {
-            outputLogger.info("Failed to load destinations mapping: {}", e.getMessage());
-        }
+        DestinationsStatusService destStatus = new DestinationsStatusService();
+        destStatus.setProject(project);
+        destStatus.reportDestinationStats(totalObjects, Verbosity.QUIET);
     }
 
     private void reportSourceMappings(int totalObjects) {
@@ -239,17 +164,7 @@ public class ProjectStatusService {
         }
     }
 
-    private void showField(String label, Object value) {
-        int padding = MIN_LABEL_WIDTH - label.length();
-        outputLogger.info("{}{}: {}{}", INDENT, label, StringUtils.repeat(' ', padding), value);
-    }
 
-    private void showFieldWithPercent(String label, int value, int total) {
-        int padding = MIN_LABEL_WIDTH - label.length();
-        double percent = (double) value / total * 100;
-        outputLogger.info("{}{}: {}{} ({}%)", INDENT, label, StringUtils.repeat(' ', padding),
-                value, String.format("%.1f", percent));
-    }
 
     private int countXmlDocuments(Path dirPath) {
         try (DirectoryStream<Path> pathStream = Files.newDirectoryStream(dirPath, "*.xml")) {
@@ -260,9 +175,5 @@ public class ProjectStatusService {
             outputLogger.info("Unable to count files for {}: {}", dirPath, e.getMessage());
             return 0;
         }
-    }
-
-    public void setProject(MigrationProject project) {
-        this.project = project;
     }
 }

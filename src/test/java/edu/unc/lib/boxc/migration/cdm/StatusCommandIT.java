@@ -221,7 +221,7 @@ public class StatusCommandIT extends AbstractCommandIT {
         assertOutputContains("Descriptions");
 
         assertOutputMatches(".*Destination Mappings\n +Last Generated: +[0-9\\-T:]+.*");
-        assertOutputMatches(".*Destinations Valid: +No \\(1 errors\\)\n.*");
+        assertOutputMatches(".*Destinations Valid: +No \\(1 error.*");
 
         assertOutputMatches(".*Source File Mappings\n +Last Updated: +Not completed.*");
         assertOutputMatches(".*Access File Mappings\n +Last Updated: +Not completed.*");
