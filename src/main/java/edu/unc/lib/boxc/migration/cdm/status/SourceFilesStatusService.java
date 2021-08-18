@@ -69,7 +69,9 @@ public class SourceFilesStatusService extends AbstractStatusService {
             if (verbosity.isVerbose()) {
                 showFieldListValues(errors);
             }
-            outputLogger.info("{}**WARNING: Invalid mappings may impact other details**", INDENT);
+            if (verbosity.isNormal()) {
+                outputLogger.info("{}**WARNING: Invalid mappings may impact other details**", INDENT);
+            }
         }
 
         Set<String> indexedIds = getObjectIdSet();
@@ -92,16 +94,22 @@ public class SourceFilesStatusService extends AbstractStatusService {
                 }
             }
             showFieldWithPercent("Objects Mapped", mappedIds.size(), totalObjects);
-            showFieldWithPercent("Unmapped Objects", totalObjects - mappedIds.size(), totalObjects);
+            if (verbosity.isNormal()) {
+                showFieldWithPercent("Unmapped Objects", totalObjects - mappedIds.size(), totalObjects);
+            }
             if (verbosity.isVerbose()) {
                 indexedIds.removeAll(mappedIds);
                 showFieldListValues(indexedIds);
             }
-            showField("Unknown Objects", unknownIds.size() + " (Object IDs that are mapped but not indexed)");
+            if (verbosity.isNormal()) {
+                showField("Unknown Objects", unknownIds.size() + " (Object IDs that are mapped but not indexed)");
+            }
             if (verbosity.isVerbose()) {
                 showFieldListValues(unknownIds);
             }
-            showField("Potential Matches", cntPotential);
+            if (verbosity.isNormal()) {
+                showField("Potential Matches", cntPotential);
+            }
         } catch (IOException e) {
             outputLogger.info("Failed to load mappings: {}", e.getMessage());
         }

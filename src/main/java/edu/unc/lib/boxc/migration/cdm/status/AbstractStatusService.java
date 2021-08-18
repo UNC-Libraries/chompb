@@ -77,7 +77,7 @@ public class AbstractStatusService {
     }
 
     protected Set<String> getObjectIdSet() {
-        Set<String> ids = new HashSet<>();;
+        Set<String> ids = new HashSet<>();
         CdmIndexService indexService = new CdmIndexService();
         indexService.setProject(project);
         try (Connection conn = indexService.openDbConnection()) {

@@ -114,13 +114,13 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
         assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Objects Mapped: +3 \\(100.0%\\).*");
-        assertOutputMatches(".*Unmapped Objects: +0 \\(0.0%\\).*");
-        assertOutputMatches(".*Unknown Objects: +0.*");
+        assertOutputNotMatches(".*Unmapped Objects: +0 \\(0.0%\\).*");
+        assertOutputNotMatches(".*Unknown Objects: +0.*");
         assertOutputMatches(".*Destinations Valid: +No.*");
-        assertOutputMatches(".*To Default: +2 \\(66.7%\\).*");
+        assertOutputNotMatches(".*To Default: +2 \\(66.7%\\).*");
         assertOutputMatches(".*Destinations: +2\n.*");
         assertOutputNotMatches(".*Destinations:.*\n +\\* 3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e.*");
-        assertOutputMatches(".*New Collections: +0\n.*");
+        assertOutputNotMatches(".*New Collections: +0\n.*");
     }
 
     @Test
@@ -221,7 +221,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Destinations Valid: +Yes.*");
         assertOutputMatches(".*To Default: +3 \\(100.0%\\).*");
         assertOutputMatches(".*Destinations: +1\n.*");
-        assertOutputMatches(".*Destinations:.*\n +\\* 3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e\\|001234.*");
+        assertOutputMatches(".*Destinations:.*\n +\\* 3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e 001234.*");
         assertOutputMatches(".*New Collections: +1\n.*");
         assertOutputMatches(".*New Collections:.*\n +\\* 001234.*");
     }
@@ -242,6 +242,26 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Unknown Objects: +0 .*");
         assertOutputMatches(".*Destinations Valid: +No.*");
         assertOutputMatches(".*To Default: +0 \\(0.0%\\).*");
+        assertOutputMatches(".*Destinations: +1\n.*");
+        assertOutputMatches(".*Destinations:.*\n +\\* 3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e.*");
+        assertOutputMatches(".*New Collections: +0\n.*");
+    }
+
+    @Test
+    public void unpopulatedDestWithDefaultTest() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        writeCsv(mappingBody("default,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
+                             "27,,"));
+
+        statusService.report(Verbosity.VERBOSE);
+
+        assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Objects Mapped: +2 \\(66.7%\\).*");
+        assertOutputMatches(".*Unmapped Objects: +1 \\(33.3%\\).*");
+        assertOutputMatches(".*Unmapped Objects:.*\n +\\* 27\n.*");
+        assertOutputMatches(".*Unknown Objects: +0 .*");
+        assertOutputMatches(".*Destinations Valid: +No.*");
+        assertOutputMatches(".*To Default: +3 \\(100.0%\\).*");
         assertOutputMatches(".*Destinations: +1\n.*");
         assertOutputMatches(".*Destinations:.*\n +\\* 3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e.*");
         assertOutputMatches(".*New Collections: +0\n.*");

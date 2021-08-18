@@ -208,7 +208,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Destinations Valid: +Yes\n.*");
         assertOutputMatches(".*To Default: +3 \\(100.0%\\).*");
         assertOutputMatches(".*Destinations: +1\n.*");
-        assertOutputMatches(".*Destinations:.*\n +\\* " + DEST_UUID + "\\|00123.*");
+        assertOutputMatches(".*Destinations:.*\n +\\* " + DEST_UUID + " 00123.*");
         assertOutputMatches(".*New Collections: +1\n.*");
         assertOutputMatches(".*New Collections:.*\n +\\* 00123.*");
     }
@@ -232,12 +232,12 @@ public class DestinationsCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Objects Mapped: +3 \\(100.0%\\).*");
-        assertOutputMatches(".*Unmapped Objects: +0.*");
+        assertOutputNotMatches(".*Unmapped Objects: +0.*");
         assertOutputMatches(".*Destinations Valid: +Yes\n.*");
-        assertOutputMatches(".*To Default: +3 \\(100.0%\\).*");
+        assertOutputNotMatches(".*To Default: +3 \\(100.0%\\).*");
         assertOutputMatches(".*Destinations: +1\n.*");
         assertOutputNotMatches(".*\\* " + DEST_UUID + "\\|00123.*");
-        assertOutputMatches(".*New Collections: +1\n.*");
+        assertOutputNotMatches(".*New Collections: +1\n.*");
         assertOutputNotMatches(".*\\* 00123.*");
     }
 
@@ -264,7 +264,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Destinations Valid: +Yes\n.*");
         assertOutputMatches(".*To Default: +3 \\(100.0%\\).*");
         assertOutputMatches(".*Destinations: +1\n.*");
-        assertOutputMatches(".*Destinations:.*\n +\\* " + DEST_UUID + "\\|00123.*");
+        assertOutputMatches(".*Destinations:.*\n +\\* " + DEST_UUID + " 00123.*");
         assertOutputMatches(".*New Collections: +1\n.*");
         assertOutputMatches(".*New Collections:.*\n +\\* 00123.*");
     }

@@ -188,9 +188,7 @@ public class StatusCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Destination Mappings\n +Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Destination Mappings\n.*\n +Objects Mapped: +3 \\(100.0%\\).*");
         assertOutputMatches(".*Destinations Valid: +Yes\n.*");
-        assertOutputMatches(".*To Default: +2 \\(66.7%\\).*");
         assertOutputMatches(".*Destinations: +2\n.*");
-        assertOutputMatches(".*New Collections: +1\n.*");
 
         assertOutputMatches(".*Source File Mappings\n +Last Updated: +Not completed.*");
         assertOutputMatches(".*Access File Mappings\n +Last Updated: +Not completed.*");
@@ -327,9 +325,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Destination Mappings\n +Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Destination Mappings\n.*\n +Objects Mapped: +3 \\(100.0%\\).*");
-        assertOutputMatches(".*To Default: +3 \\(100.0%\\).*");
         assertOutputMatches(".*Destinations: +1\n.*");
-        assertOutputMatches(".*New Collections: +1\n.*");
 
         assertOutputMatches(".*Source File Mappings\n +Last Updated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Source File Mappings\n.*\n +Objects Mapped: +3 \\(100.0%\\).*");

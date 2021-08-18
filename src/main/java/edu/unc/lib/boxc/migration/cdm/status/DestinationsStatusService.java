@@ -72,14 +72,16 @@ public class DestinationsStatusService extends AbstractStatusService {
                 if (verbosity.isVerbose()) {
                     showFieldListValues(errors);
                 }
-                outputLogger.info("{}**WARNING: Invalid mappings may impact other details**", INDENT);
+                if (verbosity.isNormal()) {
+                    outputLogger.info("{}**WARNING: Invalid mappings may impact other details**", INDENT);
+                }
             }
 
             DestinationsInfo destInfo = DestinationsService.loadMappings(project);
-            int missingDest = 0;
             Set<String> dests = new HashSet<>();
             Set<String> newColls = new HashSet<>();
             Set<String> mappedIds = new HashSet<>();
+            Set<String> missingDest = new HashSet<>();
             boolean hasDefault = false;
             for (DestinationMapping destMapping : destInfo.getMappings()) {
                 String dest = destMapping.getDestination();
@@ -88,7 +90,7 @@ public class DestinationsStatusService extends AbstractStatusService {
                     hasDefault = dest != null;
                 }
                 if (!StringUtils.isBlank(dest)) {
-                    dests.add(dest + "|" + destMapping.getCollectionId());
+                    dests.add(dest + " " + destMapping.getCollectionId());
                     if (!isDefault) {
                         if (indexedIds.contains(destMapping.getId())) {
                             mappedIds.add(destMapping.getId());
@@ -100,30 +102,39 @@ public class DestinationsStatusService extends AbstractStatusService {
                         newColls.add(destMapping.getCollectionId());
                     }
                 } else {
-                    missingDest++;
+                    missingDest.add(destMapping.getId());
                 }
             }
 
-            int totalMapped = hasDefault ? totalObjects - missingDest : mappedIds.size();
+            int totalMapped = hasDefault ? totalObjects - missingDest.size() : mappedIds.size();
             showFieldWithPercent("Objects Mapped", totalMapped, totalObjects);
-            showFieldWithPercent("Unmapped Objects", totalObjects - totalMapped, totalObjects);
-            if (verbosity.isVerbose()) {
-                indexedIds.removeAll(mappedIds);
-                showFieldListValues(indexedIds);
+            if (verbosity.isNormal()) {
+                showFieldWithPercent("Unmapped Objects", totalObjects - totalMapped, totalObjects);
             }
-            showField("Unknown Objects", unknownIds.size() + " (Object IDs that are mapped but not indexed)");
+            if (verbosity.isVerbose()) {
+                if (hasDefault) {
+                    showFieldListValues(missingDest);
+                } else {
+                    indexedIds.removeAll(mappedIds);
+                    showFieldListValues(indexedIds);
+                }
+            }
+            if (verbosity.isNormal()) {
+                showField("Unknown Objects", unknownIds.size() + " (Object IDs that are mapped but not indexed)");
+            }
             if (verbosity.isVerbose()) {
                 showFieldListValues(unknownIds);
             }
-
-            int toDefault = hasDefault ? totalObjects - mappedIds.size() : 0;
-            showFieldWithPercent("To Default", toDefault, totalObjects);
+            if (verbosity.isNormal()) {
+                int toDefault = hasDefault ? totalObjects - mappedIds.size() : 0;
+                showFieldWithPercent("To Default", toDefault, totalObjects);
+            }
             showField("Destinations", dests.size());
             if (verbosity.isNormal()) {
                 showFieldListValues(dests);
             }
-            showField("New Collections", newColls.size());
             if (verbosity.isNormal()) {
+                showField("New Collections", newColls.size());
                 showFieldListValues(newColls);
             }
         } catch (IOException e) {
