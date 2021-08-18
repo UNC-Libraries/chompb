@@ -39,8 +39,6 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 public class DestinationsStatusServiceTest extends AbstractOutputTest {
     private static final String PROJECT_NAME = "proj";
     private static final String USERNAME = "migr_user";
-    private static final String DEST_UUID = "bfe93126-849a-43a5-b9d9-391e18ffacc6";
-    private static final String DEST_UUID2 = "8ae56bbc-400e-496d-af4b-3c585e20dba1";
 
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();

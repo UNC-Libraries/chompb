@@ -70,12 +70,6 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 public class SourceFileService {
     private static final Logger log = getLogger(SourceFileService.class);
     private static final int FETCH_SIZE = 1000;
-    public static final String POTENTIAL_MATCHES_FIELD = "potential_matches";
-    public static final String SOURCE_FILE_FIELD = "source_file";
-    public static final String EXPORT_MATCHING_FIELD = "matching_value";
-    public static final String ID_FIELD = "id";
-    public static final String[] CSV_HEADERS = new String[] {
-            ID_FIELD, EXPORT_MATCHING_FIELD, SOURCE_FILE_FIELD, POTENTIAL_MATCHES_FIELD };
 
     protected MigrationProject project;
     private CdmIndexService indexService;
@@ -113,7 +107,7 @@ public class SourceFileService {
             BufferedWriter writer = (options.getDryRun() && !needsMerge) ?
                     new BufferedWriter(new OutputStreamWriter(System.out)) :
                     Files.newBufferedWriter(mappingPath);
-            CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(CSV_HEADERS));
+            CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(SourceFilesInfo.CSV_HEADERS));
         ) {
             Path basePath = options.getBasePath();
             // Query for all values of the export field to be used for matching
@@ -284,13 +278,14 @@ public class SourceFileService {
             Reader reader = Files.newBufferedReader(originalPath);
             CSVParser originalParser = new CSVParser(reader, CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
-                    .withHeader(CSV_HEADERS)
+                    .withHeader(SourceFilesInfo.CSV_HEADERS)
                     .withTrim());
             // Write to system.out if doing a dry run, otherwise write to mappings file
             BufferedWriter writer = options.getDryRun() ?
                     new BufferedWriter(new OutputStreamWriter(System.out)) :
                     Files.newBufferedWriter(mergedPath);
-            CSVPrinter mergedPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(CSV_HEADERS));
+            CSVPrinter mergedPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
+                    .withHeader(SourceFilesInfo.CSV_HEADERS));
         ) {
             Set<String> origIds = new HashSet<>();
             for (CSVRecord originalRecord : originalParser) {
@@ -373,7 +368,7 @@ public class SourceFileService {
             Reader reader = Files.newBufferedReader(mappingPath);
             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
-                    .withHeader(CSV_HEADERS)
+                    .withHeader(SourceFilesInfo.CSV_HEADERS)
                     .withTrim());
         ) {
             SourceFilesInfo info = new SourceFilesInfo();

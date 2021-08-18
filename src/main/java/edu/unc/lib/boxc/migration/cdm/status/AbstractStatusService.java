@@ -22,10 +22,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 
@@ -71,6 +74,22 @@ public class AbstractStatusService {
         } catch (SQLException e) {
             throw new MigrationException("Failed to determine number of objects", e);
         }
+    }
+
+    protected Set<String> getObjectIdSet() {
+        Set<String> ids = new HashSet<>();;
+        CdmIndexService indexService = new CdmIndexService();
+        indexService.setProject(project);
+        try (Connection conn = indexService.openDbConnection()) {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME);
+            while (rs.next()) {
+                ids.add(rs.getString(1).trim());
+            }
+        } catch (SQLException e) {
+            throw new MigrationException("Failed to determine number of objects", e);
+        }
+        return ids;
     }
 
     protected CdmIndexService getIndexService() {

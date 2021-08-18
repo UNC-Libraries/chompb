@@ -20,6 +20,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -27,11 +28,15 @@ import org.slf4j.Logger;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.status.AccessFilesStatusService;
+import edu.unc.lib.boxc.migration.cdm.validators.AccessFilesValidator;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
 /**
@@ -69,6 +74,58 @@ public class AccessFilesCommand {
         } catch (Exception e) {
             log.error("Failed to map access files", e);
             outputLogger.info("Failed to map access files: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
+    @Command(name = "validate",
+            description = "Validate the access file mappings for this project")
+    public int validate(@Option(names = { "-f", "--force"},
+            description = "Ignore incomplete mappings") boolean force) throws Exception {
+        try {
+            initialize();
+            AccessFilesValidator validator = new AccessFilesValidator();
+            validator.setProject(project);
+            List<String> errors = validator.validateMappings(force);
+            if (errors.isEmpty()) {
+                outputLogger.info("PASS: Access file mapping at path {} is valid",
+                        project.getSourceFilesMappingPath());
+                return 0;
+            } else {
+                if (parentCommand.getVerbosity().equals(Verbosity.QUIET)) {
+                    outputLogger.info("FAIL: Access file mapping is invalid with {} errors", errors.size());
+                } else {
+                    outputLogger.info("FAIL: Access file mapping at path {} is invalid due to the following issues:",
+                            project.getSourceFilesMappingPath());
+                    for (String error : errors) {
+                        outputLogger.info("    - " + error);
+                    }
+                }
+                return 1;
+            }
+        } catch (MigrationException e) {
+            log.error("Failed to validate access file mappings", e);
+            outputLogger.info("FAIL: Failed to validate access file mappings: {}", e.getMessage());
+            return 1;
+        }
+    }
+
+    @Command(name = "status",
+            description = "Display status of the access file mappings for this project")
+    public int status() throws Exception {
+        try {
+            initialize();
+            AccessFilesStatusService statusService = new AccessFilesStatusService();
+            statusService.setProject(project);
+            statusService.report(parentCommand.getVerbosity());
+
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Status failed: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Status failed", e);
+            outputLogger.info("Status failed: {}", e.getMessage(), e);
             return 1;
         }
     }

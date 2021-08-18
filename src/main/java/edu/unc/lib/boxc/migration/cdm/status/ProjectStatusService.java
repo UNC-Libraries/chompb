@@ -30,13 +30,10 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
-import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
-import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 
 /**
  * Service which displays overall the status of a migration project
@@ -141,30 +138,16 @@ public class ProjectStatusService extends AbstractStatusService {
     }
 
     private void reportSourceMappings(int totalObjects) {
-        SourceFileService fileService = new SourceFileService();
-        fileService.setProject(project);
-        try {
-            SourceFilesInfo info = fileService.loadMappings();
-            long mappedCnt = info.getMappings().stream().filter(m -> m.getSourcePath() != null).count();
-            showFieldWithPercent("Objects Mapped", (int) mappedCnt, totalObjects);
-        } catch (IOException e) {
-            outputLogger.info("Failed to source files mapping: {}", e.getMessage());
-        }
+        SourceFilesStatusService statusService = new SourceFilesStatusService();
+        statusService.setProject(project);
+        statusService.reportStats(totalObjects, Verbosity.QUIET);
     }
 
     private void reportAccessMappings(int totalObjects) {
-        AccessFileService fileService = new AccessFileService();
-        fileService.setProject(project);
-        try {
-            SourceFilesInfo info = fileService.loadMappings();
-            long mappedCnt = info.getMappings().stream().filter(m -> m.getSourcePath() != null).count();
-            showFieldWithPercent("Objects Mapped", (int) mappedCnt, totalObjects);
-        } catch (IOException e) {
-            outputLogger.info("Failed to access files mapping: {}", e.getMessage());
-        }
+        AccessFilesStatusService statusService = new AccessFilesStatusService();
+        statusService.setProject(project);
+        statusService.reportStats(totalObjects, Verbosity.QUIET);
     }
-
-
 
     private int countXmlDocuments(Path dirPath) {
         try (DirectoryStream<Path> pathStream = Files.newDirectoryStream(dirPath, "*.xml")) {

@@ -18,10 +18,6 @@ package edu.unc.lib.boxc.migration.cdm.status;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -29,12 +25,9 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
-import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 
@@ -136,21 +129,5 @@ public class DestinationsStatusService extends AbstractStatusService {
         } catch (IOException e) {
             outputLogger.info("Failed to load destinations mapping: {}", e.getMessage());
         }
-    }
-
-    private Set<String> getObjectIdSet() {
-        Set<String> ids = new HashSet<>();;
-        CdmIndexService indexService = new CdmIndexService();
-        indexService.setProject(project);
-        try (Connection conn = indexService.openDbConnection()) {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME);
-            while (rs.next()) {
-                ids.add(rs.getString(1).trim());
-            }
-        } catch (SQLException e) {
-            throw new MigrationException("Failed to determine number of objects", e);
-        }
-        return ids;
     }
 }

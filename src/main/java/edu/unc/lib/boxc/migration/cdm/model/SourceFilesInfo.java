@@ -27,6 +27,13 @@ import org.apache.commons.lang3.StringUtils;
  * @author bbpennel
  */
 public class SourceFilesInfo {
+    public static final String POTENTIAL_MATCHES_FIELD = "potential_matches";
+    public static final String SOURCE_FILE_FIELD = "source_file";
+    public static final String EXPORT_MATCHING_FIELD = "matching_value";
+    public static final String ID_FIELD = "id";
+    public static final String[] CSV_HEADERS = new String[] {
+            ID_FIELD, EXPORT_MATCHING_FIELD, SOURCE_FILE_FIELD, POTENTIAL_MATCHES_FIELD };
+
     private List<SourceFileMapping> mappings;
 
     public SourceFilesInfo() {
