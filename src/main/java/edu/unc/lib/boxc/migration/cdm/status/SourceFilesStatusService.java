@@ -87,7 +87,6 @@ public class SourceFilesStatusService extends AbstractStatusService {
                     } else {
                         unknownIds.add(mapping.getCdmId());
                     }
-                    mappedIds.add(mapping.getCdmId());
                 } else if (!StringUtils.isBlank(mapping.getPotentialMatchesString())) {
                     cntPotential++;
                 }
