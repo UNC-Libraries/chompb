@@ -27,7 +27,7 @@ import picocli.CommandLine;
 /**
  * @author bbpennel
  */
-public class AbstractCommandIT extends AbstractOutputTest{
+public class AbstractCommandIT extends AbstractOutputTest {
     private static final Logger log = getLogger(AbstractCommandIT.class);
     protected final static String USERNAME = "theuser";
     private final String initialUser = System.getProperty("user.name");

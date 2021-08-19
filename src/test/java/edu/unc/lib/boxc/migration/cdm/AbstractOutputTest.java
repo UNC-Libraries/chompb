@@ -56,6 +56,11 @@ public class AbstractOutputTest {
         output = null;
     }
 
+    protected void resetOutput() {
+        out.reset();
+        output = null;
+    }
+
     protected void assertOutputDoesNotContain(String expected) {
         assertFalse("Expected output not to contain:\n" + expected
                 + "\nBut was:\n" + getOutput(), getOutput().contains(expected));

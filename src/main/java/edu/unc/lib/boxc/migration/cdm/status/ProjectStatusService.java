@@ -17,14 +17,8 @@ package edu.unc.lib.boxc.migration.cdm.status;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
-
-import com.google.common.collect.Iterators;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -91,33 +85,15 @@ public class ProjectStatusService extends AbstractStatusService {
         sectionDivider();
 
         outputLogger.info("Descriptions");
-        DescriptionsService descService = new DescriptionsService();
-        descService.setProject(project);
-        showField("MODS Files", countXmlDocuments(project.getDescriptionsPath()));
-        showField("New Collections MODS", countXmlDocuments(project.getNewCollectionDescriptionsPath()));
-        Instant expanded = properties.getDescriptionsExpandedDate();
-        showField("Last Expanded", expanded == null ? "Not completed" : expanded);
-        try {
-            showFieldWithPercent("Object MODS Records", descService.expandDescriptions(true), totalObjects);
-        } catch (IOException e) {
-            outputLogger.info("Failed to list MODS records: {}", e.getMessage());
-        }
+        reportDescriptionStats(totalObjects);
         sectionDivider();
 
         outputLogger.info("Source File Mappings");
-        Instant sourceUpdated = properties.getSourceFilesUpdatedDate();
-        showField("Last Updated", sourceUpdated == null ? "Not completed" : sourceUpdated);
-        if (sourceUpdated != null) {
-            reportSourceMappings(totalObjects);
-        }
+        reportSourceMappings(totalObjects);
         sectionDivider();
 
         outputLogger.info("Access File Mappings");
-        Instant accessUpdated = properties.getAccessFilesUpdatedDate();
-        showField("Last Updated", accessUpdated == null ? "Not completed" : accessUpdated);
-        if (accessUpdated != null) {
-            reportAccessMappings(totalObjects);
-        }
+        reportAccessMappings(totalObjects);
         sectionDivider();
 
         outputLogger.info("Submission Information Packages");
@@ -149,14 +125,12 @@ public class ProjectStatusService extends AbstractStatusService {
         statusService.reportStats(totalObjects, Verbosity.QUIET);
     }
 
-    private int countXmlDocuments(Path dirPath) {
-        try (DirectoryStream<Path> pathStream = Files.newDirectoryStream(dirPath, "*.xml")) {
-            return Iterators.size(pathStream.iterator());
-        } catch (FileNotFoundException e) {
-            return 0;
-        } catch (IOException e) {
-            outputLogger.info("Unable to count files for {}: {}", dirPath, e.getMessage());
-            return 0;
-        }
+    private void reportDescriptionStats(int totalObjects) {
+        DescriptionsService descService = new DescriptionsService();
+        descService.setProject(project);
+        DescriptionsStatusService descStatus = new DescriptionsStatusService();
+        descStatus.setProject(project);
+        descStatus.setDescriptionsService(descService);
+        descStatus.reportStats(totalObjects, Verbosity.QUIET);
     }
 }

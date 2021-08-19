@@ -159,6 +159,98 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
         assertEquals(3, modsEls.size());
     }
 
+    @Test
+    public void statusAllWithMods() throws Exception {
+        indexExportSamples();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "generate" };
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "expand" };
+        executeExpectSuccess(args2);
+        assertOutputContains("Descriptions expanded to 3 separate files");
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "status" };
+        executeExpectSuccess(args3);
+
+        assertOutputMatches(".*Last Expanded: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Object MODS Records: +3 .*");
+        assertOutputMatches(".*MODS Files: +1.*");
+        assertOutputMatches(".*New Collections MODS: +0.*");
+    }
+
+    @Test
+    public void statusUnexpanded() throws Exception {
+        indexExportSamples();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "generate" };
+        executeExpectSuccess(args);
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "status" };
+        executeExpectSuccess(args3);
+
+        assertOutputMatches(".*Last Expanded: +Not completed.*");
+        assertOutputMatches(".*Object MODS Records: +3 .*");
+        assertOutputMatches(".*MODS Files: +1.*");
+        assertOutputMatches(".*New Collections MODS: +0.*");
+    }
+
+    @Test
+    public void statusMissingMods() throws Exception {
+        Files.createDirectories(project.getExportPath());
+        // Add second half of records as well
+        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
+                project.getExportPath().resolve("export_2.xml"));
+        indexExportSamples();
+
+        // Only adding half of the MODS records
+        Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
+                project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "expand" };
+        executeExpectSuccess(args);
+        assertOutputContains("Descriptions expanded to 3 separate files");
+
+        resetOutput();
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "status" };
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Last Expanded: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Object MODS Records: +3 \\(60.0%\\).*");
+        assertOutputMatches(".*MODS Files: +1.*");
+        assertOutputNotMatches(".*Objects without MODS.*");
+        assertOutputMatches(".*New Collections MODS: +0.*");
+
+        resetOutput();
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "status",
+                "-v" };
+        executeExpectSuccess(args3);
+
+        assertOutputMatches(".*Last Expanded: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Object MODS Records: +3 \\(60.0%\\).*");
+        assertOutputMatches(".*MODS Files: +1.*");
+        assertOutputMatches(".*Objects without MODS: +2\n + \\* 28\n + \\* 29.*");
+        assertOutputMatches(".*New Collections MODS: +0.*");
+    }
+
     private void assertHasModsRecord(List<Element> modsEls, String cdmId) {
         assertTrue("No mods record with cdm id " + cdmId,
                 modsEls.stream().anyMatch(modsEl -> cdmId.equals(modsEl.getChildText("identifier", MODS_V3_NS))));

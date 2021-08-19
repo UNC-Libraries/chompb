@@ -17,6 +17,11 @@ package edu.unc.lib.boxc.migration.cdm.status;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,6 +31,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.collect.Iterators;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
@@ -98,6 +105,17 @@ public class AbstractStatusService {
             indexService.setProject(project);
         }
         return indexService;
+    }
+
+    protected int countXmlDocuments(Path dirPath) {
+        try (DirectoryStream<Path> pathStream = Files.newDirectoryStream(dirPath, "*.xml")) {
+            return Iterators.size(pathStream.iterator());
+        } catch (FileNotFoundException e) {
+            return 0;
+        } catch (IOException e) {
+            outputLogger.info("Unable to count files for {}: {}", dirPath, e.getMessage());
+            return 0;
+        }
     }
 
     public void setProject(MigrationProject project) {

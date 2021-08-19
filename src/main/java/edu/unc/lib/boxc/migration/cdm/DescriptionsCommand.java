@@ -20,6 +20,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Set;
 
 import org.slf4j.Logger;
 
@@ -27,6 +28,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.status.DescriptionsStatusService;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -54,9 +56,9 @@ public class DescriptionsCommand {
         try {
             initialize();
 
-            int extracted = descService.expandDescriptions();
+            Set<String> idsWithMods = descService.expandDescriptions();
             outputLogger.info("Descriptions expanded to {} separate files for {} in {}s",
-                    extracted, project.getProjectName(), (System.nanoTime() - start) / 1e9);
+                    idsWithMods.size(), project.getProjectName(), (System.nanoTime() - start) / 1e9);
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("Cannot expand descriptions: {}", e.getMessage());
@@ -89,6 +91,27 @@ public class DescriptionsCommand {
         } catch (Exception e) {
             log.error("Failed to generate descriptions for project", e);
             outputLogger.info("Failed to generate descriptions for project: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
+    @Command(name = "status",
+            description = "Display status of descriptions for this project")
+    public int status() throws Exception {
+        try {
+            initialize();
+            DescriptionsStatusService statusService = new DescriptionsStatusService();
+            statusService.setProject(project);
+            statusService.setDescriptionsService(descService);
+            statusService.report(parentCommand.getVerbosity());
+
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Status failed: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Status failed", e);
+            outputLogger.info("Status failed: {}", e.getMessage(), e);
             return 1;
         }
     }
