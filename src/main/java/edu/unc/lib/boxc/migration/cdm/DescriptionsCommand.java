@@ -20,15 +20,18 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.status.DescriptionsStatusService;
+import edu.unc.lib.boxc.migration.cdm.validators.DescriptionsValidator;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -91,6 +94,39 @@ public class DescriptionsCommand {
         } catch (Exception e) {
             log.error("Failed to generate descriptions for project", e);
             outputLogger.info("Failed to generate descriptions for project: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
+    @Command(name = "validate",
+            description = { "Validate the descriptions for this project.",
+                    "Files will be validated against the MODS schema, schematron, and checked for root elements"})
+    public int validate() throws Exception {
+        try {
+            initialize();
+            DescriptionsValidator validator = new DescriptionsValidator();
+            validator.setProject(project);
+            validator.init();
+            List<String> errors = validator.validate();
+            if (errors.isEmpty()) {
+                outputLogger.info("PASS: All description files are valid",
+                        project.getDestinationMappingsPath());
+                return 0;
+            } else {
+                if (parentCommand.getVerbosity().equals(Verbosity.QUIET)) {
+                    outputLogger.info("FAIL: Description files are invalid with {} errors", errors.size());
+                } else {
+                    outputLogger.info("FAIL: Description files are invalid due to the following {} errors:",
+                            errors.size());
+                    for (String error : errors) {
+                        outputLogger.info("    - " + error);
+                    }
+                }
+                return 1;
+            }
+        } catch (MigrationException e) {
+            log.error("Failed to validate descriptions", e);
+            outputLogger.info("FAIL: Failed to validate descriptions: {}", e.getMessage());
             return 1;
         }
     }

@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -249,6 +251,55 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*MODS Files: +1.*");
         assertOutputMatches(".*Objects without MODS: +2\n + \\* 28\n + \\* 29.*");
         assertOutputMatches(".*New Collections MODS: +0.*");
+    }
+
+    @Test
+    public void validateAllValidModsTest() throws Exception {
+        indexExportSamples();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "generate" };
+        executeExpectSuccess(args);
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "validate" };
+        executeExpectSuccess(args3);
+
+        assertOutputContains("PASS: All description files are valid");
+    }
+
+    @Test
+    public void validateInvalidModsTest() throws Exception {
+        indexExportSamples();
+        XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
+
+        Document doc = new Document(
+                new Element("modsCollection", MODS_V3_NS)
+                    .addContent(new Element("mods", MODS_V3_NS)
+                        .addContent(new Element("title",MODS_V3_NS)
+                                .setText("My title"))));
+        xmlOutputter.output(doc, Files.newOutputStream(project.getDescriptionsPath().resolve("25.xml")));
+
+        // Invalid mods for a new collection, wrong root element
+        Document doc2 = new Document(
+                new Element("modsCollection", MODS_V3_NS)
+                    .addContent(new Element("mods", MODS_V3_NS)
+                        .addContent(new Element("titleInfo", MODS_V3_NS)
+                            .addContent(new Element("title",MODS_V3_NS)
+                                .setText("My title")))));
+        xmlOutputter.output(doc2, Files.newOutputStream(
+                project.getNewCollectionDescriptionsPath().resolve("coll.xml")));
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "validate" };
+        executeExpectFailure(args3);
+
+        assertOutputContains("FAIL: Description files are invalid due to the following 2 errors:");
+        assertOutputMatches(".*Invalid content was found starting with element 'mods:title'.*");
+        assertOutputMatches(".*Unexpected root element.* expecting 'mods:mods' but was 'mods:modsCollection'.*");
     }
 
     private void assertHasModsRecord(List<Element> modsEls, String cdmId) {
