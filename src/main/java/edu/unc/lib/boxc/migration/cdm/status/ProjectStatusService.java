@@ -40,6 +40,8 @@ public class ProjectStatusService extends AbstractStatusService {
     public void report() {
         outputLogger.info("Status for project {}", project.getProjectName());
 
+        initializeQueryService();
+
         MigrationProjectProperties properties = project.getProjectProperties();
         showField("Initialized", properties.getCreatedDate().toString());
         showField("User", properties.getCreator());
@@ -76,7 +78,7 @@ public class ProjectStatusService extends AbstractStatusService {
         if (indexed == null) {
             return;
         }
-        int totalObjects = countIndexedObjects();
+        int totalObjects = getQueryService().countIndexedObjects();
         showField("Total Objects", totalObjects);
         sectionDivider();
 
@@ -110,18 +112,21 @@ public class ProjectStatusService extends AbstractStatusService {
     private void reportDestinationStats(int totalObjects) {
         DestinationsStatusService destStatus = new DestinationsStatusService();
         destStatus.setProject(project);
+        destStatus.setQueryService(getQueryService());
         destStatus.reportDestinationStats(totalObjects, Verbosity.QUIET);
     }
 
     private void reportSourceMappings(int totalObjects) {
         SourceFilesStatusService statusService = new SourceFilesStatusService();
         statusService.setProject(project);
+        statusService.setQueryService(getQueryService());
         statusService.reportStats(totalObjects, Verbosity.QUIET);
     }
 
     private void reportAccessMappings(int totalObjects) {
         AccessFilesStatusService statusService = new AccessFilesStatusService();
         statusService.setProject(project);
+        statusService.setQueryService(getQueryService());
         statusService.reportStats(totalObjects, Verbosity.QUIET);
     }
 
@@ -131,6 +136,7 @@ public class ProjectStatusService extends AbstractStatusService {
         DescriptionsStatusService descStatus = new DescriptionsStatusService();
         descStatus.setProject(project);
         descStatus.setDescriptionsService(descService);
+        descStatus.setQueryService(getQueryService());
         descStatus.reportStats(totalObjects, Verbosity.QUIET);
     }
 }

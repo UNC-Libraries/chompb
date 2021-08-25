@@ -43,7 +43,7 @@ public class SourceFilesStatusService extends AbstractStatusService {
      */
     public void report(Verbosity verbosity) {
         outputLogger.info("Source file mappings status for project {}", project.getProjectName());
-        int totalObjects = countIndexedObjects();
+        int totalObjects = getQueryService().countIndexedObjects();
         reportStats(totalObjects, verbosity);
     }
 
@@ -74,7 +74,7 @@ public class SourceFilesStatusService extends AbstractStatusService {
             }
         }
 
-        Set<String> indexedIds = getObjectIdSet();
+        Set<String> indexedIds = getQueryService().getObjectIdSet();
         Set<String> mappedIds = new HashSet<>();
         Set<String> unknownIds = new HashSet<>();
         int cntPotential = 0;

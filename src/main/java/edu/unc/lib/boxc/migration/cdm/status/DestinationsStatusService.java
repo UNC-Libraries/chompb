@@ -42,7 +42,7 @@ public class DestinationsStatusService extends AbstractStatusService {
      */
     public void report(Verbosity verbosity) {
         outputLogger.info("Destinations status for project {}", project.getProjectName());
-        int totalObjects = countIndexedObjects();
+        int totalObjects = getQueryService().countIndexedObjects();
         reportDestinationStats(totalObjects, verbosity);
     }
 
@@ -58,7 +58,7 @@ public class DestinationsStatusService extends AbstractStatusService {
             return;
         }
         try {
-            Set<String> indexedIds = getObjectIdSet();
+            Set<String> indexedIds = getQueryService().getObjectIdSet();
             Set<String> unknownIds = new HashSet<>();
 
             DestinationsValidator validator = new DestinationsValidator();

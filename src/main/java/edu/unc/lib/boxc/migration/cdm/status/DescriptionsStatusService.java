@@ -38,7 +38,7 @@ public class DescriptionsStatusService extends AbstractStatusService {
      */
     public void report(Verbosity verbosity) {
         outputLogger.info("Descriptions status for project {}", project.getProjectName());
-        int totalObjects = countIndexedObjects();
+        int totalObjects = getQueryService().countIndexedObjects();
         reportStats(totalObjects, verbosity);
     }
 
@@ -57,7 +57,7 @@ public class DescriptionsStatusService extends AbstractStatusService {
             showFieldWithPercent("Object MODS Records", idsWithMods.size(), totalObjects);
             if (verbosity.isVerbose()) {
                 showField("Objects without MODS", totalObjects - idsWithMods.size());
-                Set<String> indexedIds = getObjectIdSet();
+                Set<String> indexedIds = getQueryService().getObjectIdSet();
                 indexedIds.removeAll(idsWithMods);
                 showFieldListValues(indexedIds);
             }

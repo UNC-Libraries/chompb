@@ -22,22 +22,13 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.Iterators;
 
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 
 /**
  * @author bbpennel
@@ -46,7 +37,7 @@ public class AbstractStatusService {
     protected static final String INDENT = "    ";
     private static final int MIN_LABEL_WIDTH = 20;
 
-    private CdmIndexService indexService;
+    private StatusQueryService queryService;
     protected MigrationProject project;
 
     protected void showField(String label, Object value) {
@@ -71,40 +62,20 @@ public class AbstractStatusService {
         outputLogger.info("");
     }
 
-    protected int countIndexedObjects() {
-        CdmIndexService indexService = new CdmIndexService();
-        indexService.setProject(project);
-        try (Connection conn = indexService.openDbConnection()) {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME);
-            return rs.getInt(1);
-        } catch (SQLException e) {
-            throw new MigrationException("Failed to determine number of objects", e);
+    public StatusQueryService getQueryService() {
+        if (queryService == null) {
+            return initializeQueryService();
         }
+        return queryService;
     }
 
-    protected Set<String> getObjectIdSet() {
-        Set<String> ids = new HashSet<>();
-        CdmIndexService indexService = new CdmIndexService();
-        indexService.setProject(project);
-        try (Connection conn = indexService.openDbConnection()) {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME);
-            while (rs.next()) {
-                ids.add(rs.getString(1).trim());
-            }
-        } catch (SQLException e) {
-            throw new MigrationException("Failed to determine number of objects", e);
-        }
-        return ids;
+    public void setQueryService(StatusQueryService queryService) {
+        this.queryService = queryService;
     }
 
-    protected CdmIndexService getIndexService() {
-        if (indexService == null) {
-            indexService = new CdmIndexService();
-            indexService.setProject(project);
-        }
-        return indexService;
+    public StatusQueryService initializeQueryService() {
+        this.queryService = new StatusQueryService(project);
+        return this.queryService;
     }
 
     protected int countXmlDocuments(Path dirPath) {
