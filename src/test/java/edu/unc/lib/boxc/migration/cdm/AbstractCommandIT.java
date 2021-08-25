@@ -15,19 +15,11 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.nio.file.Path;
-
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 
 import picocli.CommandLine;
@@ -35,48 +27,22 @@ import picocli.CommandLine;
 /**
  * @author bbpennel
  */
-public class AbstractCommandIT {
+public class AbstractCommandIT extends AbstractOutputTest {
     private static final Logger log = getLogger(AbstractCommandIT.class);
     protected final static String USERNAME = "theuser";
     private final String initialUser = System.getProperty("user.name");
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
-    protected Path baseDir;
-
-    protected final PrintStream originalOut = System.out;
-    protected final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    protected String output;
     protected CommandLine migrationCommand;
 
     @After
-    public void resetOut() {
-        System.setOut(originalOut);
+    public void resetProps() {
         System.setProperty("user.name", initialUser);
     }
 
     @Before
     public void baseSetUp() throws Exception {
         System.setProperty("user.name", USERNAME);
-
-        tmpFolder.create();
-        baseDir = tmpFolder.getRoot().toPath();
-
-        out.reset();
-        System.setOut(new PrintStream(out));
-        output = null;
-
         migrationCommand = new CommandLine(new CLIMain());
-    }
-
-    protected void assertOutputDoesNotContain(String expected) {
-        assertFalse("Expected output not to contain:\n" + expected
-                + "\nBut was:\n" + output, output.contains(expected));
-    }
-
-    protected void assertOutputContains(String expected) {
-        assertTrue("Expected output to contain:\n" + expected
-                + "\nBut was:\n" + output, output.contains(expected));
     }
 
     protected void executeExpectSuccess(String[] args) {

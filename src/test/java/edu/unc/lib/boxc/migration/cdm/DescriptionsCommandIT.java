@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -157,6 +159,147 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
         assertHasModsRecord(modsEls, "26");
         assertHasModsRecord(modsEls, "27");
         assertEquals(3, modsEls.size());
+    }
+
+    @Test
+    public void statusAllWithMods() throws Exception {
+        indexExportSamples();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "generate" };
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "expand" };
+        executeExpectSuccess(args2);
+        assertOutputContains("Descriptions expanded to 3 separate files");
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "status" };
+        executeExpectSuccess(args3);
+
+        assertOutputMatches(".*Last Expanded: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Object MODS Records: +3 .*");
+        assertOutputMatches(".*MODS Files: +1.*");
+        assertOutputMatches(".*New Collections MODS: +0.*");
+    }
+
+    @Test
+    public void statusUnexpanded() throws Exception {
+        indexExportSamples();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "generate" };
+        executeExpectSuccess(args);
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "status" };
+        executeExpectSuccess(args3);
+
+        assertOutputMatches(".*Last Expanded: +Not completed.*");
+        assertOutputMatches(".*Object MODS Records: +3 .*");
+        assertOutputMatches(".*MODS Files: +1.*");
+        assertOutputMatches(".*New Collections MODS: +0.*");
+    }
+
+    @Test
+    public void statusMissingMods() throws Exception {
+        Files.createDirectories(project.getExportPath());
+        // Add second half of records as well
+        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
+                project.getExportPath().resolve("export_2.xml"));
+        indexExportSamples();
+
+        // Only adding half of the MODS records
+        Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
+                project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "expand" };
+        executeExpectSuccess(args);
+        assertOutputContains("Descriptions expanded to 3 separate files");
+
+        resetOutput();
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "status" };
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Last Expanded: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Object MODS Records: +3 \\(60.0%\\).*");
+        assertOutputMatches(".*MODS Files: +1.*");
+        assertOutputNotMatches(".*Objects without MODS.*");
+        assertOutputMatches(".*New Collections MODS: +0.*");
+
+        resetOutput();
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "status",
+                "-v" };
+        executeExpectSuccess(args3);
+
+        assertOutputMatches(".*Last Expanded: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Object MODS Records: +3 \\(60.0%\\).*");
+        assertOutputMatches(".*MODS Files: +1.*");
+        assertOutputMatches(".*Objects without MODS: +2\n + \\* 28\n + \\* 29.*");
+        assertOutputMatches(".*New Collections MODS: +0.*");
+    }
+
+    @Test
+    public void validateAllValidModsTest() throws Exception {
+        indexExportSamples();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "generate" };
+        executeExpectSuccess(args);
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "validate" };
+        executeExpectSuccess(args3);
+
+        assertOutputContains("PASS: All description files are valid");
+    }
+
+    @Test
+    public void validateInvalidModsTest() throws Exception {
+        indexExportSamples();
+        XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
+
+        Document doc = new Document(
+                new Element("modsCollection", MODS_V3_NS)
+                    .addContent(new Element("mods", MODS_V3_NS)
+                        .addContent(new Element("title",MODS_V3_NS)
+                                .setText("My title"))));
+        xmlOutputter.output(doc, Files.newOutputStream(project.getDescriptionsPath().resolve("25.xml")));
+
+        // Invalid mods for a new collection, wrong root element
+        Document doc2 = new Document(
+                new Element("modsCollection", MODS_V3_NS)
+                    .addContent(new Element("mods", MODS_V3_NS)
+                        .addContent(new Element("titleInfo", MODS_V3_NS)
+                            .addContent(new Element("title",MODS_V3_NS)
+                                .setText("My title")))));
+        xmlOutputter.output(doc2, Files.newOutputStream(
+                project.getNewCollectionDescriptionsPath().resolve("coll.xml")));
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "descriptions", "validate" };
+        executeExpectFailure(args3);
+
+        assertOutputContains("FAIL: Description files are invalid due to the following 2 errors:");
+        assertOutputMatches(".*Invalid content was found starting with element 'mods:title'.*");
+        assertOutputMatches(".*Unexpected root element.* expecting 'mods:mods' but was 'mods:modsCollection'.*");
     }
 
     private void assertHasModsRecord(List<Element> modsEls, String cdmId) {

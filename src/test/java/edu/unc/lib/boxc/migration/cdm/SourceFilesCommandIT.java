@@ -15,6 +15,7 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -159,6 +160,103 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
         assertOutputContains("26,276_183B_E.tif," + srcPath2.toString() + ",");
         assertOutputContains("27,276_203_E.tif,,");
+    }
+
+
+
+    @Test
+    public void validateValidTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
+        addSourceFile("276_183B_E.tif");
+        addSourceFile("276_203_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "validate" };
+        executeExpectSuccess(args2);
+
+        assertOutputContains("PASS: Source file mapping at path " + project.getSourceFilesMappingPath() + " is valid");
+    }
+
+    @Test
+    public void validateInvalidTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "validate" };
+        executeExpectFailure(args2);
+
+        assertOutputContains("FAIL: Source file mapping at path " + project.getSourceFilesMappingPath()
+                + " is invalid");
+        assertOutputContains("- No path mapped at line 3");
+        assertOutputContains("- No path mapped at line 4");
+        assertEquals("Must only be two errors: " + output, 3, output.split("    - ").length);
+    }
+
+    @Test
+    public void statusValidTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
+        addSourceFile("276_183B_E.tif");
+        addSourceFile("276_203_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "status" };
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Last Updated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Objects Mapped: +3 \\(100.0%\\).*");
+        assertOutputMatches(".*Unmapped Objects: +0.*");
+        assertOutputMatches(".*Mappings Valid: +Yes\n.*");
+        assertOutputMatches(".*Potential Matches: +0.*");
+    }
+
+    @Test
+    public void statusUnmappedVerboseTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
+        addSourceFile("276_203_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "status",
+                "-v" };
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Last Updated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Objects Mapped: +2 \\(66.7%\\).*");
+        assertOutputMatches(".*Unmapped Objects: +1.*");
+        assertOutputMatches(".*Unmapped Objects:.*\n + \\* 26.*");
+        assertOutputMatches(".*Mappings Valid: +No.*");
+        assertOutputMatches(".*Potential Matches: +0.*");
     }
 
     private void indexExportSamples() throws Exception {

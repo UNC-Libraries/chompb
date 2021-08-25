@@ -16,7 +16,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import static edu.unc.lib.boxc.common.xml.SecureXMLFactory.createXMLInputFactory;
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
 
 import java.io.ByteArrayInputStream;
@@ -31,6 +30,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
@@ -89,26 +90,36 @@ public class DescriptionsService {
 
     /**
      * Expand the modsCollection files located in the descriptions folder out into individual MODS records by cdm id
+     * @return List of ids which have MODS descriptions
      * @throws IOException
      */
-    public int expandDescriptions() throws IOException {
-        int recordsExtracted = 0;
+    public Set<String> expandDescriptions() throws IOException {
+        return expandDescriptions(false);
+    }
+
+    /**
+     * Expand the modsCollection files located in the descriptions folder out into individual MODS records by cdm id
+     * @param dryRun if true, no files will be written
+     * @return List of ids which have MODS descriptions
+     * @throws IOException
+     */
+    public Set<String> expandDescriptions(boolean dryRun) throws IOException {
+        Set<String> idsWithMods = new HashSet<>();
         try (DirectoryStream<Path> pathStream = Files.newDirectoryStream(project.getDescriptionsPath(), "*.xml")) {
             for (Path path : pathStream) {
-                recordsExtracted += expandModsCollectionFile(path);
+                expandModsCollectionFile(path, idsWithMods, dryRun);
             }
         }
-        if (recordsExtracted > 0) {
+        if (!idsWithMods.isEmpty()) {
             project.getProjectProperties().setDescriptionsExpandedDate(Instant.now());
             ProjectPropertiesSerialization.write(project);
         }
-        return recordsExtracted;
+        return idsWithMods;
     }
 
-    private int expandModsCollectionFile(Path collFile) {
+    private void expandModsCollectionFile(Path collFile, Set<String> idsWithMods, boolean dryRun) {
         // Enable so that namespace properties will be added to the split out MODS documents if needed
         xmlOutput.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, Boolean.TRUE);
-        int recordsExtracted = 0;
 
         try (InputStream xmlStream = Files.newInputStream(collFile)) {
             XMLEventReader xmlReader = createXMLInputFactory().createXMLEventReader(xmlStream);
@@ -120,7 +131,6 @@ public class DescriptionsService {
             int openTags = 0;
             String cdmId = null;
 
-            outputLogger.info("Expanding description file {}", collFile);
             log.debug("Beginning expansion of MODS collection file {}", collFile);
             while (xmlReader.hasNext()) {
                 XMLEvent event = xmlReader.nextEvent();
@@ -182,17 +192,20 @@ public class DescriptionsService {
 
                         // Write the MODS record to a file
                         if (cdmId != null) {
-                            Path descPath = getExpandedDescriptionFilePath(cdmId);
-                            // Make sure the directory exists and overwrite any existing file
-                            Files.createDirectories(descPath.getParent());
-                            if (Files.deleteIfExists(descPath)) {
-                                log.debug("Overwriting existing MODS file {}", descPath);
+                            if (!dryRun) {
+                                Path descPath = getExpandedDescriptionFilePath(cdmId);
+                                // Make sure the directory exists and overwrite any existing file
+                                Files.createDirectories(descPath.getParent());
+                                if (Files.deleteIfExists(descPath)) {
+                                    log.debug("Overwriting existing MODS file {}", descPath);
+                                }
+                                // Pass through xmlOutputter to fix indentation issues and add xml declaration
+                                Document doc = xmlBuilder.build(new ByteArrayInputStream(
+                                        modsWriter.toString().getBytes()));
+                                xmlOutputter.output(doc, Files.newOutputStream(descPath));
                             }
-                            // Pass through xmlOutputter to fix indentation issues and add xml declaration
-                            Document doc = xmlBuilder.build(new ByteArrayInputStream(modsWriter.toString().getBytes()));
-                            xmlOutputter.output(doc, Files.newOutputStream(descPath));
 
-                            recordsExtracted++;
+                            idsWithMods.add(cdmId.trim());
                         } else {
                             log.warn("MODS record does not contain a CDM ID, skipping: {}", modsWriter);
                         }
@@ -202,7 +215,6 @@ public class DescriptionsService {
         } catch (IOException | XMLStreamException | JDOMException e) {
             throw new MigrationException(e.getMessage(), e);
         }
-        return recordsExtracted;
     }
 
     private boolean isCdmIdentifier(StartElement element) {
@@ -274,7 +286,7 @@ public class DescriptionsService {
 
             xmlOutputter.output(doc, Files.newOutputStream(path));
         } catch (SQLException | IOException e) {
-            throw new MigrationException("Failed to generate SIP", e);
+            throw new MigrationException("Failed to generate descriptions", e);
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }

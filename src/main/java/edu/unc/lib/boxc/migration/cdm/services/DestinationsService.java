@@ -25,7 +25,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -41,7 +40,7 @@ import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateDestinationMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
-import edu.unc.lib.boxc.model.api.ids.RepositoryPathConstants;
+import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 
 /**
  * Service for working with destination mappings
@@ -49,14 +48,6 @@ import edu.unc.lib.boxc.model.api.ids.RepositoryPathConstants;
  */
 public class DestinationsService {
     private static final Logger log = getLogger(DestinationsService.class);
-
-    public static final String DESTINATION_FIELD = "boxc_dest";
-    public static final String COLLECTION_FIELD = "new_collection";
-    public static final String ID_FIELD = "id";
-    public static final String[] CSV_HEADERS = new String[] {
-            ID_FIELD, DESTINATION_FIELD, COLLECTION_FIELD };
-
-    public static final Pattern DEST_PATTERN = Pattern.compile(RepositoryPathConstants.UUID_PATTERN);
 
     private MigrationProject project;
 
@@ -66,14 +57,14 @@ public class DestinationsService {
      */
     public void generateMapping(GenerateDestinationMappingOptions options) throws IOException {
         assertProjectStateValid();
-        assertValidDestination(options.getDefaultDestination());
+        DestinationsValidator.assertValidDestination(options.getDefaultDestination());
         ensureMappingState(options.isForce());
 
         Path fieldsPath = project.getDestinationMappingsPath();
 
         try (
             BufferedWriter writer = Files.newBufferedWriter(fieldsPath);
-            CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(CSV_HEADERS));
+            CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(DestinationsInfo.CSV_HEADERS));
         ) {
             if (options.getDefaultDestination() != null) {
                 csvPrinter.printRecord(DestinationsInfo.DEFAULT_ID,
@@ -89,15 +80,6 @@ public class DestinationsService {
     private void assertProjectStateValid() {
         if (project.getProjectProperties().getIndexedDate() == null) {
             throw new InvalidProjectStateException("Project must be indexed prior to generating destinations");
-        }
-    }
-
-    private void assertValidDestination(String destination) {
-        if (destination == null) {
-            return;
-        }
-        if (!DEST_PATTERN.matcher(destination).matches()) {
-            throw new IllegalArgumentException("Invalid destination '" + destination + "', must be a valid UUID");
         }
     }
 
@@ -138,7 +120,7 @@ public class DestinationsService {
             Reader reader = Files.newBufferedReader(path);
             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
-                    .withHeader(CSV_HEADERS)
+                    .withHeader(DestinationsInfo.CSV_HEADERS)
                     .withTrim());
         ) {
             DestinationsInfo info = new DestinationsInfo();

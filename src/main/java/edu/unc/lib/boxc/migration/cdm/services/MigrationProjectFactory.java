@@ -85,6 +85,7 @@ public class MigrationProjectFactory {
 
         // Initialize the descriptions folder
         Files.createDirectories(project.getDescriptionsPath());
+        Files.createDirectories(project.getNewCollectionDescriptionsPath());
 
         return project;
     }

@@ -24,6 +24,11 @@ import java.util.List;
  */
 public class DestinationsInfo {
     public static final String DEFAULT_ID = "default";
+    public static final String DESTINATION_FIELD = "boxc_dest";
+    public static final String COLLECTION_FIELD = "new_collection";
+    public static final String ID_FIELD = "id";
+    public static final String[] CSV_HEADERS = new String[] {
+            ID_FIELD, DESTINATION_FIELD, COLLECTION_FIELD };
 
     private List<DestinationMapping> mappings;
 

@@ -56,6 +56,10 @@ public class SipSubmissionOptions {
             defaultValue = "${env:REDIS_PORT:-${sys:REDIS_PORT:-6379}}")
     private int redisPort;
 
+    @Option(names = { "-f", "--force"},
+            description = "Allow resubmission of previously submitted SIPs")
+    private boolean force;
+
     public String getUsername() {
         return username;
     }
@@ -94,5 +98,13 @@ public class SipSubmissionOptions {
 
     public void setSipIds(List<String> sipIds) {
         this.sipIds = sipIds;
+    }
+
+    public boolean isForce() {
+        return force;
+    }
+
+    public void setForce(boolean force) {
+        this.force = force;
     }
 }

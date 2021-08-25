@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +60,8 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.SoftwareAgentConstants.SoftwareAgent;
 import edu.unc.lib.boxc.model.api.ids.PID;
@@ -202,8 +205,16 @@ public class SipService {
                 // Serialize the SIP info out to file
                 SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
                 // Cleanup the TDB directory not that it has been exported
-                FileUtils.deleteDirectory(entry.getTdbPath().toFile());
+                try {
+                    FileUtils.deleteDirectory(entry.getTdbPath().toFile());
+                } catch (IOException e) {
+                    log.warn("Failed to cleanup TDB directory", e);
+                }
             }
+
+            project.getProjectProperties().setSipsGeneratedDate(Instant.now());
+            ProjectPropertiesSerialization.write(project);
+
             return sips;
         } catch (SQLException | IOException e) {
             throw new MigrationException("Failed to generate SIP", e);
@@ -258,6 +269,14 @@ public class SipService {
 
     private void initializeDestinations(SipGenerationOptions options) {
         try {
+            DestinationsValidator validator = new DestinationsValidator();
+            validator.setProject(project);
+            List<String> errors = validator.validateMappings(options.isForce());
+            if (!errors.isEmpty()) {
+                throw new MigrationException("Invalid destination mappings file, encountered the following errors:\n"
+                        + String.join("\n", errors));
+            }
+
             DestinationsInfo destInfo = DestinationsService.loadMappings(project);
             // Cleanup previously generated SIPs
             FileUtils.deleteDirectory(project.getSipsPath().toFile());

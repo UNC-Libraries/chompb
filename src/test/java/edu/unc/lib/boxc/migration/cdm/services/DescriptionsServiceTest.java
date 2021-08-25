@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -74,8 +75,8 @@ public class DescriptionsServiceTest {
     public void expandCollectionsOneFile() throws Exception {
         Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
                 project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
-        int extracted = service.expandDescriptions();
-        assertEquals(3, extracted);
+        Set<String> idsWithMods = service.expandDescriptions();
+        assertEquals(3, idsWithMods.size());
         assertDatePresent();
 
         assertTrue(Files.exists(project.getExpandedDescriptionsPath()));
@@ -91,8 +92,8 @@ public class DescriptionsServiceTest {
                 project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
         Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods2.xml"),
                 project.getDescriptionsPath().resolve("gilmer_mods2.xml"));
-        int extracted = service.expandDescriptions();
-        assertEquals(6, extracted);
+        Set<String> idsWithMods = service.expandDescriptions();
+        assertEquals(6, idsWithMods.size());
         assertDatePresent();
 
         assertTrue(Files.exists(project.getExpandedDescriptionsPath()));
@@ -195,8 +196,8 @@ public class DescriptionsServiceTest {
         assertExpandedDescriptionFilesCount(2);
 
         // Expect deleted record to regenerate, and no errors from duplicates
-        int extracted = service.expandDescriptions();
-        assertEquals(3, extracted);
+        Set<String> idsWithMods = service.expandDescriptions();
+        assertEquals(3, idsWithMods.size());
         assertModsPopulated("Redoubt C", "25");
         assertModsPopulated("Plan of Battery McIntosh", "26");
         assertModsPopulated("Fort DeRussy on Red River, Louisiana", "27");
