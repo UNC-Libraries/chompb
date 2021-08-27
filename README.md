@@ -59,18 +59,24 @@ cdm2bxc.sh -h
 ```
 # Initialize a new migration project (named gilmer_demo, from CDM collection gilmer)
 cdm2bxc.sh init -p gilmer_demo -c gilmer
+
 cd gilmer
 # Export object records from CDM
-cdm2bxc.sh export
+cdm2bxc.sh export -p
+# you will be prompted for your password
+
 # Index the exported object records
 cdm2bxc.sh index
-# Map objects to Box-c destiantion
-cdm2bxc.sh destinations generate -dd <dest UUID>
+
+# Map objects to Box-c destination 
+# to map all objects being migrated by default into a newly created "00276" collection in existing Box-c Admin Unit with id 4e282ae9-496d-48bc-b1cc-a59ee565efa8
+cdm2bxc.sh destinations generate -dd 4e282ae9-496d-48bc-b1cc-a59ee565efa8 -dc 00276
+
 # Map objects to source files
-cdm2bxc.sh source_files generate -b /mnt/locos/shc/bucket/00276_gilmer_maps/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001.tif' -l
-cdm2bxc.sh source_files generate -b /mnt/locos/shc/bucket/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -u 
+cdm2bxc.sh source_files generate -b /path/to/00276_gilmer_maps/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001.tif' -l
+cdm2bxc.sh source_files generate -b /path/to/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -u 
 # Optional: Map objects to access files
-cdm2bxc.sh access_files generate -b /mnt/locos/shc/bucket/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -d
+cdm2bxc.sh access_files generate -b /path/to/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -d
 
 # Creation of MODS descriptions is not performed by the migration utility
 # Descriptions for objects being migrated should be placed in the "descriptions" folder, encoded as modsCollections
