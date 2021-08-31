@@ -60,7 +60,7 @@ cdm2bxc.sh -h
 # Initialize a new migration project (named gilmer_demo, from CDM collection gilmer)
 cdm2bxc.sh init -p gilmer_demo -c gilmer
 
-cd gilmer
+cd gilmer_demo
 # Export object records from CDM
 cdm2bxc.sh export -p
 # you will be prompted for your password
@@ -81,6 +81,8 @@ cdm2bxc.sh access_files generate -b /path/to/00276_gilmer_maps/enhanced/ -p "([0
 # Creation of MODS descriptions is not performed by the migration utility
 # Descriptions for objects being migrated should be placed in the "descriptions" folder, encoded as modsCollections
 # Descriptions for new collections should be placed in the "newCollectionDescriptions", encoded as mods records
+# For demo purposes, dummy descriptions can be generated for all objects with the following command:
+# cdm2bxc.sh descriptions generate
 
 # Perform transformation of migration project to one or more SIPs for deposit
 cdm2bxc.sh descriptions expand
