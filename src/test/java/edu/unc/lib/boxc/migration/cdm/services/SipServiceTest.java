@@ -15,6 +15,8 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -46,6 +48,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
+import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil;
 
@@ -185,6 +188,8 @@ public class SipServiceTest {
         Resource collResc = depBagChildren.iterator().next().asResource();
         assertTrue(collResc.hasProperty(RDF.type, Cdr.Collection));
         assertTrue(collResc.hasProperty(CdrDeposit.label, "001234"));
+        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, PUBLIC_PRINC));
+        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, AUTHENTICATED_PRINC));
         testHelper.assertMigrationEventPresent(dirManager, sip.getNewCollectionPid());
         Bag collBag = model.getBag(collResc);
         List<RDFNode> collChildren = collBag.iterator().toList();
@@ -230,6 +235,8 @@ public class SipServiceTest {
         Resource collResc = depBagChildren.iterator().next().asResource();
         assertTrue(collResc.hasProperty(RDF.type, Cdr.Collection));
         assertTrue(collResc.hasProperty(CdrDeposit.label, newCollId));
+        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, PUBLIC_PRINC));
+        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, AUTHENTICATED_PRINC));
         testHelper.assertMigrationEventPresent(dirManager, sip.getNewCollectionPid());
         // Check that desc file was copied over
         Path path = dirManager.getModsPath(sip.getNewCollectionPid());
