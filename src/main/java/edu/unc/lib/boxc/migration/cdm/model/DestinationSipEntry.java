@@ -15,6 +15,8 @@
  */
 package edu.unc.lib.boxc.migration.cdm.model;
 
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.nio.file.Path;
@@ -32,6 +34,7 @@ import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
+import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 
@@ -70,6 +73,9 @@ public class DestinationSipEntry {
             depRootBag.add(newCollBag);
             newCollBag.addProperty(RDF.type, Cdr.Collection);
             newCollBag.addLiteral(CdrDeposit.label, newCollectionId);
+            // New collections should be created as publicly accessible
+            newCollBag.addProperty(CdrAcl.canViewOriginals, PUBLIC_PRINC);
+            newCollBag.addProperty(CdrAcl.canViewOriginals, AUTHENTICATED_PRINC);
         }
         commitModel();
     }
