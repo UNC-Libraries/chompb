@@ -179,7 +179,7 @@ public class SipService {
                     SourceFileMapping accessMapping = accessFilesInfo.getMappingByCdmId(cdmId);
                     if (accessMapping != null && accessMapping.getSourcePath() != null) {
                         Resource accessResc = DepositModelHelpers.addDatastream(
-                                fileObjResc, DatastreamType.ACCESS_COPY);
+                                fileObjResc, DatastreamType.ACCESS_SURROGATE);
                         accessResc.addLiteral(CdrDeposit.stagingLocation,
                                 accessMapping.getSourcePath().toUri().toString());
                         String mimetype = accessFileService.getMimetype(accessMapping.getSourcePath());
