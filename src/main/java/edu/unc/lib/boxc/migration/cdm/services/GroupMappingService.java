@@ -104,7 +104,7 @@ public class GroupMappingService {
                     csvPrinter.printRecord(cdmId, null);
                     continue;
                 }
-                csvPrinter.printRecord(cdmId, groupKey);
+                csvPrinter.printRecord(cdmId, options.getGroupField() + ":" + groupKey);
             }
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
@@ -293,6 +293,7 @@ public class GroupMappingService {
             return info;
         }
     }
+
 
     public void setProject(MigrationProject project) {
         this.project = project;

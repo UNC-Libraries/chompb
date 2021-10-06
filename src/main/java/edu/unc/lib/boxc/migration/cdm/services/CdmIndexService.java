@@ -29,6 +29,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,6 +56,10 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 public class CdmIndexService {
     private static final Logger log = getLogger(CdmIndexService.class);
     public static final String TB_NAME = "cdm_records";
+    public static final String PARENT_ID_FIELD = "cdm2bxc_parent_id";
+    public static final String ENTRY_TYPE_FIELD = "cdm2bxc_entry_type";
+    public static final String ENTRY_TYPE_GROUPED_WORK = "grouped_work";
+    public static final List<String> MIGRATION_FIELDS = Arrays.asList(PARENT_ID_FIELD, ENTRY_TYPE_FIELD);
 
     private MigrationProject project;
     private CdmFieldService fieldService;
@@ -67,7 +73,9 @@ public class CdmIndexService {
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listExportFields();
-        String insertTemplate = makeInsertTemplate(exportFields);
+        List<String> allFields = new ArrayList<>(exportFields);
+        allFields.addAll(MIGRATION_FIELDS);
+        String insertTemplate = makeInsertTemplate(allFields);
 
         SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
         Connection conn = null;
@@ -113,7 +121,8 @@ public class CdmIndexService {
         List<Element> recordEls = root.getChildren("record");
         for (Element recordEl : recordEls) {
             PreparedStatement stmt = conn.prepareStatement(insertTemplate);
-            for (int i = 0; i < exportFields.size(); i++) {
+            int i = 0;
+            for (; i < exportFields.size(); i++) {
                 String exportField = exportFields.get(i);
                 Element childEl = recordEl.getChild(exportField);
                 if (childEl == null) {
@@ -124,6 +133,10 @@ public class CdmIndexService {
                 value = value == null ? "" : value;
                 stmt.setString(i + 1, value);
             }
+            // Add in migration generated fields
+            for (int j = 0; j < MIGRATION_FIELDS.size(); j++) {
+                stmt.setString(i + j, "");
+            }
             stmt.executeUpdate();
             stmt.close();
         }
@@ -133,7 +146,8 @@ public class CdmIndexService {
         ensureDatabaseState(force);
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-        List<String> exportFields = fieldInfo.listExportFields();
+        List<String> exportFields = new ArrayList<>(fieldInfo.listExportFields());
+        exportFields.addAll(MIGRATION_FIELDS);
         StringBuilder queryBuilder = new StringBuilder("CREATE TABLE " + TB_NAME + " (\n");
         for (int i = 0; i < exportFields.size(); i++) {
             String field = exportFields.get(i);
@@ -148,7 +162,7 @@ public class CdmIndexService {
             }
         }
         queryBuilder.append(')');
-        log.debug("Creating database with query: {}", queryBuilder);
+        log.warn("Creating database with query: {}", queryBuilder);
 
         Connection conn = null;
         try {

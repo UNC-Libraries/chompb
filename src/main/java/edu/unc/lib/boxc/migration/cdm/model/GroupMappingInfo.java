@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
  * @author bbpennel
  */
 public class GroupMappingInfo {
+    public static final String GROUPED_WORK_PREFIX = "grp_work:";
     public static final String GROUP_KEY = "group";
     public static final String ID_FIELD = "id";
     public static final String[] CSV_HEADERS = new String[] {
