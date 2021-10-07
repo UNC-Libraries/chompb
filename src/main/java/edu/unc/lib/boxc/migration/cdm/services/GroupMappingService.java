@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,7 @@ import org.slf4j.Logger;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo.GroupMapping;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
@@ -66,6 +68,7 @@ public class GroupMappingService {
 
     private MigrationProject project;
     private CdmIndexService indexService;
+    private CdmFieldService fieldService;
 
     public void generateMapping(GroupMappingOptions options) throws IOException {
         assertProjectStateValid();
@@ -94,7 +97,9 @@ public class GroupMappingService {
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
             ResultSet rs = stmt.executeQuery("select cdmid, " + options.getGroupField()
-                + " from " + CdmIndexService.TB_NAME + " order by cdmid ASC");
+                + " from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                + " order by cdmid ASC");
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 String groupKey = rs.getString(2);
@@ -294,6 +299,71 @@ public class GroupMappingService {
         }
     }
 
+    public void syncMappings() throws IOException {
+        assertProjectStateValid();
+        if (project.getProjectProperties().getGroupMappingsUpdatedDate() == null
+                || Files.notExists(project.getGroupMappingPath())) {
+            throw new InvalidProjectStateException("Project has not previously generated group mappings");
+        }
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = new ArrayList<>(fieldInfo.listExportFields());
+        exportFields.remove(CdmFieldInfo.CDM_ID);
+
+        Connection conn = null;
+        try {
+            conn = indexService.openDbConnection();
+            Statement stmt = conn.createStatement();
+            // Cleanup any previously synched grouping data
+            // Clear out of date parent ids
+            stmt.executeUpdate("update " + CdmIndexService.TB_NAME
+                    + " set " + CdmIndexService.PARENT_ID_FIELD + " = null"
+                    + " where " + CdmIndexService.PARENT_ID_FIELD
+                        + " like '" + GroupMappingInfo.GROUPED_WORK_PREFIX + "%'");
+            // Clear out of date generated grouping works
+            stmt.executeUpdate("delete from " + CdmIndexService.TB_NAME
+                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD
+                        + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'");
+            if (project.getProjectProperties().getGroupMappingsSynchedDate() != null) {
+                setSynchedDate(null);
+            }
+
+            // Sync the grouping data and generated works into the database
+            GroupMappingInfo info = loadGroupedMappings();
+            for (Entry<String, List<String>> groupEntry : info.getGroupedMappings().entrySet()) {
+                // Do no sync groups which only contain one child
+                if (groupEntry.getValue().size() <= 1) {
+                    continue;
+                }
+                // Clone the first child's data as the base data for the new work
+                String firstChild = groupEntry.getValue().get(0);
+                stmt.executeUpdate("insert into " + CdmIndexService.TB_NAME
+                        + " (" + String.join(",", exportFields) + ","
+                            + CdmFieldInfo.CDM_ID + "," + CdmIndexService.ENTRY_TYPE_FIELD + ")"
+                        + " select " + String.join(",", exportFields)
+                            + ",'" + groupEntry.getKey() + "','" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                        + " from " + CdmIndexService.TB_NAME
+                        + " where " + CdmFieldInfo.CDM_ID + " = " + firstChild);
+
+                // Set the parent id for the children
+                for (String childId : groupEntry.getValue()) {
+                    stmt.executeUpdate("update " + CdmIndexService.TB_NAME
+                            + " set " + CdmIndexService.PARENT_ID_FIELD + " = '" + groupEntry.getKey() + "'"
+                            + " where " + CdmFieldInfo.CDM_ID + " = '"  + childId + "'");
+                }
+            }
+        } catch (SQLException e) {
+            throw new MigrationException("Error interacting with export index", e);
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+        setSynchedDate(Instant.now());
+    }
+
+    private void setSynchedDate(Instant timestamp) throws IOException {
+        project.getProjectProperties().setGroupMappingsSynchedDate(timestamp);
+        ProjectPropertiesSerialization.write(project);
+    }
 
     public void setProject(MigrationProject project) {
         this.project = project;
@@ -301,5 +371,9 @@ public class GroupMappingService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    public void setFieldService(CdmFieldService fieldService) {
+        this.fieldService = fieldService;
     }
 }

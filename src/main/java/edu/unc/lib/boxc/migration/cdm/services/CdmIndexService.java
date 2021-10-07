@@ -28,6 +28,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -135,7 +136,7 @@ public class CdmIndexService {
             }
             // Add in migration generated fields
             for (int j = 0; j < MIGRATION_FIELDS.size(); j++) {
-                stmt.setString(i + j, "");
+                stmt.setNull(i + j, Types.LONGVARCHAR);
             }
             stmt.executeUpdate();
             stmt.close();
