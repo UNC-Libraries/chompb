@@ -31,11 +31,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
@@ -83,6 +85,7 @@ public class GroupMappingService {
             needsMerge = true;
         }
 
+        Map<String, String> matchedToGroup = new HashMap<>();
         // Iterate through exported objects in this collection to match against
         Connection conn = null;
         try (
@@ -102,14 +105,16 @@ public class GroupMappingService {
                 + " order by cdmid ASC");
             while (rs.next()) {
                 String cdmId = rs.getString(1);
-                String groupKey = rs.getString(2);
+                String matchedValue = rs.getString(2);
 
-                if (StringUtils.isBlank(groupKey)) {
+                if (StringUtils.isBlank(matchedValue)) {
                     log.debug("No matching field for object {}", cdmId);
-                    csvPrinter.printRecord(cdmId, null);
+                    csvPrinter.printRecord(cdmId, null, null);
                     continue;
                 }
-                csvPrinter.printRecord(cdmId, options.getGroupField() + ":" + groupKey);
+                String groupKey = matchedToGroup.computeIfAbsent(matchedValue,
+                        (k) ->  GroupMappingInfo.GROUPED_WORK_PREFIX + UUID.randomUUID());
+                csvPrinter.printRecord(cdmId, options.getGroupField() + ":" + matchedValue, groupKey);
             }
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
@@ -190,7 +195,8 @@ public class GroupMappingService {
             for (CSVRecord originalRecord : originalParser) {
                 GroupMapping origMapping = new GroupMapping();
                 origMapping.setCdmId(originalRecord.get(0));
-                origMapping.setGroupKey(originalRecord.get(1));
+                origMapping.setMatchedValue(originalRecord.get(1));
+                origMapping.setGroupKey(originalRecord.get(2));
 
                 GroupMapping updateMapping = updateInfo.getMappingByCdmId(origMapping.getCdmId());
                 if (updateMapping == null) {
@@ -228,7 +234,7 @@ public class GroupMappingService {
     }
 
     private void writeMapping(CSVPrinter csvPrinter, GroupMapping mapping) throws IOException {
-        csvPrinter.printRecord(mapping.getCdmId(), mapping.getGroupKey());
+        csvPrinter.printRecord(mapping.getCdmId(), mapping.getMatchedValue(), mapping.getGroupKey());
     }
 
     protected void setUpdatedDate(Instant timestamp) throws IOException {
@@ -249,7 +255,7 @@ public class GroupMappingService {
             Reader reader = Files.newBufferedReader(mappingPath);
             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
-                    .withHeader(SourceFilesInfo.CSV_HEADERS)
+                    .withHeader(GroupMappingInfo.CSV_HEADERS)
                     .withTrim());
         ) {
             GroupMappingInfo info = new GroupMappingInfo();
@@ -258,10 +264,8 @@ public class GroupMappingService {
             for (CSVRecord csvRecord : csvParser) {
                 GroupMapping mapping = new GroupMapping();
                 mapping.setCdmId(csvRecord.get(0));
-                String groupKey = csvRecord.get(1);
-                if (!StringUtils.isBlank(groupKey)) {
-                    mapping.setGroupKey(csvRecord.get(1));
-                }
+                mapping.setMatchedValue(csvRecord.get(1));
+                mapping.setGroupKey(csvRecord.get(2));
                 mappings.add(mapping);
             }
             return info;
@@ -281,14 +285,14 @@ public class GroupMappingService {
             Reader reader = Files.newBufferedReader(project.getGroupMappingPath());
             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
-                    .withHeader(SourceFilesInfo.CSV_HEADERS)
+                    .withHeader(GroupMappingInfo.CSV_HEADERS)
                     .withTrim());
         ) {
             GroupMappingInfo info = new GroupMappingInfo();
             Map<String, List<String>> mappings = info.getGroupedMappings();
             for (CSVRecord csvRecord : csvParser) {
                 String id = csvRecord.get(0);
-                String groupKey = csvRecord.get(1);
+                String groupKey = csvRecord.get(2);
                 if (StringUtils.isBlank(groupKey)) {
                     continue;
                 }
@@ -299,6 +303,11 @@ public class GroupMappingService {
         }
     }
 
+    /**
+     * Syncs group mappings from the mapping file into the database. Clears out any previously synched
+     * group mapping details before updating.
+     * @throws IOException
+     */
     public void syncMappings() throws IOException {
         assertProjectStateValid();
         if (project.getProjectProperties().getGroupMappingsUpdatedDate() == null
