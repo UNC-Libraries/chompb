@@ -169,6 +169,10 @@ public class SipService {
         }
     }
 
+    /**
+     * Factory which produces WorkGenerator objects
+     * @author bbpennel
+     */
     private class WorkGeneratorFactory {
         private SourceFilesInfo sourceFilesInfo;
         private SourceFilesInfo accessFilesInfo;
@@ -193,30 +197,50 @@ public class SipService {
         }
     }
 
+    /**
+     * WorkGenerator for works created via grouping together CDM objects
+     * @author bbpennel
+     */
     private class GroupedWorkGenerator extends WorkGenerator {
         @Override
-        protected void generateWork(Path descPath) throws IOException {
-            log.info("Transforming group generated work {} to box-c work {}", cdmId, workPid.getId());
-            workBag = model.createBag(workPid.getRepositoryPath());
-            workBag.addProperty(RDF.type, Cdr.Work);
-            workBag.addLiteral(CdrDeposit.createTime, cdmCreated);
-
-            // Copy description to SIP
-            Path sipDescPath = destEntry.getDepositDirManager().getModsPath(workPid);
-            Files.copy(descPath, sipDescPath);
-
+        protected void generateWork() throws IOException {
             try {
+                // Get the first child id in order to use its description
+                String firstChild = getFirstChildId();
+                Path expDescPath = getDescriptionPath(firstChild, false);
+
+                log.info("Transforming group generated work {} to box-c work {}", cdmId, workPid.getId());
+                workBag = model.createBag(workPid.getRepositoryPath());
+                workBag.addProperty(RDF.type, Cdr.Work);
+                workBag.addLiteral(CdrDeposit.createTime, cdmCreated);
+
+                // Copy description to SIP
+                copyDescriptionToSip(workPid, expDescPath);
+
                 fileObjPids = addChildObjects();
             } catch (SQLException e) {
                 throw new MigrationException("Failed to add child objects to " + workPid, e);
             }
         }
 
+        private String getFirstChildId() throws SQLException {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID
+                + " from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + cdmId + "'"
+                + " limit 1");
+
+            while (rs.next()) {
+                return rs.getString(1);
+            }
+            return null;
+        }
+
         private List<PID> addChildObjects() throws SQLException, IOException {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
                 + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + workPid.getId() + "'");
+                + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + cdmId + "'");
 
             List<PID> childPids = new ArrayList<>();
             while (rs.next()) {
@@ -224,13 +248,20 @@ public class SipService {
                 String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
 
                 SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
+                Path expDescPath = getDescriptionPath(cdmId, true);
+                PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
+                copyDescriptionToSip(filePid, expDescPath);
 
-                childPids.add(addFileObject(cdmId, cdmCreated, sourceMapping));
+                childPids.add(filePid);
             }
             return childPids;
         }
     }
 
+    /**
+     * Base generator for works which are constructed for standalone CDM objects
+     * @author bbpennel
+     */
     private class WorkGenerator {
         protected SourceFilesInfo sourceFilesInfo;
         protected SourceFilesInfo accessFilesInfo;
@@ -247,15 +278,13 @@ public class SipService {
         protected List<PID> fileObjPids;
 
         public void generate() throws IOException, SQLException {
-            Path expDescPath = getDescriptionPath(cdmId);
-
             workPid = pidMinter.mintContentPid();
             workBag = null;
 
             Bag destBag = destEntry.getDestinationBag();
             model = destBag.getModel();
 
-            generateWork(expDescPath);
+            generateWork();
 
             destBag.add(workBag);
 
@@ -266,7 +295,9 @@ public class SipService {
             }
         }
 
-        protected void generateWork(Path descPath) throws IOException {
+        protected void generateWork() throws IOException {
+            Path expDescPath = getDescriptionPath(cdmId, false);
+
             SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
             log.info("Transforming CDM object {} to box-c work {}", cdmId, workPid.getId());
             workBag = model.createBag(workPid.getRepositoryPath());
@@ -274,15 +305,26 @@ public class SipService {
             workBag.addLiteral(CdrDeposit.createTime, cdmCreated);
 
             // Copy description to SIP
-            Path sipDescPath = destEntry.getDepositDirManager().getModsPath(workPid);
-            Files.copy(descPath, sipDescPath);
+            copyDescriptionToSip(workPid, expDescPath);
 
             fileObjPids = Collections.singletonList(addFileObject(cdmId, cdmCreated, sourceMapping));
         }
 
-        protected Path getDescriptionPath(String cdmId) {
+        protected void copyDescriptionToSip(PID pid, Path descPath) throws IOException {
+            if (Files.notExists(descPath)) {
+                return;
+            }
+            // Copy description to SIP
+            Path sipDescPath = destEntry.getDepositDirManager().getModsPath(pid);
+            Files.copy(descPath, sipDescPath);
+        }
+
+        protected Path getDescriptionPath(String cdmId, boolean allowMissing) {
             Path expDescPath = descriptionsService.getExpandedDescriptionFilePath(cdmId);
             if (Files.notExists(expDescPath)) {
+                if (allowMissing) {
+                    return null;
+                }
                 String message = "Cannot transform object " + cdmId + ", it does not have a MODS description";
                 if (options.isForce()) {
                     outputLogger.info(message);
