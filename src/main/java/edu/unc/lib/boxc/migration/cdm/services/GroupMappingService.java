@@ -260,43 +260,21 @@ public class GroupMappingService {
         ) {
             GroupMappingInfo info = new GroupMappingInfo();
             List<GroupMapping> mappings = new ArrayList<>();
+            Map<String, List<String>> grouped = info.getGroupedMappings();
             info.setMappings(mappings);
-            for (CSVRecord csvRecord : csvParser) {
-                GroupMapping mapping = new GroupMapping();
-                mapping.setCdmId(csvRecord.get(0));
-                mapping.setMatchedValue(csvRecord.get(1));
-                mapping.setGroupKey(csvRecord.get(2));
-                mappings.add(mapping);
-            }
-            return info;
-        }
-    }
-
-    public GroupMappingInfo loadGroupedMappings() throws IOException {
-        return loadGroupedMappings(project.getGroupMappingPath());
-    }
-
-    /**
-     * @return the group mapping info for the provided project, grouped by group key
-     * @throws IOException
-     */
-    public GroupMappingInfo loadGroupedMappings(Path mappingPath) throws IOException {
-        try (
-            Reader reader = Files.newBufferedReader(project.getGroupMappingPath());
-            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .withHeader(GroupMappingInfo.CSV_HEADERS)
-                    .withTrim());
-        ) {
-            GroupMappingInfo info = new GroupMappingInfo();
-            Map<String, List<String>> mappings = info.getGroupedMappings();
+            info.setGroupedMappings(grouped);
             for (CSVRecord csvRecord : csvParser) {
                 String id = csvRecord.get(0);
                 String groupKey = csvRecord.get(2);
+                GroupMapping mapping = new GroupMapping();
+                mapping.setCdmId(id);
+                mapping.setMatchedValue(csvRecord.get(1));
+                mapping.setGroupKey(groupKey);
+                mappings.add(mapping);
                 if (StringUtils.isBlank(groupKey)) {
                     continue;
                 }
-                List<String> ids = mappings.computeIfAbsent(groupKey, v -> new ArrayList<String>());
+                List<String> ids = grouped.computeIfAbsent(groupKey, v -> new ArrayList<>());
                 ids.add(id);
             }
             return info;
@@ -338,7 +316,7 @@ public class GroupMappingService {
             }
 
             // Sync the grouping data and generated works into the database
-            GroupMappingInfo info = loadGroupedMappings();
+            GroupMappingInfo info = loadMappings();
             for (Entry<String, List<String>> groupEntry : info.getGroupedMappings().entrySet()) {
                 // Do no sync groups which only contain one child
                 if (groupEntry.getValue().size() <= 1) {

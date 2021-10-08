@@ -159,6 +159,7 @@ public class StatusCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Destination Mappings\n +Last Generated: +Not completed.*");
         assertOutputMatches(".*Source File Mappings\n +Last Updated: +Not completed.*");
         assertOutputMatches(".*Access File Mappings\n +Last Updated: +Not completed.*");
+        assertOutputMatches(".*Grouped Object Mappings\n +Last Generated: +Not completed.*");
         assertOutputMatches(".*Submission Information Packages\n +Last Generated: +Not completed.*");
     }
 

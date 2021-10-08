@@ -248,9 +248,7 @@ public class SipService {
                 String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
 
                 SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-                Path expDescPath = getDescriptionPath(cdmId, true);
                 PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
-                copyDescriptionToSip(filePid, expDescPath);
 
                 childPids.add(filePid);
             }

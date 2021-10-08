@@ -163,7 +163,7 @@ public class CdmIndexService {
             }
         }
         queryBuilder.append(')');
-        log.warn("Creating database with query: {}", queryBuilder);
+        log.debug("Creating database with query: {}", queryBuilder);
 
         Connection conn = null;
         try {

@@ -76,6 +76,12 @@ public class GroupMappingInfo {
                 .findFirst().orElse(null);
     }
 
+    public String getMatchedValueByGroupKey(String groupKey) {
+        return mappings.stream().filter(m -> groupKey.equals(m.getGroupKey()))
+                .map(GroupMapping::getMatchedValue)
+                .findFirst().orElse(null);
+    }
+
     public static class GroupMapping {
         private String cdmId;
         private String matchedValue;

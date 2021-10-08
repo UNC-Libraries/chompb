@@ -101,6 +101,89 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
         }
     }
 
+    @Test
+    public void statusNotGenerated() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "status" };
+        executeExpectSuccess(args);
+
+        assertOutputMatches(".*Last Generated: +Not completed.*");
+    }
+
+    @Test
+    public void statusGenerated() throws Exception {
+        indexExportSamples();
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "generate",
+                "-n", "groupa"};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "status" };
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Mappings Modified: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Last Synched: +Not completed.*");
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "sync" };
+        executeExpectSuccess(args3);
+
+        resetOutput();
+
+        // Normal verbosity
+        String[] args4 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "status" };
+        executeExpectSuccess(args4);
+
+        assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Mappings Modified: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Last Synched: +[0-9\\-T:]+.*");
+
+        assertOutputMatches(".*Total Groups: +1.*");
+        assertOutputMatches(".*Objects In Groups: +2.*");
+        assertOutputNotMatches(".*Counts per group.*");
+
+        resetOutput();
+
+        // Quiet verbosity
+        String[] args5 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "status",
+                "-q" };
+        executeExpectSuccess(args5);
+
+        assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Mappings Modified: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Last Synched: +[0-9\\-T:]+.*");
+
+        assertOutputNotMatches(".*Total Groups.*");
+
+        resetOutput();
+
+        // Verbose
+        String[] args6 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "status",
+                "-v" };
+        executeExpectSuccess(args6);
+
+        assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Mappings Modified: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Last Synched: +[0-9\\-T:]+.*");
+
+        assertOutputMatches(".*Total Groups: +1.*");
+        assertOutputMatches(".*Objects In Groups: +2.*");
+        assertOutputMatches(".*Counts per group:.*");
+        assertOutputMatches(".*groupa:group1 \\(with id .+\\): 2.*");
+    }
+
     private void assertFilesGrouped(Connection conn, String... expectedFileCdmIds)
             throws Exception {
         Statement stmt = conn.createStatement();

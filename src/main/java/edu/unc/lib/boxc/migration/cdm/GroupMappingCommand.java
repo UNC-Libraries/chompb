@@ -31,6 +31,7 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.status.GroupMappingStatusService;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParentCommand;
@@ -93,6 +94,26 @@ public class GroupMappingCommand {
         } catch (Exception e) {
             log.error("Failed to sync group mappings", e);
             outputLogger.info("Failed to sync group mappings: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
+    @Command(name = "status",
+            description = "Display status of the group mappings for this project")
+    public int status() throws Exception {
+        try {
+            initialize();
+            GroupMappingStatusService statusService = new GroupMappingStatusService();
+            statusService.setProject(project);
+            statusService.report(parentCommand.getVerbosity());
+
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Status failed: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Status failed", e);
+            outputLogger.info("Status failed: {}", e.getMessage(), e);
             return 1;
         }
     }

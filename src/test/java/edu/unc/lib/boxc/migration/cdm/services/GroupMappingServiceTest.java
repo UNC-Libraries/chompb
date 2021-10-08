@@ -107,10 +107,9 @@ public class GroupMappingServiceTest {
         assertMappingPresent(info, "29", null, null);
         assertEquals(5, info.getMappings().size());
 
-        GroupMappingInfo groupedInfo  = service.loadGroupedMappings();
-        assertGroupingPresent(groupedInfo, group1Key, "25", "26");
-        assertGroupingPresent(groupedInfo, group2Key, "27");
-        assertEquals(2, groupedInfo.getGroupedMappings().size());
+        assertGroupingPresent(info, group1Key, "25", "26");
+        assertGroupingPresent(info, group2Key, "27");
+        assertEquals(2, info.getGroupedMappings().size());
 
         assertMappedDatePresent();
     }
@@ -216,11 +215,10 @@ public class GroupMappingServiceTest {
         assertMappingPresent(info2, "29", "digitc:2005-11-10", group1Key2);
         assertEquals(5, info2.getMappings().size());
 
-        GroupMappingInfo groupedInfo  = service.loadGroupedMappings();
-        assertGroupingPresent(groupedInfo, group1Key2, "25", "28", "29");
-        assertGroupingPresent(groupedInfo, group2Key2, "26");
-        assertGroupingPresent(groupedInfo, group3Key2, "27");
-        assertEquals(3, groupedInfo.getGroupedMappings().size());
+        assertGroupingPresent(info2, group1Key2, "25", "28", "29");
+        assertGroupingPresent(info2, group2Key2, "26");
+        assertGroupingPresent(info2, group3Key2, "27");
+        assertEquals(3, info2.getGroupedMappings().size());
 
         assertMappedDatePresent();
     }
@@ -380,10 +378,9 @@ public class GroupMappingServiceTest {
             assertNumberOfGroups(conn, 1);
             assertParentIdsPresent(conn, group1Key, null);
 
-            GroupMappingInfo groupedInfo  = service.loadGroupedMappings();
-            assertGroupingPresent(groupedInfo, group1Key, "25", "26");
-            assertGroupingPresent(groupedInfo, group2Key, "27");
-            assertEquals(2, groupedInfo.getGroupedMappings().size());
+            assertGroupingPresent(info, group1Key, "25", "26");
+            assertGroupingPresent(info, group2Key, "27");
+            assertEquals(2, info.getGroupedMappings().size());
 
             assertSynchedDatePresent();
         } finally {
