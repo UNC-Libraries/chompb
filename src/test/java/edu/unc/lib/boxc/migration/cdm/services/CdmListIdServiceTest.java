@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -17,7 +18,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.util.List;
 
@@ -35,6 +39,8 @@ public class CdmListIdServiceTest {
     private CloseableHttpResponse httpResp;
     @Mock
     private HttpEntity respEntity;
+    @Captor
+    private ArgumentCaptor<HttpGet> httpGetArgumentCaptor;
 
     @Before
     public void setup() throws Exception {
@@ -73,6 +79,8 @@ public class CdmListIdServiceTest {
         assertEquals("130", allListId.get(99));
         assertEquals("131", allListId.get(100));
         assertEquals("193", allListId.get(160));
+
+        assertUrlsCalled("https://dc.lib.unc.edu:82/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json");
     }
 
     @Test
@@ -100,5 +108,15 @@ public class CdmListIdServiceTest {
     @Test
     public void  retrieveCdmListIdMoreThanPageSize() throws Exception {
 
+    }
+
+    private void assertUrlsCalled(String... expectedUrls) throws Exception {
+        verify(httpClient, Mockito.times(expectedUrls.length)).execute(httpGetArgumentCaptor.capture());
+        List<HttpGet> getObjects = httpGetArgumentCaptor.getAllValues();
+        for (int i = 0; i < expectedUrls.length; i++) {
+            HttpGet getMethod = getObjects.get(i);
+            String expectedUrl = expectedUrls[i];
+            assertEquals(expectedUrl, getMethod.getURI().toString());
+        }
     }
 }
