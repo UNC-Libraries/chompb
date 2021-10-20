@@ -152,9 +152,9 @@ public class SipServiceHelper {
 
         if (accessPath == null) {
             // Verify no access copy
-            assertFalse(fileObjResc.hasProperty(CdrDeposit.hasDatastreamAccessCopy));
+            assertFalse(fileObjResc.hasProperty(CdrDeposit.hasDatastreamAccessSurrogate));
         } else {
-            Resource accessResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamAccessCopy).getResource();
+            Resource accessResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamAccessSurrogate).getResource();
             accessResc.hasLiteral(CdrDeposit.stagingLocation, accessPath.toUri().toString());
             accessResc.hasLiteral(CdrDeposit.mimetype, "image/tiff");
         }
