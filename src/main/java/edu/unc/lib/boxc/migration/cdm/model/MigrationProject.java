@@ -33,6 +33,7 @@ public class MigrationProject {
     public static final String DESTINATIONS_FILENAME = "destinations.csv";
     public static final String SOURCE_MAPPING_FILENAME = "source_files.csv";
     public static final String ACCESS_MAPPING_FILENAME = "access_files.csv";
+    public static final String GROUP_MAPPING_FILENAME = "group_mappings.csv";
     public static final String SIPS_DIRNAME = "sips";
 
     private Path projectPath;
@@ -128,6 +129,13 @@ public class MigrationProject {
      */
     public Path getAccessFilesMappingPath() {
         return projectPath.resolve(ACCESS_MAPPING_FILENAME);
+    }
+
+    /**
+     * @return Path of the object group mapping files mapping file
+     */
+    public Path getGroupMappingPath() {
+        return projectPath.resolve(GROUP_MAPPING_FILENAME);
     }
 
     /**

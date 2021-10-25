@@ -34,6 +34,8 @@ public class MigrationProjectProperties {
     private Instant destinationsGeneratedDate;
     private Instant sourceFilesUpdatedDate;
     private Instant accessFilesUpdatedDate;
+    private Instant groupMappingsUpdatedDate;
+    private Instant groupMappingsSynchedDate;
     private Instant descriptionsExpandedDate;
     private Instant sipsGeneratedDate;
     private Set<String> sipsSubmitted;
@@ -139,6 +141,28 @@ public class MigrationProjectProperties {
 
     public void setAccessFilesUpdatedDate(Instant accessFilesUpdatedDate) {
         this.accessFilesUpdatedDate = accessFilesUpdatedDate;
+    }
+
+    /**
+     * @return timestamp the group mappings file was last updated
+     */
+    public Instant getGroupMappingsUpdatedDate() {
+        return groupMappingsUpdatedDate;
+    }
+
+    public void setGroupMappingsUpdatedDate(Instant groupMappingsUpdatedDate) {
+        this.groupMappingsUpdatedDate = groupMappingsUpdatedDate;
+    }
+
+    /**
+     * @return timestamp the group mappings were last synched to the database
+     */
+    public Instant getGroupMappingsSynchedDate() {
+        return groupMappingsSynchedDate;
+    }
+
+    public void setGroupMappingsSynchedDate(Instant groupMappingsSynchedDate) {
+        this.groupMappingsSynchedDate = groupMappingsSynchedDate;
     }
 
     /**

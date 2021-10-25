@@ -78,7 +78,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
         assertOutputContains("CDM Collection Fields");
         assertOutputMatches(".*Mapping File Valid: +Yes.*");
-        assertOutputMatches(".*Fields: +60\n.*");
+        assertOutputMatches(".*Fields: +61\n.*");
         assertOutputMatches(".*Skipped: +1\n.*");
 
         assertOutputContains("CDM Collection Exports");
@@ -159,6 +159,7 @@ public class StatusCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Destination Mappings\n +Last Generated: +Not completed.*");
         assertOutputMatches(".*Source File Mappings\n +Last Updated: +Not completed.*");
         assertOutputMatches(".*Access File Mappings\n +Last Updated: +Not completed.*");
+        assertOutputMatches(".*Grouped Object Mappings\n +Last Generated: +Not completed.*");
         assertOutputMatches(".*Submission Information Packages\n +Last Generated: +Not completed.*");
     }
 
