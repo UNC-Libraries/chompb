@@ -199,10 +199,7 @@ public class GroupMappingService {
                 origMapping.setGroupKey(originalRecord.get(2));
 
                 GroupMapping updateMapping = updateInfo.getMappingByCdmId(origMapping.getCdmId());
-                if (updateMapping == null) {
-                    // No updates, so write original
-                    writeMapping(mergedPrinter, origMapping);
-                } else if (updateMapping.getGroupKey() != null) {
+                if (updateMapping != null && updateMapping.getGroupKey() != null) {
                     if (options.getForce() || origMapping.getGroupKey() == null) {
                         // overwrite entry with updated mapping if using force or original didn't have a group
                         writeMapping(mergedPrinter, updateMapping);
@@ -211,7 +208,7 @@ public class GroupMappingService {
                         writeMapping(mergedPrinter, origMapping);
                     }
                 } else {
-                    // No change, retain original
+                    // No updates or change, retain original
                     writeMapping(mergedPrinter, origMapping);
                 }
                 origIds.add(originalRecord.get(0));
