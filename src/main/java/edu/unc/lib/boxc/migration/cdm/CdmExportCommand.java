@@ -63,6 +63,11 @@ public class CdmExportCommand implements Callable<Integer> {
             arity = "0..1",
             interactive = true)
     private String cdmPassword;
+    @Option(names = {"-n", "-per-page"},
+            description = {"Page size for exports.",
+                    "Default: ${DEFAULT-VALUE}"},
+            defaultValue = "1000")
+    private String pageSize;
 
     private CdmFieldService fieldService;
     private CdmExportService exportService;
