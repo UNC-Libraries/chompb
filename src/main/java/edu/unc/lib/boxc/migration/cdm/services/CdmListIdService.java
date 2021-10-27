@@ -51,6 +51,8 @@ public class CdmListIdService {
     private CloseableHttpClient httpClient;
     private String cdmBaseUri;
 
+    private int pageSize = 1000; //set default page size
+
     /**
      * Get the total number of object IDs for the given collection
      * @param project
@@ -86,9 +88,15 @@ public class CdmListIdService {
         }
     }
 
+    /**
+     * Page through the results
+     * @param project
+     * @throw IOException
+     * @return
+     */
     private List<String> pagingResults (MigrationProject project, int total) {
         int totalRecords = total;
-        int pageSize = 50;
+        int pageSize = this.pageSize;
         int maxPages = totalRecords / pageSize;
 
         List<String> urls = new ArrayList<String>();
@@ -103,7 +111,7 @@ public class CdmListIdService {
     }
 
     /**
-     * Parse json
+     * Parse json for object IDs
      * @param project
      * @throw IOException
      * @return
@@ -168,6 +176,14 @@ public class CdmListIdService {
 
     public void setCdmBaseUri(String cdmBaseUri) {
         this.cdmBaseUri = cdmBaseUri;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
     }
 
 }

@@ -2,7 +2,6 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,7 +26,7 @@ import java.util.List;
 
 public class CdmListIdServiceTest {
     private static final String CDM_BASE_URL = "http://example.com:88/";
-    private static final String PROJECT_NAME = "proj";
+    private static final String PROJECT_NAME = "gilmer";
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -51,6 +50,7 @@ public class CdmListIdServiceTest {
         service = new CdmListIdService();
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);
+        service.setPageSize(50);
 
         when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResp);
         when(httpResp.getEntity()).thenReturn(respEntity);
@@ -72,6 +72,7 @@ public class CdmListIdServiceTest {
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_2.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_3.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_4.json"));
+
         List<String> allListId = service.listAllCdmId(project);
 
         assertEquals(161, allListId.size());
@@ -80,7 +81,11 @@ public class CdmListIdServiceTest {
         assertEquals("131", allListId.get(100));
         assertEquals("193", allListId.get(160));
 
-        assertUrlsCalled("https://dc.lib.unc.edu:82/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json");
+        assertUrlsCalled("http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json",
+                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/50/1/1/0/0/0/0/json",
+                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/50/51/1/0/0/0/0/json",
+                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/50/101/1/0/0/0/0/json",
+                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/50/151/1/0/0/0/0/json");
     }
 
     @Test
@@ -94,8 +99,10 @@ public class CdmListIdServiceTest {
 
     @Test
     public void retrieveCdmListIdLessThanPageSize() throws Exception {
+        service.setPageSize(1000);
         when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"));
+
         List<String> allListId = service.listAllCdmId(project);
 
         assertEquals(161, allListId.size());
@@ -103,11 +110,9 @@ public class CdmListIdServiceTest {
         assertEquals("130", allListId.get(99));
         assertEquals("131", allListId.get(100));
         assertEquals("193", allListId.get(160));
-    }
 
-    @Test
-    public void  retrieveCdmListIdMoreThanPageSize() throws Exception {
-
+        assertUrlsCalled("http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json",
+                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/1000/1/1/0/0/0/0/json");
     }
 
     private void assertUrlsCalled(String... expectedUrls) throws Exception {
