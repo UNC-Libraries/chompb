@@ -12,7 +12,7 @@ The project has only been tested in Mac and Linux environments
 When first setting up the project for development purposes, you will need to perform the following steps:
 
 * First, make a local clone of the box-c repo and build it
->[Box-C Build Steps](https://github.com/UNC-Libraries/box-c#building-the-project)
+>[Box-C Build Steps](https://github.com/UNC-Libraries/box-c#requirements)
 
 * Next, clone the migration utility and build it
 ```
