@@ -10,15 +10,13 @@ The project has only been tested in Mac and Linux environments
 
 ## Initial project setup
 When first setting up the project for development purposes, you will need to perform the following steps:
+
+* First, make a local clone of the box-c repo and build it
+>[Box-C Build Steps](https://github.com/UNC-Libraries/box-c#building-the-project)
+
+* Next, clone the migration utility and build it
 ```
-# First, make a local clone of the box-c and build it
-git clone git@github.com:UNC-Libraries/Carolina-Digital-Repository.git
-cd Carolina-Digital-Repository
-mvn clean install -DskipTests
-
-cd ..
-
-# Next, clone the migration utility and build it
+# in your home directory
 git clone git@github.com:UNC-Libraries/cdm-to-boxc-migration-util.git
 cd cdm-to-boxc-migration-util
 mvn clean install
