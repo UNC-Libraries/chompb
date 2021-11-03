@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -228,16 +229,18 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateDryRunTest() throws Exception {
-        indexExportSamples();
-        SourceFileMappingOptions options = makeDefaultOptions();
-        options.setDryRun(true);
-        addSourceFile("276_182_E.tif");
+        OutputHelper.captureOutput(() -> {
+            indexExportSamples();
+            SourceFileMappingOptions options = makeDefaultOptions();
+            options.setDryRun(true);
+            addSourceFile("276_182_E.tif");
 
-        service.generateMapping(options);
+            service.generateMapping(options);
 
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+            assertFalse(Files.exists(project.getSourceFilesMappingPath()));
 
-        assertMappedDateNotPresent();
+            assertMappedDateNotPresent();
+        });
     }
 
     @Test
@@ -503,16 +506,18 @@ public class SourceFileServiceTest {
 
         service.generateMapping(options);
 
-        addSourceFile("276_183B_E.tif");
-        options.setUpdate(true);
-        options.setDryRun(true);
-        service.generateMapping(options);
+        OutputHelper.captureOutput(() -> {
+            addSourceFile("276_183B_E.tif");
+            options.setUpdate(true);
+            options.setDryRun(true);
+            service.generateMapping(options);
 
-        SourceFilesInfo info2 = service.loadMappings();
-        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
-        // Mapping should be unchanged
-        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
-        assertMappingPresent(info2, "27", "276_203_E.tif", null);
+            SourceFilesInfo info2 = service.loadMappings();
+            assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
+            // Mapping should be unchanged
+            assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+            assertMappingPresent(info2, "27", "276_203_E.tif", null);
+        });
     }
 
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
