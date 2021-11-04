@@ -91,6 +91,7 @@ public class SipService {
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
     private DescriptionsService descriptionsService;
+    private RedirectMappingService redirectMappingService;
     private PremisLoggerFactory premisLoggerFactory;
     private MigrationProject project;
     private PIDMinter pidMinter;
@@ -108,9 +109,11 @@ public class SipService {
     public List<MigrationSip> generateSips(SipGenerationOptions options) {
         validateProjectState();
         initializeDestinations(options);
+        redirectMappingService = new RedirectMappingService(project);
 
         Connection conn = null;
         try {
+            redirectMappingService.init();
             WorkGeneratorFactory workGeneratorFactory = new WorkGeneratorFactory();
             workGeneratorFactory.options = options;
             workGeneratorFactory.sourceFilesInfo = sourceFileService.loadMappings();
@@ -166,6 +169,7 @@ public class SipService {
         } finally {
             CdmIndexService.closeDbConnection(conn);
             destEntries.stream().forEach(DestinationSipEntry::close);
+            redirectMappingService.closeCsv();
         }
     }
 
@@ -249,6 +253,7 @@ public class SipService {
 
                 SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
                 PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
+                redirectMappingService.addRow(cdmId, workPid.getId(), filePid.getId());
 
                 childPids.add(filePid);
             }
