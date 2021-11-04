@@ -21,6 +21,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
@@ -33,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -116,17 +119,19 @@ public class GroupMappingServiceTest {
 
     @Test
     public void generateDryRunTest() throws Exception {
-        indexExportSamples();
-        GroupMappingOptions options = makeDefaultOptions();
-        options.setDryRun(true);
-        service.generateMapping(options);
+        OutputHelper.captureOutput(() -> {
+            try {
+                indexExportSamples();
+                GroupMappingOptions options = makeDefaultOptions();
+                options.setDryRun(true);
+                service.generateMapping(options);
 
-        try {
-            service.loadMappings();
-            fail();
-        } catch (NoSuchFileException e) {
-            // expected
-        }
+                service.loadMappings();
+                fail();
+            } catch (NoSuchFileException e) {
+                // expected
+            }
+        });
 
         assertMappedDateNotPresent();
     }
@@ -160,26 +165,25 @@ public class GroupMappingServiceTest {
 
     @Test
     public void generateSecondDryRunTest() throws Exception {
-        indexExportSamples();
-        GroupMappingOptions options = makeDefaultOptions();
-        service.generateMapping(options);
+        OutputHelper.captureOutput(() -> {
+            indexExportSamples();
+            GroupMappingOptions options = makeDefaultOptions();
+            service.generateMapping(options);
+            options.setDryRun(true);
 
-        options.setDryRun(true);
-
-        service.generateMapping(options);
-
-        // mapping state should be unchanged
-        GroupMappingInfo info = service.loadMappings();
-        String group1Key = info.getGroupKeyByMatchedValue("groupa:group1");
-        String group2Key = info.getGroupKeyByMatchedValue("groupa:group2");
-        assertMappingPresent(info, "25", "groupa:group1", group1Key);
-        assertMappingPresent(info, "26", "groupa:group1", group1Key);
-        assertMappingPresent(info, "27", "groupa:group2", group2Key);
-        assertMappingPresent(info, "28", null, null);
-        assertMappingPresent(info, "29", null, null);
-        assertEquals(5, info.getMappings().size());
-
-        assertMappedDatePresent();
+            service.generateMapping(options);
+            // mapping state should be unchanged
+            GroupMappingInfo info = service.loadMappings();
+            String group1Key = info.getGroupKeyByMatchedValue("groupa:group1");
+            String group2Key = info.getGroupKeyByMatchedValue("groupa:group2");
+            assertMappingPresent(info, "25", "groupa:group1", group1Key);
+            assertMappingPresent(info, "26", "groupa:group1", group1Key);
+            assertMappingPresent(info, "27", "groupa:group2", group2Key);
+            assertMappingPresent(info, "28", null, null);
+            assertMappingPresent(info, "29", null, null);
+            assertEquals(5, info.getMappings().size());
+            assertMappedDatePresent();
+        });
     }
 
     @Test
