@@ -35,6 +35,7 @@ public class MigrationProject {
     public static final String ACCESS_MAPPING_FILENAME = "access_files.csv";
     public static final String GROUP_MAPPING_FILENAME = "group_mappings.csv";
     public static final String SIPS_DIRNAME = "sips";
+    public static final String REDIRECT_MAPPING_FILENAME = "redirect_mappings.csv";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -150,5 +151,12 @@ public class MigrationProject {
      */
     public String getProjectName() {
         return properties.getName();
+    }
+
+    /**
+     * @return Path of the redirect mapping file
+     */
+    public Path getRedirectMappingPath() {
+        return projectPath.resolve(REDIRECT_MAPPING_FILENAME);
     }
 }
