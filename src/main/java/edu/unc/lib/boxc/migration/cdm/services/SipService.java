@@ -383,6 +383,9 @@ public class SipService {
                 }
             }
 
+            // add redirect mapping for this file
+            redirectMappingService.addRow(cdmId, workPid.getId(), fileObjPid.getId());
+
             return fileObjPid;
         }
     }
