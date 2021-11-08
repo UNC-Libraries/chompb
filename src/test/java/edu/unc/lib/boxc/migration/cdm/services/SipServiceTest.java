@@ -18,17 +18,20 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static java.nio.file.StandardOpenOption.APPEND;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.BufferedWriter;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -516,6 +519,35 @@ public class SipServiceTest {
 
         assertPersistedSipInfoMatches(sip);
     }
+
+    @Test
+    public void generateSingleSipWithRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        service.generateSips(makeOptions());
+
+        assertTrue(Files.exists(project.getRedirectMappingPath()));
+
+        try (
+            Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                    .withFirstRecordAsHeader()
+                    .withHeader(RedirectMappingService.CSV_HEADERS)
+                    .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals(project.getProjectProperties().getCdmCollectionId(), rows.get(0).get("cdm_collection_id"));
+            assertEquals("25", rows.get(0).get("cdm_object_id"));
+            assertFalse(StringUtils.isBlank(rows.get(0).get("boxc_work_id")));
+            assertFalse(StringUtils.isBlank(rows.get(0).get("boxc_file_id")));
+        }
+    }
+
+    // TODO multiple sips should generate one redirect file with content from all sips
+    // TODO generating sips twice should overwrite redirect mappings csv
 
     private  SipGenerationOptions makeOptions() {
         return makeOptions(false);
