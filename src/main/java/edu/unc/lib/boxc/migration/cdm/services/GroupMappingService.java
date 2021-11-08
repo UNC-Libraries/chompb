@@ -291,7 +291,7 @@ public class GroupMappingService {
         }
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-        List<String> exportFields = new ArrayList<>(fieldInfo.listExportFields());
+        List<String> exportFields = new ArrayList<>(fieldInfo.listAllExportFields());
         exportFields.remove(CdmFieldInfo.CDM_ID);
 
         Connection conn = null;

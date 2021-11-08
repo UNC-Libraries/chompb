@@ -39,6 +39,8 @@ public class CdmFieldInfo {
             CDM_ID, CDM_CREATED, "cdmmodified", "cdmfile", "cdmpath");
 
     private List<CdmFieldEntry> fields;
+    private List<String> exportFields;
+    private List<String> configuredFields;
 
     public CdmFieldInfo() {
         fields = new ArrayList<>();
@@ -53,13 +55,30 @@ public class CdmFieldInfo {
     }
 
     /**
+     * @return List of all the configured export fields. Does not include reserved CDM fields.
+     */
+    public List<String> listConfiguredFields() {
+        if (configuredFields == null) {
+            configuredFields = streamConfiguredFields().collect(Collectors.toList());
+        }
+        return configuredFields;
+    }
+
+    /**
      * @return List of all the exported fields, including reserved CDM fields
      */
-    public List<String> listExportFields() {
-        Stream<String> exportFields = getFields().stream()
+    public List<String> listAllExportFields() {
+        if (exportFields == null) {
+            exportFields = Streams.concat(streamConfiguredFields(), RESERVED_FIELDS.stream())
+                    .collect(Collectors.toList());
+        }
+        return exportFields;
+    }
+
+    private Stream<String> streamConfiguredFields() {
+        return getFields().stream()
                 .filter(f -> !f.getSkipExport() && !IGNORE_FIELDS.contains(f.getExportAs()))
                 .map(CdmFieldEntry::getExportAs);
-        return Streams.concat(exportFields, RESERVED_FIELDS.stream()).collect(Collectors.toList());
     }
 
     /**

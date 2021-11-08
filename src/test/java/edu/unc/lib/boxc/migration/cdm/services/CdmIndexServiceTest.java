@@ -86,7 +86,7 @@ public class CdmIndexServiceTest {
         assertRowCount(3);
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-        List<String> exportFields = fieldInfo.listExportFields();
+        List<String> exportFields = fieldInfo.listAllExportFields();
 
         Connection conn = service.openDbConnection();
         try {
@@ -140,7 +140,7 @@ public class CdmIndexServiceTest {
         assertRowCount(5);
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-        List<String> exportFields = fieldInfo.listExportFields();
+        List<String> exportFields = fieldInfo.listAllExportFields();
 
         Connection conn = service.openDbConnection();
         try {
