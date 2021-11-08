@@ -184,10 +184,10 @@ public class CdmIndexService {
 
         // Add in migration generated fields
         for (int j = 0; j < migrationFieldValues.length; j++) {
-            if (migrationFieldValues == null) {
-                stmt.setNull(i + j, Types.LONGVARCHAR);
+            if (migrationFieldValues[j] == null) {
+                stmt.setNull(i + j + 1, Types.LONGVARCHAR);
             } else {
-                stmt.setString(i + j, migrationFieldValues[j]);
+                stmt.setString(i + j + 1, migrationFieldValues[j]);
             }
         }
 
