@@ -38,6 +38,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -72,6 +73,8 @@ public class CdmExportServiceTest {
     @Mock
     private CloseableHttpResponse getResp;
     @Mock
+    private CloseableHttpResponse httpResp;
+    @Mock
     private StatusLine getStatus;
     @Mock
     private CloseableHttpResponse postResp;
@@ -96,13 +99,15 @@ public class CdmExportServiceTest {
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);
         service.setCdmFieldService(fieldService);
+        service.setPageSize(50);
 
         // Mockito any matcher not differentiating between the different HttpPost/HttpGet params
         when(httpClient.execute(any())).thenReturn(postResp).thenReturn(getResp);
+        when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResp);
         when(getResp.getStatusLine()).thenReturn(getStatus);
+        when(getResp.getEntity()).thenReturn(getEntity);
         when(postResp.getStatusLine()).thenReturn(postStatus);
         when(postResp.getEntity()).thenReturn(postEntity);
-        when(getResp.getEntity()).thenReturn(getEntity);
         when(getEntity.getContent()).thenReturn(new ByteArrayInputStream(EXPORT_BODY.getBytes()));
     }
 

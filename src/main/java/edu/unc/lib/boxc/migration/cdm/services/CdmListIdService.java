@@ -99,7 +99,7 @@ public class CdmListIdService {
         int pageSize = this.pageSize;
         int maxPages = totalRecords / pageSize;
 
-        List<String> urls = new ArrayList<String>();
+        List<String> urls = new ArrayList<>();
 
         for (int page = 0; page <= maxPages; page++) {
             int recordNum = (page * pageSize) + 1;
@@ -157,17 +157,13 @@ public class CdmListIdService {
         int totalObjects = getTotalObjects(project);
         List<String> pageUrls = pagingResults(project, totalObjects);
 
-        List<String> allObjectIds = new ArrayList<String>();
+        List<String> allObjectIds = new ArrayList<>();
 
         for(String url : pageUrls) {
             List<String> objectIds = parseJson(project, url);
             allObjectIds.addAll(objectIds);
         }
         return allObjectIds;
-
-//        System.out.println(totalObjects);
-//        System.out.println(pageUrls);
-//        System.out.println(allObjectIds);
     }
 
     public void setHttpClient(CloseableHttpClient httpClient) {
@@ -185,6 +181,5 @@ public class CdmListIdService {
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
     }
-
 }
 

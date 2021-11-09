@@ -65,9 +65,9 @@ public class CdmExportCommand implements Callable<Integer> {
     private String cdmPassword;
     @Option(names = {"-n", "-per-page"},
             description = {"Page size for exports.",
-                    "Default: ${DEFAULT-VALUE}"},
+                    "Default: ${DEFAULT-VALUE}. Max page size is 5000"},
             defaultValue = "1000")
-    private String pageSize;
+    private int pageSize;
 
     private CdmFieldService fieldService;
     private CdmExportService exportService;
@@ -77,6 +77,7 @@ public class CdmExportCommand implements Callable<Integer> {
         long start = System.nanoTime();
 
         try {
+            validate();
             initializeServices();
 
             Path currentPath = parentCommand.getWorkingDirectory();
@@ -96,6 +97,7 @@ public class CdmExportCommand implements Callable<Integer> {
         fieldService = new CdmFieldService();
         exportService = new CdmExportService();
         exportService.setCdmBaseUri(cdmBaseUri);
+        exportService.setPageSize(pageSize);
         exportService.setCdmFieldService(fieldService);
         initializeAuthenticatedCdmClient();
 
@@ -120,5 +122,11 @@ public class CdmExportCommand implements Callable<Integer> {
                 .build();
 
         exportService.setHttpClient(httpClient);
+    }
+
+    private void validate() {
+        if (pageSize < 1 || pageSize > 5000) {
+            throw new MigrationException("Page size must be between 1 and 5000");
+        }
     }
 }
