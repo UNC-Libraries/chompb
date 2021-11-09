@@ -12,7 +12,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,15 +53,6 @@ public class CdmListIdServiceTest {
 
         when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResp);
         when(httpResp.getEntity()).thenReturn(respEntity);
-    }
-
-    @Test
-    public void test() throws Exception {
-        CdmListIdService listId = new CdmListIdService();
-        listId.setCdmBaseUri("https://dc.lib.unc.edu:82/");
-        CloseableHttpClient httpClient = HttpClients.createMinimal();
-        listId.setHttpClient(httpClient);
-        listId.listAllCdmId(project);
     }
 
     @Test
