@@ -15,6 +15,8 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -43,9 +45,11 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
+import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil;
 
@@ -185,6 +189,8 @@ public class SipServiceTest {
         Resource collResc = depBagChildren.iterator().next().asResource();
         assertTrue(collResc.hasProperty(RDF.type, Cdr.Collection));
         assertTrue(collResc.hasProperty(CdrDeposit.label, "001234"));
+        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, PUBLIC_PRINC));
+        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, AUTHENTICATED_PRINC));
         testHelper.assertMigrationEventPresent(dirManager, sip.getNewCollectionPid());
         Bag collBag = model.getBag(collResc);
         List<RDFNode> collChildren = collBag.iterator().toList();
@@ -230,6 +236,8 @@ public class SipServiceTest {
         Resource collResc = depBagChildren.iterator().next().asResource();
         assertTrue(collResc.hasProperty(RDF.type, Cdr.Collection));
         assertTrue(collResc.hasProperty(CdrDeposit.label, newCollId));
+        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, PUBLIC_PRINC));
+        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, AUTHENTICATED_PRINC));
         testHelper.assertMigrationEventPresent(dirManager, sip.getNewCollectionPid());
         // Check that desc file was copied over
         Path path = dirManager.getModsPath(sip.getNewCollectionPid());
@@ -427,6 +435,86 @@ public class SipServiceTest {
 
         List<MigrationSip> listedSips = service.listSips();
         assertEquals(2, listedSips.size());
+    }
+
+    @Test
+    public void generateSipsWithGroupedWork() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        GroupMappingOptions groupOptions = new GroupMappingOptions();
+        groupOptions.setGroupField("groupa");
+        GroupMappingService groupService = new GroupMappingService();
+        groupService.setProject(project);
+        groupService.setIndexService(testHelper.getIndexService());
+        groupService.setFieldService(testHelper.getFieldService());
+        groupService.generateMapping(groupOptions);
+        groupService.syncMappings();
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(2, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "25", false,
+                stagingLocs.get(0), stagingLocs.get(1));
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
+    @Test
+    public void generateSipsWithGroupedWorkWithAccessCopies() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> accessLocs = testHelper.populateAccessFiles("276_182_E.tif", "276_203_E.tif");
+
+        GroupMappingOptions groupOptions = new GroupMappingOptions();
+        groupOptions.setGroupField("groupa");
+        GroupMappingService groupService = new GroupMappingService();
+        groupService.setProject(project);
+        groupService.setIndexService(testHelper.getIndexService());
+        groupService.setFieldService(testHelper.getFieldService());
+        groupService.generateMapping(groupOptions);
+        groupService.syncMappings();
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(2, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "25", true,
+                stagingLocs.get(0), accessLocs.get(0), stagingLocs.get(1), null);
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model,
+                stagingLocs.get(2), accessLocs.get(1), "27");
+
+        assertPersistedSipInfoMatches(sip);
     }
 
     private  SipGenerationOptions makeOptions() {

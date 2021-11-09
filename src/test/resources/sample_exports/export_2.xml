@@ -56,6 +56,7 @@
     <find>http://localhost/cdm/ref/collection/gilmer/id/28</find>
     <fullrs>276_241_E.tif</fullrs>
     <fullResolution>276_241_E.tif</fullResolution>
+    <groupa></groupa>
     <cdmid>28</cdmid>
     <cdmaccess></cdmaccess>
     <cdmcreated>2005-12-09</cdmcreated>
@@ -124,6 +125,7 @@
     <find>http://localhost/cdm/ref/collection/gilmer/id/29</find>
     <fullrs>276_245a_E.tif</fullrs>
     <fullResolution>276_245a_E.tif</fullResolution>
+    <groupa></groupa>
     <cdmid>29</cdmid>
     <cdmaccess></cdmaccess>
     <cdmcreated>2005-12-10</cdmcreated>

@@ -1,16 +1,119 @@
-# CDM to Box-c Migration Util
+# CDM to Box-c Migration Utility
+A commandline utility which facilitates the migration of collections from a CONTENTdm server to a Box-c repository.
 
-To build:
+# Building and developing
+
+## Requirements
+Requires Java 8 in order to run.
+Building the project requires maven 3.
+The project has only been tested in Mac and Linux environments
+
+## Initial project setup
+When first setting up the project for development purposes, you will need to perform the following steps:
+
+* First, make a local clone of the box-c repo and build it
+>[Box-C Build Steps](https://github.com/UNC-Libraries/box-c#requirements)
+
+* Next, clone the migration utility and build it
 ```
+# in your home directory
+git clone git@github.com:UNC-Libraries/cdm-to-boxc-migration-util.git
+cd cdm-to-boxc-migration-util
 mvn clean install
 ```
 
-Basic Usage:
+### Building and updating
+In order to perform a full build of the project (with tests run) you would perform:
 ```
-java -jar target/cdm2bxc.jar
+mvn clean package
 ```
 
-## Project Structure
+If there are updates to the box-c project which need to be pulled in for use in the migration utility, you will need to do a `pull` in the box-c clone (or make the changes locally), and build the box-c project with a `mvn clean install -DskipTests`.
+
+### Deploying
+In order to deploy the project to a server or the development VM, see the `deploy_migration_util.rb` command from the `boxc-ansible` project. You can deploy uncommitted changes to the utility by providing the `-p` option. For example, `./deploy_migration_util.rb dev -p /path/to/cdm-to-boxc-migration-util` would build and deploy the current state of the migration util located at the provided path.
+
+# Usage
+
+## Basic Usage on Servers
+```
+cdm2bxc.sh -h
+```
+
+## General Workflow
+1. Initialize a new migration project for a CDM collection
+2. Export object records from CDM
+3. Index the exported object records
+4. Add data to the migration project, in any order:
+	1. Map objects to Box-c destinations
+	2. Add MODS descriptions for objects and new collections
+	3. Map objects to source files
+	4. Map objects to access files (optional)
+5. Once all of these steps are complete and the migration team signs off...
+6. Perform transformation of migration project to one or more SIPs for deposit (number of SIPs is based on the destination mappings)
+7. Submit SIPs to Box-c deposit service for ingest
+
+### Example workflow for Gilmer
+```
+# Initialize a new migration project (named gilmer_demo, from CDM collection gilmer)
+cdm2bxc.sh init -p gilmer_demo -c gilmer
+
+cd gilmer_demo
+# Export object records from CDM
+cdm2bxc.sh export -p
+# you will be prompted for your password
+
+# Index the exported object records
+cdm2bxc.sh index
+
+# Map objects to Box-c destination 
+# to map all objects being migrated by default into a newly created "00276" collection in existing Box-c Admin Unit with id 4e282ae9-496d-48bc-b1cc-a59ee565efa8
+cdm2bxc.sh destinations generate -dd 4e282ae9-496d-48bc-b1cc-a59ee565efa8 -dc 00276
+
+# Map objects to source files
+cdm2bxc.sh source_files generate -b /path/to/00276_gilmer_maps/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001.tif' -l
+cdm2bxc.sh source_files generate -b /path/to/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -u 
+# Optional: Map objects to access files
+cdm2bxc.sh access_files generate -b /path/to/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -d
+
+# Creation of MODS descriptions is not performed by the migration utility
+# Descriptions for objects being migrated should be placed in the "descriptions" folder, encoded as modsCollections
+# Descriptions for new collections should be placed in the "newCollectionDescriptions", encoded as mods records
+# For demo purposes, dummy descriptions can be generated for all objects with the following command:
+# cdm2bxc.sh descriptions generate
+
+# Perform transformation of migration project to one or more SIPs for deposit
+cdm2bxc.sh descriptions expand
+cdm2bxc.sh sips generate
+
+# Submit all SIPs for deposit (optionally, individual SIPs can be submitted)
+cdm2bxc.sh submit
+# NOTE: in order to submit the SIPs, they must be located in an approved staging location.
+# All prior steps can be perform at any path on the server.
+```
+
+### Monitoring progress and project state
+In order to view the overall status of a migration project you may use the status command:
+```
+cdm2bxc.sh status
+```
+Additionally, there are a number of more detailed status reports available for individual components of the migration, such as:
+```
+cdm2bxc.sh descriptions status
+cdm2bxc.sh source_files status
+cdm2bxc.sh access_files status
+cdm2bxc.sh destinations status
+```
+
+There are also commands available to validate various aspects of the project:
+```
+cdm2bxc.sh descriptions validate # validates MODS descriptions against schemas and local schematron
+cdm2bxc.sh source_files validate # verifies syntax, whether mapped files exist, and other concerns
+cdm2bxc.sh access_files validate
+cdm2bxc.sh destinations validate # verifies syntax and consistency of mappings
+```
+
+# Project Directory Structure
 A migration project initialized using this utility will produce a directory with the following structure:
 * <project name> - root directory for the project, named using the project name provided during initialization
 	* .project.json - Properties tracked by the migration utility about the current migration project.

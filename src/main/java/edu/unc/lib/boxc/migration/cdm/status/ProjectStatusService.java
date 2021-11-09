@@ -98,6 +98,10 @@ public class ProjectStatusService extends AbstractStatusService {
         reportAccessMappings(totalObjects);
         sectionDivider();
 
+        outputLogger.info("Grouped Object Mappings");
+        reportGroupMappings(totalObjects);
+        sectionDivider();
+
         outputLogger.info("Submission Information Packages");
         Instant sipsGenerated = properties.getSipsGeneratedDate();
         showField("Last Generated", sipsGenerated == null ? "Not completed" : sipsGenerated);
@@ -125,6 +129,13 @@ public class ProjectStatusService extends AbstractStatusService {
 
     private void reportAccessMappings(int totalObjects) {
         AccessFilesStatusService statusService = new AccessFilesStatusService();
+        statusService.setProject(project);
+        statusService.setQueryService(getQueryService());
+        statusService.reportStats(totalObjects, Verbosity.QUIET);
+    }
+
+    private void reportGroupMappings(int totalObjects) {
+        GroupMappingStatusService statusService = new GroupMappingStatusService();
         statusService.setProject(project);
         statusService.setQueryService(getQueryService());
         statusService.reportStats(totalObjects, Verbosity.QUIET);

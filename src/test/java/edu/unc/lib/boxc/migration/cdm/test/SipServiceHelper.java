@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -152,9 +153,9 @@ public class SipServiceHelper {
 
         if (accessPath == null) {
             // Verify no access copy
-            assertFalse(fileObjResc.hasProperty(CdrDeposit.hasDatastreamAccessCopy));
+            assertFalse(fileObjResc.hasProperty(CdrDeposit.hasDatastreamAccessSurrogate));
         } else {
-            Resource accessResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamAccessCopy).getResource();
+            Resource accessResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamAccessSurrogate).getResource();
             accessResc.hasLiteral(CdrDeposit.stagingLocation, accessPath.toUri().toString());
             accessResc.hasLiteral(CdrDeposit.mimetype, "image/tiff");
         }
@@ -164,6 +165,75 @@ public class SipServiceHelper {
         assertMigrationEventPresent(dirManager, workPid);
         PID fileObjPid = PIDs.get(fileObjResc.getURI());
         assertMigrationEventPresent(dirManager, fileObjPid);
+
+        assertModsPresentWithCdmId(dirManager, workPid, cdmId);
+    }
+
+    /**
+     *
+     * @param objResc
+     * @param dirManager
+     * @param depModel
+     * @param cdmId
+     * @param withAccessCopies
+     * @param filePaths if withAccessCopies is false, then this is a list of staging paths. Otherwise,
+     *      this array should alternate between staging and access paths, staging first. If there is no
+     *       access path for an object, then null must be provided.
+     * @throws Exception
+     */
+    public void assertGroupedWorkPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager, Model depModel,
+            String cdmId, boolean withAccessCopies, Path... filePaths) throws Exception {
+        List<Path> stagingPaths;
+        List<Path> accessPaths = null;
+        if (withAccessCopies) {
+            // Split paths out into staging and access path lists
+            stagingPaths = new ArrayList<>();
+            accessPaths = new ArrayList<>();
+            for (int i = 0; i < filePaths.length; i++) {
+                if (i % 2 == 0) {
+                    stagingPaths.add(filePaths[i]);
+                } else {
+                    accessPaths.add(filePaths[i]);
+                }
+            }
+        } else {
+            stagingPaths = Arrays.asList(filePaths);
+        }
+
+        assertTrue(objResc.hasProperty(RDF.type, Cdr.Work));
+        Bag workBag = depModel.getBag(objResc);
+        List<RDFNode> workChildren = workBag.iterator().toList();
+        assertEquals(stagingPaths.size(), workChildren.size());
+
+        for (int i = 0; i < stagingPaths.size(); i++) {
+            Path stagingPath = stagingPaths.get(i);
+            String stagingUri = stagingPath.toUri().toString();
+            Resource fileObjResc = workChildren.stream().map(RDFNode::asResource)
+                .filter(c -> c.getProperty(CdrDeposit.hasDatastreamOriginal).getResource()
+                    .hasLiteral(CdrDeposit.stagingLocation, stagingUri))
+                .findFirst().get();
+            assertTrue(fileObjResc.hasProperty(RDF.type, Cdr.FileObject));
+
+            Resource origResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamOriginal).getResource();
+            assertTrue(origResc.hasLiteral(CdrDeposit.label, stagingPath.getFileName().toString()));
+
+            if (withAccessCopies) {
+                Path accessPath = accessPaths.get(i);
+                if (accessPath == null) {
+                    assertFalse(fileObjResc.hasProperty(CdrDeposit.hasDatastreamAccessSurrogate));
+                } else {
+                    Resource accessResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamAccessSurrogate).getResource();
+                    accessResc.hasLiteral(CdrDeposit.stagingLocation, accessPath.toUri().toString());
+                    accessResc.hasLiteral(CdrDeposit.mimetype, "image/tiff");
+                }
+            }
+
+            PID fileObjPid = PIDs.get(fileObjResc.getURI());
+            assertMigrationEventPresent(dirManager, fileObjPid);
+        }
+
+        PID workPid = PIDs.get(objResc.getURI());
+        assertMigrationEventPresent(dirManager, workPid);
 
         assertModsPresentWithCdmId(dirManager, workPid, cdmId);
     }

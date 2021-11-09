@@ -54,6 +54,7 @@ fila,fila,File Format Raw Scan,false
 filb,filb,File Format filename,false
 full,full,path,false
 fullrs,fullrs,Full resolution,false
+groupa,groupa,Group A,false
 dmoclcno,dmoclcno,OCLC number,false
 dmcreated,dmcreated,Date created,false
 dmmodified,dmmodified,Date modified,false
