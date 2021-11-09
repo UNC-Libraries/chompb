@@ -253,7 +253,6 @@ public class SipService {
 
                 SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
                 PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
-                redirectMappingService.addRow(cdmId, workPid.getId(), filePid.getId());
 
                 childPids.add(filePid);
             }
