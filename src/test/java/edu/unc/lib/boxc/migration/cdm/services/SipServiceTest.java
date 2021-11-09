@@ -521,7 +521,7 @@ public class SipServiceTest {
     }
 
     @Test
-    public void generateSingleSipWithRedirectMapping() throws Exception {
+    public void generateSipsWithRedirectMapping() throws Exception {
         testHelper.indexExportData("export_1.xml");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
@@ -539,14 +539,76 @@ public class SipServiceTest {
                     .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals(project.getProjectProperties().getCdmCollectionId(), rows.get(0).get("cdm_collection_id"));
-            assertEquals("25", rows.get(0).get("cdm_object_id"));
-            assertFalse(StringUtils.isBlank(rows.get(0).get("boxc_work_id")));
-            assertFalse(StringUtils.isBlank(rows.get(0).get("boxc_file_id")));
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
         }
     }
 
-    // TODO multiple sips should generate one redirect file with content from all sips
+    @Test
+    public void generateSipsWithMultipleDestinationsAndRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        // Inserting an extra destination which has one object mapped to it
+        try (BufferedWriter writer = Files.newBufferedWriter(project.getDestinationMappingsPath(), APPEND)) {
+            writer.write("26," + DEST_UUID2 + ",");
+        }
+
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(2, sips.size());
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals(3, rows.toArray().length);
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
+        }
+    }
+
+    @Test
+    public void generateSipsWithGroupedWorkAndRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        GroupMappingOptions groupOptions = new GroupMappingOptions();
+        groupOptions.setGroupField("groupa");
+        GroupMappingService groupService = new GroupMappingService();
+        groupService.setProject(project);
+        groupService.setIndexService(testHelper.getIndexService());
+        groupService.setFieldService(testHelper.getFieldService());
+        groupService.generateMapping(groupOptions);
+        groupService.syncMappings();
+
+        service.generateSips(makeOptions());
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "27"); // ungrouped items first
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "26");
+            // grouped files should have the same work ID
+            assertEquals(rows.get(1).get("boxc_work_id"), rows.get(2).get("boxc_work_id"));
+        }
+    }
+
     // TODO generating sips twice should overwrite redirect mappings csv
 
     private  SipGenerationOptions makeOptions() {
@@ -566,5 +628,12 @@ public class SipServiceTest {
         assertEquals(expectedSip.getDestinationPid(), sipInfo.getDestinationPid());
         assertEquals(expectedSip.getNewCollectionLabel(), sipInfo.getNewCollectionLabel());
         assertEquals(expectedSip.getNewCollectionPid(), sipInfo.getNewCollectionPid());
+    }
+
+    private void assertRedirectMappingRowContentIsCorrect(CSVRecord row, MigrationProject project, String objectId) {
+        assertEquals(project.getProjectProperties().getCdmCollectionId(), row.get("cdm_collection_id"));
+        assertEquals(objectId, row.get("cdm_object_id"));
+        assertFalse(StringUtils.isBlank(row.get("boxc_work_id")));
+        assertFalse(StringUtils.isBlank(row.get("boxc_file_id")));
     }
 }
