@@ -15,6 +15,8 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.BufferedWriter;
@@ -115,7 +117,9 @@ public class SourceFileService {
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
             ResultSet rs = stmt.executeQuery("select cdmid, " + options.getExportField()
-                + " from " + CdmIndexService.TB_NAME);
+                    + " from " + CdmIndexService.TB_NAME
+                    + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
+                        + " or " + ENTRY_TYPE_FIELD + " is null");
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 String dbFilename = rs.getString(2);

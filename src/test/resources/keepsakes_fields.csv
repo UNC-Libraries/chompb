@@ -28,7 +28,7 @@ citati,citati,Citation,false
 langua,langua,Language,false
 condit,condit,Condition,false
 additi,additi,Additional display,false
-filena,filena,filename,false
+file,file,filename,false
 fullrs,fullrs,Archival file,false
 dmoclcno,dmoclcno,OCLC number,false
 dmcreated,dmcreated,Date created,false

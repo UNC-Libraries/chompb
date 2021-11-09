@@ -26,6 +26,7 @@ import java.io.BufferedWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -513,6 +514,43 @@ public class SipServiceTest {
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model,
                 stagingLocs.get(2), accessLocs.get(1), "27");
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
+    @Test
+    public void generateSipWithCompoundObjects() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        DescriptionsService descriptionsService = new DescriptionsService();
+        descriptionsService.setProject(project);
+        descriptionsService.generateDocuments(false);
+        descriptionsService.expandDescriptions();
+        List<Path> stagingLocs = testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+                "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-20");
+        testHelper.assertGroupedWorkPopulatedInSip(workResc2, dirManager, model, "604", false,
+                stagingLocs.get(1), stagingLocs.get(2));
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2014-02-17");
+        testHelper.assertGroupedWorkPopulatedInSip(workResc3, dirManager, model, "607", false,
+                stagingLocs.get(3), stagingLocs.get(4));
 
         assertPersistedSipInfoMatches(sip);
     }
