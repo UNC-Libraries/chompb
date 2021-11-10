@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
@@ -73,8 +74,6 @@ public class CdmExportServiceTest {
     @Mock
     private CloseableHttpResponse getResp;
     @Mock
-    private CloseableHttpResponse httpResp;
-    @Mock
     private StatusLine getStatus;
     @Mock
     private CloseableHttpResponse postResp;
@@ -99,11 +98,9 @@ public class CdmExportServiceTest {
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);
         service.setCdmFieldService(fieldService);
-        service.setPageSize(50);
 
         // Mockito any matcher not differentiating between the different HttpPost/HttpGet params
         when(httpClient.execute(any())).thenReturn(postResp).thenReturn(getResp);
-        when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResp);
         when(getResp.getStatusLine()).thenReturn(getStatus);
         when(getResp.getEntity()).thenReturn(getEntity);
         when(postResp.getStatusLine()).thenReturn(postStatus);
@@ -113,17 +110,21 @@ public class CdmExportServiceTest {
 
     @Test
     public void exportAllValidProjectTest() throws Exception {
+        when(httpClient.execute(any())).thenReturn(getResp).thenReturn(getResp).thenReturn(postResp).thenReturn(getResp);
         CdmFieldInfo fieldInfo = populateFieldInfo();
         fieldService.persistFieldsToProject(project, fieldInfo);
 
         when(postStatus.getStatusCode()).thenReturn(200);
         when(getStatus.getStatusCode()).thenReturn(200);
+        when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
+                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
+                .thenReturn(this.getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"));
 
         service.exportAll(project);
 
-        verify(httpClient, times(2)).execute(requestCaptor.capture());
+        verify(httpClient, times(4)).execute(requestCaptor.capture());
         List<HttpUriRequest> requests = requestCaptor.getAllValues();
-        HttpPost httpPost = (HttpPost) requests.get(0);
+        HttpPost httpPost = (HttpPost) requests.get(2);
         String postBody = IOUtils.toString(httpPost.getEntity().getContent(), ISO_8859_1);
         Map<String, String> submittedParams = Arrays.stream(postBody.split("&"))
             .collect(Collectors.toMap(f -> f.split("=")[0], f -> f.split("=")[1]));
@@ -134,8 +135,8 @@ public class CdmExportServiceTest {
         assertEquals("description", submittedParams.get("desc"));
 
         assertTrue("Export folder not created", Files.exists(project.getExportPath()));
-        assertEquals(EXPORT_BODY, FileUtils.readFileToString(
-                project.getExportPath().resolve("export_all.xml").toFile(), ISO_8859_1));
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
     }
 
     @Test
@@ -146,6 +147,7 @@ public class CdmExportServiceTest {
         when(postStatus.getStatusCode()).thenReturn(400);
         when(postEntity.getContent()).thenReturn(new ByteArrayInputStream("bad".getBytes()));
         when(getStatus.getStatusCode()).thenReturn(200);
+        when(getEntity.getContent()).thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
         try {
             service.exportAll(project);
@@ -163,7 +165,9 @@ public class CdmExportServiceTest {
         fieldService.persistFieldsToProject(project, fieldInfo);
 
         when(postStatus.getStatusCode()).thenReturn(200);
+        when(postEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"));
         when(getStatus.getStatusCode()).thenReturn(400);
+        when(getEntity.getContent()).thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
         try {
             service.exportAll(project);
@@ -176,18 +180,22 @@ public class CdmExportServiceTest {
 
     @Test
     public void exportAllSkipFieldTest() throws Exception {
+        when(httpClient.execute(any())).thenReturn(getResp).thenReturn(getResp).thenReturn(postResp).thenReturn(getResp);
         CdmFieldInfo fieldInfo = populateFieldInfo();
         fieldInfo.getFields().get(1).setSkipExport(true);
         fieldService.persistFieldsToProject(project, fieldInfo);
 
         when(postStatus.getStatusCode()).thenReturn(200);
         when(getStatus.getStatusCode()).thenReturn(200);
+        when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
+                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
+                .thenReturn(this.getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"));
 
         service.exportAll(project);
 
-        verify(httpClient, times(2)).execute(requestCaptor.capture());
+        verify(httpClient, times(4)).execute(requestCaptor.capture());
         List<HttpUriRequest> requests = requestCaptor.getAllValues();
-        HttpPost httpPost = (HttpPost) requests.get(0);
+        HttpPost httpPost = (HttpPost) requests.get(2);
         String postBody = IOUtils.toString(httpPost.getEntity().getContent(), ISO_8859_1);
         Map<String, String> submittedParams = Arrays.stream(postBody.split("&"))
             .collect(Collectors.toMap(f -> f.split("=")[0], f -> f.split("=")[1]));
@@ -198,8 +206,8 @@ public class CdmExportServiceTest {
         assertFalse("Must not include skipped field", submittedParams.containsKey("desc"));
 
         assertTrue("Export folder not created", Files.exists(project.getExportPath()));
-        assertEquals(EXPORT_BODY, FileUtils.readFileToString(
-                project.getExportPath().resolve("export_all.xml").toFile(), ISO_8859_1));
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
     }
 
     private CdmFieldInfo populateFieldInfo() {
