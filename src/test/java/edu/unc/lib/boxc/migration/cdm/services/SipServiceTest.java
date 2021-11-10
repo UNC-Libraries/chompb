@@ -31,6 +31,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -610,6 +611,25 @@ public class SipServiceTest {
     }
 
     // TODO generating sips twice should overwrite redirect mappings csv
+    @Test
+    public void generateSipsTwiceWithRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        service.generateSips(makeOptions());
+        String redirectFile = FileUtils.readFileToString(project.getRedirectMappingPath().toFile(), StandardCharsets.UTF_8);
+
+        service = testHelper.createSipsService();
+        service.generateSips(makeOptions());
+        String secondRedirectFile = FileUtils.readFileToString(project.getRedirectMappingPath().toFile(), StandardCharsets.UTF_8);
+
+
+        assertTrue(Files.exists(project.getRedirectMappingPath()));
+        // make sure that sequential sips generation work/file ID changes are reflected in the redirect mapping csv
+        assertNotEquals(redirectFile, secondRedirectFile);
+    }
 
     private  SipGenerationOptions makeOptions() {
         return makeOptions(false);
