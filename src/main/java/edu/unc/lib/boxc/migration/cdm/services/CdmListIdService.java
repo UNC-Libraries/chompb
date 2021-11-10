@@ -44,7 +44,6 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
  * Service for listing CDM object IDs
  * @author krwong
  */
-
 public class CdmListIdService {
     private static final Logger log = getLogger(CdmListIdService.class);
 
@@ -80,8 +79,7 @@ public class CdmListIdService {
             }
                 ObjectNode entryNode = mapper.readTree(parser);
                 JsonNode pager = entryNode.get("pager");
-                int total = pager.get("total").asInt();
-                return total;
+                return pager.get("total").asInt();
         } catch (JsonParseException e) {
             throw new MigrationException("Failed to parse response from URL " + totalUri
                     + ": " + e.getMessage());
@@ -94,9 +92,8 @@ public class CdmListIdService {
      * @throw IOException
      * @return
      */
-    private List<String> pagingResults (MigrationProject project, int total) {
+    private List<String> pagingResults(MigrationProject project, int total) {
         int totalRecords = total;
-        int pageSize = this.pageSize;
         int maxPages = totalRecords / pageSize;
 
         List<String> urls = new ArrayList<>();
@@ -113,14 +110,15 @@ public class CdmListIdService {
     /**
      * Parse json for object IDs
      * @param project
+     * @param url
      * @throw IOException
      * @return
      */
-    private List<String> parseJson (MigrationProject project, String url) throws IOException {
+    private List<String> parseJson(MigrationProject project, String url) throws IOException {
         String collectionId = project.getProjectProperties().getCdmCollectionId();
         String objectUri = url;
 
-        ArrayList<String> objectIds = new ArrayList<String>();
+        List<String> objectIds = new ArrayList<>();
 
         ObjectMapper mapper = new ObjectMapper();
         HttpGet getMethod = new HttpGet(objectUri);
@@ -150,7 +148,6 @@ public class CdmListIdService {
     /**
      * List all exported CDM records for this project
      * @param project
-     * "dmwebservices/index.php?q=dmQuery/" + collectionId + "/0/dmrecord/dmrecord/1024/" + start + "/1/0/0/0/0" + "/json"
      * @return
      */
     public List<String> listAllCdmId(MigrationProject project) throws IOException {
