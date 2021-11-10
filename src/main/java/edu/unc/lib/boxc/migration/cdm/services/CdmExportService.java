@@ -18,7 +18,8 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -77,13 +78,11 @@ public class CdmExportService {
         listId.setCdmBaseUri(cdmBaseUri);
         List<String> allIds = listId.listAllCdmId(project);
         List<List<String>> chunks = Lists.partition(allIds, pageSize);
-        int i = 0;
+        int exportPage = 0;
         for (List<String> chunk : chunks) {
             // Name each exported page
-            int exportPage = (i + 1);
+            exportPage++;
             String exportFilename = "export_" + exportPage + ".xml";
-            i++;
-            File exportFile = new File(exportFilename);
             String cdmIds = String.join("%2C", chunk);
             String bodyParams = "CISODB=%2F" + project.getProjectProperties().getCdmCollectionId()
                     + "&CISOTYPE=standard&CISOPAGE=1&" + fieldParams + "&CISOPTRLIST=" + cdmIds;

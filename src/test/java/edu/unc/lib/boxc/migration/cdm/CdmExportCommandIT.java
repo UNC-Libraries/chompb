@@ -137,7 +137,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
-        assertFalse("Description folder should not be created", Files.exists(project.getExportPath()));
+        assertFalse("Export folder must not exist", Files.exists(project.getExportPath()));
         assertOutputContains("Page size must be between 1 and 5000");
     }
 
@@ -154,7 +154,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
-        assertFalse("Description folder should not be created", Files.exists(project.getExportPath()));
+        assertFalse("Export folder must not exist", Files.exists(project.getExportPath()));
         assertOutputContains("Page size must be between 1 and 5000");
     }
 
