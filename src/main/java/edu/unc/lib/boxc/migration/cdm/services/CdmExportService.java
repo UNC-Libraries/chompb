@@ -97,11 +97,6 @@ public class CdmExportService {
                     throw new MigrationException("Failed to request export (" + resp.getStatusLine().getStatusCode()
                             + "): " + IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1));
                 }
-                // Save generated export to xml file
-                InputStream inputStream = resp.getEntity().getContent();
-                OutputStream outputStream = new FileOutputStream(exportFile);
-                IOUtils.copy(inputStream, outputStream);
-                outputStream.close();
             }
             // Retrieve the export results
             Path exportFilePath = project.getExportPath().resolve(exportFilename);
