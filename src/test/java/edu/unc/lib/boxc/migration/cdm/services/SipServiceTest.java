@@ -610,9 +610,8 @@ public class SipServiceTest {
         }
     }
 
-    // TODO generating sips twice should overwrite redirect mappings csv
     @Test
-    public void generateSipsTwiceWithRedirectMapping() throws Exception {
+    public void generateSipsTwiceOverwritesRedirectMapping() throws Exception {
         testHelper.indexExportData("export_1.xml");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
