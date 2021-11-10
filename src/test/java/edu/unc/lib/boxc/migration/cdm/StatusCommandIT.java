@@ -19,8 +19,10 @@ import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -149,6 +151,7 @@ public class StatusCommandIT extends AbstractCommandIT {
         assertOutputContains("Index of CDM Objects");
         assertOutputMatches(".*Last Indexed: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Total Objects: +3\n.*");
+        assertOutputMatches(".*Single Objects: +3 .*");
 
         assertOutputContains("Descriptions");
         assertOutputMatches(".*MODS Files: +0.*");
@@ -330,6 +333,54 @@ public class StatusCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Source File Mappings\n +Last Updated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Source File Mappings\n.*\n +Objects Mapped: +3 \\(100.0%\\).*");
+
+        assertOutputMatches(".*Access File Mappings\n +Last Updated: +Not completed.*");
+        assertOutputMatches(".*Submission Information Packages\n +Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Number of SIPs: +1\n.*");
+        assertOutputMatches(".*SIPs Submitted: +0\n.*");
+    }
+
+    @Test
+    public void reportSipGeneratedWithCompoundObjects() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        String newCollId = "00123test";
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.getDescriptionsService().generateDocuments(true);
+        testHelper.getDescriptionsService().expandDescriptions();
+        testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+                "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
+        SipService sipService = testHelper.createSipsService();
+        SipGenerationOptions sipOpts = new SipGenerationOptions();
+        sipOpts.setUsername(USERNAME);
+        sipService.generateSips(sipOpts);
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "status" };
+        executeExpectSuccess(args);
+
+        assertOutputContains("Status for project " + PROJECT_ID);
+
+        assertOutputContains("CDM Collection Fields");
+        assertOutputContains("CDM Collection Exports");
+
+        assertOutputContains("Index of CDM Objects");
+        assertOutputMatches(".*Total Objects: +7\n.*");
+        assertOutputMatches(".*Single Objects: +1 .*");
+        assertOutputMatches(".*cpd_object: +2 .*");
+        assertOutputMatches(".*cpd_child: +4 .*");
+
+        assertOutputContains("Descriptions");
+        assertOutputMatches(".*MODS Files: +1\n.*");
+        assertOutputMatches(".*Last Expanded: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Object MODS Records: +7 \\(100.0%\\).*");
+
+        assertOutputMatches(".*Destination Mappings\n +Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Destination Mappings\n.*\n +Objects Mapped: +7 \\(100.0%\\).*");
+        assertOutputMatches(".*Destinations: +1\n.*");
+
+        assertOutputMatches(".*Source File Mappings\n +Last Updated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Source File Mappings\n.*\n +Objects Mapped: +5 \\(71.4%\\).*");
 
         assertOutputMatches(".*Access File Mappings\n +Last Updated: +Not completed.*");
         assertOutputMatches(".*Submission Information Packages\n +Last Generated: +[0-9\\-T:]+.*");

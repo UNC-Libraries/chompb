@@ -19,6 +19,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Map;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -28,6 +29,7 @@ import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Service which displays overall the status of a migration project
@@ -80,6 +82,14 @@ public class ProjectStatusService extends AbstractStatusService {
         }
         int totalObjects = getQueryService().countIndexedObjects();
         showField("Total Objects", totalObjects);
+        Map<String, Integer> typeCounts = getQueryService().countObjectsByType();
+        typeCounts.forEach((type, count) -> {
+            if (StringUtils.isBlank(type)) {
+                showFieldWithPercent("Single Objects", count, totalObjects);
+            } else {
+                showFieldWithPercent(type, count, totalObjects);
+            }
+        });
         sectionDivider();
 
         outputLogger.info("Destination Mappings");
