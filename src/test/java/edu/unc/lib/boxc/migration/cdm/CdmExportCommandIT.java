@@ -76,20 +76,33 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void exportValidProjectTest() throws Exception {
+        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1000/1/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8))));
+
         Path projPath = createProject();
 
         String[] args = new String[] {
                 "-w", projPath.toString(),
                 "export",
                 "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD };
+                "-p", PASSWORD};
         executeExpectSuccess(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
 
         assertTrue("Export folder not created", Files.exists(project.getExportPath()));
-        assertEquals(BODY_RESP, FileUtils.readFileToString(
-                project.getExportPath().resolve("export_all.xml").toFile(), StandardCharsets.UTF_8));
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
     }
 
     @Test
@@ -160,6 +173,14 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void errorResponseTest() throws Exception {
+        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1000/1/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
         stubFor(post(urlEqualTo("/cgi-bin/admin/exportxml.exe"))
                 .willReturn(aResponse()
                         .withStatus(400)));

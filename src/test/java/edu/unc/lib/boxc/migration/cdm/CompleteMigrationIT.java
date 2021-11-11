@@ -127,6 +127,15 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
     @Test
     public void migrateSimpleCollectionTest() throws Exception {
+        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1000/1/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
+
         String[] argsInit = new String[] {
                 "-w", baseDir.toString(),
                 "init",
