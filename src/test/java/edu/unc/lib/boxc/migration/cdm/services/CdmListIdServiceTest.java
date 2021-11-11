@@ -95,8 +95,8 @@ public class CdmListIdServiceTest {
 
     @Test
     public void retrieveCdmListIdNoResults() throws Exception {
-        CdmListIdService listId = new CdmListIdService();
-        List<String> allListId = listId.listAllCdmId(project);
+        when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"));
+        List<String> allListId = service.listAllCdmId(project);
 
         assertEquals(0, allListId.size());
         assertTrue(allListId.isEmpty());
