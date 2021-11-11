@@ -156,7 +156,7 @@ public class CdmListIdService {
 
         List<String> allObjectIds = new ArrayList<>();
 
-        for(String url : pageUrls) {
+        for (String url : pageUrls) {
             List<String> objectIds = parseJson(project, url);
             allObjectIds.addAll(objectIds);
         }
