@@ -100,7 +100,7 @@ public class CdmExportServiceTest {
         service.setCdmFieldService(fieldService);
 
         // Mockito any matcher not differentiating between the different HttpPost/HttpGet params
-        when(httpClient.execute(any())).thenReturn(postResp).thenReturn(getResp);
+        when(httpClient.execute(any())).thenReturn(getResp).thenReturn(getResp).thenReturn(postResp).thenReturn(getResp);
         when(getResp.getStatusLine()).thenReturn(getStatus);
         when(getResp.getEntity()).thenReturn(getEntity);
         when(postResp.getStatusLine()).thenReturn(postStatus);
@@ -110,7 +110,6 @@ public class CdmExportServiceTest {
 
     @Test
     public void exportAllValidProjectTest() throws Exception {
-        when(httpClient.execute(any())).thenReturn(getResp).thenReturn(getResp).thenReturn(postResp).thenReturn(getResp);
         CdmFieldInfo fieldInfo = populateFieldInfo();
         fieldService.persistFieldsToProject(project, fieldInfo);
 
@@ -147,14 +146,16 @@ public class CdmExportServiceTest {
         when(postStatus.getStatusCode()).thenReturn(400);
         when(postEntity.getContent()).thenReturn(new ByteArrayInputStream("bad".getBytes()));
         when(getStatus.getStatusCode()).thenReturn(200);
-        when(getEntity.getContent()).thenReturn(new ByteArrayInputStream("bad".getBytes()));
+        when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
+                .thenReturn(new ByteArrayInputStream("bad".getBytes()))
+                .thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
         try {
             service.exportAll(project);
             fail();
         } catch (MigrationException e) {
             // Should only have made one call
-            verify(httpClient).execute(any());
+            verify(httpClient, times(2)).execute(any());
             assertFalse("Export folder should not exist", Files.exists(project.getExportPath()));
         }
     }
@@ -165,22 +166,22 @@ public class CdmExportServiceTest {
         fieldService.persistFieldsToProject(project, fieldInfo);
 
         when(postStatus.getStatusCode()).thenReturn(200);
-        when(postEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"));
         when(getStatus.getStatusCode()).thenReturn(400);
-        when(getEntity.getContent()).thenReturn(new ByteArrayInputStream("bad".getBytes()));
+        when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
+                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
+                .thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
         try {
             service.exportAll(project);
             fail();
         } catch (MigrationException e) {
-            verify(httpClient, times(2)).execute(any());
+            verify(httpClient, times(4)).execute(any());
             assertFalse("Export folder should not exist", Files.exists(project.getExportPath()));
         }
     }
 
     @Test
     public void exportAllSkipFieldTest() throws Exception {
-        when(httpClient.execute(any())).thenReturn(getResp).thenReturn(getResp).thenReturn(postResp).thenReturn(getResp);
         CdmFieldInfo fieldInfo = populateFieldInfo();
         fieldInfo.getFields().get(1).setSkipExport(true);
         fieldService.persistFieldsToProject(project, fieldInfo);
