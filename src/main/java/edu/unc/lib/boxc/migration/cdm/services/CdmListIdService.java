@@ -60,7 +60,8 @@ public class CdmListIdService {
      */
     private int getTotalObjects(MigrationProject project) throws IOException {
         String collectionId = project.getProjectProperties().getCdmCollectionId();
-        String totalObjectsUrl = "dmwebservices/index.php?q=dmQuery/" + collectionId + "/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json";
+        String totalObjectsUrl = "dmwebservices/index.php?q=dmQuery/" + collectionId
+                + "/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json";
         String totalUri = URIUtil.join(cdmBaseUri, totalObjectsUrl);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -100,7 +101,9 @@ public class CdmListIdService {
 
         for (int page = 0; page <= maxPages; page++) {
             int recordNum = (page * pageSize) + 1;
-            String cdmPageUrl = "dmwebservices/index.php?q=dmQuery/" + project.getProjectProperties().getCdmCollectionId() + "/0/dmrecord/dmrecord/" + pageSize + "/" + recordNum + "/1/0/0/0/0/json";
+            String cdmPageUrl = "dmwebservices/index.php?q=dmQuery/"
+                    + project.getProjectProperties().getCdmCollectionId()
+                    + "/0/dmrecord/dmrecord/" + pageSize + "/" + recordNum + "/1/0/0/0/0/json";
             String pageUrl = URIUtil.join(cdmBaseUri, cdmPageUrl);
             urls.add(pageUrl);
         }
