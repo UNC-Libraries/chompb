@@ -67,7 +67,6 @@ public class CdmListIdService {
         ObjectMapper mapper = new ObjectMapper();
         HttpGet getMethod = new HttpGet(totalUri);
         try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
-            //Error looking up collection
             String body = IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1);
             if (body.contains("Error looking up collection")) {
                 throw new MigrationException("No collection with ID '" + collectionId
@@ -126,7 +125,6 @@ public class CdmListIdService {
         ObjectMapper mapper = new ObjectMapper();
         HttpGet getMethod = new HttpGet(objectUri);
         try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
-            //Error looking up collection
             String body = IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1);
             if (body.contains("Error looking up collection")) {
                 throw new MigrationException("No collection with ID '" + collectionId
@@ -153,7 +151,7 @@ public class CdmListIdService {
      * @param project
      * @return
      */
-    public List<String> listAllCdmId(MigrationProject project) throws IOException {
+    public List<String> listAllCdmIds(MigrationProject project) throws IOException {
         int totalObjects = getTotalObjects(project);
         List<String> pageUrls = pagingResults(project, totalObjects);
 
