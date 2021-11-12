@@ -78,7 +78,7 @@ public class CdmListIdServiceTest {
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_3.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_4.json"));
 
-        List<String> allListId = service.listAllCdmId(project);
+        List<String> allListId = service.listAllCdmIds(project);
 
         assertEquals(161, allListId.size());
         assertEquals("25", allListId.get(0));
@@ -96,7 +96,7 @@ public class CdmListIdServiceTest {
     @Test
     public void retrieveCdmListIdNoResults() throws Exception {
         when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"));
-        List<String> allListId = service.listAllCdmId(project);
+        List<String> allListId = service.listAllCdmIds(project);
 
         assertEquals(0, allListId.size());
         assertTrue(allListId.isEmpty());
@@ -108,7 +108,7 @@ public class CdmListIdServiceTest {
         when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"));
 
-        List<String> allListId = service.listAllCdmId(project);
+        List<String> allListId = service.listAllCdmIds(project);
 
         assertEquals(161, allListId.size());
         assertEquals("25", allListId.get(0));

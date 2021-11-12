@@ -75,7 +75,7 @@ public class CdmExportService {
         CdmListIdService listId = new CdmListIdService();
         listId.setHttpClient(httpClient);
         listId.setCdmBaseUri(cdmBaseUri);
-        List<String> allIds = listId.listAllCdmId(project);
+        List<String> allIds = listId.listAllCdmIds(project);
         List<List<String>> chunks = Lists.partition(allIds, pageSize);
         int exportPage = 0;
         for (List<String> chunk : chunks) {
