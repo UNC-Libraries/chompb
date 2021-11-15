@@ -51,6 +51,8 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     private final static String COLLECTION_ID = "my_coll";
     private final static String PASSWORD = "supersecret";
+    public static final String CDM_QUERY_BASE = "/dmwebservices/index.php?q=dmQuery/"
+            + COLLECTION_ID + "/0/dmrecord/dmrecord/";
     private final static String BODY_RESP = "<xml>record</xml>";
     private final static String PAGESIZE = "50";
 
@@ -76,11 +78,11 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void exportValidProjectTest() throws Exception {
-        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json"))
+        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"1/0/1/0/0/0/0/json"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1000/1/1/0/0/0/0/json"))
+        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
@@ -173,11 +175,11 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void errorResponseTest() throws Exception {
-        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json"))
+        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1/0/1/0/0/0/0/json"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1000/1/1/0/0/0/0/json"))
+        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
@@ -229,11 +231,11 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_4.xml"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json"))
+        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1/0/1/0/0/0/0/json"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1000/1/1/0/0/0/0/json"))
+        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));

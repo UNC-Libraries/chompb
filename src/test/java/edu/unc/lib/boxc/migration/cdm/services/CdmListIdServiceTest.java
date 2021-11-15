@@ -41,6 +41,8 @@ import java.util.List;
 public class CdmListIdServiceTest {
     private static final String CDM_BASE_URL = "http://example.com:88/";
     private static final String PROJECT_NAME = "gilmer";
+    public static final String CDM_QUERY_BASE = CDM_BASE_URL + "dmwebservices/index.php?q=dmQuery/"
+            + PROJECT_NAME + "/0/dmrecord/dmrecord/";
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -86,11 +88,11 @@ public class CdmListIdServiceTest {
         assertEquals("131", allListId.get(100));
         assertEquals("193", allListId.get(160));
 
-        assertUrlsCalled("http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json",
-                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/50/1/1/0/0/0/0/json",
-                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/50/51/1/0/0/0/0/json",
-                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/50/101/1/0/0/0/0/json",
-                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/50/151/1/0/0/0/0/json");
+        assertUrlsCalled(CDM_QUERY_BASE + "1/0/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "50/1/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "50/51/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "50/101/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "50/151/1/0/0/0/0/json");
     }
 
     @Test
@@ -116,8 +118,8 @@ public class CdmListIdServiceTest {
         assertEquals("131", allListId.get(100));
         assertEquals("193", allListId.get(160));
 
-        assertUrlsCalled("http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json",
-                "http://example.com:88/dmwebservices/index.php?q=dmQuery/gilmer/0/dmrecord/dmrecord/1000/1/1/0/0/0/0/json");
+        assertUrlsCalled(CDM_QUERY_BASE + "1/0/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json");
     }
 
     private void assertUrlsCalled(String... expectedUrls) throws Exception {

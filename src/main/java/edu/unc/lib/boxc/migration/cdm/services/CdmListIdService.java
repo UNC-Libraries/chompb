@@ -46,6 +46,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
  */
 public class CdmListIdService {
     private static final Logger log = getLogger(CdmListIdService.class);
+    public static final String CDM_QUERY_BASE = "dmwebservices/index.php?q=dmQuery/";
 
     private CloseableHttpClient httpClient;
     private String cdmBaseUri;
@@ -60,7 +61,7 @@ public class CdmListIdService {
      */
     private int getTotalObjects(MigrationProject project) throws IOException {
         String collectionId = project.getProjectProperties().getCdmCollectionId();
-        String totalObjectsUrl = "dmwebservices/index.php?q=dmQuery/" + collectionId
+        String totalObjectsUrl = CDM_QUERY_BASE + collectionId
                 + "/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json";
         String totalUri = URIUtil.join(cdmBaseUri, totalObjectsUrl);
 
@@ -100,7 +101,7 @@ public class CdmListIdService {
 
         for (int page = 0; page <= maxPages; page++) {
             int recordNum = (page * pageSize) + 1;
-            String cdmPageUrl = "dmwebservices/index.php?q=dmQuery/"
+            String cdmPageUrl = CDM_QUERY_BASE
                     + project.getProjectProperties().getCdmCollectionId()
                     + "/0/dmrecord/dmrecord/" + pageSize + "/" + recordNum + "/1/0/0/0/0/json";
             String pageUrl = URIUtil.join(cdmBaseUri, cdmPageUrl);
