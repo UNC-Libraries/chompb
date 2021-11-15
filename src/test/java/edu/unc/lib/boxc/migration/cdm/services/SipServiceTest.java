@@ -15,32 +15,6 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
-import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
-import static java.nio.file.StandardOpenOption.APPEND;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.BufferedWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.jena.rdf.model.Bag;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.vocabulary.RDF;
-import org.jdom2.Document;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
@@ -53,6 +27,38 @@ import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.rdf.model.Bag;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDF;
+import org.jdom2.Document;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.BufferedWriter;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
+import static java.nio.file.StandardOpenOption.APPEND;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author bbpennel
@@ -555,6 +561,115 @@ public class SipServiceTest {
         assertPersistedSipInfoMatches(sip);
     }
 
+    @Test
+    public void generateSipsWithRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        service.generateSips(makeOptions());
+
+        assertTrue(Files.exists(project.getRedirectMappingPath()));
+
+        try (
+            Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                    .withFirstRecordAsHeader()
+                    .withHeader(RedirectMappingService.CSV_HEADERS)
+                    .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
+        }
+    }
+
+    @Test
+    public void generateSipsWithMultipleDestinationsAndRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        // Inserting an extra destination which has one object mapped to it
+        try (BufferedWriter writer = Files.newBufferedWriter(project.getDestinationMappingsPath(), APPEND)) {
+            writer.write("26," + DEST_UUID2 + ",");
+        }
+
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(2, sips.size());
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals(3, rows.toArray().length);
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
+        }
+    }
+
+    @Test
+    public void generateSipsWithGroupedWorkAndRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        GroupMappingOptions groupOptions = new GroupMappingOptions();
+        groupOptions.setGroupField("groupa");
+        GroupMappingService groupService = new GroupMappingService();
+        groupService.setProject(project);
+        groupService.setIndexService(testHelper.getIndexService());
+        groupService.setFieldService(testHelper.getFieldService());
+        groupService.generateMapping(groupOptions);
+        groupService.syncMappings();
+
+        service.generateSips(makeOptions());
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "27"); // ungrouped items first
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "26");
+            // grouped files should have the same work ID
+            assertEquals(rows.get(1).get("boxc_work_id"), rows.get(2).get("boxc_work_id"));
+        }
+    }
+
+    @Test
+    public void generateSipsTwiceOverwritesRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        service.generateSips(makeOptions());
+        String redirectFile = FileUtils.readFileToString(project.getRedirectMappingPath().toFile(), StandardCharsets.UTF_8);
+
+        service = testHelper.createSipsService();
+        service.generateSips(makeOptions());
+        String secondRedirectFile = FileUtils.readFileToString(project.getRedirectMappingPath().toFile(), StandardCharsets.UTF_8);
+
+
+        assertTrue(Files.exists(project.getRedirectMappingPath()));
+        // make sure that sequential sips generation work/file ID changes are reflected in the redirect mapping csv
+        assertNotEquals(redirectFile, secondRedirectFile);
+    }
+
     private  SipGenerationOptions makeOptions() {
         return makeOptions(false);
     }
@@ -572,5 +687,12 @@ public class SipServiceTest {
         assertEquals(expectedSip.getDestinationPid(), sipInfo.getDestinationPid());
         assertEquals(expectedSip.getNewCollectionLabel(), sipInfo.getNewCollectionLabel());
         assertEquals(expectedSip.getNewCollectionPid(), sipInfo.getNewCollectionPid());
+    }
+
+    private void assertRedirectMappingRowContentIsCorrect(CSVRecord row, MigrationProject project, String objectId) {
+        assertEquals(project.getProjectProperties().getCdmCollectionId(), row.get("cdm_collection_id"));
+        assertEquals(objectId, row.get("cdm_object_id"));
+        assertFalse(StringUtils.isBlank(row.get("boxc_work_id")));
+        assertFalse(StringUtils.isBlank(row.get("boxc_file_id")));
     }
 }
