@@ -37,7 +37,7 @@ In order to deploy the project to a server or the development VM, see the `deplo
 
 ## Basic Usage on Servers
 ```
-cdm2bxc.sh -h
+chompb -h
 ```
 
 ## General Workflow
@@ -56,38 +56,38 @@ cdm2bxc.sh -h
 ### Example workflow for Gilmer
 ```
 # Initialize a new migration project (named gilmer_demo, from CDM collection gilmer)
-cdm2bxc.sh init -p gilmer_demo -c gilmer
+chompb init -p gilmer_demo -c gilmer
 
 cd gilmer_demo
 # Export object records from CDM
-cdm2bxc.sh export -p
+chompb export -p
 # you will be prompted for your password
 
 # Index the exported object records
-cdm2bxc.sh index
+chompb index
 
 # Map objects to Box-c destination 
 # to map all objects being migrated by default into a newly created "00276" collection in existing Box-c Admin Unit with id 4e282ae9-496d-48bc-b1cc-a59ee565efa8
-cdm2bxc.sh destinations generate -dd 4e282ae9-496d-48bc-b1cc-a59ee565efa8 -dc 00276
+chompb destinations generate -dd 4e282ae9-496d-48bc-b1cc-a59ee565efa8 -dc 00276
 
 # Map objects to source files
-cdm2bxc.sh source_files generate -b /path/to/00276_gilmer_maps/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001.tif' -l
-cdm2bxc.sh source_files generate -b /path/to/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -u 
+chompb source_files generate -b /path/to/00276_gilmer_maps/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001.tif' -l
+chompb source_files generate -b /path/to/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -u 
 # Optional: Map objects to access files
-cdm2bxc.sh access_files generate -b /path/to/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -d
+chompb access_files generate -b /path/to/00276_gilmer_maps/enhanced/ -p "([0-9]+)\\_([^_]+)\\_E.tiff?" -t '00$1_op0$2_0001_e.tif' -l -d
 
 # Creation of MODS descriptions is not performed by the migration utility
 # Descriptions for objects being migrated should be placed in the "descriptions" folder, encoded as modsCollections
 # Descriptions for new collections should be placed in the "newCollectionDescriptions", encoded as mods records
 # For demo purposes, dummy descriptions can be generated for all objects with the following command:
-# cdm2bxc.sh descriptions generate
+# chompb descriptions generate
 
 # Perform transformation of migration project to one or more SIPs for deposit
-cdm2bxc.sh descriptions expand
-cdm2bxc.sh sips generate
+chompb descriptions expand
+chompb sips generate
 
 # Submit all SIPs for deposit (optionally, individual SIPs can be submitted)
-cdm2bxc.sh submit
+chompb submit
 # NOTE: in order to submit the SIPs, they must be located in an approved staging location.
 # All prior steps can be perform at any path on the server.
 ```
@@ -95,22 +95,22 @@ cdm2bxc.sh submit
 ### Monitoring progress and project state
 In order to view the overall status of a migration project you may use the status command:
 ```
-cdm2bxc.sh status
+chompb status
 ```
 Additionally, there are a number of more detailed status reports available for individual components of the migration, such as:
 ```
-cdm2bxc.sh descriptions status
-cdm2bxc.sh source_files status
-cdm2bxc.sh access_files status
-cdm2bxc.sh destinations status
+chompb descriptions status
+chompb source_files status
+chompb access_files status
+chompb destinations status
 ```
 
 There are also commands available to validate various aspects of the project:
 ```
-cdm2bxc.sh descriptions validate # validates MODS descriptions against schemas and local schematron
-cdm2bxc.sh source_files validate # verifies syntax, whether mapped files exist, and other concerns
-cdm2bxc.sh access_files validate
-cdm2bxc.sh destinations validate # verifies syntax and consistency of mappings
+chompb descriptions validate # validates MODS descriptions against schemas and local schematron
+chompb source_files validate # verifies syntax, whether mapped files exist, and other concerns
+chompb access_files validate
+chompb destinations validate # verifies syntax and consistency of mappings
 ```
 
 # Project Directory Structure
