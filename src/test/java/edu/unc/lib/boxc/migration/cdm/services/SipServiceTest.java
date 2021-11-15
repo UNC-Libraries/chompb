@@ -647,6 +647,7 @@ public class SipServiceTest {
             assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "26");
             // grouped files should have the same work ID
             assertEquals(rows.get(1).get("boxc_work_id"), rows.get(2).get("boxc_work_id"));
+            assertEquals(3, rows.size());
         }
     }
 
@@ -668,6 +669,45 @@ public class SipServiceTest {
         assertTrue(Files.exists(project.getRedirectMappingPath()));
         // make sure that sequential sips generation work/file ID changes are reflected in the redirect mapping csv
         assertNotEquals(redirectFile, secondRedirectFile);
+    }
+
+    @Test
+    public void generateSipWithCompoundObjectsAndRedirectMapping() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        DescriptionsService descriptionsService = new DescriptionsService();
+        descriptionsService.setProject(project);
+        descriptionsService.generateDocuments(false);
+        descriptionsService.expandDescriptions();
+        List<Path> stagingLocs = testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+                "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
+
+        service.generateSips(makeOptions());
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "216");
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "602");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "603");
+            assertRedirectMappingRowContentNoFileId(rows.get(3), project, "604");
+            assertRedirectMappingRowContentIsCorrect(rows.get(4), project, "605");
+            assertRedirectMappingRowContentIsCorrect(rows.get(5), project, "606");
+            assertRedirectMappingRowContentNoFileId(rows.get(6), project, "607");
+            String cmpId1 = rows.get(3).get("boxc_work_id");
+            assertEquals(cmpId1, rows.get(1).get("boxc_work_id"));
+            assertEquals(cmpId1, rows.get(2).get("boxc_work_id"));
+            String cmpId2 = rows.get(6).get("boxc_work_id");
+            assertEquals(cmpId2, rows.get(4).get("boxc_work_id"));
+            assertEquals(cmpId2, rows.get(5).get("boxc_work_id"));
+
+            assertEquals(7, rows.size());
+        }
     }
 
     private  SipGenerationOptions makeOptions() {
@@ -694,5 +734,12 @@ public class SipServiceTest {
         assertEquals(objectId, row.get("cdm_object_id"));
         assertFalse(StringUtils.isBlank(row.get("boxc_work_id")));
         assertFalse(StringUtils.isBlank(row.get("boxc_file_id")));
+    }
+
+    private void assertRedirectMappingRowContentNoFileId(CSVRecord row, MigrationProject project, String objectId) {
+        assertEquals(project.getProjectProperties().getCdmCollectionId(), row.get("cdm_collection_id"));
+        assertEquals(objectId, row.get("cdm_object_id"));
+        assertFalse(StringUtils.isBlank(row.get("boxc_work_id")));
+        assertTrue(StringUtils.isBlank(row.get("boxc_file_id")));
     }
 }

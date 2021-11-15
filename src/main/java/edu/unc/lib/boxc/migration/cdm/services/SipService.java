@@ -209,6 +209,13 @@ public class SipService {
      */
     private class MultiFileWorkGenerator extends WorkGenerator {
         @Override
+        protected void generateWork() throws IOException {
+            super.generateWork();
+            // Add redirect mapping for compound object
+            redirectMappingService.addRow(cdmId, workPid.getId(), null);
+        }
+
+        @Override
         protected List<PID> addChildObjects() throws IOException {
             try {
                 Statement stmt = conn.createStatement();
