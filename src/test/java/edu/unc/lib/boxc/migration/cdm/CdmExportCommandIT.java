@@ -52,7 +52,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     private final static String COLLECTION_ID = "my_coll";
     private final static String PASSWORD = "supersecret";
-    public final static String CDM_QUERY_BASE = CdmListIdService.CDM_QUERY_BASE
+    public final static String CDM_QUERY_BASE = "/" + CdmListIdService.CDM_QUERY_BASE
             + COLLECTION_ID + "/0/dmrecord/dmrecord/";
     private final static String BODY_RESP = "<xml>record</xml>";
     private final static String PAGESIZE = "50";
