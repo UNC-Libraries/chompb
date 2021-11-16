@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import edu.unc.lib.boxc.migration.cdm.services.CdmListIdService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
@@ -51,7 +52,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     private final static String COLLECTION_ID = "my_coll";
     private final static String PASSWORD = "supersecret";
-    public static final String CDM_QUERY_BASE = "/dmwebservices/index.php?q=dmQuery/"
+    public final static String CDM_QUERY_BASE = CdmListIdService.CDM_QUERY_BASE
             + COLLECTION_ID + "/0/dmrecord/dmrecord/";
     private final static String BODY_RESP = "<xml>record</xml>";
     private final static String PAGESIZE = "50";

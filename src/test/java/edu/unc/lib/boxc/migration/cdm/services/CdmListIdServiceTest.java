@@ -41,7 +41,7 @@ import java.util.List;
 public class CdmListIdServiceTest {
     private static final String CDM_BASE_URL = "http://example.com:88/";
     private static final String PROJECT_NAME = "gilmer";
-    public static final String CDM_QUERY_BASE = CDM_BASE_URL + "dmwebservices/index.php?q=dmQuery/"
+    public static final String CDM_QUERY_BASE = CDM_BASE_URL + CdmListIdService.CDM_QUERY_BASE
             + PROJECT_NAME + "/0/dmrecord/dmrecord/";
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
