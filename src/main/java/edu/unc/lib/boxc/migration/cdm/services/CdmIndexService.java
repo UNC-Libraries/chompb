@@ -60,10 +60,14 @@ public class CdmIndexService {
     public static final String PARENT_ID_FIELD = "cdm2bxc_parent_id";
     public static final String ENTRY_TYPE_FIELD = "cdm2bxc_entry_type";
     public static final String ENTRY_TYPE_GROUPED_WORK = "grouped_work";
+    public static final String ENTRY_TYPE_COMPOUND_OBJECT = "cpd_object";
+    public static final String ENTRY_TYPE_COMPOUND_CHILD = "cpd_child";
     public static final List<String> MIGRATION_FIELDS = Arrays.asList(PARENT_ID_FIELD, ENTRY_TYPE_FIELD);
 
     private MigrationProject project;
     private CdmFieldService fieldService;
+
+    private String recordInsertSqlTemplate;
 
     /**
      * Indexes all exported CDM records for this project
@@ -73,10 +77,10 @@ public class CdmIndexService {
         assertCollectionExported();
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-        List<String> exportFields = fieldInfo.listExportFields();
+        List<String> exportFields = fieldInfo.listAllExportFields();
         List<String> allFields = new ArrayList<>(exportFields);
         allFields.addAll(MIGRATION_FIELDS);
-        String insertTemplate = makeInsertTemplate(allFields);
+        recordInsertSqlTemplate = makeInsertTemplate(allFields);
 
         SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
         Connection conn = null;
@@ -88,7 +92,7 @@ public class CdmIndexService {
                 Path exportPath = it.next();
                 outputLogger.info("Indexing file: {}", exportPath.getFileName());
                 Document doc = builder.build(exportPath.toFile());
-                indexDocument(doc, conn, insertTemplate, exportFields);
+                indexDocument(doc, conn, fieldInfo);
             }
         } catch (IOException e) {
             throw new MigrationException("Failed to read export files: " + e.getMessage());
@@ -116,38 +120,96 @@ public class CdmIndexService {
                 + ")";
     }
 
-    private void indexDocument(Document doc, Connection conn, String insertTemplate, List<String> exportFields)
+    private void indexDocument(Document doc, Connection conn, CdmFieldInfo fieldInfo)
             throws SQLException {
         Element root = doc.getRootElement();
         List<Element> recordEls = root.getChildren("record");
         for (Element recordEl : recordEls) {
-            PreparedStatement stmt = conn.prepareStatement(insertTemplate);
-            int i = 0;
-            for (; i < exportFields.size(); i++) {
-                String exportField = exportFields.get(i);
-                Element childEl = recordEl.getChild(exportField);
-                if (childEl == null) {
-                    throw new InvalidProjectStateException("Missing configured field " + exportField
-                            + " in export document, aborting indexing due to configuration mismatch");
+            Element structEl = recordEl.getChild("structure");
+            List<Element> pageEls = structEl.getChildren("page");
+            String objType = pageEls.size() > 0 ? ENTRY_TYPE_COMPOUND_OBJECT : null;
+
+            List<String> values = listFieldValues(recordEl, fieldInfo.listConfiguredFields());
+            List<String> reserved = listFieldValues(recordEl, CdmFieldInfo.RESERVED_FIELDS);
+            values.addAll(reserved);
+            indexObject(conn, values, null, objType);
+
+            if (!pageEls.isEmpty()) {
+                for (Element pageEl : pageEls) {
+                    indexCompoundChild(pageEl, conn, fieldInfo, reserved);
                 }
-                String value = childEl.getTextTrim();
-                value = value == null ? "" : value;
-                stmt.setString(i + 1, value);
             }
-            // Add in migration generated fields
-            for (int j = 0; j < MIGRATION_FIELDS.size(); j++) {
-                stmt.setNull(i + j, Types.LONGVARCHAR);
-            }
-            stmt.executeUpdate();
-            stmt.close();
         }
+    }
+
+    private void indexCompoundChild(Element childEl, Connection conn, CdmFieldInfo fieldInfo,
+                                    List<String> parentReservedValues) throws SQLException {
+        Element metadataEl = childEl.getChild("pagemetadata");
+        String pageId = childEl.getChildText("pageptr");
+        String parentCdmId = parentReservedValues.get(0);
+
+        List<String> values = listFieldValues(metadataEl, fieldInfo.listConfiguredFields());
+        // Use the page id as the child's cdm id
+        values.add(pageId);
+        // Compound child record doesn't timestamp fields, so use parents
+        values.add(parentReservedValues.get(1));
+        values.add(parentReservedValues.get(2));
+        // Clear the cdmfile and cdmpath values for the child
+        values.add(null);
+        values.add(null);
+        indexObject(conn, values, parentCdmId, ENTRY_TYPE_COMPOUND_CHILD);
+    }
+
+    private List<String> listFieldValues(Element objEl, List<String> exportFields) {
+        return exportFields.stream()
+                .map(exportField -> {
+                    Element childEl = objEl.getChild(exportField);
+                    if (childEl == null) {
+                        throw new InvalidProjectStateException("Missing configured field " + exportField
+                                + " in export document, aborting indexing due to configuration mismatch");
+                    }
+                    String value = childEl.getTextTrim();
+                    return value == null ? "" : value;
+                }).collect(Collectors.toList());
+    }
+
+    /**
+     * Indexes the metadata of an object provided via exportFieldValues and migrationFieldValues
+     * @param conn
+     * @param exportFieldValues Values of all configured and reserved fields which belong to the object being indexed.
+     *                          Must be ordered with configured fields first, followed by reserved fields
+     *                          as defined in CdmFieldInfo.RESERVED_FIELDS
+     * @param migrationFieldValues Array of migration specific fields, in the order defined in
+     *                             CdmIndexService.MIGRATION_FIELDS
+     * @throws SQLException
+     */
+    private void indexObject(Connection conn, List<String> exportFieldValues, String... migrationFieldValues)
+            throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(recordInsertSqlTemplate);
+        int i = 0;
+        for (; i < exportFieldValues.size(); i++) {
+            String value = exportFieldValues.get(i);
+            stmt.setString(i + 1, value);
+        }
+
+        // Add in migration generated fields
+        for (int j = 0; j < migrationFieldValues.length; j++) {
+            if (migrationFieldValues[j] == null) {
+                stmt.setNull(i + j + 1, Types.LONGVARCHAR);
+            } else {
+                stmt.setString(i + j + 1, migrationFieldValues[j]);
+            }
+        }
+
+        stmt.executeUpdate();
+        stmt.close();
     }
 
     public void createDatabase(boolean force) throws IOException {
         ensureDatabaseState(force);
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-        List<String> exportFields = new ArrayList<>(fieldInfo.listExportFields());
+        List<String> exportFields = new ArrayList<>(fieldInfo.listAllExportFields());
         exportFields.addAll(MIGRATION_FIELDS);
         StringBuilder queryBuilder = new StringBuilder("CREATE TABLE " + TB_NAME + " (\n");
         for (int i = 0; i < exportFields.size(); i++) {

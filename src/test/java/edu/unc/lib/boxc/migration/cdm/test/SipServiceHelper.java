@@ -15,6 +15,7 @@
  */
 package edu.unc.lib.boxc.migration.cdm.test;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -26,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -246,10 +248,14 @@ public class SipServiceHelper {
     }
 
     public void indexExportData(String... filenames) throws Exception {
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
+        indexExportData(Paths.get("src/test/resources/gilmer_fields.csv"), filenames);
+    }
+
+    public void indexExportData(Path fieldsPath, String... filenames) throws Exception {
+        Files.copy(fieldsPath, project.getFieldsPath(), REPLACE_EXISTING);
         for (String filename : filenames) {
             Files.copy(Paths.get("src/test/resources/sample_exports/" + filename),
-                    project.getExportPath().resolve(filename));
+                    project.getExportPath().resolve(filename), REPLACE_EXISTING);
         }
         project.getProjectProperties().setExportedDate(Instant.now());
         indexService.createDatabase(true);
