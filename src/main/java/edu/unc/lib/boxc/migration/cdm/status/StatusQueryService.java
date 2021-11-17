@@ -20,7 +20,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -55,6 +57,24 @@ public class StatusQueryService {
             ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME);
             indexedObjectsCountCache = rs.getInt(1);
             return indexedObjectsCountCache;
+        } catch (SQLException e) {
+            throw new MigrationException("Failed to determine number of objects", e);
+        }
+    }
+
+    protected Map<String, Integer> countObjectsByType() {
+        CdmIndexService indexService = new CdmIndexService();
+        indexService.setProject(project);
+        try (Connection conn = indexService.openDbConnection()) {
+            Map<String, Integer> result = new HashMap<>();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + CdmIndexService.ENTRY_TYPE_FIELD + ", count(*)"
+                    + " from " + CdmIndexService.TB_NAME
+                    + " group by " + CdmIndexService.ENTRY_TYPE_FIELD);
+            while (rs.next()) {
+                result.put(rs.getString(1), new Integer(rs.getInt(2)));
+            }
+            return result;
         } catch (SQLException e) {
             throw new MigrationException("Failed to determine number of objects", e);
         }

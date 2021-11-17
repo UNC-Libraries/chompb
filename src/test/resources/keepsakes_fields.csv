@@ -1,0 +1,37 @@
+cdm_nick,export_as,description,skip_export
+title,title,Title,false
+descri,descri,Description,false
+creato,creato,Creator,false
+creati,creati,Creation Date,false
+date,date,Date,false
+search,search,Search by Decade,false
+inscri,inscri,Transcription,false
+captio,captio,Caption,false
+subjec,subjec,Subject (tgm),false
+subjea,subjea,Subject Name,false
+subjeb,subjeb,Subject Topical,false
+usage,usage,Usage Statement,false
+releva,releva,Relevance,false
+subjed,subjed,Subject Geographic,false
+notes,notes,Notes,false
+titla,titla,Title Note,false
+origin,origin,Form,false
+resour,resour,Resource Type,false
+physic,physic,Physical Description,false
+publis,publis,Publisher,false
+collec,collec,Collection in Repository,false
+digita,digita,Digital Collection,false
+reposi,reposi,Repository,false
+host,host,Host,false
+local,local,Local Identifier,false
+citati,citati,Citation,false
+langua,langua,Language,false
+condit,condit,Condition,false
+additi,additi,Additional display,false
+file,file,filename,false
+fullrs,fullrs,Archival file,false
+dmoclcno,dmoclcno,OCLC number,false
+dmcreated,dmcreated,Date created,false
+dmmodified,dmmodified,Date modified,false
+dmrecord,dmrecord,CONTENTdm number,false
+find,find,CONTENTdm file name,false

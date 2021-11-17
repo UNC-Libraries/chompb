@@ -187,6 +187,8 @@ public class SipService {
             WorkGenerator gen;
             if (CdmIndexService.ENTRY_TYPE_GROUPED_WORK.equals(entryType)) {
                 gen = new GroupedWorkGenerator();
+            } else if (CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT.equals(entryType)) {
+                gen = new MultiFileWorkGenerator();
             } else {
                 gen = new WorkGenerator();
             }
@@ -202,10 +204,47 @@ public class SipService {
     }
 
     /**
+     * WorkGenerator for works containing multiple files
+     * @author bbpennel
+     */
+    private class MultiFileWorkGenerator extends WorkGenerator {
+        @Override
+        protected void generateWork() throws IOException {
+            super.generateWork();
+            // Add redirect mapping for compound object
+            redirectMappingService.addRow(cdmId, workPid.getId(), null);
+        }
+
+        @Override
+        protected List<PID> addChildObjects() throws IOException {
+            try {
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
+                        + " from " + CdmIndexService.TB_NAME
+                        + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + cdmId + "'");
+
+                List<PID> childPids = new ArrayList<>();
+                while (rs.next()) {
+                    String cdmId = rs.getString(1);
+                    String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
+
+                    SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
+                    PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
+
+                    childPids.add(filePid);
+                }
+                return childPids;
+            } catch (SQLException e) {
+                throw new MigrationException(e);
+            }
+        }
+    }
+
+    /**
      * WorkGenerator for works created via grouping together CDM objects
      * @author bbpennel
      */
-    private class GroupedWorkGenerator extends WorkGenerator {
+    private class GroupedWorkGenerator extends MultiFileWorkGenerator {
         @Override
         protected void generateWork() throws IOException {
             try {
@@ -238,25 +277,6 @@ public class SipService {
                 return rs.getString(1);
             }
             return null;
-        }
-
-        private List<PID> addChildObjects() throws SQLException, IOException {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
-                + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + cdmId + "'");
-
-            List<PID> childPids = new ArrayList<>();
-            while (rs.next()) {
-                String cdmId = rs.getString(1);
-                String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
-
-                SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-                PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
-
-                childPids.add(filePid);
-            }
-            return childPids;
         }
     }
 
@@ -300,7 +320,7 @@ public class SipService {
         protected void generateWork() throws IOException {
             Path expDescPath = getDescriptionPath(cdmId, false);
 
-            SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
+
             log.info("Transforming CDM object {} to box-c work {}", cdmId, workPid.getId());
             workBag = model.createBag(workPid.getRepositoryPath());
             workBag.addProperty(RDF.type, Cdr.Work);
@@ -309,7 +329,12 @@ public class SipService {
             // Copy description to SIP
             copyDescriptionToSip(workPid, expDescPath);
 
-            fileObjPids = Collections.singletonList(addFileObject(cdmId, cdmCreated, sourceMapping));
+            fileObjPids = addChildObjects();
+        }
+
+        protected List<PID> addChildObjects() throws IOException {
+            SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
+            return Collections.singletonList(addFileObject(cdmId, cdmCreated, sourceMapping));
         }
 
         protected void copyDescriptionToSip(PID pid, Path descPath) throws IOException {

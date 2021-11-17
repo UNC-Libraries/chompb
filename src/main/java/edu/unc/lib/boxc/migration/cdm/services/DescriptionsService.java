@@ -16,6 +16,8 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import static edu.unc.lib.boxc.common.xml.SecureXMLFactory.createXMLInputFactory;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_GROUPED_WORK;
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
 
 import java.io.ByteArrayInputStream;
@@ -269,7 +271,9 @@ public class DescriptionsService {
             doc.setRootElement(collEl);
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", title from "
-                    + CdmIndexService.TB_NAME);
+                    + CdmIndexService.TB_NAME
+                    + " where " + ENTRY_TYPE_FIELD + " != '" + ENTRY_TYPE_GROUPED_WORK + "'"
+                            + " or " + ENTRY_TYPE_FIELD + " is null");
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 String title = rs.getString(2);
