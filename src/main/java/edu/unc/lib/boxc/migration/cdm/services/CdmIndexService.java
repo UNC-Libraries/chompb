@@ -173,6 +173,16 @@ public class CdmIndexService {
                 }).collect(Collectors.toList());
     }
 
+    /**
+     * Indexes the metadata of an object provided via exportFieldValues and migrationFieldValues
+     * @param conn
+     * @param exportFieldValues Values of all configured and reserved fields which belong to the object being indexed.
+     *                          Must be ordered with configured fields first, followed by reserved fields
+     *                          as defined in CdmFieldInfo.RESERVED_FIELDS
+     * @param migrationFieldValues Array of migration specific fields, in the order defined in
+     *                             CdmIndexService.MIGRATION_FIELDS
+     * @throws SQLException
+     */
     private void indexObject(Connection conn, List<String> exportFieldValues, String... migrationFieldValues)
             throws SQLException {
         PreparedStatement stmt = conn.prepareStatement(recordInsertSqlTemplate);
