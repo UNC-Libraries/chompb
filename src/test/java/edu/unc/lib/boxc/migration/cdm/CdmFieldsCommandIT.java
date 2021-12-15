@@ -15,16 +15,23 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
+import static org.junit.Assert.assertTrue;
+
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
+import edu.unc.lib.boxc.migration.cdm.services.FieldAssessmentTemplateService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 
 /**
@@ -33,10 +40,16 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 public class CdmFieldsCommandIT extends AbstractCommandIT {
 
     private CdmFieldService fieldService;
+    private FieldAssessmentTemplateService templateService;
+
+    @Rule
+    public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
     @Before
     public void setUp() throws Exception {
         fieldService = new CdmFieldService();
+        templateService = new FieldAssessmentTemplateService();
+        templateService.setCdmFieldService(fieldService);
     }
 
     @After
@@ -85,5 +98,19 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         executeExpectFailure(cmdArgs);
 
         assertOutputContains("Duplicate export_as value 'titla'");
+    }
+
+    @Test
+    public void generateReportTest() throws Exception {
+        tmpFolder.create();
+        MigrationProject project = MigrationProjectFactory.createMigrationProject(
+                tmpFolder.getRoot().toPath(), "gilmer", null, USERNAME);
+        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
+        templateService.generate(project);
+
+        Path projPath = project.getProjectPath();
+        Path newPath = projPath.resolve("field_assessment_gilmer.xlsx");
+
+        assertTrue(Files.exists(newPath));
     }
 }
