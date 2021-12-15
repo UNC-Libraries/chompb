@@ -57,7 +57,7 @@ public class FieldAssessmentTemplateService {
         Sheet sheet = workbook.createSheet("Template");
 
         // Style spreadsheet
-        XSSFFont defaultFont= workbook.createFont();
+        XSSFFont defaultFont = workbook.createFont();
         defaultFont.setFontHeightInPoints((short) 11);
         defaultFont.setFontName("Calibri");
         defaultFont.setColor(IndexedColors.BLACK.getIndex());
@@ -108,7 +108,7 @@ public class FieldAssessmentTemplateService {
 
         // Add a row for every field in field info object and fill in default values for all blank ? fields
         int rowNum = 0;
-        for (int i=0; i<fields.size(); i++) {
+        for (int i = 0; i < fields.size(); i++) {
             rowNum++;
             Row row = sheet.createRow(rowNum);
             row.setRowStyle(defaultStyle);
@@ -122,7 +122,7 @@ public class FieldAssessmentTemplateService {
         }
 
         // Auto size the column widths
-        for(int columnIndex = 0; columnIndex < 11; columnIndex++) {
+        for (int columnIndex = 0; columnIndex < 11; columnIndex++) {
             sheet.autoSizeColumn(columnIndex);
             int currentColumnWidth = sheet.getColumnWidth(columnIndex);
             sheet.setColumnWidth(columnIndex, (currentColumnWidth + 1000));
