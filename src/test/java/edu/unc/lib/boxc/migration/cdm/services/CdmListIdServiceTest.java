@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -36,6 +37,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.nio.file.Files;
 import java.util.List;
 
 public class CdmListIdServiceTest {
@@ -48,6 +50,7 @@ public class CdmListIdServiceTest {
 
     private MigrationProject project;
     private CdmListIdService service;
+    private ExportStateService exportStateService;
     @Mock
     private CloseableHttpClient httpClient;
     @Mock
@@ -63,10 +66,16 @@ public class CdmListIdServiceTest {
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+        Files.createDirectories(project.getExportPath());
+        exportStateService = new ExportStateService();
+        exportStateService.setProject(project);
+        exportStateService.transitionToStarting();
         service = new CdmListIdService();
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);
+        service.setExportStateService(exportStateService);
         service.setPageSize(50);
+        service.setProject(project);
 
         when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResp);
         when(httpResp.getEntity()).thenReturn(respEntity);
@@ -80,7 +89,7 @@ public class CdmListIdServiceTest {
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_3.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_4.json"));
 
-        List<String> allListId = service.listAllCdmIds(project);
+        List<String> allListId = service.listAllCdmIds();
 
         assertEquals(161, allListId.size());
         assertEquals("25", allListId.get(0));
@@ -98,7 +107,7 @@ public class CdmListIdServiceTest {
     @Test
     public void retrieveCdmListIdNoResults() throws Exception {
         when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"));
-        List<String> allListId = service.listAllCdmIds(project);
+        List<String> allListId = service.listAllCdmIds();
 
         assertEquals(0, allListId.size());
         assertTrue(allListId.isEmpty());
@@ -110,7 +119,7 @@ public class CdmListIdServiceTest {
         when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"));
 
-        List<String> allListId = service.listAllCdmIds(project);
+        List<String> allListId = service.listAllCdmIds();
 
         assertEquals(161, allListId.size());
         assertEquals("25", allListId.get(0));

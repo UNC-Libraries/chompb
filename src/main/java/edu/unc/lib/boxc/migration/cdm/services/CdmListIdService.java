@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -48,18 +49,19 @@ public class CdmListIdService {
     private static final Logger log = getLogger(CdmListIdService.class);
     public static final String CDM_QUERY_BASE = "dmwebservices/index.php?q=dmQuery/";
 
+    private MigrationProject project;
     private CloseableHttpClient httpClient;
     private String cdmBaseUri;
+    private ExportStateService exportStateService;
 
     private int pageSize = 1000; //set default page size
 
     /**
      * Get the total number of object IDs for the given collection
-     * @param project
      * @throw IOException
      * @return
      */
-    private int getTotalObjects(MigrationProject project) throws IOException {
+    private int getTotalObjects() throws IOException {
         String collectionId = project.getProjectProperties().getCdmCollectionId();
         String totalObjectsUrl = CDM_QUERY_BASE + collectionId
                 + "/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json";
@@ -89,11 +91,10 @@ public class CdmListIdService {
 
     /**
      * Page through the results
-     * @param project
      * @throw IOException
      * @return
      */
-    private List<String> pagingResults(MigrationProject project, int total) {
+    private List<String> pagingResults(int total) {
         int totalRecords = total;
         int maxPages = totalRecords / pageSize;
 
@@ -112,12 +113,11 @@ public class CdmListIdService {
 
     /**
      * Parse json for object IDs
-     * @param project
      * @param url
      * @throw IOException
      * @return
      */
-    private List<String> parseJson(MigrationProject project, String url) throws IOException {
+    private List<String> parseJson(String url) throws IOException {
         String collectionId = project.getProjectProperties().getCdmCollectionId();
         String objectUri = url;
 
@@ -149,19 +149,21 @@ public class CdmListIdService {
 
     /**
      * List all exported CDM records for this project
-     * @param project
      * @return
      */
-    public List<String> listAllCdmIds(MigrationProject project) throws IOException {
-        int totalObjects = getTotalObjects(project);
-        List<String> pageUrls = pagingResults(project, totalObjects);
+    public List<String> listAllCdmIds() throws IOException {
+        int totalObjects = getTotalObjects();
+        exportStateService.objectCountCompleted(totalObjects);
+        List<String> pageUrls = pagingResults(totalObjects);
 
         List<String> allObjectIds = new ArrayList<>();
-
+        exportStateService.transitionToListing(pageSize);
         for (String url : pageUrls) {
-            List<String> objectIds = parseJson(project, url);
+            List<String> objectIds = parseJson(url);
+            exportStateService.registerObjectIds(objectIds);
             allObjectIds.addAll(objectIds);
         }
+        exportStateService.listingComplete();
         return allObjectIds;
     }
 
@@ -179,6 +181,14 @@ public class CdmListIdService {
 
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
+    }
+
+    public void setProject(MigrationProject project) {
+        this.project = project;
+    }
+
+    public void setExportStateService(ExportStateService exportStateService) {
+        this.exportStateService = exportStateService;
     }
 }
 

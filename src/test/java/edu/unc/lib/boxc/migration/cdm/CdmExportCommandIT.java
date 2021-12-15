@@ -199,7 +199,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
 
-        assertFalse("Description folder should not be created", Files.exists(project.getExportPath()));
+        assertFalse("Export file should not be created", Files.exists(project.getExportPath().resolve("export_1.xml")));
         assertOutputContains("Failed to request export");
     }
 

@@ -15,8 +15,20 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.google.common.collect.Lists;
+import edu.unc.lib.boxc.common.util.URIUtil;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,20 +38,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.slf4j.Logger;
-
-import edu.unc.lib.boxc.common.util.URIUtil;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service for exporting CDM item records
@@ -51,6 +51,8 @@ public class CdmExportService {
     private CloseableHttpClient httpClient;
     private String cdmBaseUri;
     private CdmFieldService cdmFieldService;
+    private ExportStateService exportStateService;
+    private CdmListIdService listId;
 
     private int pageSize = 1000;
 
@@ -65,6 +67,8 @@ public class CdmExportService {
     public void exportAll(MigrationProject project) throws IOException {
         // Generate body of export request using the list of fields configure for export
         cdmFieldService.validateFieldsFile(project);
+        initializeExportDir(project);
+        exportStateService.transitionToStarting();
         CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
         String fieldParams = fieldInfo.getFields().stream()
                 .filter(f -> !f.getSkipExport())
@@ -72,11 +76,10 @@ public class CdmExportService {
                 .collect(Collectors.joining("&"));
 
         // Add paging to export
-        CdmListIdService listId = new CdmListIdService();
-        listId.setHttpClient(httpClient);
-        listId.setCdmBaseUri(cdmBaseUri);
-        List<String> allIds = listId.listAllCdmIds(project);
+        initializeListingService(project);
+        List<String> allIds = listId.listAllCdmIds();
         List<List<String>> chunks = Lists.partition(allIds, pageSize);
+        exportStateService.transitionToExporting(pageSize);
         int exportPage = 0;
         for (List<String> chunk : chunks) {
             // Name each exported page
@@ -99,10 +102,22 @@ public class CdmExportService {
             // Retrieve the export results
             Path exportFilePath = project.getExportPath().resolve(exportFilename);
             downloadExport(project, exportFilePath);
+
+            exportStateService.registerExported(chunk);
         }
 
         project.getProjectProperties().setExportedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
+
+        exportStateService.exportingCompleted();
+    }
+
+    private void initializeListingService(MigrationProject project) {
+        listId = new CdmListIdService();
+        listId.setHttpClient(httpClient);
+        listId.setCdmBaseUri(cdmBaseUri);
+        listId.setExportStateService(exportStateService);
+        listId.setProject(project);
     }
 
     private void initializeExportDir(MigrationProject project) throws IOException {
@@ -120,7 +135,6 @@ public class CdmExportService {
                 throw new MigrationException("Failed to download export (" + resp.getStatusLine().getStatusCode()
                         + "): " + IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1));
             }
-            initializeExportDir(project);
             Files.copy(resp.getEntity().getContent(), exportFilePath, StandardCopyOption.REPLACE_EXISTING);
             log.debug("Downloaded export to file {}", exportFilePath);
         }
@@ -136,6 +150,10 @@ public class CdmExportService {
 
     public void setCdmFieldService(CdmFieldService cdmFieldService) {
         this.cdmFieldService = cdmFieldService;
+    }
+
+    public void setExportStateService(ExportStateService exportStateService) {
+        this.exportStateService = exportStateService;
     }
 
     public int getPageSize() {

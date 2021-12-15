@@ -21,6 +21,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -71,6 +72,8 @@ public class CdmExportCommand implements Callable<Integer> {
 
     private CdmFieldService fieldService;
     private CdmExportService exportService;
+    private ExportStateService exportStateService;
+    private MigrationProject project;
 
     @Override
     public Integer call() throws Exception {
@@ -78,10 +81,11 @@ public class CdmExportCommand implements Callable<Integer> {
 
         try {
             validate();
-            initializeServices();
 
             Path currentPath = parentCommand.getWorkingDirectory();
-            MigrationProject project = MigrationProjectFactory.loadMigrationProject(currentPath);
+            project = MigrationProjectFactory.loadMigrationProject(currentPath);
+            initializeServices();
+
             exportService.exportAll(project);
 
             outputLogger.info("Exported project {} in {}s", project.getProjectName(),
@@ -95,10 +99,13 @@ public class CdmExportCommand implements Callable<Integer> {
 
     public void initializeServices() {
         fieldService = new CdmFieldService();
+        exportStateService = new ExportStateService();
+        exportStateService.setProject(project);
         exportService = new CdmExportService();
         exportService.setCdmBaseUri(cdmBaseUri);
         exportService.setPageSize(pageSize);
         exportService.setCdmFieldService(fieldService);
+        exportService.setExportStateService(exportStateService);
         initializeAuthenticatedCdmClient();
 
     }

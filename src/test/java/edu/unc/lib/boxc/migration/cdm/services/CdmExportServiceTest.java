@@ -29,11 +29,14 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -69,6 +72,7 @@ public class CdmExportServiceTest {
     private MigrationProject project;
     private CdmFieldService fieldService;
     private CdmExportService service;
+    private ExportStateService exportStateService;
     @Mock
     private CloseableHttpClient httpClient;
     @Mock
@@ -93,11 +97,13 @@ public class CdmExportServiceTest {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         fieldService = new CdmFieldService();
-
+        exportStateService = new ExportStateService();
+        exportStateService.setProject(project);
         service = new CdmExportService();
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);
         service.setCdmFieldService(fieldService);
+        service.setExportStateService(exportStateService);
 
         // Mockito any matcher not differentiating between the different HttpPost/HttpGet params
         when(httpClient.execute(any())).thenReturn(getResp).thenReturn(getResp).thenReturn(postResp).thenReturn(getResp);
@@ -134,6 +140,7 @@ public class CdmExportServiceTest {
         assertEquals("description", submittedParams.get("desc"));
 
         assertTrue("Export folder not created", Files.exists(project.getExportPath()));
+        assertExportFileCount(1);
         assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
     }
@@ -156,7 +163,7 @@ public class CdmExportServiceTest {
         } catch (MigrationException e) {
             // Should only have made one call
             verify(httpClient, times(2)).execute(any());
-            assertFalse("Export folder should not exist", Files.exists(project.getExportPath()));
+            assertExportFileCount(0);
         }
     }
 
@@ -176,7 +183,7 @@ public class CdmExportServiceTest {
             fail();
         } catch (MigrationException e) {
             verify(httpClient, times(4)).execute(any());
-            assertFalse("Export folder should not exist", Files.exists(project.getExportPath()));
+            assertExportFileCount(0);
         }
     }
 
@@ -207,8 +214,16 @@ public class CdmExportServiceTest {
         assertFalse("Must not include skipped field", submittedParams.containsKey("desc"));
 
         assertTrue("Export folder not created", Files.exists(project.getExportPath()));
+        assertExportFileCount(1);
         assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
+    }
+
+    private void assertExportFileCount(int expectedCount) throws Exception {
+        try (Stream<Path> files = Files.list(project.getExportPath())) {
+            long count = files.filter(p -> p.getFileName().toString().startsWith("export")).count();
+            assertEquals(expectedCount, count);
+        }
     }
 
     private CdmFieldInfo populateFieldInfo() {
