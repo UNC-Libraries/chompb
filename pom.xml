@@ -16,6 +16,7 @@
         <picocli.version>4.6.1</picocli.version>
         <wiremock.version>2.27.2</wiremock.version>
         <sqlite-jdbc.version>3.36.0.1</sqlite-jdbc.version>
+        <poi.version>5.1.0</poi.version>
 
         <build-tools.path></build-tools.path>
     </properties>
@@ -112,6 +113,16 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
