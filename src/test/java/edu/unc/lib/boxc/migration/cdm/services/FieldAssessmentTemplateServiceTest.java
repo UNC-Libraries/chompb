@@ -15,7 +15,12 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,8 +34,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-
-import static org.junit.Assert.*;
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 
 /**
  * @author krwong
@@ -55,9 +59,6 @@ public class FieldAssessmentTemplateServiceTest {
         service.setCdmFieldService(fieldService);
     }
 
-    // test that all fields are filled in
-    // test that all the expected rows are present (including configured and reserved)
-    // test that ignored fields don't show up in the spreadsheet
     @Test
     public void allExpectedCellsPopulatedTest() throws Exception {
         populateFieldInfo();

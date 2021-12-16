@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,11 +40,20 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 
 /**
+ * Service for generating field assessment spreadsheet template
  * @author krwong
  */
 public class FieldAssessmentTemplateService {
     private CdmFieldService cdmFieldService;
+    private static final List<String> COLUMN_NAMES = Arrays.asList("Field Label", "Alias", "MD Source",
+            "All fields blank?", "Some fields blank?", "Repeated fields?", "Retain?", "Display?",
+            "MODS mapping", "Notes", "Remediation needed");
 
+    /**
+     * Generate field assessment spreadsheet template for a collection
+     * @param project
+     * @throws IOException
+     */
     public void generate(MigrationProject project) throws IOException {
         // Get a list of all the fields
         cdmFieldService.validateFieldsFile(project);
@@ -94,23 +104,15 @@ public class FieldAssessmentTemplateService {
         sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, 10));
         sheet.createFreezePane(0,1);
         header.setRowStyle(headerStyle);
-        header.createCell(0).setCellValue("Field Label");
-        header.createCell(1).setCellValue("Alias");
-        header.createCell(2).setCellValue("MD Source");
-        header.createCell(3).setCellValue("All fields blank?");
-        header.createCell(4).setCellValue("Some fields blank?");
-        header.createCell(5).setCellValue("Repeated fields?");
-        header.createCell(6).setCellValue("Retain?");
-        header.createCell(7).setCellValue("Display?");
-        header.createCell(8).setCellValue("MODS mapping");
-        header.createCell(9).setCellValue("Notes");
-        header.createCell(10).setCellValue("Remediation needed");
+        int cellNum = 0;
+        for (String name : COLUMN_NAMES) {
+            header.createCell(cellNum).setCellValue(name);
+            cellNum++;
+        }
 
         // Add a row for every field in field info object and fill in default values for all blank ? fields
-        int rowNum = 0;
         for (int i = 0; i < fields.size(); i++) {
-            rowNum++;
-            Row row = sheet.createRow(rowNum);
+            Row row = sheet.createRow(i + 1);
             row.setRowStyle(defaultStyle);
             row.createCell(0).setCellValue(fields.get(i).getDescription());
             row.createCell(1).setCellValue(fields.get(i).getExportAs());
@@ -122,7 +124,7 @@ public class FieldAssessmentTemplateService {
         }
 
         // Auto size the column widths
-        for (int columnIndex = 0; columnIndex < 11; columnIndex++) {
+        for (int columnIndex = 0; columnIndex < COLUMN_NAMES.size(); columnIndex++) {
             sheet.autoSizeColumn(columnIndex);
             int currentColumnWidth = sheet.getColumnWidth(columnIndex);
             sheet.setColumnWidth(columnIndex, (currentColumnWidth + 1000));
