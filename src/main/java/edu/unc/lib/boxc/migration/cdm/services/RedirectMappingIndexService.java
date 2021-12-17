@@ -18,7 +18,6 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -30,8 +29,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Objects;
+import java.sql.DriverManager;
 
 /**
  * Service for indexing the redirect mapping CSV into the chomping_block DB
@@ -78,37 +76,27 @@ public class RedirectMappingIndexService {
                 preparedStatement.execute();
             }
 
-            // insert or update (if it's the same IDs?) if it fails, delete the old one and put it in again?
+            // TODO insert or update (if it's the same IDs?) if it fails, delete the old one and put it in again?
         } catch (SQLException | IOException e) {
             throw new MigrationException("Error indexing redirect mapping CSV", e);
         } finally {
-            closeDbConnection(conn);
+            CdmIndexService.closeDbConnection(conn);
         }
     }
 
     private void assertCollectionSubmitted() {
-        if (project.getProjectProperties().getSipsSubmitted() == null) {
+        if (project.getProjectProperties().getSipsSubmitted().isEmpty()) {
             throw new InvalidProjectStateException("Must submit the collection prior to indexing");
         }
     }
 
     public Connection openDbConnection() throws SQLException {
         try {
-//            Class.forName("org.sqlite.JDBC");
-//            return DriverManager.getConnection("jdbc:sqlite:" + project.getIndexPath());
+            // TODO in BXC-3372 need to connect it to actual DB when not in local testing
+            Class.forName("org.sqlite.JDBC");
+            return DriverManager.getConnection("jdbc:sqlite:" + project.getRedirectMappingIndexPath());
         } catch (ClassNotFoundException e) {
-            throw new MigrationException("Failed to open database connection to " + project.getIndexPath(), e);
-            // what is the index path?
-        }
-    }
-
-    public static void closeDbConnection(Connection conn) {
-        try {
-            if (conn != null) {
-                conn.close();
-            }
-        } catch (SQLException e) {
-            throw new MigrationException("Failed to close database connection: " + e.getMessage());
+            throw new MigrationException("Failed to open database connection to " + project.getRedirectMappingIndexPath(), e);
         }
     }
 }
