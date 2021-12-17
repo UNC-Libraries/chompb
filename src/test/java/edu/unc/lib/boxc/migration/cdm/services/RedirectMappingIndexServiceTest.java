@@ -91,29 +91,25 @@ public class RedirectMappingIndexServiceTest {
     }
 
     @Test
-    public void redirectMappingTableIsPopulated() throws Exception {
+    public void redirectMappingTableIsPopulatedWithRightNumberOfRows() throws Exception {
         addSipsSubmitted();
         indexService.indexMapping();
 
-        assertRowCount(3);
+        Connection conn = indexService.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select count(*) from redirect_mappings");
+            rs.next();
+            assertEquals("Incorrect number of rows in database", 3, rs.getInt(1));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
     }
 
     private SipGenerationOptions makeOptions() {
         SipGenerationOptions options = new SipGenerationOptions();
         options.setUsername(USERNAME);
         return options;
-    }
-
-    private void assertRowCount(int expected) throws Exception {
-        Connection conn = indexService.openDbConnection();
-        try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select count(*) from redirect_mappings");
-            rs.next();
-            assertEquals("Incorrect number of rows in database", expected, rs.getInt(1));
-        } finally {
-            CdmIndexService.closeDbConnection(conn);
-        }
     }
 
     private void addSipsSubmitted() {
