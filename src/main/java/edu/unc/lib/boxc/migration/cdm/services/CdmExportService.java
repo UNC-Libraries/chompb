@@ -68,7 +68,7 @@ public class CdmExportService {
         // Generate body of export request using the list of fields configure for export
         cdmFieldService.validateFieldsFile(project);
         initializeExportDir(project);
-        exportStateService.transitionToStarting();
+        exportStateService.startOrResumeExport(false);
         CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
         String fieldParams = fieldInfo.getFields().stream()
                 .filter(f -> !f.getSkipExport())

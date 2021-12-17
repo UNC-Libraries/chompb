@@ -17,6 +17,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.slf4j.LoggerFactory.getLogger;
+import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -91,16 +93,18 @@ public class CdmListIdService {
 
     /**
      * Page through the results
-     * @throw IOException
+     * @param startIndex
+     * @param total
      * @return
      */
-    private List<String> pagingResults(int total) {
+    private List<String> pagingResults(int startIndex, int total) {
         int totalRecords = total;
+        int startPage = startIndex / pageSize;
         int maxPages = totalRecords / pageSize;
 
         List<String> urls = new ArrayList<>();
 
-        for (int page = 0; page <= maxPages; page++) {
+        for (int page = startPage; page <= maxPages; page++) {
             int recordNum = (page * pageSize) + 1;
             String cdmPageUrl = CDM_QUERY_BASE
                     + project.getProjectProperties().getCdmCollectionId()
@@ -152,18 +156,39 @@ public class CdmListIdService {
      * @return
      */
     public List<String> listAllCdmIds() throws IOException {
-        int totalObjects = getTotalObjects();
-        exportStateService.objectCountCompleted(totalObjects);
-        List<String> pageUrls = pagingResults(totalObjects);
-
-        List<String> allObjectIds = new ArrayList<>();
-        exportStateService.transitionToListing(pageSize);
-        for (String url : pageUrls) {
-            List<String> objectIds = parseJson(url);
-            exportStateService.registerObjectIds(objectIds);
-            allObjectIds.addAll(objectIds);
+        // Get total number of objects either from cdm or from resumption data
+        int totalObjects;
+        if (exportStateService.isResuming()) {
+            totalObjects = exportStateService.getState().getTotalObjects();
+        } else {
+            totalObjects = getTotalObjects();
+            exportStateService.objectCountCompleted(totalObjects);
         }
-        exportStateService.listingComplete();
+
+        // If resuming, then start from the already retrieved ids, otherwise start from an empty list
+        List<String> allObjectIds;
+        if (exportStateService.isResuming()) {
+            allObjectIds = exportStateService.retrieveObjectIds();
+        } else {
+            allObjectIds = new ArrayList<>();
+        }
+        // If we have not retrieved all the ids, then start retrieving the remaining ids
+        if (allObjectIds.size() < totalObjects) {
+            if (exportStateService.isResuming()) {
+                exportStateService.assertState(ProgressState.LISTING_OBJECTS);
+            } else {
+                exportStateService.transitionToListing(pageSize);
+            }
+
+            List<String> pageUrls = pagingResults(allObjectIds.size(), totalObjects);
+            for (String url : pageUrls) {
+                List<String> objectIds = parseJson(url);
+                exportStateService.registerObjectIds(objectIds);
+                allObjectIds.addAll(objectIds);
+            }
+            exportStateService.listingComplete();
+        }
+
         return allObjectIds;
     }
 

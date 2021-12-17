@@ -31,7 +31,7 @@ public class ExportState {
     private Integer totalObjects;
     private Integer lastExportedIndex;
     private boolean resuming = false;
-    private ProgressState state;
+    private ProgressState progressState;
 
     public enum ProgressState {
         STARTING, COUNT_COMPLETED, LISTING_OBJECTS, LISTING_COMPLETED, EXPORTING, EXPORT_COMPLETED;
@@ -69,12 +69,12 @@ public class ExportState {
         this.totalObjects = totalObjects;
     }
 
-    public ProgressState getState() {
-        return state;
+    public ProgressState getProgressState() {
+        return progressState;
     }
 
-    public void setState(ProgressState state) {
-        this.state = state;
+    public void setProgressState(ProgressState progressState) {
+        this.progressState = progressState;
     }
 
     public Integer getLastExportedIndex() {

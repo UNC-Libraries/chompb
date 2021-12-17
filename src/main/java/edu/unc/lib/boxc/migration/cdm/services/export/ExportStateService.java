@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,8 +40,6 @@ import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.Progres
 public class ExportStateService {
     private static final String IDS_FILENAME = ".object_ids.txt";
     private static final String STATE_FILENAME = ".export_state.json";
-    private MigrationProject project;
-    private ExportState state;
     private static final ObjectWriter STATE_WRITER;
     private static final ObjectReader STATE_READER;
     static {
@@ -53,13 +52,57 @@ public class ExportStateService {
         STATE_WRITER = mapper.writerFor(ExportState.class);
     }
 
+    private MigrationProject project;
+    private ExportState state = new ExportState();
+
+    public void startOrResumeExport(boolean forceRestart) throws IOException {
+        if (forceRestart) {
+            clearState();
+            transitionToStarting();
+            return;
+        }
+        state = readState();
+        ProgressState progressState = state.getProgressState();
+        if (progressState == null) {
+            transitionToStarting();
+            return;
+        }
+        // If resuming in initial steps, start over
+        if (ProgressState.STARTING.equals(progressState) || ProgressState.COUNT_COMPLETED.equals(progressState)) {
+            clearState();
+            transitionToStarting();
+            return;
+        }
+        if (ProgressState.EXPORT_COMPLETED.equals(progressState)) {
+            throw new InvalidProjectStateException("Export has already completed, must force restart to overwrite");
+        }
+        // For all other states, we are resuming
+        state.setResuming(true);
+    }
+
+    /**
+     * Check if the export is either not resuming or is in one of the listed states. Used to determine if
+     * the steps for a stage of an export should be executed or not.
+     * @param states
+     * @return
+     */
+    public boolean inStateOrNotResuming(ProgressState... states) {
+        if (!state.isResuming()) {
+            return true;
+        }
+        return Arrays.stream(states).anyMatch(s -> s.equals(state.getProgressState()));
+    }
+
+    public boolean isResuming() {
+        return state.isResuming();
+    }
+
     /**
      * Transition the export to the listing object ids state
      * @throws IOException
      */
     public void transitionToStarting() throws IOException {
-        state = new ExportState();
-        state.setState(ProgressState.STARTING);
+        state.setProgressState(ProgressState.STARTING);
         writeState();
     }
 
@@ -71,7 +114,7 @@ public class ExportStateService {
     public void objectCountCompleted(int count) throws IOException {
         assertState(ProgressState.STARTING);
         state.setTotalObjects(count);
-        state.setState(ExportState.ProgressState.COUNT_COMPLETED);
+        state.setProgressState(ExportState.ProgressState.COUNT_COMPLETED);
         writeState();
     }
 
@@ -82,7 +125,7 @@ public class ExportStateService {
      */
     public void transitionToListing(int listingPageSize) throws IOException {
         assertState(ProgressState.COUNT_COMPLETED);
-        state.setState(ProgressState.LISTING_OBJECTS);
+        state.setProgressState(ProgressState.LISTING_OBJECTS);
         state.setListIdPageSize(listingPageSize);
         writeState();
     }
@@ -93,7 +136,7 @@ public class ExportStateService {
      */
     public void listingComplete() throws IOException {
         assertState(ProgressState.LISTING_OBJECTS);
-        state.setState(ProgressState.LISTING_COMPLETED);
+        state.setProgressState(ProgressState.LISTING_COMPLETED);
         writeState();
     }
 
@@ -103,7 +146,8 @@ public class ExportStateService {
      */
     public void registerObjectIds(List<String> ids) throws IOException {
         assertState(ProgressState.LISTING_OBJECTS);
-        String idsJoined = String.join("\r\n", ids);
+        // Join to line separated, with trailing newline so that the next page starts on a new line
+        String idsJoined = String.join("\r\n", ids) + "\r\n";
         Files.write(
                 getObjectListPath(),
                 idsJoined.getBytes(),
@@ -126,7 +170,7 @@ public class ExportStateService {
      */
     public void transitionToExporting(int exportPageSize) throws IOException {
         assertState(ProgressState.LISTING_COMPLETED);
-        state.setState(ProgressState.EXPORTING);
+        state.setProgressState(ProgressState.EXPORTING);
         state.setExportPageSize(exportPageSize);
         writeState();
     }
@@ -149,7 +193,7 @@ public class ExportStateService {
      */
     public void exportingCompleted() throws IOException {
         assertState(ProgressState.EXPORTING);
-        state.setState(ProgressState.EXPORT_COMPLETED);
+        state.setProgressState(ProgressState.EXPORT_COMPLETED);
         writeState();
     }
 
@@ -161,8 +205,8 @@ public class ExportStateService {
         return project.getExportPath().resolve(STATE_FILENAME);
     }
 
-    private void assertState(ProgressState expectedState) {
-        if (!state.getState().equals(expectedState)) {
+    public void assertState(ProgressState expectedState) {
+        if (!state.getProgressState().equals(expectedState)) {
             throw new InvalidProjectStateException("Invalid state, export must be in " + expectedState + " state");
         }
     }
@@ -172,6 +216,9 @@ public class ExportStateService {
      * @throws IOException
      */
     public void writeState() throws IOException {
+        if (Files.notExists(project.getExportPath())) {
+            Files.createDirectories(project.getExportPath());
+        }
         STATE_WRITER.writeValue(getExportStatePath().toFile(), state);
     }
 
@@ -180,6 +227,9 @@ public class ExportStateService {
      * @throws IOException
      */
     public ExportState readState() throws IOException {
+        if (Files.notExists(getExportStatePath())) {
+            return new ExportState();
+        }
         return STATE_READER.readValue(getExportStatePath().toFile());
     }
 
@@ -195,5 +245,9 @@ public class ExportStateService {
 
     public void setProject(MigrationProject project) {
         this.project = project;
+    }
+
+    public ExportState getState() {
+        return state;
     }
 }
