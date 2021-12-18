@@ -25,9 +25,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import edu.unc.lib.boxc.migration.cdm.services.CdmListIdService;
@@ -262,6 +266,99 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 project.getExportPath().resolve("export_3.xml").toFile(), StandardCharsets.UTF_8));
         assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_4.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
                 project.getExportPath().resolve("export_4.xml").toFile(), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void multipageExportErrorAndResumeTest() throws Exception {
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+                .inScenario("Multiple Exports")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8)))
+                .willSetStateTo("Page 2"));
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+                .inScenario("Multiple Exports")
+                .whenScenarioStateIs("Page 2")
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_2.xml"), StandardCharsets.UTF_8)))
+                .willSetStateTo("Page 3"));
+
+        // Error on the third page
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+                .inScenario("Multiple Exports")
+                .whenScenarioStateIs("Page 3")
+                .willReturn(aResponse()
+                        .withStatus(400)));
+
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+                .inScenario("Multiple Exports")
+                .whenScenarioStateIs("Page 4")
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_4.xml"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1/0/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
+
+        Path projPath = createProject();
+
+        String[] args = new String[] {
+                "-w", projPath.toString(),
+                "export",
+                "--cdm-url", cdmBaseUrl,
+                "-p", PASSWORD,
+                "-n", PAGESIZE};
+        executeExpectFailure(args);
+
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
+        assertExportFilesPresent(project, "export_1.xml", "export_2.xml");
+
+        // Correct the third page
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+                .inScenario("Multiple Exports")
+                .whenScenarioStateIs("Page 3")
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_3.xml"), StandardCharsets.UTF_8)))
+                .willSetStateTo("Page 4"));
+
+        String[] args2 = new String[] {
+                "-w", projPath.toString(),
+                "export",
+                "--cdm-url", cdmBaseUrl,
+                "-p", PASSWORD,
+                "-n", PAGESIZE};
+        executeExpectSuccess(args2);
+
+        assertExportFilesPresent(project, "export_1.xml", "export_2.xml", "export_3.xml", "export_4.xml");
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_2.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_2.xml").toFile(), StandardCharsets.UTF_8));
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_3.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_3.xml").toFile(), StandardCharsets.UTF_8));
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_4.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_4.xml").toFile(), StandardCharsets.UTF_8));
+    }
+
+    // TODO test a forced restart for partial export
+    // TODO test rerunning a completed export
+
+    private void assertExportFilesPresent(MigrationProject project, String... expectedNames) throws IOException {
+        List<String> exportNames = Files.list(project.getExportPath())
+                .map(p -> p.getFileName().toString())
+                .filter(p -> p.startsWith("export"))
+                .collect(Collectors.toList());
+        assertTrue("Expected names: " + String.join(", ", expectedNames
+            + "\nBut found names: " + exportNames), exportNames.containsAll(Arrays.asList(expectedNames)));
+        assertEquals(expectedNames.length, exportNames.size());
     }
 
     private Path createProject() throws Exception {

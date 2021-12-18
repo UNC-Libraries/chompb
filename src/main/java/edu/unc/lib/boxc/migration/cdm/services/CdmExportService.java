@@ -20,6 +20,7 @@ import edu.unc.lib.boxc.common.util.URIUtil;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportState;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.IOUtils;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.slf4j.LoggerFactory.getLogger;
+import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 
 /**
  * Service for exporting CDM item records
@@ -79,37 +81,50 @@ public class CdmExportService {
         initializeListingService(project);
         List<String> allIds = listId.listAllCdmIds();
         List<List<String>> chunks = Lists.partition(allIds, pageSize);
-        exportStateService.transitionToExporting(pageSize);
-        int exportPage = 0;
-        for (List<String> chunk : chunks) {
-            // Name each exported page
-            exportPage++;
-            String exportFilename = "export_" + exportPage + ".xml";
-            String cdmIds = String.join("%2C", chunk);
-            String bodyParams = "CISODB=%2F" + project.getProjectProperties().getCdmCollectionId()
-                    + "&CISOTYPE=standard&CISOPAGE=1&" + fieldParams + "&CISOPTRLIST=" + cdmIds;
-            // Trigger the export
-            String exportReqUrl = URIUtil.join(cdmBaseUri, "cgi-bin/admin/exportxml.exe");
-            log.debug("Requesting export from {}", exportReqUrl);
-            HttpPost postMethod = new HttpPost(exportReqUrl);
-            postMethod.setEntity(new StringEntity(bodyParams, ISO_8859_1));
-            try (CloseableHttpResponse resp = httpClient.execute(postMethod)) {
-                if (resp.getStatusLine().getStatusCode() != 200) {
-                    throw new MigrationException("Failed to request export (" + resp.getStatusLine().getStatusCode()
-                            + "): " + IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1));
+        if (exportStateService.inStateOrNotResuming(ProgressState.LISTING_COMPLETED)) {
+            exportStateService.transitionToExporting(pageSize);
+        }
+        if (exportStateService.inStateOrNotResuming(ProgressState.EXPORTING)) {
+            int exportPage = 0;
+            for (List<String> chunk : chunks) {
+                // Name each exported page
+                exportPage++;
+                if (exportStateService.isResuming()
+                        && (exportPage * pageSize - 1) <= exportStateService.getState().getLastExportedIndex()) {
+                    continue;
                 }
+                exportPageOfResults(exportPage, chunk, fieldParams, project);
             }
-            // Retrieve the export results
-            Path exportFilePath = project.getExportPath().resolve(exportFilename);
-            downloadExport(project, exportFilePath);
 
-            exportStateService.registerExported(chunk);
+            project.getProjectProperties().setExportedDate(Instant.now());
+            ProjectPropertiesSerialization.write(project);
         }
 
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
-
         exportStateService.exportingCompleted();
+    }
+
+    private void exportPageOfResults(int pageNum, List<String> pageIds, String fieldParams, MigrationProject project)
+            throws IOException {
+        String exportFilename = "export_" + pageNum + ".xml";
+        String cdmIds = String.join("%2C", pageIds);
+        String bodyParams = "CISODB=%2F" + project.getProjectProperties().getCdmCollectionId()
+                + "&CISOTYPE=standard&CISOPAGE=1&" + fieldParams + "&CISOPTRLIST=" + cdmIds;
+        // Trigger the export
+        String exportReqUrl = URIUtil.join(cdmBaseUri, "cgi-bin/admin/exportxml.exe");
+        log.debug("Requesting export from {}", exportReqUrl);
+        HttpPost postMethod = new HttpPost(exportReqUrl);
+        postMethod.setEntity(new StringEntity(bodyParams, ISO_8859_1));
+        try (CloseableHttpResponse resp = httpClient.execute(postMethod)) {
+            if (resp.getStatusLine().getStatusCode() != 200) {
+                throw new MigrationException("Failed to request export (" + resp.getStatusLine().getStatusCode()
+                        + "): " + IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1));
+            }
+        }
+        // Retrieve the export results
+        Path exportFilePath = project.getExportPath().resolve(exportFilename);
+        downloadExport(project, exportFilePath);
+
+        exportStateService.registerExported(pageIds);
     }
 
     private void initializeListingService(MigrationProject project) {

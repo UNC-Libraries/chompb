@@ -359,6 +359,24 @@ public class ExportStateServiceTest {
         assertEquals(allIds, exportStateService.retrieveObjectIds());
     }
 
+    @Test
+    public void registerExportedTest() throws Exception {
+        exportStateService.startOrResumeExport(false);
+        exportStateService.getState().setProgressState(ProgressState.EXPORTING);
+
+        List<String> allIds = generateIdList(120);
+        List<String> firstPage = allIds.subList(0, 50);
+        List<String> secondPage = allIds.subList(50, 100);
+        List<String> thirdPage = allIds.subList(100, 120);
+
+        exportStateService.registerExported(firstPage);
+        assertEquals(49, exportStateService.getState().getLastExportedIndex().intValue());
+        exportStateService.registerExported(secondPage);
+        assertEquals(99, exportStateService.getState().getLastExportedIndex().intValue());
+        exportStateService.registerExported(thirdPage);
+        assertEquals(119, exportStateService.getState().getLastExportedIndex().intValue());
+    }
+
     private List<String> generateIdList(int count) {
         return IntStream.range(0, count)
                 .mapToObj(Integer::toString)

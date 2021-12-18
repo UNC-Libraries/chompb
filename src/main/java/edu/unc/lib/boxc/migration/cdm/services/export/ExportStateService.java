@@ -182,8 +182,14 @@ public class ExportStateService {
      */
     public void registerExported(List<String> objectIds) throws IOException {
         assertState(ProgressState.EXPORTING);
-        int lastIndex = state.getLastExportedIndex() == null ? 0 : state.getLastExportedIndex();
-        state.setLastExportedIndex(lastIndex + objectIds.size() - 1);
+        int lastIndex;
+        if (state.getLastExportedIndex() == null) {
+            // Subtract 1 from size to shift to 0 based index for the first page
+            lastIndex = objectIds.size() - 1;
+        } else {
+            lastIndex = state.getLastExportedIndex() + objectIds.size();
+        }
+        state.setLastExportedIndex(lastIndex);
         writeState();
     }
 
