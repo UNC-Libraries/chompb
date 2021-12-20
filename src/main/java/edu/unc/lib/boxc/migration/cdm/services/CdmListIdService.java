@@ -117,18 +117,18 @@ public class CdmListIdService {
 
     /**
      * Parse json for object IDs
-     * @param url
+     * @param objectUri
      * @throw IOException
      * @return
      */
-    private List<String> parseJson(String url) throws IOException {
+    private List<String> parseJson(String objectUri) throws IOException {
         String collectionId = project.getProjectProperties().getCdmCollectionId();
-        String objectUri = url;
 
         List<String> objectIds = new ArrayList<>();
 
         ObjectMapper mapper = new ObjectMapper();
         HttpGet getMethod = new HttpGet(objectUri);
+        log.debug("Requesting object list from URI: {}", objectUri);
         try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
             String body = IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1);
             if (body.contains("Error looking up collection")) {
