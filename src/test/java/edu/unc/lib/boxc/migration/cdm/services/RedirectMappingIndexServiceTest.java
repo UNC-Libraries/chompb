@@ -20,15 +20,21 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.time.Instant;
+import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -62,13 +68,13 @@ public class RedirectMappingIndexServiceTest {
         Statement statement = conn.createStatement();
         statement.execute("drop table if exists redirect_mappings");
         statement.execute("CREATE TABLE redirect_mappings (" +
-                " id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                " cdm_collection_id varchar(64) NOT NULL, " +
-                " cdm_object_id varchar(64) NOT NULL," +
-                " boxc_work_id varchar(64) NOT NULL," +
-                " boxc_file_id varchar(64) DEFAULT NULL," +
-                " created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                " UNIQUE (cdm_collection_id, cdm_object_id)" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "cdm_collection_id varchar(64) NOT NULL, " +
+                "cdm_object_id varchar(64) NOT NULL, " +
+                "boxc_work_id varchar(64) NOT NULL, " +
+                "boxc_file_id varchar(64) DEFAULT NULL, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "UNIQUE (cdm_collection_id, cdm_object_id)" +
                 ")");
         CdmIndexService.closeDbConnection(conn);
 
@@ -81,7 +87,7 @@ public class RedirectMappingIndexServiceTest {
     }
 
     @Test
-    public void indexingDoesNotHappenIfCollectionIsNotSubmitted() throws Exception {
+    public void indexingDoesNotHappenIfCollectionIsNotSubmitted() {
         try {
             indexService.indexMapping();
         } catch (InvalidProjectStateException e) {
@@ -101,6 +107,42 @@ public class RedirectMappingIndexServiceTest {
             ResultSet rs = stmt.executeQuery("select count(*) from redirect_mappings");
             rs.next();
             assertEquals("Incorrect number of rows in database", 3, rs.getInt(1));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
+    public void  redirectMappingIndexPopulatesColumnsCorrectly() throws Exception {
+        ArrayList<String> row1 = new ArrayList<>();
+        Path mappingPath = project.getRedirectMappingPath();
+        addSipsSubmitted();
+        indexService.indexMapping();
+
+        Reader reader = Files.newBufferedReader(mappingPath);
+        CSVParser originalParser = new CSVParser(reader, CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withHeader(RedirectMappingService.CSV_HEADERS)
+                .withTrim());
+
+        for (CSVRecord originalRecord : originalParser) {
+            row1.add(originalRecord.get(0)); // cdm_collection_id
+            row1.add(originalRecord.get(1)); // cdm_object_id
+            row1.add(originalRecord.get(2)); // boxc_work_id
+            row1.add(originalRecord.get(3)); // boxc_file_id
+            break; // just testing the first row
+        }
+
+        Connection conn = indexService.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select cdm_collection_id, cdm_object_id, " +
+                    "boxc_work_id, boxc_file_id from redirect_mappings");
+            rs.next();
+            assertEquals("cdm_collection_id value isn't accurate", row1.get(0), rs.getString("cdm_collection_id"));
+            assertEquals("cdm_object_id value isn't accurate", row1.get(1), rs.getString("cdm_object_id"));
+            assertEquals("boxc_work_id value isn't accurate", row1.get(2), rs.getString("boxc_work_id"));
+            assertEquals("boxc_file_id value isn't accurate", row1.get(3), rs.getString("boxc_file_id"));
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
