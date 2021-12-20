@@ -100,6 +100,7 @@ public class CdmExportServiceTest {
         fieldService = new CdmFieldService();
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);
+        exportStateService.transitionToStarting();
         service = new CdmExportService();
         service.setHttpClient(httpClient);
         service.setProject(project);
@@ -182,7 +183,8 @@ public class CdmExportServiceTest {
         fieldService.persistFieldsToProject(project, fieldInfo);
 
         when(postStatus.getStatusCode()).thenReturn(200);
-        when(getStatus.getStatusCode()).thenReturn(400);
+        // First status is for object listing requests
+        when(getStatus.getStatusCode()).thenReturn(200, 200, 400);
         when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
                 .thenReturn(new ByteArrayInputStream("bad".getBytes()));

@@ -21,6 +21,7 @@ import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmExportService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportState;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
@@ -34,11 +35,13 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 
 /**
  * @author bbpennel
@@ -75,6 +78,7 @@ public class CdmExportCommand implements Callable<Integer> {
             project = MigrationProjectFactory.loadMigrationProject(currentPath);
             initializeServices();
 
+            startOrResumeExport();
             exportService.exportAll(options);
 
             outputLogger.info("Exported project {} in {}s", project.getProjectName(),
@@ -95,7 +99,22 @@ public class CdmExportCommand implements Callable<Integer> {
         exportService.setCdmFieldService(fieldService);
         exportService.setExportStateService(exportStateService);
         initializeAuthenticatedCdmClient();
+    }
 
+    private void startOrResumeExport() throws IOException {
+        exportStateService.startOrResumeExport(options.isForce());
+        if (exportStateService.isResuming()) {
+            outputLogger.info("Resuming incomplete export from where it left off...");
+            ExportState exportState = exportStateService.getState();
+            if (ProgressState.LISTING_OBJECTS.equals(exportState.getProgressState())) {
+                outputLogger.info("Resuming listing of object IDs");
+            } else {
+                outputLogger.info("Listing of object IDs complete");
+                if (ProgressState.EXPORTING.equals(exportState.getProgressState())) {
+                    outputLogger.info("Resuming export of object records");
+                }
+            }
+        }
     }
 
     private void initializeAuthenticatedCdmClient() {
@@ -121,8 +140,12 @@ public class CdmExportCommand implements Callable<Integer> {
     }
 
     private void validate() {
-        if (options.getPageSize() < 1 || options.getPageSize() > 5000) {
-            throw new MigrationException("Page size must be between 1 and 5000");
+        if (options.getPageSize() < 1 || options.getPageSize() > CdmExportOptions.MAX_EXPORT_PER_PAGE) {
+            throw new MigrationException("Page size must be between 1 and " + CdmExportOptions.MAX_EXPORT_PER_PAGE);
+        }
+        if (options.getListingPageSize() < 1 || options.getListingPageSize() > CdmExportOptions.MAX_LISTING_PER_PAGE) {
+            throw new MigrationException("Listing page size must be between 1 and "
+                    + CdmExportOptions.MAX_LISTING_PER_PAGE);
         }
     }
 }

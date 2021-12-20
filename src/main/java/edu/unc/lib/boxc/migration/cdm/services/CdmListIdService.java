@@ -15,14 +15,6 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static org.slf4j.LoggerFactory.getLogger;
-import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -30,8 +22,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.common.util.URIUtil;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -39,9 +32,13 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.slf4j.Logger;
 
-import edu.unc.lib.boxc.common.util.URIUtil;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service for listing CDM object IDs
@@ -73,6 +70,10 @@ public class CdmListIdService {
         HttpGet getMethod = new HttpGet(totalUri);
         try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
             String body = IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1);
+            if (resp.getStatusLine().getStatusCode() != 200) {
+                throw new MigrationException("Request to retrieve object count " + totalUri
+                        + " failed with status " + resp.getStatusLine().getStatusCode() + ": " + body);
+            }
             if (body.contains("Error looking up collection")) {
                 throw new MigrationException("No collection with ID '" + collectionId
                         + "' found on server at " + totalUri);
@@ -131,6 +132,10 @@ public class CdmListIdService {
         log.debug("Requesting object list from URI: {}", objectUri);
         try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
             String body = IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1);
+            if (resp.getStatusLine().getStatusCode() != 200) {
+                throw new MigrationException("Request to retrieve object listing " + objectUri
+                        + " failed with status " + resp.getStatusLine().getStatusCode() + ": " + body);
+            }
             if (body.contains("Error looking up collection")) {
                 throw new MigrationException("No collection with ID '" + collectionId
                         + "' found on server at " + objectUri);
@@ -143,6 +148,9 @@ public class CdmListIdService {
                     String objectId = record.get("dmrecord").asText();
                     objectIds.add(objectId);
                 }
+            }
+            if (objectIds.isEmpty()) {
+                throw new MigrationException("Retrieved no object ids for listing request: " + objectUri);
             }
         } catch (JsonParseException e) {
             throw new MigrationException("Failed to parse response from URL " + objectUri

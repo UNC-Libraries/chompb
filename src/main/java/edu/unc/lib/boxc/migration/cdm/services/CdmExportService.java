@@ -21,7 +21,6 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
-import edu.unc.lib.boxc.migration.cdm.services.export.ExportState;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.IOUtils;
@@ -40,9 +39,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.slf4j.LoggerFactory.getLogger;
-import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 
 /**
  * Service for exporting CDM item records
@@ -62,14 +61,13 @@ public class CdmExportService {
 
     /**
      * Export all records from CDM for the provided project
-     * @param project
+     * @param options
      * @throws IOException
      */
     public void exportAll(CdmExportOptions options) throws IOException {
         // Generate body of export request using the list of fields configure for export
         cdmFieldService.validateFieldsFile(project);
         initializeExportDir(project);
-        exportStateService.startOrResumeExport(options.isForce());
         CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
         String fieldParams = fieldInfo.getFields().stream()
                 .filter(f -> !f.getSkipExport())
@@ -132,6 +130,7 @@ public class CdmExportService {
         listId.setHttpClient(httpClient);
         listId.setCdmBaseUri(options.getCdmBaseUri());
         listId.setExportStateService(exportStateService);
+        listId.setPageSize(options.getListingPageSize());
         listId.setProject(project);
     }
 

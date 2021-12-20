@@ -124,7 +124,7 @@ public class ExportStateServiceTest {
         assertEquals(ProgressState.EXPORT_COMPLETED, state.getProgressState());
         assertEquals(99, state.getTotalObjects().intValue());
         assertEquals(cdmIds, exportStateService.retrieveObjectIds());
-        assertEquals(cdmIds.size() - 1, state.getLastExportedIndex().intValue());
+        assertEquals(cdmIds.size() - 1, state.getLastExportedIndex());
     }
 
     @Test
@@ -146,13 +146,8 @@ public class ExportStateServiceTest {
         assertFalse(state.isResuming());
         assertEquals(ProgressState.STARTING, state.getProgressState());
         assertNull(state.getTotalObjects());
-        try {
-            exportStateService.retrieveObjectIds();
-            fail();
-        } catch (NoSuchFileException e) {
-            // expected
-        }
-        assertNull(state.getLastExportedIndex());
+        assertTrue(exportStateService.retrieveObjectIds().isEmpty());
+        assertEquals(0, state.getLastExportedIndex());
     }
 
     @Test
@@ -176,13 +171,13 @@ public class ExportStateServiceTest {
         assertEquals(ProgressState.EXPORTING, state.getProgressState());
         assertEquals(99, state.getTotalObjects().intValue());
         assertEquals(cdmIds, exportStateService.retrieveObjectIds());
-        assertEquals(49, state.getLastExportedIndex().intValue());
+        assertEquals(49, state.getLastExportedIndex());
 
         // Active state should indicate it was resumed
         ExportState activeState = exportStateService.getState();
         assertTrue(activeState.isResuming());
         assertEquals(ProgressState.EXPORTING, activeState.getProgressState());
-        assertEquals(49, state.getLastExportedIndex().intValue());
+        assertEquals(49, state.getLastExportedIndex());
     }
 
     @Test
@@ -204,13 +199,8 @@ public class ExportStateServiceTest {
         assertFalse(state.isResuming());
         assertEquals(ProgressState.STARTING, state.getProgressState());
         assertNull(state.getTotalObjects());
-        try {
-            exportStateService.retrieveObjectIds();
-            fail();
-        } catch (NoSuchFileException e) {
-            // expected
-        }
-        assertNull(state.getLastExportedIndex());
+        assertTrue(exportStateService.retrieveObjectIds().isEmpty());
+        assertEquals(0, state.getLastExportedIndex());
     }
 
     @Test
@@ -370,11 +360,11 @@ public class ExportStateServiceTest {
         List<String> thirdPage = allIds.subList(100, 120);
 
         exportStateService.registerExported(firstPage);
-        assertEquals(49, exportStateService.getState().getLastExportedIndex().intValue());
+        assertEquals(49, exportStateService.getState().getLastExportedIndex());
         exportStateService.registerExported(secondPage);
-        assertEquals(99, exportStateService.getState().getLastExportedIndex().intValue());
+        assertEquals(99, exportStateService.getState().getLastExportedIndex());
         exportStateService.registerExported(thirdPage);
-        assertEquals(119, exportStateService.getState().getLastExportedIndex().intValue());
+        assertEquals(119, exportStateService.getState().getLastExportedIndex());
     }
 
     private List<String> generateIdList(int count) {

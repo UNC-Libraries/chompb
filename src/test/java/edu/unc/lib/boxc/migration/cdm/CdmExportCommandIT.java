@@ -336,6 +336,9 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 "-p", PASSWORD,
                 "-n", PAGESIZE};
         executeExpectSuccess(args2);
+        assertOutputContains("Resuming incomplete export from where it left off");
+        assertOutputContains("Listing of object IDs complete");
+        assertOutputContains("Resuming export of object records");
 
         assertExportFilesPresent(project, "export_1.xml", "export_2.xml", "export_3.xml", "export_4.xml");
         assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
@@ -406,6 +409,68 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         // Contents of file should match new contents
         assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void resumeDuringListingTest() throws Exception {
+        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"1/0/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
+
+        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/1/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_1.json"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/51/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_2.json"), StandardCharsets.UTF_8))));
+        // Fail on the third page
+        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/101/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withStatus(400)));
+
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8))));
+
+        Path projPath = createProject();
+
+        String[] args = new String[] {
+                "-w", projPath.toString(),
+                "export",
+                "--cdm-url", cdmBaseUrl,
+                "-p", PASSWORD,
+                "--object-listing-per-page", "50"};
+        executeExpectFailure(args);
+        // Export no export files
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
+        assertExportFilesPresent(project);
+
+        // Succeed on third page this time
+        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/101/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_3.json"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/151/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_4.json"), StandardCharsets.UTF_8))));
+
+        String[] argsResume = new String[] {
+                "-w", projPath.toString(),
+                "export",
+                "--cdm-url", cdmBaseUrl,
+                "-p", PASSWORD};
+        executeExpectSuccess(args);
+
+        assertExportFilesPresent(project, "export_1.xml");
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
+
+        assertEquals(161, Files.lines(project.getExportPath().resolve(".object_ids.txt")).count());
     }
 
     private void assertExportFilesPresent(MigrationProject project, String... expectedNames) throws IOException {

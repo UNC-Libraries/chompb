@@ -22,22 +22,27 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author bbpennel
  */
 public class ExportStateService {
+    private static final Logger log = getLogger(ExportStateService.class);
     private static final String IDS_FILENAME = ".object_ids.txt";
     private static final String STATE_FILENAME = ".export_state.json";
     private static final ObjectWriter STATE_WRITER;
@@ -59,18 +64,21 @@ public class ExportStateService {
         if (forceRestart) {
             clearState();
             transitionToStarting();
+            log.debug("Forcing restart of export, cleared previous state");
             return;
         }
         state = readState();
         ProgressState progressState = state.getProgressState();
         if (progressState == null) {
             transitionToStarting();
+            log.debug("Starting new export");
             return;
         }
         // If resuming in initial steps, start over
         if (ProgressState.STARTING.equals(progressState) || ProgressState.COUNT_COMPLETED.equals(progressState)) {
             clearState();
             transitionToStarting();
+            log.debug("Restarting export, had not reached listing or exporting states");
             return;
         }
         if (ProgressState.EXPORT_COMPLETED.equals(progressState)) {
@@ -158,6 +166,9 @@ public class ExportStateService {
      * @return the list of object ids for this CDM project
      */
     public List<String> retrieveObjectIds() throws IOException {
+        if (Files.notExists(getObjectListPath())) {
+            return new ArrayList<>();
+        }
         try (Stream<String> lines = Files.lines(getObjectListPath())) {
             return lines.collect(Collectors.toList());
         }
@@ -183,7 +194,7 @@ public class ExportStateService {
     public void registerExported(List<String> objectIds) throws IOException {
         assertState(ProgressState.EXPORTING);
         int lastIndex;
-        if (state.getLastExportedIndex() == null) {
+        if (state.getLastExportedIndex() == 0) {
             // Subtract 1 from size to shift to 0 based index for the first page
             lastIndex = objectIds.size() - 1;
         } else {
@@ -213,7 +224,8 @@ public class ExportStateService {
 
     public void assertState(ProgressState expectedState) {
         if (!state.getProgressState().equals(expectedState)) {
-            throw new InvalidProjectStateException("Invalid state, export must be in " + expectedState + " state");
+            throw new InvalidProjectStateException("Invalid state, export must be in " + expectedState + " state"
+                + " but was in state " + state.getProgressState());
         }
     }
 
@@ -246,6 +258,15 @@ public class ExportStateService {
     public void clearState() throws IOException {
         Files.deleteIfExists(getExportStatePath());
         Files.deleteIfExists(getObjectListPath());
+        Files.list(project.getExportPath())
+                .filter(p -> p.getFileName().toString().startsWith("export"))
+                .forEach(p -> {
+                    try {
+                        Files.delete(p);
+                    } catch (IOException e) {
+                        log.error("Failed to cleanup file", e);
+                    }
+                });
         state = new ExportState();
     }
 

@@ -29,7 +29,8 @@ public class ExportState {
     private Integer exportPageSize;
     private Integer listIdPageSize;
     private Integer totalObjects;
-    private Integer lastExportedIndex;
+    // Int so it will start at 0 instead of null
+    private int lastExportedIndex;
     private boolean resuming = false;
     private ProgressState progressState;
 
@@ -77,11 +78,11 @@ public class ExportState {
         this.progressState = progressState;
     }
 
-    public Integer getLastExportedIndex() {
+    public int getLastExportedIndex() {
         return lastExportedIndex;
     }
 
-    public void setLastExportedIndex(Integer lastExportedIndex) {
+    public void setLastExportedIndex(int lastExportedIndex) {
         this.lastExportedIndex = lastExportedIndex;
     }
 

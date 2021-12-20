@@ -33,11 +33,18 @@ public class CdmExportOptions {
                     "Defaults to current user: ${DEFAULT-VALUE}"},
             defaultValue = "${sys:user.name}")
     private String cdmUsername;
-    @CommandLine.Option(names = {"-n", "-per-page"},
+    public static final int MAX_EXPORT_PER_PAGE = 5000;
+    @CommandLine.Option(names = {"-n", "--per-page"},
             description = {"Page size for exports.",
-                    "Default: ${DEFAULT-VALUE}. Max page size is 5000"},
+                    "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_EXPORT_PER_PAGE},
             defaultValue = "1000")
-    private int pageSize;
+    private int pageSize = 1000;
+    public static final int MAX_LISTING_PER_PAGE = 1000;
+    @CommandLine.Option(names = {"--object-listing-per-page"},
+            description = {"During initial listing of objects, the number of objects to list per page.",
+                    "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_LISTING_PER_PAGE},
+            defaultValue = "1000")
+    private int listingPageSize = 1000;
     @CommandLine.Option(names = { "-f", "--force"},
             description = "Force the export to restart from the beginning. Use if a previous export was started "
                     + "or completed, but you would like to begin the export again.")
@@ -65,6 +72,14 @@ public class CdmExportOptions {
 
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
+    }
+
+    public int getListingPageSize() {
+        return listingPageSize;
+    }
+
+    public void setListingPageSize(int listingPageSize) {
+        this.listingPageSize = listingPageSize;
     }
 
     public boolean isForce() {

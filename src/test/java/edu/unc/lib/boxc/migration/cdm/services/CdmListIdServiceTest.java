@@ -24,9 +24,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.http.HttpEntity;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ConnectTimeoutException;
@@ -40,6 +42,8 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 
@@ -60,6 +64,8 @@ public class CdmListIdServiceTest {
     private CloseableHttpResponse httpResp;
     @Mock
     private HttpEntity respEntity;
+    @Mock
+    private StatusLine statusLine;
     @Captor
     private ArgumentCaptor<HttpGet> httpGetArgumentCaptor;
 
@@ -82,6 +88,8 @@ public class CdmListIdServiceTest {
 
         when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResp);
         when(httpResp.getEntity()).thenReturn(respEntity);
+        when(httpResp.getStatusLine()).thenReturn(statusLine);
+        when(statusLine.getStatusCode()).thenReturn(200);
     }
 
     @Test
@@ -110,10 +118,12 @@ public class CdmListIdServiceTest {
     @Test
     public void retrieveCdmListIdNoResults() throws Exception {
         when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"));
-        List<String> allListId = service.listAllCdmIds();
-
-        assertEquals(0, allListId.size());
-        assertTrue(allListId.isEmpty());
+        try {
+            service.listAllCdmIds();
+            fail();
+        } catch (MigrationException e) {
+            assertTrue(e.getMessage().contains("Retrieved no object ids"));
+        }
     }
 
     @Test
@@ -174,6 +184,40 @@ public class CdmListIdServiceTest {
                 CDM_QUERY_BASE + "50/51/1/0/0/0/0/json",
                 // Page called twice, first time fails
                 CDM_QUERY_BASE + "50/101/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "50/101/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "50/151/1/0/0/0/0/json");
+    }
+
+    @Test
+    public void failOnFirstPageOfResultsTest() throws Exception {
+        when(respEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
+                .thenReturn(new ByteArrayInputStream("Bad output".getBytes(StandardCharsets.UTF_8)))
+                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_1.json"))
+                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_2.json"))
+                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_3.json"))
+                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_4.json"));
+
+        try {
+            service.listAllCdmIds();
+            fail();
+        } catch (MigrationException e) {
+            // Expected
+        }
+
+        // Resume with issue resolved
+        exportStateService.getState().setResuming(true);
+        List<String> allListId = service.listAllCdmIds();
+
+        assertEquals(161, allListId.size());
+        assertEquals("25", allListId.get(0));
+        assertEquals("130", allListId.get(99));
+        assertEquals("131", allListId.get(100));
+        assertEquals("193", allListId.get(160));
+
+        assertUrlsCalled(CDM_QUERY_BASE + "1/0/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "50/1/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "50/1/1/0/0/0/0/json",
+                CDM_QUERY_BASE + "50/51/1/0/0/0/0/json",
                 CDM_QUERY_BASE + "50/101/1/0/0/0/0/json",
                 CDM_QUERY_BASE + "50/151/1/0/0/0/0/json");
     }
