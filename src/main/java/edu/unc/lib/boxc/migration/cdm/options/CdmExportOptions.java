@@ -38,6 +38,10 @@ public class CdmExportOptions {
                     "Default: ${DEFAULT-VALUE}. Max page size is 5000"},
             defaultValue = "1000")
     private int pageSize;
+    @CommandLine.Option(names = { "-f", "--force"},
+            description = "Force the export to restart from the beginning. Use if a previous export was started "
+                    + "or completed, but you would like to begin the export again.")
+    private boolean force;
 
     public String getCdmBaseUri() {
         return cdmBaseUri;
@@ -61,5 +65,13 @@ public class CdmExportOptions {
 
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
+    }
+
+    public boolean isForce() {
+        return force;
+    }
+
+    public void setForce(boolean force) {
+        this.force = force;
     }
 }

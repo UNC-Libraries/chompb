@@ -348,8 +348,65 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 project.getExportPath().resolve("export_4.xml").toFile(), StandardCharsets.UTF_8));
     }
 
-    // TODO test a forced restart for partial export
-    // TODO test rerunning a completed export
+    @Test
+    public void rerunCompletedExportTest() throws Exception {
+        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"1/0/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8))));
+
+        Path projPath = createProject();
+
+        String[] args = new String[] {
+                "-w", projPath.toString(),
+                "export",
+                "--cdm-url", cdmBaseUrl,
+                "-p", PASSWORD};
+        executeExpectSuccess(args);
+
+        // Change response for export so it will be clear if a new export occurs
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/octet-stream")
+                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8))));
+
+        String[] argsRerun = new String[] {
+                "-w", projPath.toString(),
+                "export",
+                "--cdm-url", cdmBaseUrl,
+                "-p", PASSWORD};
+        executeExpectFailure(argsRerun);
+        assertOutputContains("Export has already completed, must force restart to overwrite");
+
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
+
+        // Previous export should still be present
+        assertExportFilesPresent(project, "export_1.xml");
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
+
+        // Retry with force restart
+        String[] argsRestart = new String[] {
+                "-w", projPath.toString(),
+                "export",
+                "--cdm-url", cdmBaseUrl,
+                "-p", PASSWORD,
+                "--force"};
+        executeExpectSuccess(argsRestart);
+
+        assertExportFilesPresent(project, "export_1.xml");
+        // Contents of file should match new contents
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
+    }
 
     private void assertExportFilesPresent(MigrationProject project, String... expectedNames) throws IOException {
         List<String> exportNames = Files.list(project.getExportPath())
