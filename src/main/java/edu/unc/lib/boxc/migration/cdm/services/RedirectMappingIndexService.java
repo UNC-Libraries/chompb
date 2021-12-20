@@ -37,7 +37,7 @@ import java.sql.DriverManager;
  * @author snluong
  */
 public class RedirectMappingIndexService {
-    private MigrationProject project;
+    private final MigrationProject project;
 
     public RedirectMappingIndexService(MigrationProject project) {
         this.project = project;
@@ -61,8 +61,9 @@ public class RedirectMappingIndexService {
                 String boxc_work_id = originalRecord.get(2);
                 String boxc_file_id = originalRecord.get(3);
 
-                String query = " insert into redirect_mappings (cdm_collection_id, cdm_object_id, boxc_work_id, boxc_file_id)"
-                        + " values (?, ?, ?, ?)";
+                String query = " insert into redirect_mappings " +
+                        "(cdm_collection_id, cdm_object_id, boxc_work_id, boxc_file_id) " +
+                        "values (?, ?, ?, ?)";
                 PreparedStatement preparedStatement = conn.prepareStatement(query);
                 preparedStatement.setString(1, cdm_collection_id);
                 preparedStatement.setString(2, cdm_object_id);
@@ -96,7 +97,8 @@ public class RedirectMappingIndexService {
             Class.forName("org.sqlite.JDBC");
             return DriverManager.getConnection("jdbc:sqlite:" + project.getRedirectMappingIndexPath());
         } catch (ClassNotFoundException e) {
-            throw new MigrationException("Failed to open database connection to " + project.getRedirectMappingIndexPath(), e);
+            throw new MigrationException("Failed to open database connection to " +
+                    project.getRedirectMappingIndexPath(), e);
         }
     }
 }
