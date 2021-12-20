@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -101,7 +102,7 @@ public class CdmExportServiceTest {
         exportStateService.setProject(project);
         service = new CdmExportService();
         service.setHttpClient(httpClient);
-        service.setCdmBaseUri(CDM_BASE_URL);
+        service.setProject(project);
         service.setCdmFieldService(fieldService);
         service.setExportStateService(exportStateService);
 
@@ -112,6 +113,14 @@ public class CdmExportServiceTest {
         when(postResp.getStatusLine()).thenReturn(postStatus);
         when(postResp.getEntity()).thenReturn(postEntity);
         when(getEntity.getContent()).thenReturn(new ByteArrayInputStream(EXPORT_BODY.getBytes()));
+    }
+
+    private CdmExportOptions makeExportOptions() {
+        CdmExportOptions options = new CdmExportOptions();
+        options.setCdmBaseUri(CDM_BASE_URL);
+        options.setCdmUsername("user");
+        options.setPageSize(1000);
+        return options;
     }
 
     @Test
@@ -125,7 +134,7 @@ public class CdmExportServiceTest {
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"));
 
-        service.exportAll(project);
+        service.exportAll(makeExportOptions());
 
         verify(httpClient, times(4)).execute(requestCaptor.capture());
         List<HttpUriRequest> requests = requestCaptor.getAllValues();
@@ -158,7 +167,7 @@ public class CdmExportServiceTest {
                 .thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
         try {
-            service.exportAll(project);
+            service.exportAll(makeExportOptions());
             fail();
         } catch (MigrationException e) {
             // Should only have made one call
@@ -179,7 +188,7 @@ public class CdmExportServiceTest {
                 .thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
         try {
-            service.exportAll(project);
+            service.exportAll(makeExportOptions());
             fail();
         } catch (MigrationException e) {
             verify(httpClient, times(4)).execute(any());
@@ -199,7 +208,7 @@ public class CdmExportServiceTest {
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"));
 
-        service.exportAll(project);
+        service.exportAll(makeExportOptions());
 
         verify(httpClient, times(4)).execute(requestCaptor.capture());
         List<HttpUriRequest> requests = requestCaptor.getAllValues();
