@@ -38,11 +38,17 @@ import java.sql.DriverManager;
  */
 public class RedirectMappingIndexService {
     private final MigrationProject project;
+    public static final String INSERT_STATEMENT = " insert into redirect_mappings " +
+            "(cdm_collection_id, cdm_object_id, boxc_work_id, boxc_file_id) " +
+            "values (?, ?, ?, ?)";
 
     public RedirectMappingIndexService(MigrationProject project) {
         this.project = project;
     }
 
+    /**
+     * Reads data from redirect_mapping CSV and inserts that data into the redirect_mappings table
+     */
     public void indexMapping() {
         assertCollectionSubmitted();
         Connection conn = null;
@@ -54,17 +60,13 @@ public class RedirectMappingIndexService {
                     .withFirstRecordAsHeader()
                     .withHeader(RedirectMappingService.CSV_HEADERS)
                     .withTrim());
-
             for (CSVRecord originalRecord : originalParser) {
                 String cdm_collection_id = originalRecord.get(0);
                 String cdm_object_id = originalRecord.get(1);
                 String boxc_work_id = originalRecord.get(2);
                 String boxc_file_id = originalRecord.get(3);
 
-                String query = " insert into redirect_mappings " +
-                        "(cdm_collection_id, cdm_object_id, boxc_work_id, boxc_file_id) " +
-                        "values (?, ?, ?, ?)";
-                PreparedStatement preparedStatement = conn.prepareStatement(query);
+                PreparedStatement preparedStatement = conn.prepareStatement(INSERT_STATEMENT);
                 preparedStatement.setString(1, cdm_collection_id);
                 preparedStatement.setString(2, cdm_object_id);
                 preparedStatement.setString(3, boxc_work_id);

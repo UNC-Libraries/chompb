@@ -19,7 +19,6 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -35,6 +34,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -97,24 +97,8 @@ public class RedirectMappingIndexServiceTest {
     }
 
     @Test
-    public void redirectMappingTableIsPopulatedWithRightNumberOfRows() throws Exception {
-        addSipsSubmitted();
-        indexService.indexMapping();
-
-        Connection conn = indexService.openDbConnection();
-        try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select count(*) from redirect_mappings");
-            rs.next();
-            assertEquals("Incorrect number of rows in database", 3, rs.getInt(1));
-        } finally {
-            CdmIndexService.closeDbConnection(conn);
-        }
-    }
-
-    @Test
-    public void  redirectMappingIndexPopulatesColumnsCorrectly() throws Exception {
-        ArrayList<String> row1 = new ArrayList<>();
+    public void  redirectMappingIndexPopulatesTableCorrectly() throws Exception {
+        List<String> row1 = new ArrayList<>();
         Path mappingPath = project.getRedirectMappingPath();
         addSipsSubmitted();
         indexService.indexMapping();
@@ -136,6 +120,10 @@ public class RedirectMappingIndexServiceTest {
         Connection conn = indexService.openDbConnection();
         try {
             Statement stmt = conn.createStatement();
+            ResultSet count = stmt.executeQuery("select count(*) from redirect_mappings");
+            count.next();
+            assertEquals("Incorrect number of rows in database", 3, count.getInt(1));
+
             ResultSet rs = stmt.executeQuery("select cdm_collection_id, cdm_object_id, " +
                     "boxc_work_id, boxc_file_id from redirect_mappings");
             rs.next();
