@@ -24,7 +24,6 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import org.slf4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,6 +38,8 @@ import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.Progres
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
+ * Service which records and tracks the state of an export operation
+ *
  * @author bbpennel
  */
 public class ExportStateService {
@@ -60,6 +61,14 @@ public class ExportStateService {
     private MigrationProject project;
     private ExportState state = new ExportState();
 
+    /**
+     * Initializes the state of the export to either a new export or resumes an incomplete export when
+     * appropriate. If the forceRestart flag is provided, or the previous incomplete export did
+     * not progress far enough to warrant resumption, the existing state will be clear and restarted.
+     *
+     * @param forceRestart if true, previous export state will be cleared and a new export state started
+     * @throws IOException
+     */
     public void startOrResumeExport(boolean forceRestart) throws IOException {
         if (forceRestart) {
             clearState();
@@ -222,6 +231,10 @@ public class ExportStateService {
         return project.getExportPath().resolve(STATE_FILENAME);
     }
 
+    /**
+     * Throws an InvalidProjectStateException if the state of the export does not match the expected state
+     * @param expectedState
+     */
     public void assertState(ProgressState expectedState) {
         if (!state.getProgressState().equals(expectedState)) {
             throw new InvalidProjectStateException("Invalid state, export must be in " + expectedState + " state"
@@ -256,17 +269,19 @@ public class ExportStateService {
      * @throws IOException
      */
     public void clearState() throws IOException {
-        Files.deleteIfExists(getExportStatePath());
-        Files.deleteIfExists(getObjectListPath());
-        Files.list(project.getExportPath())
-                .filter(p -> p.getFileName().toString().startsWith("export"))
-                .forEach(p -> {
-                    try {
-                        Files.delete(p);
-                    } catch (IOException e) {
-                        log.error("Failed to cleanup file", e);
-                    }
-                });
+        if (Files.exists(project.getExportPath())) {
+            Files.deleteIfExists(getExportStatePath());
+            Files.deleteIfExists(getObjectListPath());
+            Files.list(project.getExportPath())
+                    .filter(p -> p.getFileName().toString().startsWith("export"))
+                    .forEach(p -> {
+                        try {
+                            Files.delete(p);
+                        } catch (IOException e) {
+                            log.error("Failed to cleanup file", e);
+                        }
+                    });
+        }
         state = new ExportState();
     }
 
