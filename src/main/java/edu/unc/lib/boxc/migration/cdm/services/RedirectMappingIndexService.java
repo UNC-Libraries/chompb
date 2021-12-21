@@ -105,5 +105,5 @@ public class RedirectMappingIndexService {
         }
     }
 
-    public void setConnectionString(String connectionString) {  this.connectionString = connectionString; }
+    public void setConnectionString(String connectionString) { this.connectionString = connectionString; }
 }
