@@ -15,8 +15,6 @@
  */
 package edu.unc.lib.boxc.migration.cdm.model;
 
-import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
-
 import java.nio.file.Path;
 
 /**

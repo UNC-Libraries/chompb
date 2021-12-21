@@ -30,6 +30,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -62,8 +63,9 @@ public class RedirectMappingIndexServiceTest {
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         sipsService = testHelper.createSipsService();
-
         indexService = new RedirectMappingIndexService(project);
+        indexService.setConnectionString("jdbc:sqlite:" + testHelper.getRedirectMappingIndexPath());
+
         Connection conn = indexService.openDbConnection();
         Statement statement = conn.createStatement();
         statement.execute("drop table if exists redirect_mappings");
@@ -77,13 +79,6 @@ public class RedirectMappingIndexServiceTest {
                 "UNIQUE (cdm_collection_id, cdm_object_id)" +
                 ")");
         CdmIndexService.closeDbConnection(conn);
-
-        testHelper.indexExportData("export_1.xml");
-        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
-
-        sipsService.generateSips(makeOptions());
     }
 
     @Test
@@ -97,20 +92,23 @@ public class RedirectMappingIndexServiceTest {
     }
 
     @Test
-    public void  redirectMappingIndexPopulatesTableCorrectly() throws Exception {
+    public void redirectMappingIndexPopulatesTableCorrectly() throws Exception {
+        generateRegularProject();
+        sipsService.generateSips(makeOptions());
+
         List<String> row1 = new ArrayList<>();
         Path mappingPath = project.getRedirectMappingPath();
         Connection conn = indexService.openDbConnection();
-        indexService.setConnectionString("jdbc:sqlite:" + testHelper.getRedirectMappingIndexPath());
+
         addSipsSubmitted();
         indexService.indexMapping();
 
         try (
-            Reader reader = Files.newBufferedReader(mappingPath);
-            CSVParser originalParser = new CSVParser(reader, CSVFormat.DEFAULT
-                .withFirstRecordAsHeader()
-                .withHeader(RedirectMappingService.CSV_HEADERS)
-                .withTrim());
+                Reader reader = Files.newBufferedReader(mappingPath);
+                CSVParser originalParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
         ) {
             for (CSVRecord originalRecord : originalParser) {
                 row1.add(originalRecord.get(0)); // cdm_collection_id
@@ -128,10 +126,41 @@ public class RedirectMappingIndexServiceTest {
             ResultSet rs = stmt.executeQuery("select cdm_collection_id, cdm_object_id, " +
                     "boxc_work_id, boxc_file_id from redirect_mappings");
             rs.next();
-            assertEquals("cdm_collection_id value isn't accurate", row1.get(0), rs.getString("cdm_collection_id"));
-            assertEquals("cdm_object_id value isn't accurate", row1.get(1), rs.getString("cdm_object_id"));
-            assertEquals("boxc_work_id value isn't accurate", row1.get(2), rs.getString("boxc_work_id"));
-            assertEquals("boxc_file_id value isn't accurate", row1.get(3), rs.getString("boxc_file_id"));
+            assertEquals("cdm_collection_id value isn't accurate", row1.get(0),
+                    rs.getString("cdm_collection_id"));
+            assertEquals("cdm_object_id value isn't accurate", row1.get(1),
+                    rs.getString("cdm_object_id"));
+            assertEquals("boxc_work_id value isn't accurate", row1.get(2),
+                    rs.getString("boxc_work_id"));
+            assertEquals("boxc_file_id value isn't accurate", row1.get(3),
+                    rs.getString("boxc_file_id"));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
+    public void workIdsArePopulatedInRedirectMappingIndexForCompoundObjects() throws Exception {
+        List<String> nulls = new ArrayList<>();
+        generateCompoundObjectProject();
+        sipsService.generateSips(makeOptions());
+        Connection conn = indexService.openDbConnection();
+
+        addSipsSubmitted();
+        indexService.indexMapping();
+
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet count = stmt.executeQuery("select count(*) from redirect_mappings");
+            count.next();
+            assertEquals("Incorrect number of rows in database", 7, count.getInt(1));
+
+            ResultSet rs = stmt.executeQuery("select boxc_work_id from redirect_mappings where boxc_work_id is null");
+            while (rs.next()) {
+                nulls.add(rs.getString("boxc_work_id"));
+            }
+
+            assertTrue("there are null boxc_work_ids", nulls.isEmpty());
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
@@ -145,5 +174,22 @@ public class RedirectMappingIndexServiceTest {
 
     private void addSipsSubmitted() {
         project.getProjectProperties().getSipsSubmitted().add("Sips submitted!");
+    }
+
+    private void generateRegularProject() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+    }
+
+    private void generateCompoundObjectProject() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"),
+                "export_compounds.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.getDescriptionsService().generateDocuments(true);
+        testHelper.getDescriptionsService().expandDescriptions();
+        testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+                "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
     }
 }
