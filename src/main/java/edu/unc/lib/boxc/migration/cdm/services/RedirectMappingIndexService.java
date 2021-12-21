@@ -38,6 +38,7 @@ import java.sql.DriverManager;
  */
 public class RedirectMappingIndexService {
     private final MigrationProject project;
+    public String connectionString;
     public static final String INSERT_STATEMENT = " insert into redirect_mappings " +
             "(cdm_collection_id, cdm_object_id, boxc_work_id, boxc_file_id) " +
             "values (?, ?, ?, ?)";
@@ -53,13 +54,14 @@ public class RedirectMappingIndexService {
         assertCollectionSubmitted();
         Connection conn = null;
         Path mappingPath = project.getRedirectMappingPath();
-        try {
-            conn = openDbConnection();
+        try (
             Reader reader = Files.newBufferedReader(mappingPath);
             CSVParser originalParser = new CSVParser(reader, CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
                     .withHeader(RedirectMappingService.CSV_HEADERS)
                     .withTrim());
+        ) {
+            conn = openDbConnection();
             for (CSVRecord originalRecord : originalParser) {
                 String cdm_collection_id = originalRecord.get(0);
                 String cdm_object_id = originalRecord.get(1);
@@ -97,10 +99,11 @@ public class RedirectMappingIndexService {
         try {
             // TODO in BXC-3372 need to connect it to actual DB when not in local testing
             Class.forName("org.sqlite.JDBC");
-            return DriverManager.getConnection("jdbc:sqlite:" + project.getRedirectMappingIndexPath());
+            return DriverManager.getConnection(connectionString);
         } catch (ClassNotFoundException e) {
-            throw new MigrationException("Failed to open database connection to " +
-                    project.getRedirectMappingIndexPath(), e);
+            throw new MigrationException("Failed to open database connection to " + connectionString, e);
         }
     }
+
+    public void setConnectionString(String connectionString) {  this.connectionString = connectionString; }
 }

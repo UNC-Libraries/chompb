@@ -15,6 +15,8 @@
  */
 package edu.unc.lib.boxc.migration.cdm.model;
 
+import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
+
 import java.nio.file.Path;
 
 /**
@@ -36,7 +38,6 @@ public class MigrationProject {
     public static final String GROUP_MAPPING_FILENAME = "group_mappings.csv";
     public static final String SIPS_DIRNAME = "sips";
     public static final String REDIRECT_MAPPING_FILENAME = "redirect_mappings.csv";
-    public static final String REDIRECT_MAPPING_INDEX_FILENAME = "redirect_mapping_index.db";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -159,12 +160,5 @@ public class MigrationProject {
      */
     public Path getRedirectMappingPath() {
         return projectPath.resolve(REDIRECT_MAPPING_FILENAME);
-    }
-
-    /**
-     * @return Path of the index containing redirect mapping data
-     */
-    public Path getRedirectMappingIndexPath() {
-        return projectPath.resolve(REDIRECT_MAPPING_INDEX_FILENAME);
     }
 }

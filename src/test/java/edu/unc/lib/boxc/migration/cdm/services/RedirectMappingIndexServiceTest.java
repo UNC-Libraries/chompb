@@ -100,25 +100,26 @@ public class RedirectMappingIndexServiceTest {
     public void  redirectMappingIndexPopulatesTableCorrectly() throws Exception {
         List<String> row1 = new ArrayList<>();
         Path mappingPath = project.getRedirectMappingPath();
+        Connection conn = indexService.openDbConnection();
+        indexService.setConnectionString("jdbc:sqlite:" + testHelper.getRedirectMappingIndexPath());
         addSipsSubmitted();
         indexService.indexMapping();
 
-        Reader reader = Files.newBufferedReader(mappingPath);
-        CSVParser originalParser = new CSVParser(reader, CSVFormat.DEFAULT
+        try (
+            Reader reader = Files.newBufferedReader(mappingPath);
+            CSVParser originalParser = new CSVParser(reader, CSVFormat.DEFAULT
                 .withFirstRecordAsHeader()
                 .withHeader(RedirectMappingService.CSV_HEADERS)
                 .withTrim());
+        ) {
+            for (CSVRecord originalRecord : originalParser) {
+                row1.add(originalRecord.get(0)); // cdm_collection_id
+                row1.add(originalRecord.get(1)); // cdm_object_id
+                row1.add(originalRecord.get(2)); // boxc_work_id
+                row1.add(originalRecord.get(3)); // boxc_file_id
+                break; // just testing the first row
+            }
 
-        for (CSVRecord originalRecord : originalParser) {
-            row1.add(originalRecord.get(0)); // cdm_collection_id
-            row1.add(originalRecord.get(1)); // cdm_object_id
-            row1.add(originalRecord.get(2)); // boxc_work_id
-            row1.add(originalRecord.get(3)); // boxc_file_id
-            break; // just testing the first row
-        }
-
-        Connection conn = indexService.openDbConnection();
-        try {
             Statement stmt = conn.createStatement();
             ResultSet count = stmt.executeQuery("select count(*) from redirect_mappings");
             count.next();
