@@ -39,6 +39,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author snluong
@@ -85,6 +86,7 @@ public class RedirectMappingIndexServiceTest {
     public void indexingDoesNotHappenIfCollectionIsNotSubmitted() {
         try {
             indexService.indexMapping();
+            fail();
         } catch (InvalidProjectStateException e) {
             assertTrue("Unexpected message: " + e.getMessage(),
                     e.getMessage().contains("Must submit the collection prior to indexing"));
@@ -140,8 +142,8 @@ public class RedirectMappingIndexServiceTest {
     }
 
     @Test
-    public void workIdsArePopulatedInRedirectMappingIndexForCompoundObjects() throws Exception {
-        List<String> nulls = new ArrayList<>();
+    public void tableIsPopulatedCorrectlyInRedirectMappingIndexForCompoundObjects() throws Exception {
+        List<String> cdm_object_ids = new ArrayList<>();
         generateCompoundObjectProject();
         sipsService.generateSips(makeOptions());
         Connection conn = indexService.openDbConnection();
@@ -155,12 +157,13 @@ public class RedirectMappingIndexServiceTest {
             count.next();
             assertEquals("Incorrect number of rows in database", 7, count.getInt(1));
 
-            ResultSet rs = stmt.executeQuery("select boxc_work_id from redirect_mappings where boxc_work_id is null");
+            ResultSet rs = stmt.executeQuery("select cdm_object_id from redirect_mappings where " +
+                    "boxc_work_id is not null and boxc_file_id is null");
             while (rs.next()) {
-                nulls.add(rs.getString("boxc_work_id"));
+                cdm_object_ids.add(rs.getString("cdm_object_id"));
             }
 
-            assertTrue("there are null boxc_work_ids", nulls.isEmpty());
+            assertEquals("compound objects aren't represented correctly", 2, cdm_object_ids.size());
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
