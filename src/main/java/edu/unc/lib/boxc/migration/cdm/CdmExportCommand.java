@@ -104,7 +104,8 @@ public class CdmExportCommand implements Callable<Integer> {
     private void startOrResumeExport() throws IOException {
         exportStateService.startOrResumeExport(options.isForce());
         if (exportStateService.isResuming()) {
-            outputLogger.info("Resuming incomplete export from where it left off...");
+            outputLogger.info("Resuming incomplete export started {} from where it left off...",
+                    exportStateService.getState().getStartTime());
             ExportState exportState = exportStateService.getState();
             if (ProgressState.LISTING_OBJECTS.equals(exportState.getProgressState())) {
                 outputLogger.info("Resuming listing of object IDs");
@@ -140,12 +141,13 @@ public class CdmExportCommand implements Callable<Integer> {
     }
 
     private void validate() {
-        if (options.getPageSize() < 1 || options.getPageSize() > CdmExportOptions.MAX_EXPORT_PER_PAGE) {
-            throw new MigrationException("Page size must be between 1 and " + CdmExportOptions.MAX_EXPORT_PER_PAGE);
+        if (options.getPageSize() < 1 || options.getPageSize() > CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE) {
+            throw new MigrationException("Page size must be between 1 and "
+                    + CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE);
         }
-        if (options.getListingPageSize() < 1 || options.getListingPageSize() > CdmExportOptions.MAX_LISTING_PER_PAGE) {
+        if (options.getListingPageSize() < 1 || options.getListingPageSize() > CdmExportOptions.MAX_LIST_IDS_PER_PAGE) {
             throw new MigrationException("Listing page size must be between 1 and "
-                    + CdmExportOptions.MAX_LISTING_PER_PAGE);
+                    + CdmExportOptions.MAX_LIST_IDS_PER_PAGE);
         }
     }
 }

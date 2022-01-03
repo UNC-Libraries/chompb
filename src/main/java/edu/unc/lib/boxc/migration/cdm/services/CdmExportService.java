@@ -87,6 +87,7 @@ public class CdmExportService {
             for (List<String> chunk : chunks) {
                 // Name each exported page
                 exportPage++;
+                // When resuming, skip over pages until past the previously recorded last exported record
                 if (exportStateService.isResuming()
                         && (exportPage * pageSize - 1) <= exportStateService.getState().getLastExportedIndex()) {
                     continue;

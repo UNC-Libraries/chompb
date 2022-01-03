@@ -336,7 +336,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 "-p", PASSWORD,
                 "-n", PAGESIZE};
         executeExpectSuccess(args2);
-        assertOutputContains("Resuming incomplete export from where it left off");
+        assertOutputMatches(".*Resuming incomplete export started [0-9\\-T.:Z]+ from where it left off.*");
         assertOutputContains("Listing of object IDs complete");
         assertOutputContains("Resuming export of object records");
 
@@ -443,7 +443,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 "export",
                 "--cdm-url", cdmBaseUrl,
                 "-p", PASSWORD,
-                "--object-listing-per-page", "50"};
+                "--ids-per-page", "50"};
         executeExpectFailure(args);
         // Export no export files
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);

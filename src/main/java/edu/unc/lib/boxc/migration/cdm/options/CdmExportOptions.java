@@ -33,16 +33,16 @@ public class CdmExportOptions {
                     "Defaults to current user: ${DEFAULT-VALUE}"},
             defaultValue = "${sys:user.name}")
     private String cdmUsername;
-    public static final int MAX_EXPORT_PER_PAGE = 5000;
-    @CommandLine.Option(names = {"-n", "--per-page"},
+    public static final int MAX_EXPORT_RECORDS_PER_PAGE = 5000;
+    @CommandLine.Option(names = {"-n", "--records-per-page"},
             description = {"Page size for exports.",
-                    "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_EXPORT_PER_PAGE},
+                    "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_EXPORT_RECORDS_PER_PAGE},
             defaultValue = "1000")
     private int pageSize = 1000;
-    public static final int MAX_LISTING_PER_PAGE = 1000;
-    @CommandLine.Option(names = {"--object-listing-per-page"},
-            description = {"During initial listing of objects, the number of objects to list per page.",
-                    "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_LISTING_PER_PAGE},
+    public static final int MAX_LIST_IDS_PER_PAGE = 1000;
+    @CommandLine.Option(names = {"--ids-per-page"},
+            description = {"During initial listing of object IDs, the number of objects to list per page.",
+                    "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_LIST_IDS_PER_PAGE},
             defaultValue = "1000")
     private int listingPageSize = 1000;
     @CommandLine.Option(names = { "-f", "--force"},
