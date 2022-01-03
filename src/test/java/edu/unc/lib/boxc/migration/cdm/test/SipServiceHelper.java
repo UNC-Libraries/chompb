@@ -36,6 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -84,6 +85,7 @@ public class SipServiceHelper {
     private final static Pattern SIP_PATH_PATTERN = Pattern.compile(".*SIP path: ([^\\s]+).*", Pattern.DOTALL);
     private final static Pattern NEW_COLL_PATTERN =
             Pattern.compile(".*Added new collection ([^\\s]+) with box-c id ([^\\s]+).*", Pattern.DOTALL);
+    public static final String REDIRECT_MAPPING_INDEX_FILENAME = "redirect_mapping_index.db";
 
     private Path sourceFilesBasePath;
     private Path accessFilesBasePath;
@@ -96,6 +98,7 @@ public class SipServiceHelper {
     private CdmIndexService indexService;
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
+    private RedirectMappingIndexService redirectMappingIndexService;
 
     public SipServiceHelper(MigrationProject project, Path filesBasePath) throws IOException {
         this.sourceFilesBasePath = new File(filesBasePath.toFile(), "source").toPath();
@@ -118,6 +121,7 @@ public class SipServiceHelper {
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
         destinationsService.setProject(project);
+        redirectMappingIndexService = new RedirectMappingIndexService(project);
 
         Files.createDirectories(project.getExportPath());
     }
@@ -377,6 +381,13 @@ public class SipServiceHelper {
         sip.setDepositPid(PIDs.get(PIDConstants.DEPOSITS_QUALIFIER, depositId));
         sip.setSipPath(sipPath);
         return sip;
+    }
+
+    /**
+     * @return Path of the index containing redirect mapping data
+     */
+    public Path getRedirectMappingIndexPath() {
+        return project.getProjectPath().resolve(REDIRECT_MAPPING_INDEX_FILENAME);
     }
 
     public Path getSourceFilesBasePath() {
