@@ -144,9 +144,7 @@ public class RedirectMappingIndexServiceTest {
     @Test
     public void tableIsPopulatedCorrectlyInRedirectMappingIndexForCompoundObjects() throws Exception {
         List<String> cdm_object_ids = new ArrayList<>();
-        List<String> expected_ids = new ArrayList<>();
-        expected_ids.add("604");
-        expected_ids.add("607");
+        List<String> expected_ids = Arrays.asList("604", "607");
         generateCompoundObjectProject();
         sipsService.generateSips(makeOptions());
         Connection conn = indexService.openDbConnection();
