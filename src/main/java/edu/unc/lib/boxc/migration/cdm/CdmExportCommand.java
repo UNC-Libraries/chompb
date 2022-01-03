@@ -15,12 +15,14 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
-
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.concurrent.Callable;
-
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
+import edu.unc.lib.boxc.migration.cdm.services.CdmExportService;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
+import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportState;
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -29,48 +31,41 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.services.CdmExportService;
-import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.concurrent.Callable;
+
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 
 /**
  * @author bbpennel
  */
 @Command(name = "export",
-        description = "Export records for a collection from CDM")
+        description = { "Export records for a collection from CDM.",
+                "If an export operation was started but did not complete, running this command again will "
+                    + "resume from where it left off. To force a restart instead, use the --force option."})
 public class CdmExportCommand implements Callable<Integer> {
     @ParentCommand
     private CLIMain parentCommand;
 
-    @Option(names = { "--cdm-url" },
-            description = {"Base URL to the CDM web service API. Falls back to CDM_BASE_URL env variable.",
-                    "Default: ${DEFAULT-VALUE}"},
-            defaultValue = "${env:CDM_BASE_URL:-http://localhost:82/}")
-    private String cdmBaseUri;
-    @Option(names = { "-u", "--cdm-user"},
-            description = {"User name for CDM requests.",
-                    "Defaults to current user: ${DEFAULT-VALUE}"},
-            defaultValue = "${sys:user.name}")
-    private String cdmUsername;
-    @Option(names = {"-p", "--cdm-password"},
+    @CommandLine.Mixin
+    private CdmExportOptions options;
+    @CommandLine.Option(names = {"-p", "--cdm-password"},
             description = "Password for CDM requests. Required.",
             arity = "0..1",
             interactive = true)
     private String cdmPassword;
-    @Option(names = {"-n", "-per-page"},
-            description = {"Page size for exports.",
-                    "Default: ${DEFAULT-VALUE}. Max page size is 5000"},
-            defaultValue = "1000")
-    private int pageSize;
 
     private CdmFieldService fieldService;
     private CdmExportService exportService;
+    private ExportStateService exportStateService;
+    private MigrationProject project;
 
     @Override
     public Integer call() throws Exception {
@@ -78,11 +73,13 @@ public class CdmExportCommand implements Callable<Integer> {
 
         try {
             validate();
-            initializeServices();
 
             Path currentPath = parentCommand.getWorkingDirectory();
-            MigrationProject project = MigrationProjectFactory.loadMigrationProject(currentPath);
-            exportService.exportAll(project);
+            project = MigrationProjectFactory.loadMigrationProject(currentPath);
+            initializeServices();
+
+            startOrResumeExport();
+            exportService.exportAll(options);
 
             outputLogger.info("Exported project {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
@@ -95,26 +92,45 @@ public class CdmExportCommand implements Callable<Integer> {
 
     public void initializeServices() {
         fieldService = new CdmFieldService();
+        exportStateService = new ExportStateService();
+        exportStateService.setProject(project);
         exportService = new CdmExportService();
-        exportService.setCdmBaseUri(cdmBaseUri);
-        exportService.setPageSize(pageSize);
+        exportService.setProject(project);
         exportService.setCdmFieldService(fieldService);
+        exportService.setExportStateService(exportStateService);
         initializeAuthenticatedCdmClient();
+    }
 
+    private void startOrResumeExport() throws IOException {
+        exportStateService.startOrResumeExport(options.isForce());
+        if (exportStateService.isResuming()) {
+            outputLogger.info("Resuming incomplete export started {} from where it left off...",
+                    exportStateService.getState().getStartTime());
+            ExportState exportState = exportStateService.getState();
+            if (ProgressState.LISTING_OBJECTS.equals(exportState.getProgressState())) {
+                outputLogger.info("Resuming listing of object IDs");
+            } else {
+                outputLogger.info("Listing of object IDs complete");
+                if (ProgressState.EXPORTING.equals(exportState.getProgressState())) {
+                    outputLogger.info("Resuming export of object records");
+                }
+            }
+        }
     }
 
     private void initializeAuthenticatedCdmClient() {
-        if (StringUtils.isBlank(cdmUsername)) {
+        if (StringUtils.isBlank(options.getCdmUsername())) {
             throw new MigrationException("Must provided a CDM username");
         }
         if (StringUtils.isBlank(cdmPassword)) {
-            throw new MigrationException("Must provided a CDM password for user " + cdmUsername);
+            throw new MigrationException("Must provided a CDM password for user " + options.getCdmUsername());
         }
 
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        outputLogger.info("Initializing connection to {}", URI.create(cdmBaseUri).getHost());
-        AuthScope scope = new AuthScope(new HttpHost(URI.create(cdmBaseUri).getHost()));
-        credsProvider.setCredentials(scope, new UsernamePasswordCredentials(cdmUsername, cdmPassword));
+        outputLogger.info("Initializing connection to {}", URI.create(options.getCdmBaseUri()).getHost());
+        AuthScope scope = new AuthScope(new HttpHost(URI.create(options.getCdmBaseUri()).getHost()));
+        credsProvider.setCredentials(scope, new UsernamePasswordCredentials(
+                options.getCdmUsername(), cdmPassword));
 
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setDefaultCredentialsProvider(credsProvider)
@@ -125,8 +141,13 @@ public class CdmExportCommand implements Callable<Integer> {
     }
 
     private void validate() {
-        if (pageSize < 1 || pageSize > 5000) {
-            throw new MigrationException("Page size must be between 1 and 5000");
+        if (options.getPageSize() < 1 || options.getPageSize() > CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE) {
+            throw new MigrationException("Page size must be between 1 and "
+                    + CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE);
+        }
+        if (options.getListingPageSize() < 1 || options.getListingPageSize() > CdmExportOptions.MAX_LIST_IDS_PER_PAGE) {
+            throw new MigrationException("Listing page size must be between 1 and "
+                    + CdmExportOptions.MAX_LIST_IDS_PER_PAGE);
         }
     }
 }

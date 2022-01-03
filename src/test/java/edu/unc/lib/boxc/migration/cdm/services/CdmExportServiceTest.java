@@ -29,11 +29,15 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -69,6 +73,7 @@ public class CdmExportServiceTest {
     private MigrationProject project;
     private CdmFieldService fieldService;
     private CdmExportService service;
+    private ExportStateService exportStateService;
     @Mock
     private CloseableHttpClient httpClient;
     @Mock
@@ -93,11 +98,14 @@ public class CdmExportServiceTest {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         fieldService = new CdmFieldService();
-
+        exportStateService = new ExportStateService();
+        exportStateService.setProject(project);
+        exportStateService.transitionToStarting();
         service = new CdmExportService();
         service.setHttpClient(httpClient);
-        service.setCdmBaseUri(CDM_BASE_URL);
+        service.setProject(project);
         service.setCdmFieldService(fieldService);
+        service.setExportStateService(exportStateService);
 
         // Mockito any matcher not differentiating between the different HttpPost/HttpGet params
         when(httpClient.execute(any())).thenReturn(getResp).thenReturn(getResp).thenReturn(postResp).thenReturn(getResp);
@@ -106,6 +114,14 @@ public class CdmExportServiceTest {
         when(postResp.getStatusLine()).thenReturn(postStatus);
         when(postResp.getEntity()).thenReturn(postEntity);
         when(getEntity.getContent()).thenReturn(new ByteArrayInputStream(EXPORT_BODY.getBytes()));
+    }
+
+    private CdmExportOptions makeExportOptions() {
+        CdmExportOptions options = new CdmExportOptions();
+        options.setCdmBaseUri(CDM_BASE_URL);
+        options.setCdmUsername("user");
+        options.setPageSize(1000);
+        return options;
     }
 
     @Test
@@ -119,7 +135,7 @@ public class CdmExportServiceTest {
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"));
 
-        service.exportAll(project);
+        service.exportAll(makeExportOptions());
 
         verify(httpClient, times(4)).execute(requestCaptor.capture());
         List<HttpUriRequest> requests = requestCaptor.getAllValues();
@@ -134,6 +150,7 @@ public class CdmExportServiceTest {
         assertEquals("description", submittedParams.get("desc"));
 
         assertTrue("Export folder not created", Files.exists(project.getExportPath()));
+        assertExportFileCount(1);
         assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
     }
@@ -151,12 +168,12 @@ public class CdmExportServiceTest {
                 .thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
         try {
-            service.exportAll(project);
+            service.exportAll(makeExportOptions());
             fail();
         } catch (MigrationException e) {
             // Should only have made one call
             verify(httpClient, times(2)).execute(any());
-            assertFalse("Export folder should not exist", Files.exists(project.getExportPath()));
+            assertExportFileCount(0);
         }
     }
 
@@ -166,17 +183,18 @@ public class CdmExportServiceTest {
         fieldService.persistFieldsToProject(project, fieldInfo);
 
         when(postStatus.getStatusCode()).thenReturn(200);
-        when(getStatus.getStatusCode()).thenReturn(400);
+        // First status is for object listing requests
+        when(getStatus.getStatusCode()).thenReturn(200, 200, 400);
         when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
                 .thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
         try {
-            service.exportAll(project);
+            service.exportAll(makeExportOptions());
             fail();
         } catch (MigrationException e) {
             verify(httpClient, times(4)).execute(any());
-            assertFalse("Export folder should not exist", Files.exists(project.getExportPath()));
+            assertExportFileCount(0);
         }
     }
 
@@ -192,7 +210,7 @@ public class CdmExportServiceTest {
                 .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
                 .thenReturn(this.getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"));
 
-        service.exportAll(project);
+        service.exportAll(makeExportOptions());
 
         verify(httpClient, times(4)).execute(requestCaptor.capture());
         List<HttpUriRequest> requests = requestCaptor.getAllValues();
@@ -207,8 +225,16 @@ public class CdmExportServiceTest {
         assertFalse("Must not include skipped field", submittedParams.containsKey("desc"));
 
         assertTrue("Export folder not created", Files.exists(project.getExportPath()));
+        assertExportFileCount(1);
         assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
+    }
+
+    private void assertExportFileCount(int expectedCount) throws Exception {
+        try (Stream<Path> files = Files.list(project.getExportPath())) {
+            long count = files.filter(p -> p.getFileName().toString().startsWith("export")).count();
+            assertEquals(expectedCount, count);
+        }
     }
 
     private CdmFieldInfo populateFieldInfo() {
