@@ -53,14 +53,20 @@ public class ExportProgressService {
         }
         displayActive.set(true);
         displayThread = new Thread(() -> {
-            // Update the display every
+            // Update the progress display until flag is set to end it, or an interrupt occurs
             while (displayActive.get()) {
                 update();
                 try {
                     TimeUnit.MILLISECONDS.sleep(displayUpdateRate);
                 } catch (InterruptedException e) {
                     log.warn("Interrupting progress display");
+                    displayActive.set(false);
+                    DisplayProgressUtil.finishProgress();
                     return;
+                } catch (Exception e) {
+                    displayActive.set(false);
+                    DisplayProgressUtil.finishProgress();
+                    throw e;
                 }
             }
         });
@@ -75,12 +81,17 @@ public class ExportProgressService {
             log.error("Progress display not active");
             return;
         }
-        displayActive.set(false);
-        // Wait up to 10 ticks for the display thread to end, just in case it doesn't end immediately
-        try {
-            displayThread.join(displayUpdateRate * 10);
-        } catch (InterruptedException e) {
-            log.warn("Interrupted while waiting for progress display to shut down");
+        if (displayActive.get()) {
+            // Wait up to 10 ticks for the display thread to end, just in case it doesn't end immediately
+            try {
+                // Wait a tick to allow display to sync up with the state
+                TimeUnit.MILLISECONDS.sleep(displayUpdateRate);
+                displayActive.set(false);
+                // Allow thread time to shut down
+                displayThread.join(displayUpdateRate * 9);
+            } catch (InterruptedException e) {
+                log.warn("Interrupted while waiting for progress display to shut down");
+            }
         }
         displayThread = null;
     }
