@@ -17,17 +17,22 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.awaitility.Awaitility.await;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
 
 /**
  * @author bbpennel
@@ -78,6 +83,24 @@ public class AbstractOutputTest {
         Matcher matcher = Pattern.compile(expected, Pattern.DOTALL).matcher(getOutput());
         assertTrue("Expected output to match:\n" + expected
                 + "\nBut was:\n" + getOutput(), matcher.matches());
+    }
+
+    /**
+     * Wait a short amount of time for the output to match the provided expression
+     * @param expected Value which the output should match, may be a regex
+     */
+    protected void awaitOutputMatches(String expected) {
+        Pattern pattern = Pattern.compile(expected, Pattern.DOTALL);
+        try {
+            await().pollInterval(Duration.ofMillis(25))
+                    .atMost(Duration.ofSeconds(2))
+                    .until(() -> {
+                        return pattern.matcher(out.toString()).matches();
+                    });
+        } catch (ConditionTimeoutException e) {
+            System.err.println("Expected output to match:\n" + expected + "\nBut was:\n" + out.toString());
+            throw e;
+        }
     }
 
     /**

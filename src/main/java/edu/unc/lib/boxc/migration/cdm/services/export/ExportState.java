@@ -18,6 +18,7 @@ package edu.unc.lib.boxc.migration.cdm.services.export;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.Instant;
+import java.util.Arrays;
 
 /**
  * State of a CDM export operation
@@ -29,6 +30,7 @@ public class ExportState {
     private Integer exportPageSize;
     private Integer listIdPageSize;
     private Integer totalObjects;
+    private int listedObjectCount;
     // Int so it will start at 0 instead of null
     private int lastExportedIndex;
     private boolean resuming = false;
@@ -62,6 +64,19 @@ public class ExportState {
         this.listIdPageSize = listIdPageSize;
     }
 
+    @JsonIgnore
+    public int getListedObjectCount() {
+        return listedObjectCount;
+    }
+
+    public void setListedObjectCount(int listedObjectCount) {
+        this.listedObjectCount = listedObjectCount;
+    }
+
+    public void incrementListedObjectCount(int increVal) {
+        this.listedObjectCount += increVal;
+    }
+
     public Integer getTotalObjects() {
         return totalObjects;
     }
@@ -76,6 +91,23 @@ public class ExportState {
 
     public void setProgressState(ProgressState progressState) {
         this.progressState = progressState;
+    }
+
+    /**
+     *
+     * @param exportState
+     * @param expectedStates
+     * @return True if the progressState of the provided exportState matches any of the expected states
+     */
+    public static boolean inState(ExportState exportState, ProgressState... expectedStates) {
+        if (exportState == null) {
+            return false;
+        }
+        ProgressState pState = exportState.getProgressState();
+        if (pState == null) {
+            return false;
+        }
+        return Arrays.stream(expectedStates).anyMatch(s -> s.equals(pState));
     }
 
     public int getLastExportedIndex() {

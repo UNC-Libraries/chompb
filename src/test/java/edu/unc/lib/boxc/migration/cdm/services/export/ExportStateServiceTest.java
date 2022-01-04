@@ -338,15 +338,18 @@ public class ExportStateServiceTest {
     public void registerObjectIdsTest() throws Exception {
         exportStateService.startOrResumeExport(false);
         exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
+        assertEquals(0, exportStateService.getState().getListedObjectCount());
 
         List<String> allIds = generateIdList(100);
         List<String> firstPage = allIds.subList(0, 50);
         exportStateService.registerObjectIds(firstPage);
         assertEquals(firstPage, exportStateService.retrieveObjectIds());
+        assertEquals(50, exportStateService.getState().getListedObjectCount());
 
         List<String> secondPage = allIds.subList(50, 100);
         exportStateService.registerObjectIds(secondPage);
         assertEquals(allIds, exportStateService.retrieveObjectIds());
+        assertEquals(100, exportStateService.getState().getListedObjectCount());
     }
 
     @Test
