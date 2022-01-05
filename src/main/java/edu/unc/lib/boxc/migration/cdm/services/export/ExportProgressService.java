@@ -19,7 +19,6 @@ import edu.unc.lib.boxc.migration.cdm.util.DisplayProgressUtil;
 import org.slf4j.Logger;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
@@ -39,7 +38,7 @@ public class ExportProgressService {
     private boolean exportingNeedsClose;
 
     private Thread displayThread;
-    private AtomicBoolean displayActive = new AtomicBoolean(false);
+    private boolean displayActive;
     private static final long DEFAULT_UPDATE_RATE = 250l;
     private long displayUpdateRate = DEFAULT_UPDATE_RATE;
 
@@ -51,20 +50,20 @@ public class ExportProgressService {
             log.error("Progress display already active, cannot start again");
             return;
         }
-        displayActive.set(true);
+        displayActive = true;
         displayThread = new Thread(() -> {
             // Update the progress display until flag is set to end it, or an interrupt occurs
-            while (displayActive.get()) {
+            while (displayActive) {
                 update();
                 try {
                     TimeUnit.MILLISECONDS.sleep(displayUpdateRate);
                 } catch (InterruptedException e) {
                     log.warn("Interrupting progress display");
-                    displayActive.set(false);
+                    displayActive = false;
                     DisplayProgressUtil.finishProgress();
                     return;
                 } catch (Exception e) {
-                    displayActive.set(false);
+                    displayActive = false;
                     DisplayProgressUtil.finishProgress();
                     throw e;
                 }
@@ -81,12 +80,12 @@ public class ExportProgressService {
             log.error("Progress display not active");
             return;
         }
-        if (displayActive.get()) {
+        if (displayActive) {
             // Wait up to 10 ticks for the display thread to end, just in case it doesn't end immediately
             try {
                 // Wait a tick to allow display to sync up with the state
                 TimeUnit.MILLISECONDS.sleep(displayUpdateRate);
-                displayActive.set(false);
+                displayActive = false;
                 // Allow thread time to shut down
                 displayThread.join(displayUpdateRate * 9);
             } catch (InterruptedException e) {
