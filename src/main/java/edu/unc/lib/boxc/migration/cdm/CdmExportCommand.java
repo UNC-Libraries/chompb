@@ -21,6 +21,7 @@ import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmExportService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportProgressService;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportState;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.lang3.StringUtils;
@@ -40,8 +41,8 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 
 /**
  * @author bbpennel
@@ -65,6 +66,7 @@ public class CdmExportCommand implements Callable<Integer> {
     private CdmFieldService fieldService;
     private CdmExportService exportService;
     private ExportStateService exportStateService;
+    private ExportProgressService exportProgressService;
     private MigrationProject project;
 
     @Override
@@ -79,8 +81,12 @@ public class CdmExportCommand implements Callable<Integer> {
             initializeServices();
 
             startOrResumeExport();
-            exportService.exportAll(options);
-
+            try {
+                exportProgressService.startProgressDisplay();
+                exportService.exportAll(options);
+            } finally {
+                exportProgressService.endProgressDisplay();
+            }
             outputLogger.info("Exported project {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
@@ -98,6 +104,8 @@ public class CdmExportCommand implements Callable<Integer> {
         exportService.setProject(project);
         exportService.setCdmFieldService(fieldService);
         exportService.setExportStateService(exportStateService);
+        exportProgressService = new ExportProgressService();
+        exportProgressService.setExportStateService(exportStateService);
         initializeAuthenticatedCdmClient();
     }
 
