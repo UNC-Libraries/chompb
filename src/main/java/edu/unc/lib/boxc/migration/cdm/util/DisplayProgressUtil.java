@@ -25,17 +25,20 @@ import static org.apache.commons.lang3.StringUtils.repeat;
  */
 public class DisplayProgressUtil {
     private static final int PROGRESS_BAR_UNITS = 40;
-    private static final double PROGRESS_BAR_DIVIDOR = (double) 100 / PROGRESS_BAR_UNITS;
+    private static final double PROGRESS_BAR_DIVISOR = (double) 100 / PROGRESS_BAR_UNITS;
 
     /**
-     * Render a progress bar, percent, and total
+     * Render a progress bar, percent, and total.
+     *
+     * For example, given current = 120 and total = 161, it would display:
+     *  75% [==============================          ] 120/161
      *
      * @param current
      * @param total
      */
     public static void displayProgress(long current, long total) {
         long percent = Math.round(((float) current / total) * 100);
-        int progressBars = (int) Math.round(percent / PROGRESS_BAR_DIVIDOR);
+        int progressBars = (int) Math.round(percent / PROGRESS_BAR_DIVISOR);
 
         StringBuilder sb = new StringBuilder("\r");
         sb.append(format("%1$3s", percent)).append("% [");
