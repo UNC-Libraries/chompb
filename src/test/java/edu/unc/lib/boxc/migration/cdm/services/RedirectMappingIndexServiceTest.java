@@ -66,6 +66,7 @@ public class RedirectMappingIndexServiceTest {
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         sipsService = testHelper.createSipsService();
         indexService = new RedirectMappingIndexService(project);
+        // the tests use a sqlite DB but otherwise the service will connect to a MySQL DB
         indexService.setConnectionString("jdbc:sqlite:" + testHelper.getRedirectMappingIndexPath());
 
         Connection conn = indexService.openDbConnection();

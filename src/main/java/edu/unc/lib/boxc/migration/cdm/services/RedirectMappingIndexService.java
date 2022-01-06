@@ -23,6 +23,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.DriverManager;
+import java.util.Properties;
 
 /**
  * Service for indexing the redirect mapping CSV into the chomping_block DB
@@ -42,6 +44,7 @@ public class RedirectMappingIndexService {
     public static final String INSERT_STATEMENT = " insert into redirect_mappings " +
             "(cdm_collection_id, cdm_object_id, boxc_work_id, boxc_file_id) " +
             "values (?, ?, ?, ?)";
+    private Path redirectDbConnectionPath;
 
     public RedirectMappingIndexService(MigrationProject project) {
         this.project = project;
@@ -97,15 +100,45 @@ public class RedirectMappingIndexService {
 
     public Connection openDbConnection() throws SQLException {
         try {
-            // TODO in BXC-3372 need to connect it to actual DB when not in local testing
-            Class.forName("org.sqlite.JDBC");
+            // in the tests we use sqlite, otherwise mysql is used
+            if (connectionString == null) {
+                Properties props = getConnectionProperties();
+                setConnectionString(generateConnectionString(props));
+            }
+            if (connectionString.contains("sqlite")) {
+                Class.forName("org.sqlite.JDBC");
+            } else {
+                Class.forName("org.mysql.JDBC");
+            }
+
             return DriverManager.getConnection(connectionString);
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | IOException e) {
             throw new MigrationException("Failed to open database connection to " + connectionString, e);
         }
     }
 
     public void setConnectionString(String connectionString) {
         this.connectionString = connectionString;
+    }
+
+    public void setRedirectDbConnectionPath(Path redirectDbConnectionPath) {
+        this.redirectDbConnectionPath = redirectDbConnectionPath;
+    }
+
+    private Properties getConnectionProperties() throws IOException {
+        InputStream inputStream = Files.newInputStream(redirectDbConnectionPath);
+        Properties props = new Properties();
+        props.load(inputStream);
+        return props;
+    }
+
+    private String generateConnectionString(Properties props) {
+        String connectionString = "jdbc:mysql://";
+        String user = props.getProperty("db_user");
+        String password = props.getProperty("db_password");
+        String host = props.getProperty("db_host");
+
+        connectionString = connectionString + user + ":" + password + "@" + host + ":3306/db";
+        return connectionString;
     }
 }
