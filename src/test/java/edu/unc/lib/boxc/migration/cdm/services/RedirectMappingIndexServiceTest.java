@@ -97,7 +97,7 @@ public class RedirectMappingIndexServiceTest {
 
     @Test
     public void redirectMappingIndexPopulatesTableCorrectly() throws Exception {
-        generateRegularProject();
+        testHelper.initializeDefaultProjectState(DEST_UUID);
         sipsService.generateSips(makeOptions());
 
         List<String> row1 = new ArrayList<>();
@@ -180,13 +180,6 @@ public class RedirectMappingIndexServiceTest {
 
     private void addSipsSubmitted() {
         project.getProjectProperties().getSipsSubmitted().add("Sips submitted!");
-    }
-
-    private void generateRegularProject() throws Exception {
-        testHelper.indexExportData("export_1.xml");
-        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
     }
 
     private void generateCompoundObjectProject() throws Exception {

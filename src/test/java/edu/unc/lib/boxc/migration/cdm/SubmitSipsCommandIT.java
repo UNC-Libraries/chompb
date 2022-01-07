@@ -138,7 +138,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
 
     @Test
     public void submitMissingGroupsTest() throws Exception {
-        initializeProjectState();
+        testHelper.initializeDefaultProjectState(DEST_UUID);
         SipGenerationOptions genOptions = new SipGenerationOptions();
         genOptions.setUsername(USERNAME);
         List<MigrationSip> sips = sipService.generateSips(genOptions);
@@ -158,7 +158,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
     @Test
     public void submitInvalidPortTest() throws Exception {
         System.setProperty("REDIS_PORT", "0");
-        initializeProjectState();
+        testHelper.initializeDefaultProjectState(DEST_UUID);
         SipGenerationOptions genOptions = new SipGenerationOptions();
         genOptions.setUsername(USERNAME);
         List<MigrationSip> sips = sipService.generateSips(genOptions);
@@ -179,7 +179,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
     @Test
     public void submitNoRedisHostTest() throws Exception {
         System.setProperty("REDIS_HOST", "");
-        initializeProjectState();
+        testHelper.initializeDefaultProjectState(DEST_UUID);
         SipGenerationOptions genOptions = new SipGenerationOptions();
         genOptions.setUsername(USERNAME);
         List<MigrationSip> sips = sipService.generateSips(genOptions);
@@ -199,7 +199,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
 
     @Test
     public void submitSingleSipTest() throws Exception {
-        initializeProjectState();
+        testHelper.initializeDefaultProjectState(DEST_UUID);
         SipGenerationOptions genOptions = new SipGenerationOptions();
         genOptions.setUsername(USERNAME);
         List<MigrationSip> sips = sipService.generateSips(genOptions);
@@ -219,7 +219,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
 
     @Test
     public void submitMultipleSipTest() throws Exception {
-        initializeProjectState();
+        testHelper.initializeDefaultProjectState(DEST_UUID);
         // Inserting an extra destination which has one object mapped to it
         try (BufferedWriter writer = Files.newBufferedWriter(project.getDestinationMappingsPath(), APPEND)) {
             writer.write("26," + DEST_UUID2 + ",");
@@ -246,7 +246,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
 
     @Test
     public void submitExcludeAllTest() throws Exception {
-        initializeProjectState();
+        testHelper.initializeDefaultProjectState(DEST_UUID);
         SipGenerationOptions genOptions = new SipGenerationOptions();
         genOptions.setUsername(USERNAME);
         List<MigrationSip> sips = sipService.generateSips(genOptions);
@@ -267,7 +267,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
 
     @Test
     public void submitMultipleLimitToOneTest() throws Exception {
-        initializeProjectState();
+        testHelper.initializeDefaultProjectState(DEST_UUID);
         // Inserting an extra destination which has one object mapped to it
         try (BufferedWriter writer = Files.newBufferedWriter(project.getDestinationMappingsPath(), APPEND)) {
             writer.write("26," + DEST_UUID2 + ",");
@@ -292,13 +292,6 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
         initDepositStatusFactory();
         assertDepositStatusSet(sip2);
         assertTrue(depositStatusFactory.get(sip1.getDepositId()).isEmpty());
-    }
-
-    private void initializeProjectState() throws Exception {
-        testHelper.indexExportData("export_1.xml");
-        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
     }
 
     private void assertDepositStatusSet(MigrationSip sip) {
