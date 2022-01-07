@@ -16,15 +16,56 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author snluong
  */
 public class IndexRedirectCommandIT  extends AbstractCommandIT {
+    private static final String PROJECT_NAME = "proj";
+    private static final String USERNAME = "migr_user";
+    private static final String DEST_UUID = "7a33f5e6-f0ca-461c-8df0-c76c62198b17";
     private MigrationProject project;
     private SipServiceHelper testHelper;
 
     private RedirectMappingIndexService indexService;
+
+    @Before
+    public void setup() throws Exception {
+        project = MigrationProjectFactory.createMigrationProject(
+                baseDir, PROJECT_NAME, null, USERNAME);
+        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        Files.createDirectories(project.getExportPath());
+        testHelper.initializeDefaultProjectState(DEST_UUID);
+    }
+
+    @Test
+    public void indexRedirectsFailsIfProjectNotSubmitted() {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "index_redirects"};
+        executeExpectFailure(args);
+
+        assertOutputContains("Must submit the collection prior to indexing");
+    }
+
+    @Test
+    public void indexRedirectsFailsIfProjectNotSubmitted() {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "index_redirects"};
+        executeExpectFailure(args);
+
+        assertOutputContains("Must submit the collection prior to indexing");
+    }
 }
