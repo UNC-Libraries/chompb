@@ -383,6 +383,13 @@ public class SipServiceHelper {
         return sip;
     }
 
+    public void initializeDefaultProjectState(String dest_uuid) throws Exception {
+        indexExportData("export_1.xml");
+        generateDefaultDestinationsMapping(dest_uuid, null);
+        populateDescriptions("gilmer_mods1.xml");
+        populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+    }
+
     /**
      * @return Path of the index containing redirect mapping data
      */

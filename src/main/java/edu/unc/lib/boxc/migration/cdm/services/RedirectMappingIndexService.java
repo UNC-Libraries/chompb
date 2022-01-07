@@ -133,12 +133,11 @@ public class RedirectMappingIndexService {
     }
 
     private String generateConnectionString(Properties props) {
-        String connectionString = "jdbc:mysql://";
+        String dbType = props.getProperty("db_type");
         String user = props.getProperty("db_user");
         String password = props.getProperty("db_password");
         String host = props.getProperty("db_host");
 
-        connectionString = connectionString + user + ":" + password + "@" + host + ":3306/db";
-        return connectionString;
+        return "jdbc:" + dbType + "://" + user + ":" + password + "@" + host + ":3306/db";
     }
 }
