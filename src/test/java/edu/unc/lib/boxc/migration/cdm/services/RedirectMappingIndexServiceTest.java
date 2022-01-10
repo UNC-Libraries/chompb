@@ -16,8 +16,10 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.test.RedirectMappingHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -32,7 +34,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,24 +68,13 @@ public class RedirectMappingIndexServiceTest {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        RedirectMappingHelper redirectHelper = new RedirectMappingHelper();
         sipsService = testHelper.createSipsService();
         indexService = new RedirectMappingIndexService(project);
+
         // the tests use a sqlite DB but otherwise the service will connect to a MySQL DB
         indexService.setConnectionString("jdbc:sqlite:" + testHelper.getRedirectMappingIndexPath());
-
-        Connection conn = indexService.openDbConnection();
-        Statement statement = conn.createStatement();
-        statement.execute("drop table if exists redirect_mappings");
-        statement.execute("CREATE TABLE redirect_mappings (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "cdm_collection_id varchar(64) NOT NULL, " +
-                "cdm_object_id varchar(64) NOT NULL, " +
-                "boxc_work_id varchar(64) NOT NULL, " +
-                "boxc_file_id varchar(64) DEFAULT NULL, " +
-                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "UNIQUE (cdm_collection_id, cdm_object_id)" +
-                ")");
-        CdmIndexService.closeDbConnection(conn);
+        redirectHelper.createRedirectMappingsTableInDb(testHelper.getRedirectMappingIndexPath());
     }
 
     @Test
