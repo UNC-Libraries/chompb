@@ -51,7 +51,6 @@ import static org.junit.Assert.fail;
  */
 public class RedirectMappingIndexServiceTest {
     private static final String PROJECT_NAME = "proj";
-    private static final String USERNAME = "migr_user";
     private static final String DEST_UUID = "7a33f5e6-f0ca-461c-8df0-c76c62198b17";
 
     @Rule
@@ -61,6 +60,7 @@ public class RedirectMappingIndexServiceTest {
     private RedirectMappingIndexService indexService;
     private SipService sipsService;
     private SipServiceHelper testHelper;
+    private RedirectMappingHelper redirectHelper;
 
     @Before
     public void setup() throws Exception {
@@ -68,7 +68,7 @@ public class RedirectMappingIndexServiceTest {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
-        RedirectMappingHelper redirectHelper = new RedirectMappingHelper();
+        redirectHelper = new RedirectMappingHelper();
         sipsService = testHelper.createSipsService();
         indexService = new RedirectMappingIndexService(project);
 
@@ -91,13 +91,13 @@ public class RedirectMappingIndexServiceTest {
     @Test
     public void redirectMappingIndexPopulatesTableCorrectly() throws Exception {
         testHelper.initializeDefaultProjectState(DEST_UUID);
-        sipsService.generateSips(makeOptions());
+        sipsService.generateSips(redirectHelper.makeOptions());
 
         List<String> row1 = new ArrayList<>();
         Path mappingPath = project.getRedirectMappingPath();
         Connection conn = indexService.openDbConnection();
 
-        addSipsSubmitted();
+        testHelper.addSipsSubmitted();
         indexService.indexMapping();
 
         try (
@@ -141,10 +141,10 @@ public class RedirectMappingIndexServiceTest {
         List<String> cdm_object_ids = new ArrayList<>();
         List<String> expected_ids = Arrays.asList("604", "607");
         generateCompoundObjectProject();
-        sipsService.generateSips(makeOptions());
+        sipsService.generateSips(redirectHelper.makeOptions());
         Connection conn = indexService.openDbConnection();
 
-        addSipsSubmitted();
+        testHelper.addSipsSubmitted();
         indexService.indexMapping();
 
         try {
@@ -163,16 +163,6 @@ public class RedirectMappingIndexServiceTest {
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
-    }
-
-    private SipGenerationOptions makeOptions() {
-        SipGenerationOptions options = new SipGenerationOptions();
-        options.setUsername(USERNAME);
-        return options;
-    }
-
-    private void addSipsSubmitted() {
-        project.getProjectProperties().getSipsSubmitted().add("Sips submitted!");
     }
 
     private void generateCompoundObjectProject() throws Exception {

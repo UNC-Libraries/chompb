@@ -20,6 +20,7 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexServiceTest;
+import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.test.RedirectMappingHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.Before;
@@ -41,18 +42,22 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
     private static final String USERNAME = "migr_user";
     private static final String DEST_UUID = "7a33f5e6-f0ca-461c-8df0-c76c62198b17";
     private MigrationProject project;
+    private SipService sipsService;
+    private SipServiceHelper testHelper;
+    private RedirectMappingHelper redirectMappingHelper;
 
     private RedirectMappingIndexService indexService;
 
     @Before
     public void setup() throws Exception {
+        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
                 baseDir, PROJECT_NAME, null, USERNAME);
-        SipServiceHelper testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
-        RedirectMappingHelper redirectHelper = new RedirectMappingHelper();
+        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        redirectMappingHelper = new RedirectMappingHelper();
         Files.createDirectories(project.getExportPath());
-        testHelper.initializeDefaultProjectState(DEST_UUID);
-        redirectHelper.createRedirectMappingsTableInDb(testHelper.getRedirectMappingIndexPath());
+        sipsService = testHelper.createSipsService();
+        redirectMappingHelper.createRedirectMappingsTableInDb(testHelper.getRedirectMappingIndexPath());
     }
 
     @Test
@@ -66,13 +71,17 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
     }
 
     @Test
-    public void indexRedirectsSucceedsIfProjectIsSubmitted() {
+    public void indexRedirectsSucceedsIfProjectIsSubmitted() throws Exception {
+        testHelper.initializeDefaultProjectState(DEST_UUID);
+        sipsService.generateSips(redirectMappingHelper.makeOptions());
+        testHelper.addSipsSubmitted();
+
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "index_redirects",
                 "--db-connection", "tests/resources/redirect_db_connection.properties",};
         executeExpectSuccess(args);
 
-        assertOutputContains("Must submit the collection prior to indexing");
+        //assertOutputContains("Must submit the collection prior to indexing");
     }
 }

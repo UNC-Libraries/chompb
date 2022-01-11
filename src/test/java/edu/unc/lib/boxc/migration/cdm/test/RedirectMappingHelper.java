@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm.test;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 
@@ -29,6 +30,7 @@ import java.sql.Statement;
  * @author snluong
  */
 public class RedirectMappingHelper {
+    private static final String USERNAME = "migr_user";
 
     public void createRedirectMappingsTableInDb(Path redirectMappingIndexPath) {
         String connectionString = "jdbc:sqlite:" + redirectMappingIndexPath;
@@ -52,7 +54,15 @@ public class RedirectMappingHelper {
         }
     }
 
-    public void setUpCompletedProject(SipServiceHelper testHelper) {
+    public void setUpCompletedProject(SipServiceHelper testHelper, String dest_uuid) throws Exception {
         SipService sipsService = testHelper.createSipsService();
+        sipsService.generateSips(makeOptions());
+        testHelper.initializeDefaultProjectState(dest_uuid);
+    }
+
+    public SipGenerationOptions makeOptions() {
+        SipGenerationOptions options = new SipGenerationOptions();
+        options.setUsername(USERNAME);
+        return options;
     }
 }

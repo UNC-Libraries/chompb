@@ -390,6 +390,10 @@ public class SipServiceHelper {
         populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
     }
 
+    public void addSipsSubmitted() {
+        project.getProjectProperties().getSipsSubmitted().add("Sips submitted!");
+    }
+
     /**
      * @return Path of the index containing redirect mapping data
      */
