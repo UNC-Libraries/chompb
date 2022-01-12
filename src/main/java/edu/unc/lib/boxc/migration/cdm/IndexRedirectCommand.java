@@ -57,7 +57,7 @@ public class IndexRedirectCommand implements Callable<Integer> {
             indexService.indexMapping();
             return 0;
         } catch (MigrationException e) {
-            outputLogger.info("Failed to export project: {}", e.getMessage());
+            outputLogger.info("Failed to index redirect mapping: {}", e.getMessage());
             return 1;
         }
     }

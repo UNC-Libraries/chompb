@@ -23,11 +23,18 @@ import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexServiceTest;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.test.RedirectMappingHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.Statement;
@@ -38,6 +45,9 @@ import static org.junit.Assert.assertTrue;
  * @author snluong
  */
 public class IndexRedirectCommandIT  extends AbstractCommandIT {
+    @Rule
+    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+
     private static final String PROJECT_NAME = "proj";
     private static final String USERNAME = "migr_user";
     private static final String DEST_UUID = "7a33f5e6-f0ca-461c-8df0-c76c62198b17";
@@ -45,8 +55,8 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
     private SipService sipsService;
     private SipServiceHelper testHelper;
     private RedirectMappingHelper redirectMappingHelper;
-
-    private RedirectMappingIndexService indexService;
+    private Path redirectMappingIndexPath;
+    private Path propertiesPath;
 
     @Before
     public void setup() throws Exception {
@@ -54,10 +64,13 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
         project = MigrationProjectFactory.createMigrationProject(
                 baseDir, PROJECT_NAME, null, USERNAME);
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
-        redirectMappingHelper = new RedirectMappingHelper();
+
         Files.createDirectories(project.getExportPath());
         sipsService = testHelper.createSipsService();
-        redirectMappingHelper.createRedirectMappingsTableInDb(testHelper.getRedirectMappingIndexPath());
+        redirectMappingHelper = new RedirectMappingHelper(project);
+        redirectMappingIndexPath = redirectMappingHelper.getRedirectMappingIndexPath();
+        redirectMappingHelper.createRedirectMappingsTableInDb(redirectMappingIndexPath);
+        propertiesPath = redirectMappingHelper.createRedirectDbConnectionPropertiesFile(tmpFolder, "sqlite");
     }
 
     @Test
@@ -75,13 +88,12 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
         testHelper.initializeDefaultProjectState(DEST_UUID);
         sipsService.generateSips(redirectMappingHelper.makeOptions());
         testHelper.addSipsSubmitted();
+        ProjectPropertiesSerialization.write(project);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "index_redirects",
-                "--db-connection", "tests/resources/redirect_db_connection.properties",};
+                "--db-connection", propertiesPath.toString()};
         executeExpectSuccess(args);
-
-        //assertOutputContains("Must submit the collection prior to indexing");
     }
 }

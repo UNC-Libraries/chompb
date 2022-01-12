@@ -16,9 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.test.RedirectMappingHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.apache.commons.csv.CSVFormat;
@@ -29,18 +27,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -60,7 +58,7 @@ public class RedirectMappingIndexServiceTest {
     private RedirectMappingIndexService indexService;
     private SipService sipsService;
     private SipServiceHelper testHelper;
-    private RedirectMappingHelper redirectHelper;
+    private RedirectMappingHelper redirectMappingHelper;
 
     @Before
     public void setup() throws Exception {
@@ -68,13 +66,14 @@ public class RedirectMappingIndexServiceTest {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
-        redirectHelper = new RedirectMappingHelper();
+        redirectMappingHelper = new RedirectMappingHelper(project);
         sipsService = testHelper.createSipsService();
         indexService = new RedirectMappingIndexService(project);
 
         // the tests use a sqlite DB but otherwise the service will connect to a MySQL DB
-        indexService.setConnectionString("jdbc:sqlite:" + testHelper.getRedirectMappingIndexPath());
-        redirectHelper.createRedirectMappingsTableInDb(testHelper.getRedirectMappingIndexPath());
+        Path indexPath = redirectMappingHelper.getRedirectMappingIndexPath();
+        indexService.setConnectionString("jdbc:sqlite:" + indexPath);
+        redirectMappingHelper.createRedirectMappingsTableInDb(indexPath);
     }
 
     @Test
@@ -91,7 +90,7 @@ public class RedirectMappingIndexServiceTest {
     @Test
     public void redirectMappingIndexPopulatesTableCorrectly() throws Exception {
         testHelper.initializeDefaultProjectState(DEST_UUID);
-        sipsService.generateSips(redirectHelper.makeOptions());
+        sipsService.generateSips(redirectMappingHelper.makeOptions());
 
         List<String> row1 = new ArrayList<>();
         Path mappingPath = project.getRedirectMappingPath();
@@ -141,7 +140,7 @@ public class RedirectMappingIndexServiceTest {
         List<String> cdm_object_ids = new ArrayList<>();
         List<String> expected_ids = Arrays.asList("604", "607");
         generateCompoundObjectProject();
-        sipsService.generateSips(redirectHelper.makeOptions());
+        sipsService.generateSips(redirectMappingHelper.makeOptions());
         Connection conn = indexService.openDbConnection();
 
         testHelper.addSipsSubmitted();
@@ -163,6 +162,15 @@ public class RedirectMappingIndexServiceTest {
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
+    }
+
+    @Test
+    public void generateConnectionStringBuildsMySqlString() throws IOException {
+        Path path = redirectMappingHelper.createRedirectDbConnectionPropertiesFile(tmpFolder, "mysql");
+        indexService.setRedirectDbConnectionPath(path);
+        Properties props = indexService.getConnectionProperties();
+        assertEquals("generated connection string is incorrect",
+                "jdbc:mysql://root:password@localhost:3306/db", indexService.generateConnectionString(props));
     }
 
     private void generateCompoundObjectProject() throws Exception {

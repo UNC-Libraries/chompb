@@ -16,10 +16,15 @@
 package edu.unc.lib.boxc.migration.cdm.test;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
-import edu.unc.lib.boxc.migration.cdm.services.SipService;
+import org.apache.commons.io.FileUtils;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -31,6 +36,12 @@ import java.sql.Statement;
  */
 public class RedirectMappingHelper {
     private static final String USERNAME = "migr_user";
+    public static final String REDIRECT_MAPPING_INDEX_FILENAME = "redirect_mapping_index.db";
+    private final MigrationProject project;
+
+    public RedirectMappingHelper(MigrationProject project) {
+        this.project = project;
+    }
 
     public void createRedirectMappingsTableInDb(Path redirectMappingIndexPath) {
         String connectionString = "jdbc:sqlite:" + redirectMappingIndexPath;
@@ -54,15 +65,27 @@ public class RedirectMappingHelper {
         }
     }
 
-    public void setUpCompletedProject(SipServiceHelper testHelper, String dest_uuid) throws Exception {
-        SipService sipsService = testHelper.createSipsService();
-        sipsService.generateSips(makeOptions());
-        testHelper.initializeDefaultProjectState(dest_uuid);
+    /**
+     * @return Path of the index containing redirect mapping data
+     */
+    public Path getRedirectMappingIndexPath() {
+        return project.getProjectPath().resolve(REDIRECT_MAPPING_INDEX_FILENAME);
     }
 
     public SipGenerationOptions makeOptions() {
         SipGenerationOptions options = new SipGenerationOptions();
         options.setUsername(USERNAME);
         return options;
+    }
+
+    public Path createRedirectDbConnectionPropertiesFile(TemporaryFolder tempFolder, String dbType) throws IOException {
+        String mysqlString = "db_type=mysql\ndb_host=localhost\ndb_user=root\ndb_password=password";
+        String sqliteString = "db_type=sqlite\ndb_host=" + getRedirectMappingIndexPath();
+        File createdFile = tempFolder.newFile("redirect_db_connection.properties");
+
+        String string = "sqlite".equals(dbType) ? sqliteString : mysqlString;
+        FileUtils.writeStringToFile(createdFile, string, StandardCharsets.UTF_8);
+
+        return createdFile.toPath();
     }
 }

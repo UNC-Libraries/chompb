@@ -125,18 +125,24 @@ public class RedirectMappingIndexService {
         this.redirectDbConnectionPath = redirectDbConnectionPath;
     }
 
-    private Properties getConnectionProperties() throws IOException {
+    public Properties getConnectionProperties() throws IOException {
         InputStream inputStream = Files.newInputStream(redirectDbConnectionPath);
         Properties props = new Properties();
         props.load(inputStream);
         return props;
     }
 
-    private String generateConnectionString(Properties props) {
+    public String generateConnectionString(Properties props) {
         String dbType = props.getProperty("db_type");
+        String host = props.getProperty("db_host");
+
+        // we use sqlite in the tests, which use a different connection string syntax
+        if ("sqlite".equals(dbType) ) {
+            return "jdbc:sqlite:" + host;
+        }
+
         String user = props.getProperty("db_user");
         String password = props.getProperty("db_password");
-        String host = props.getProperty("db_host");
 
         return "jdbc:" + dbType + "://" + user + ":" + password + "@" + host + ":3306/db";
     }
