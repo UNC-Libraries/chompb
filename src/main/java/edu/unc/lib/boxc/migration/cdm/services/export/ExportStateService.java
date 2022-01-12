@@ -30,7 +30,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -101,14 +100,14 @@ public class ExportStateService {
     /**
      * Check if the export is either not resuming or is in one of the listed states. Used to determine if
      * the steps for a stage of an export should be executed or not.
-     * @param states
+     * @param expectedStates
      * @return
      */
-    public boolean inStateOrNotResuming(ProgressState... states) {
+    public boolean inStateOrNotResuming(ProgressState... expectedStates) {
         if (!state.isResuming()) {
             return true;
         }
-        return Arrays.stream(states).anyMatch(s -> s.equals(state.getProgressState()));
+        return ExportState.inState(state, expectedStates);
     }
 
     public boolean isResuming() {
@@ -171,6 +170,7 @@ public class ExportStateService {
                 getObjectListPath(),
                 idsJoined.getBytes(),
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        state.incrementListedObjectCount(ids.size());
     }
 
     /**
@@ -178,10 +178,14 @@ public class ExportStateService {
      */
     public List<String> retrieveObjectIds() throws IOException {
         if (Files.notExists(getObjectListPath())) {
+            state.setListedObjectCount(0);
             return new ArrayList<>();
         }
         try (Stream<String> lines = Files.lines(getObjectListPath())) {
-            return lines.collect(Collectors.toList());
+            List<String> ids = lines.collect(Collectors.toList());
+            // Sync up state's count of objects to count retrieved from file
+            state.setListedObjectCount(ids.size());
+            return ids;
         }
     }
 
