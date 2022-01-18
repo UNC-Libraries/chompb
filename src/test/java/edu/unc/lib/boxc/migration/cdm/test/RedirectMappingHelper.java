@@ -23,13 +23,16 @@ import org.apache.commons.io.FileUtils;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 
 /**
  * @author snluong
@@ -43,8 +46,8 @@ public class RedirectMappingHelper {
         this.project = project;
     }
 
-    public void createRedirectMappingsTableInDb(Path redirectMappingIndexPath) {
-        String connectionString = "jdbc:sqlite:" + redirectMappingIndexPath;
+    public void createRedirectMappingsTableInDb() {
+        String connectionString = "jdbc:sqlite:" + getRedirectMappingIndexPath();
         try {
             Class.forName("org.sqlite.JDBC");
             Connection conn = DriverManager.getConnection(connectionString);
@@ -78,14 +81,21 @@ public class RedirectMappingHelper {
         return options;
     }
 
-    public Path createRedirectDbConnectionPropertiesFile(TemporaryFolder tempFolder, String dbType) throws IOException {
-        String mysqlString = "db_type=mysql\ndb_host=localhost\ndb_user=root\ndb_password=password";
-        String sqliteString = "db_type=sqlite\ndb_host=" + getRedirectMappingIndexPath();
-        File createdFile = tempFolder.newFile("redirect_db_connection.properties");
+    public Path createDbConnectionPropertiesFile(TemporaryFolder tempFolder, String dbType) throws IOException {
+        File propertiesFile = new File(tempFolder.getRoot(), "redirect_db_connection.properties");
+        OutputStream output = new FileOutputStream(propertiesFile);
 
-        String string = "sqlite".equals(dbType) ? sqliteString : mysqlString;
-        FileUtils.writeStringToFile(createdFile, string, StandardCharsets.UTF_8);
+        Properties prop = new Properties();
+        prop.setProperty("db_type", dbType);
+        if ("sqlite".equals(dbType)) {
+            prop.setProperty("db_host", getRedirectMappingIndexPath().toString());
+        } else {
+            prop.setProperty("db_host", "localhost");
+            prop.setProperty("db_user", "root");
+            prop.setProperty("db_password", "password");
+        }
+        prop.store(output, null);
 
-        return createdFile.toPath();
+        return propertiesFile.toPath();
     }
 }

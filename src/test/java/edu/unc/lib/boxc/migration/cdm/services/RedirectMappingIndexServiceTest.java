@@ -69,11 +69,12 @@ public class RedirectMappingIndexServiceTest {
         redirectMappingHelper = new RedirectMappingHelper(project);
         sipsService = testHelper.createSipsService();
         indexService = new RedirectMappingIndexService(project);
+        indexService.init();
 
         // the tests use a sqlite DB but otherwise the service will connect to a MySQL DB
         Path indexPath = redirectMappingHelper.getRedirectMappingIndexPath();
         indexService.setConnectionString("jdbc:sqlite:" + indexPath);
-        redirectMappingHelper.createRedirectMappingsTableInDb(indexPath);
+        redirectMappingHelper.createRedirectMappingsTableInDb();
     }
 
     @Test
@@ -166,11 +167,10 @@ public class RedirectMappingIndexServiceTest {
 
     @Test
     public void generateConnectionStringBuildsMySqlString() throws IOException {
-        Path path = redirectMappingHelper.createRedirectDbConnectionPropertiesFile(tmpFolder, "mysql");
+        Path path = redirectMappingHelper.createDbConnectionPropertiesFile(tmpFolder, "mysql");
         indexService.setRedirectDbConnectionPath(path);
-        Properties props = indexService.getConnectionProperties();
         assertEquals("generated connection string is incorrect",
-                "jdbc:mysql://root:password@localhost:3306/db", indexService.generateConnectionString(props));
+                "jdbc:mysql://root:password@localhost:3306/db", indexService.generateConnectionString());
     }
 
     private void generateCompoundObjectProject() throws Exception {

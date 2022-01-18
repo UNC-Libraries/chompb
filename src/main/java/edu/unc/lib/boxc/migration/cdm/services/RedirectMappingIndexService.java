@@ -45,9 +45,19 @@ public class RedirectMappingIndexService {
             "(cdm_collection_id, cdm_object_id, boxc_work_id, boxc_file_id) " +
             "values (?, ?, ?, ?)";
     private Path redirectDbConnectionPath;
+    private Properties props;
 
     public RedirectMappingIndexService(MigrationProject project) {
         this.project = project;
+    }
+
+    public void init() {
+        try (InputStream inputStream = Files.newInputStream(redirectDbConnectionPath)) {
+            props = new Properties();
+            props.load(inputStream);
+        } catch (IOException e) {
+            throw new MigrationException("Error reading properties file", e);
+        }
     }
 
     /**
@@ -102,8 +112,7 @@ public class RedirectMappingIndexService {
         try {
             // in the tests we use sqlite, otherwise mysql is used
             if (connectionString == null) {
-                Properties props = getConnectionProperties();
-                setConnectionString(generateConnectionString(props));
+                setConnectionString(generateConnectionString());
             }
             if (connectionString.contains("sqlite")) {
                 Class.forName("org.sqlite.JDBC");
@@ -112,7 +121,7 @@ public class RedirectMappingIndexService {
             }
 
             return DriverManager.getConnection(connectionString);
-        } catch (ClassNotFoundException | IOException e) {
+        } catch (ClassNotFoundException e) {
             throw new MigrationException("Failed to open database connection to " + connectionString, e);
         }
     }
@@ -125,14 +134,11 @@ public class RedirectMappingIndexService {
         this.redirectDbConnectionPath = redirectDbConnectionPath;
     }
 
-    public Properties getConnectionProperties() throws IOException {
-        InputStream inputStream = Files.newInputStream(redirectDbConnectionPath);
-        Properties props = new Properties();
-        props.load(inputStream);
-        return props;
-    }
-
-    public String generateConnectionString(Properties props) {
+    /*
+        Determines DB type from loaded properties and builds a connection string accordingly
+        This connection string is used to connect to the DB where the redirect mapping table lives
+     */
+    public String generateConnectionString() {
         String dbType = props.getProperty("db_type");
         String host = props.getProperty("db_host");
 

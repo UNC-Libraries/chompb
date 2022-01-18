@@ -49,16 +49,24 @@ public class IndexRedirectCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         try {
+            validate();
             Path currentPath = parentCommand.getWorkingDirectory();
             project = MigrationProjectFactory.loadMigrationProject(currentPath);
             indexService = new RedirectMappingIndexService(project);
             indexService.setRedirectDbConnectionPath(redirectDbConnectionPath);
+            indexService.init();
 
             indexService.indexMapping();
             return 0;
         } catch (MigrationException e) {
             outputLogger.info("Failed to index redirect mapping: {}", e.getMessage());
             return 1;
+        }
+    }
+
+    private void validate() {
+        if (redirectDbConnectionPath == null) {
+            throw new MigrationException("The DB connection path must be included");
         }
     }
 }

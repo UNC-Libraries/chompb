@@ -55,7 +55,6 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
     private SipService sipsService;
     private SipServiceHelper testHelper;
     private RedirectMappingHelper redirectMappingHelper;
-    private Path redirectMappingIndexPath;
     private Path propertiesPath;
 
     @Before
@@ -68,16 +67,16 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
         Files.createDirectories(project.getExportPath());
         sipsService = testHelper.createSipsService();
         redirectMappingHelper = new RedirectMappingHelper(project);
-        redirectMappingIndexPath = redirectMappingHelper.getRedirectMappingIndexPath();
-        redirectMappingHelper.createRedirectMappingsTableInDb(redirectMappingIndexPath);
-        propertiesPath = redirectMappingHelper.createRedirectDbConnectionPropertiesFile(tmpFolder, "sqlite");
+        redirectMappingHelper.createRedirectMappingsTableInDb();
+        propertiesPath = redirectMappingHelper.createDbConnectionPropertiesFile(tmpFolder, "sqlite");
     }
 
     @Test
     public void indexRedirectsFailsIfProjectNotSubmitted() {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
-                "index_redirects"};
+                "index_redirects",
+                "--db-connection", propertiesPath.toString()};
         executeExpectFailure(args);
 
         assertOutputContains("Must submit the collection prior to indexing");
@@ -95,5 +94,15 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
                 "index_redirects",
                 "--db-connection", propertiesPath.toString()};
         executeExpectSuccess(args);
+    }
+
+    @Test
+    public void indexRedirectsFailsIfDbConnectionStringNotIncluded() {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "index_redirects"};
+        executeExpectFailure(args);
+
+        assertOutputContains("The DB connection path must be included");
     }
 }
