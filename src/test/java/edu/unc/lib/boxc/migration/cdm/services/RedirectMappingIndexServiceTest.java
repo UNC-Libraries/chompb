@@ -38,7 +38,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -67,14 +66,13 @@ public class RedirectMappingIndexServiceTest {
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         redirectMappingHelper = new RedirectMappingHelper(project);
+        redirectMappingHelper.createRedirectMappingsTableInDb();
+        Path sqliteDbPropertiesPath = redirectMappingHelper.createDbConnectionPropertiesFile(tmpFolder, "sqlite");
+
         sipsService = testHelper.createSipsService();
         indexService = new RedirectMappingIndexService(project);
+        indexService.setRedirectDbConnectionPath(sqliteDbPropertiesPath);
         indexService.init();
-
-        // the tests use a sqlite DB but otherwise the service will connect to a MySQL DB
-        Path indexPath = redirectMappingHelper.getRedirectMappingIndexPath();
-        indexService.setConnectionString("jdbc:sqlite:" + indexPath);
-        redirectMappingHelper.createRedirectMappingsTableInDb();
     }
 
     @Test
@@ -167,8 +165,10 @@ public class RedirectMappingIndexServiceTest {
 
     @Test
     public void generateConnectionStringBuildsMySqlString() throws IOException {
-        Path path = redirectMappingHelper.createDbConnectionPropertiesFile(tmpFolder, "mysql");
-        indexService.setRedirectDbConnectionPath(path);
+        Path mysqlPath = redirectMappingHelper.createDbConnectionPropertiesFile(tmpFolder, "mysql");
+        indexService.setRedirectDbConnectionPath(mysqlPath);
+        indexService.init();
+
         assertEquals("generated connection string is incorrect",
                 "jdbc:mysql://root:password@localhost:3306/db", indexService.generateConnectionString());
     }

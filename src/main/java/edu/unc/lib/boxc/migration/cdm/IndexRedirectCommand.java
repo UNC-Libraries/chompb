@@ -57,6 +57,7 @@ public class IndexRedirectCommand implements Callable<Integer> {
             indexService.init();
 
             indexService.indexMapping();
+            outputLogger.info("Redirect mapping indexing completed. Yay!");
             return 0;
         } catch (MigrationException e) {
             outputLogger.info("Failed to index redirect mapping: {}", e.getMessage());

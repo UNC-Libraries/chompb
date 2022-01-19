@@ -94,6 +94,7 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
                 "index_redirects",
                 "--db-connection", propertiesPath.toString()};
         executeExpectSuccess(args);
+        assertOutputContains("Redirect mapping indexing completed. Yay!");
     }
 
     @Test
