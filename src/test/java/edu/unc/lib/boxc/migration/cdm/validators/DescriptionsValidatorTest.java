@@ -84,7 +84,7 @@ public class DescriptionsValidatorTest {
         xmlOutputter.output(doc, Files.newOutputStream(project.getDescriptionsPath().resolve("mods.xml")));
 
         List<String> errors =  validator.validate();
-        assertHasErrorMatching(errors, ".*Invalid content .* element 'mods:title'.*");
+        assertHasErrorMatching(errors, ".*Invalid content .* element '\\{\"http://www.loc.gov/mods/v3\":title.*");
         assertErrorCount(errors, 1);
     }
 
@@ -123,7 +123,7 @@ public class DescriptionsValidatorTest {
         xmlOutputter.output(doc, Files.newOutputStream(project.getNewCollectionDescriptionsPath().resolve("mods.xml")));
 
         List<String> errors =  validator.validate();
-        assertHasErrorMatching(errors, ".*Invalid content .* element 'mods:title'.*");
+        assertHasErrorMatching(errors, ".*Invalid content .* element '\\{\"http://www.loc.gov/mods/v3\":title\\}'.*");
         assertErrorCount(errors, 1);
     }
 
