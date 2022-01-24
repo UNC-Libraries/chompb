@@ -298,7 +298,8 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
         executeExpectFailure(args3);
 
         assertOutputContains("FAIL: Description files are invalid due to the following 2 errors:");
-        assertOutputMatches(".*Invalid content was found starting with element 'mods:title'.*");
+        assertOutputMatches(".*Invalid content was found starting with element" +
+                " '\\{\"http://www.loc.gov/mods/v3\":title\\}'.*");
         assertOutputMatches(".*Unexpected root element.* expecting 'mods:mods' but was 'mods:modsCollection'.*");
     }
 
