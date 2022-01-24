@@ -117,7 +117,7 @@ public class RedirectMappingIndexService {
             if (connectionString.contains("sqlite")) {
                 Class.forName("org.sqlite.JDBC");
             } else {
-                Class.forName("org.mysql.JDBC");
+                Class.forName("com.mysql.cj.jdbc.Driver");
             }
 
             return DriverManager.getConnection(connectionString);
