@@ -170,7 +170,8 @@ public class RedirectMappingIndexServiceTest {
         indexService.init();
 
         assertEquals("generated connection string is incorrect",
-                "jdbc:mysql://root:password@localhost:3306/db", indexService.generateConnectionString());
+                "jdbc:mysql://root:password@localhost:3306/chomping_block",
+                indexService.generateConnectionString());
     }
 
     private void generateCompoundObjectProject() throws Exception {
