@@ -39,6 +39,8 @@ public class MigrationProjectProperties {
     private Instant descriptionsExpandedDate;
     private Instant sipsGeneratedDate;
     private Set<String> sipsSubmitted;
+    private String hookId;
+    private String collectionNumber;
 
     public MigrationProjectProperties() {
         sipsSubmitted = new HashSet<>();
@@ -196,5 +198,27 @@ public class MigrationProjectProperties {
 
     public void setSipsSubmitted(Set<String> sipsSubmitted) {
         this.sipsSubmitted = sipsSubmitted;
+    }
+
+    /**
+     * @return hookId field for this project
+     */
+    public String getHookId() {
+        return hookId;
+    }
+
+    public void setHookId(String hookId) {
+        this.hookId = hookId;
+    }
+
+    /**
+     * @return collectionNumber field for this project
+     */
+    public String getCollectionNumber() {
+        return collectionNumber;
+    }
+
+    public void setCollectionNumber(String collectionNumber) {
+        this.collectionNumber = collectionNumber;
     }
 }
