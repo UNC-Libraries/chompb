@@ -42,7 +42,7 @@ public class RedirectMappingIndexService {
     private final MigrationProject project;
     public String connectionString;
     public static final String INSERT_STATEMENT = " insert into redirect_mappings " +
-            "(cdm_collection_id, cdm_object_id, boxc_work_id, boxc_file_id) " +
+            "(cdm_collection_id, cdm_object_id, boxc_object_id, boxc_file_id) " +
             "values (?, ?, ?, ?)";
     private Path redirectDbConnectionPath;
     private Properties props;
@@ -78,13 +78,13 @@ public class RedirectMappingIndexService {
             for (CSVRecord originalRecord : originalParser) {
                 String cdm_collection_id = originalRecord.get(0);
                 String cdm_object_id = originalRecord.get(1);
-                String boxc_work_id = originalRecord.get(2);
+                String boxc_object_id = originalRecord.get(2);
                 String boxc_file_id = originalRecord.get(3);
 
                 PreparedStatement preparedStatement = conn.prepareStatement(INSERT_STATEMENT);
                 preparedStatement.setString(1, cdm_collection_id);
                 preparedStatement.setString(2, cdm_object_id);
-                preparedStatement.setString(3, boxc_work_id);
+                preparedStatement.setString(3, boxc_object_id);
                 if (boxc_file_id.isEmpty()) {
                     preparedStatement.setNull(4, java.sql.Types.NULL);
                 } else {

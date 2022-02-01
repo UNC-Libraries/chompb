@@ -57,7 +57,7 @@ public class RedirectMappingHelper {
                     "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "cdm_collection_id varchar(64) NOT NULL, " +
                     "cdm_object_id varchar(64) DEFAULT NULL, " +
-                    "boxc_work_id varchar(64) NOT NULL, " +
+                    "boxc_object_id varchar(64) NOT NULL, " +
                     "boxc_file_id varchar(64) DEFAULT NULL, " +
                     "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                     "UNIQUE (cdm_collection_id, cdm_object_id)" +
