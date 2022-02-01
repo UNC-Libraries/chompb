@@ -56,7 +56,7 @@ public class RedirectMappingHelper {
             statement.execute("CREATE TABLE redirect_mappings (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "cdm_collection_id varchar(64) NOT NULL, " +
-                    "cdm_object_id varchar(64) NOT NULL, " +
+                    "cdm_object_id varchar(64) DEFAULT NULL, " +
                     "boxc_object_id varchar(64) NOT NULL, " +
                     "boxc_file_id varchar(64) DEFAULT NULL, " +
                     "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
