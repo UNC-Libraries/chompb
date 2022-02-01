@@ -108,7 +108,7 @@ public class RedirectMappingIndexServiceTest {
             for (CSVRecord originalRecord : originalParser) {
                 row1.add(originalRecord.get(0)); // cdm_collection_id
                 row1.add(originalRecord.get(1)); // cdm_object_id
-                row1.add(originalRecord.get(2)); // boxc_work_id
+                row1.add(originalRecord.get(2)); // boxc_object_id
                 row1.add(originalRecord.get(3)); // boxc_file_id
                 break; // just testing the first row
             }
@@ -119,14 +119,14 @@ public class RedirectMappingIndexServiceTest {
             assertEquals("Incorrect number of rows in database", 3, count.getInt(1));
 
             ResultSet rs = stmt.executeQuery("select cdm_collection_id, cdm_object_id, " +
-                    "boxc_work_id, boxc_file_id from redirect_mappings");
+                    "boxc_object_id, boxc_file_id from redirect_mappings");
             rs.next();
             assertEquals("cdm_collection_id value isn't accurate", row1.get(0),
                     rs.getString("cdm_collection_id"));
             assertEquals("cdm_object_id value isn't accurate", row1.get(1),
                     rs.getString("cdm_object_id"));
-            assertEquals("boxc_work_id value isn't accurate", row1.get(2),
-                    rs.getString("boxc_work_id"));
+            assertEquals("boxc_object_id value isn't accurate", row1.get(2),
+                    rs.getString("boxc_object_id"));
             assertEquals("boxc_file_id value isn't accurate", row1.get(3),
                     rs.getString("boxc_file_id"));
         } finally {
@@ -152,7 +152,7 @@ public class RedirectMappingIndexServiceTest {
             assertEquals("Incorrect number of rows in database", 7, count.getInt(1));
 
             ResultSet rs = stmt.executeQuery("select cdm_object_id from redirect_mappings where " +
-                    "boxc_work_id is not null and boxc_file_id is null");
+                    "boxc_object_id is not null and boxc_file_id is null");
             while (rs.next()) {
                 cdm_object_ids.add(rs.getString("cdm_object_id"));
             }

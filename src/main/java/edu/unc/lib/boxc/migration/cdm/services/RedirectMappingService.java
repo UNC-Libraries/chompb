@@ -34,7 +34,7 @@ public class RedirectMappingService {
     private MigrationProject project;
     private CSVPrinter csvPrinter;
     public static final String[] CSV_HEADERS = new String[] {
-            "cdm_collection_id", "cdm_object_id", "boxc_work_id", "boxc_file_id" };
+            "cdm_collection_id", "cdm_object_id", "boxc_object_id", "boxc_file_id" };
 
     public RedirectMappingService(MigrationProject project) {
         this.project = project;
