@@ -39,7 +39,7 @@ public class ProjectPropertiesCommand {
 
     private ProjectPropertiesService propertiesService = new ProjectPropertiesService();
 
-    @Command(name="list",
+    @Command(name = "list",
             description = "List all configurable properties for the project.")
     public int listProperties() throws Exception {
         try {

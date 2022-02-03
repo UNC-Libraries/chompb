@@ -44,8 +44,7 @@ public class ProjectPropertiesService {
         map.put("collectionNumber", project.getProjectProperties().getCollectionNumber());
         Set<Map.Entry<String, String>> set = map.entrySet();
         List<Map.Entry<String, String>> configuredProperties = new ArrayList<>(set);
-        for (int i = 0; i < configuredProperties.size(); i++)
-        {
+        for (int i = 0; i < configuredProperties.size(); i++) {
             System.out.println(configuredProperties.get(i).getKey() + ": " + configuredProperties.get(i).getValue());
         }
     }
