@@ -37,15 +37,15 @@ public class ProjectPropertiesCommand {
     @ParentCommand
     private CLIMain parentCommand;
 
-    private MigrationProject project;
-    private ProjectPropertiesService propertiesService;
+    private ProjectPropertiesService propertiesService = new ProjectPropertiesService();
 
     @Command(name="list",
-            description = "List all properties for the project.")
+            description = "List all configurable properties for the project.")
     public int listProperties() throws Exception {
         try {
             MigrationProject project = MigrationProjectFactory
                     .loadMigrationProject(parentCommand.getWorkingDirectory());
+            propertiesService.setProject(project);
             propertiesService.getProjectProperties();
             outputLogger.info("Project properties listed.");
             return 0;
@@ -68,6 +68,7 @@ public class ProjectPropertiesCommand {
         try {
             MigrationProject project = MigrationProjectFactory
                     .loadMigrationProject(parentCommand.getWorkingDirectory());
+            propertiesService.setProject(project);
             propertiesService.setProperties(setField, setValue);
             outputLogger.info("Project property set");
             return 0;
@@ -82,12 +83,13 @@ public class ProjectPropertiesCommand {
     @Command(name = "unset",
             description = "Manually unset/clear project properties. " +
                     "You can clear multiple properties at the same time. " +
-                    "Example: chompb config unset hookId,collectionNumber")
+                    "Example: chompb config unset hookId collectionNumber")
     public int unsetProperties(@Parameters(paramLabel = "<unsetField(s)>",
             description = "List of fields to unset") List<String> unsetFields) throws Exception {
         try {
             MigrationProject project = MigrationProjectFactory
                     .loadMigrationProject(parentCommand.getWorkingDirectory());
+            propertiesService.setProject(project);
             propertiesService.unsetProperties(unsetFields);
             outputLogger.info("Project property(ies) unset");
             return 0;
