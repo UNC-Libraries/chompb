@@ -23,6 +23,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.DriverManager;
+import java.util.Properties;
 
 /**
  * Service for indexing the redirect mapping CSV into the chomping_block DB
@@ -40,11 +42,22 @@ public class RedirectMappingIndexService {
     private final MigrationProject project;
     public String connectionString;
     public static final String INSERT_STATEMENT = " insert into redirect_mappings " +
-            "(cdm_collection_id, cdm_object_id, boxc_work_id, boxc_file_id) " +
+            "(cdm_collection_id, cdm_object_id, boxc_object_id, boxc_file_id) " +
             "values (?, ?, ?, ?)";
+    private Path redirectDbConnectionPath;
+    private Properties props;
 
     public RedirectMappingIndexService(MigrationProject project) {
         this.project = project;
+    }
+
+    public void init() {
+        try (InputStream inputStream = Files.newInputStream(redirectDbConnectionPath)) {
+            props = new Properties();
+            props.load(inputStream);
+        } catch (IOException e) {
+            throw new MigrationException("Error reading properties file", e);
+        }
     }
 
     /**
@@ -65,13 +78,13 @@ public class RedirectMappingIndexService {
             for (CSVRecord originalRecord : originalParser) {
                 String cdm_collection_id = originalRecord.get(0);
                 String cdm_object_id = originalRecord.get(1);
-                String boxc_work_id = originalRecord.get(2);
+                String boxc_object_id = originalRecord.get(2);
                 String boxc_file_id = originalRecord.get(3);
 
                 PreparedStatement preparedStatement = conn.prepareStatement(INSERT_STATEMENT);
                 preparedStatement.setString(1, cdm_collection_id);
                 preparedStatement.setString(2, cdm_object_id);
-                preparedStatement.setString(3, boxc_work_id);
+                preparedStatement.setString(3, boxc_object_id);
                 if (boxc_file_id.isEmpty()) {
                     preparedStatement.setNull(4, java.sql.Types.NULL);
                 } else {
@@ -97,8 +110,16 @@ public class RedirectMappingIndexService {
 
     public Connection openDbConnection() throws SQLException {
         try {
-            // TODO in BXC-3372 need to connect it to actual DB when not in local testing
-            Class.forName("org.sqlite.JDBC");
+            // in the tests we use sqlite, otherwise mysql is used
+            if (connectionString == null) {
+                setConnectionString(generateConnectionString());
+            }
+            if (connectionString.contains("sqlite")) {
+                Class.forName("org.sqlite.JDBC");
+            } else {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+            }
+
             return DriverManager.getConnection(connectionString);
         } catch (ClassNotFoundException e) {
             throw new MigrationException("Failed to open database connection to " + connectionString, e);
@@ -107,5 +128,28 @@ public class RedirectMappingIndexService {
 
     public void setConnectionString(String connectionString) {
         this.connectionString = connectionString;
+    }
+
+    public void setRedirectDbConnectionPath(Path redirectDbConnectionPath) {
+        this.redirectDbConnectionPath = redirectDbConnectionPath;
+    }
+
+    /*
+        Determines DB type from loaded properties and builds a connection string accordingly
+        This connection string is used to connect to the DB where the redirect mapping table lives
+     */
+    public String generateConnectionString() {
+        String dbType = props.getProperty("db_type");
+        String host = props.getProperty("db_host");
+
+        // we use sqlite in the tests, which use a different connection string syntax
+        if ("sqlite".equals(dbType) ) {
+            return "jdbc:sqlite:" + host;
+        }
+
+        String user = props.getProperty("db_user");
+        String password = props.getProperty("db_password");
+
+        return "jdbc:" + dbType + "://" + user + ":" + password + "@" + host + ":3306/chomping_block";
     }
 }

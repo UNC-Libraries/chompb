@@ -17,8 +17,8 @@
         <wiremock.version>2.27.2</wiremock.version>
         <sqlite-jdbc.version>3.36.0.1</sqlite-jdbc.version>
         <poi.version>5.1.0</poi.version>
-
         <build-tools.path></build-tools.path>
+        <mysql.version>8.0.28</mysql.version>
     </properties>
 
     <build>
@@ -147,6 +147,11 @@
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>${sqlite-jdbc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql.version}</version>
         </dependency>
         <!-- Logging -->
         <dependency>

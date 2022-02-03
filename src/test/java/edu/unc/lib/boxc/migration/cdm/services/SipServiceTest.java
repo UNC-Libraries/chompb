@@ -646,7 +646,7 @@ public class SipServiceTest {
             assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "25");
             assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "26");
             // grouped files should have the same work ID
-            assertEquals(rows.get(1).get("boxc_work_id"), rows.get(2).get("boxc_work_id"));
+            assertEquals(rows.get(1).get("boxc_object_id"), rows.get(2).get("boxc_object_id"));
             assertEquals(3, rows.size());
         }
     }
@@ -699,12 +699,12 @@ public class SipServiceTest {
             assertRedirectMappingRowContentIsCorrect(rows.get(4), project, "605");
             assertRedirectMappingRowContentIsCorrect(rows.get(5), project, "606");
             assertRedirectMappingRowContentNoFileId(rows.get(6), project, "607");
-            String cmpId1 = rows.get(3).get("boxc_work_id");
-            assertEquals(cmpId1, rows.get(1).get("boxc_work_id"));
-            assertEquals(cmpId1, rows.get(2).get("boxc_work_id"));
-            String cmpId2 = rows.get(6).get("boxc_work_id");
-            assertEquals(cmpId2, rows.get(4).get("boxc_work_id"));
-            assertEquals(cmpId2, rows.get(5).get("boxc_work_id"));
+            String cmpId1 = rows.get(3).get("boxc_object_id");
+            assertEquals(cmpId1, rows.get(1).get("boxc_object_id"));
+            assertEquals(cmpId1, rows.get(2).get("boxc_object_id"));
+            String cmpId2 = rows.get(6).get("boxc_object_id");
+            assertEquals(cmpId2, rows.get(4).get("boxc_object_id"));
+            assertEquals(cmpId2, rows.get(5).get("boxc_object_id"));
 
             assertEquals(7, rows.size());
         }
@@ -732,14 +732,14 @@ public class SipServiceTest {
     private void assertRedirectMappingRowContentIsCorrect(CSVRecord row, MigrationProject project, String objectId) {
         assertEquals(project.getProjectProperties().getCdmCollectionId(), row.get("cdm_collection_id"));
         assertEquals(objectId, row.get("cdm_object_id"));
-        assertFalse(StringUtils.isBlank(row.get("boxc_work_id")));
+        assertFalse(StringUtils.isBlank(row.get("boxc_object_id")));
         assertFalse(StringUtils.isBlank(row.get("boxc_file_id")));
     }
 
     private void assertRedirectMappingRowContentNoFileId(CSVRecord row, MigrationProject project, String objectId) {
         assertEquals(project.getProjectProperties().getCdmCollectionId(), row.get("cdm_collection_id"));
         assertEquals(objectId, row.get("cdm_object_id"));
-        assertFalse(StringUtils.isBlank(row.get("boxc_work_id")));
+        assertFalse(StringUtils.isBlank(row.get("boxc_object_id")));
         assertTrue(StringUtils.isBlank(row.get("boxc_file_id")));
     }
 }

@@ -85,7 +85,6 @@ public class SipServiceHelper {
     private final static Pattern SIP_PATH_PATTERN = Pattern.compile(".*SIP path: ([^\\s]+).*", Pattern.DOTALL);
     private final static Pattern NEW_COLL_PATTERN =
             Pattern.compile(".*Added new collection ([^\\s]+) with box-c id ([^\\s]+).*", Pattern.DOTALL);
-    public static final String REDIRECT_MAPPING_INDEX_FILENAME = "redirect_mapping_index.db";
 
     private Path sourceFilesBasePath;
     private Path accessFilesBasePath;
@@ -98,7 +97,6 @@ public class SipServiceHelper {
     private CdmIndexService indexService;
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
-    private RedirectMappingIndexService redirectMappingIndexService;
 
     public SipServiceHelper(MigrationProject project, Path filesBasePath) throws IOException {
         this.sourceFilesBasePath = new File(filesBasePath.toFile(), "source").toPath();
@@ -121,7 +119,6 @@ public class SipServiceHelper {
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
         destinationsService.setProject(project);
-        redirectMappingIndexService = new RedirectMappingIndexService(project);
 
         Files.createDirectories(project.getExportPath());
     }
@@ -383,11 +380,15 @@ public class SipServiceHelper {
         return sip;
     }
 
-    /**
-     * @return Path of the index containing redirect mapping data
-     */
-    public Path getRedirectMappingIndexPath() {
-        return project.getProjectPath().resolve(REDIRECT_MAPPING_INDEX_FILENAME);
+    public void initializeDefaultProjectState(String dest_uuid) throws Exception {
+        indexExportData("export_1.xml");
+        generateDefaultDestinationsMapping(dest_uuid, null);
+        populateDescriptions("gilmer_mods1.xml");
+        populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+    }
+
+    public void addSipsSubmitted() {
+        project.getProjectProperties().getSipsSubmitted().add("Sips submitted!");
     }
 
     public Path getSourceFilesBasePath() {
