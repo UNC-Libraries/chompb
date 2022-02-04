@@ -29,7 +29,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.MissingFormatWidthException;
 import java.util.Set;
 
 /**
@@ -107,7 +106,7 @@ public class RedirectMappingService {
         // there is more than one destination, so no redirect
         if (uniqueDestinationPids.size() > 1) {
             outputLogger.info("There were multiple possible destinations, so chompb can't select one " +
-                    "for redirect mapping. You will need to add any destinations to destinations.csv");
+                    "for redirect mapping. You will need to add any redirect mappings to redirect_mappings.csv");
         }
         // there is exactly one distinct new collection, so we'll redirect to it
         if (uniqueNewCollectionPids.size() == 1) {
