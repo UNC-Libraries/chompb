@@ -48,7 +48,7 @@ public class ProjectPropertiesCommand {
                     .loadMigrationProject(parentCommand.getWorkingDirectory());
             propertiesService.setProject(project);
             Map<String, String> projectProperties = propertiesService.getProjectProperties();
-            for(Map.Entry<String, String> entry : projectProperties.entrySet()) {
+            for (Map.Entry<String, String> entry : projectProperties.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 outputLogger.info(key + ": " + value);
