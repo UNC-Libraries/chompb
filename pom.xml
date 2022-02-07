@@ -17,6 +17,7 @@
         <wiremock.version>2.27.2</wiremock.version>
         <sqlite-jdbc.version>3.36.0.1</sqlite-jdbc.version>
         <poi.version>5.1.0</poi.version>
+        <log4j-to-slf4j.version>2.17.1</log4j-to-slf4j.version>
         <build-tools.path></build-tools.path>
         <mysql.version>8.0.28</mysql.version>
     </properties>
@@ -123,6 +124,12 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
+        </dependency>
+        <!-- Poi uses log4j-api internally, so redirect it to slf4j so it can go through logback -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>${log4j-to-slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
