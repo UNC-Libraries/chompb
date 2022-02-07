@@ -24,6 +24,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
 import java.util.List;
+import java.util.Map;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 
@@ -46,8 +47,12 @@ public class ProjectPropertiesCommand {
             MigrationProject project = MigrationProjectFactory
                     .loadMigrationProject(parentCommand.getWorkingDirectory());
             propertiesService.setProject(project);
-            propertiesService.getProjectProperties();
-            outputLogger.info("Project properties listed.");
+            Map<String, String> projectProperties = propertiesService.getProjectProperties();
+            for(Map.Entry<String, String> entry : projectProperties.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                outputLogger.info(key + ": " + value);
+            }
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("{}", e.getMessage());
@@ -69,7 +74,7 @@ public class ProjectPropertiesCommand {
             MigrationProject project = MigrationProjectFactory
                     .loadMigrationProject(parentCommand.getWorkingDirectory());
             propertiesService.setProject(project);
-            propertiesService.setProperties(setField, setValue);
+            propertiesService.setProperty(setField, setValue);
             outputLogger.info("Project property set");
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {

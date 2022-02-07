@@ -20,33 +20,29 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Service for manually updating the project properties
  * @author krwong
  */
 public class ProjectPropertiesService {
-
     private MigrationProject project;
+
+    private static final String HOOK_ID = "hookId";
+    private static final String COLLECTION_NUMBER = "collectionNumber";
 
     /**
      * List project properties that can be manually set/unset
      * @throws IOException
      */
-    public void getProjectProperties() throws IOException {
-        Map<String, String> map = new HashMap<String, String>();
-        map.put("hookId", project.getProjectProperties().getHookId());
-        map.put("collectionNumber", project.getProjectProperties().getCollectionNumber());
-        Set<Map.Entry<String, String>> set = map.entrySet();
-        List<Map.Entry<String, String>> configuredProperties = new ArrayList<>(set);
-        for (int i = 0; i < configuredProperties.size(); i++) {
-            System.out.println(configuredProperties.get(i).getKey() + ": " + configuredProperties.get(i).getValue());
-        }
+    public Map<String, String> getProjectProperties() throws IOException {
+        Map<String, String> projectProperties = new HashMap<>();
+        projectProperties.put(HOOK_ID, project.getProjectProperties().getCollectionNumber());
+        projectProperties.put(COLLECTION_NUMBER, project.getProjectProperties().getCollectionNumber());
+        return projectProperties;
     }
 
     /**
@@ -55,11 +51,11 @@ public class ProjectPropertiesService {
      * @param setValue
      * @throws IOException
      */
-    public void setProperties(String setField, String setValue) throws IOException {
-        if ((setField.equalsIgnoreCase("hookId") == true) && (setValue != null)) {
+    public void setProperty(String setField, String setValue) throws IOException {
+        if ((HOOK_ID.equalsIgnoreCase(setField)) && (setValue != null)) {
             project.getProjectProperties().setHookId(setValue);
             ProjectPropertiesSerialization.write(project);
-        } else if ((setField.equalsIgnoreCase("collectionNumber") == true) && (setValue != null)) {
+        } else if ((COLLECTION_NUMBER.equalsIgnoreCase(setField)) && (setValue != null)) {
             project.getProjectProperties().setCollectionNumber(setValue);
             ProjectPropertiesSerialization.write(project);
         } else {
@@ -74,10 +70,10 @@ public class ProjectPropertiesService {
      */
     public void unsetProperties(List<String> unsetFields) throws IOException {
         for (String unsetField : unsetFields) {
-            if (unsetField.equalsIgnoreCase("hookId") == true) {
+            if (unsetField.equalsIgnoreCase(HOOK_ID)) {
                 project.getProjectProperties().setHookId(null);
                 ProjectPropertiesSerialization.write(project);
-            } else if (unsetField.equalsIgnoreCase("collectionNumber") == true) {
+            } else if (unsetField.equalsIgnoreCase(COLLECTION_NUMBER)) {
                 project.getProjectProperties().setCollectionNumber(null);
                 ProjectPropertiesSerialization.write(project);
             } else {

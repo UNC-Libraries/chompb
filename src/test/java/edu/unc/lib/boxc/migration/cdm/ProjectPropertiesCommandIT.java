@@ -39,7 +39,7 @@ public class ProjectPropertiesCommandIT extends AbstractCommandIT {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                baseDir, PROJECT_NAME, null,"user");
+                baseDir, PROJECT_NAME, null, "user");
         propertiesService = new ProjectPropertiesService();
         propertiesService.setProject(project);
     }

@@ -25,10 +25,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
@@ -38,6 +37,8 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
  */
 public class ProjectPropertiesServiceTest {
     private static final String PROJECT_NAME = "gilmer";
+    private static final String HOOK_ID = "hookId";
+    private static final String COLLECTION_NUMBER = "collectionNumber";
 
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -55,18 +56,17 @@ public class ProjectPropertiesServiceTest {
 
     @Test
     public void listProjectPropertiesTest() throws Exception {
-        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outContent));
+        Map<String, String> projectProperties = service.getProjectProperties();
 
-        service.getProjectProperties();
-
-        assertEquals("hookId: null\ncollectionNumber: null\n", outContent.toString());
+        assertTrue(projectProperties.containsKey(HOOK_ID));
+        assertTrue(projectProperties.containsValue(null));
+        assertTrue(projectProperties.containsKey(COLLECTION_NUMBER));
     }
 
     @Test
     public void setProjectPropertiesTest() throws Exception {
-        service.setProperties("hookId", "000dd");
-        service.setProperties("collectionNumber", "000dd");
+        service.setProperty(HOOK_ID, "000dd");
+        service.setProperty(COLLECTION_NUMBER, "000dd");
 
         assertEquals("000dd", project.getProjectProperties().getHookId());
         assertEquals("000dd", project.getProjectProperties().getCollectionNumber());
@@ -75,7 +75,7 @@ public class ProjectPropertiesServiceTest {
     @Test
     public void setProjectPropertiesInvalidFieldTest() throws Exception {
         try {
-            service.setProperties("ookId", "000dd");
+            service.setProperty("ookId", "000dd");
             fail();
         } catch (MigrationException e) {
             assertTrue(e.getMessage().contains("Invalid field/value input"));
@@ -83,9 +83,9 @@ public class ProjectPropertiesServiceTest {
     }
 
     @Test
-    public void setProjectPropertiesNullValueTest() throws Exception {
+    public void setProjectPropertyNullValueTest() throws Exception {
         try {
-            service.setProperties("hookId",null);
+            service.setProperty(HOOK_ID, null);
             fail();
         } catch (MigrationException e) {
             assertTrue(e.getMessage().contains("Invalid field/value input"));
@@ -95,8 +95,8 @@ public class ProjectPropertiesServiceTest {
     @Test
     public void unsetProjectPropertiesTest() throws Exception {
         List<String> unsetFields = new ArrayList<>();
-        unsetFields.add("hookId");
-        unsetFields.add("collectionNumber");
+        unsetFields.add(HOOK_ID);
+        unsetFields.add(COLLECTION_NUMBER);
 
         service.unsetProperties(unsetFields);
 
