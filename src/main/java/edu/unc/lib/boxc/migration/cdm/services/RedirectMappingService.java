@@ -92,21 +92,26 @@ public class RedirectMappingService {
      * @param sips list of MigrationSips
      */
     public void addCollectionRow(List<MigrationSip> sips) throws IOException {
-        List<PID> destinationPids = new ArrayList<>();
-        List<PID> newCollectionPids = new ArrayList<>();
+        List<String> destinationPids = new ArrayList<>();
+        List<String> newCollectionPids = new ArrayList<>();
 
         for (MigrationSip sip: sips) {
-            destinationPids.add(sip.getDestinationPid());
-            newCollectionPids.add(sip.getNewCollectionPid());
+            if (sip.getDestinationId() != null) {
+                destinationPids.add(sip.getDestinationId());
+            }
+            if (sip.getNewCollectionId() != null) {
+                newCollectionPids.add(sip.getNewCollectionId());
+            }
         }
 
-        Set<PID> uniqueDestinationPids = new HashSet<>(destinationPids);
-        Set<PID> uniqueNewCollectionPids = new HashSet<>(newCollectionPids);
+        Set<String> uniqueDestinationPids = new HashSet<>(destinationPids);
+        Set<String> uniqueNewCollectionPids = new HashSet<>(newCollectionPids);
 
         // there is more than one destination, so no redirect
         if (uniqueDestinationPids.size() > 1) {
             outputLogger.info("There were multiple possible destinations, so chompb can't select one " +
                     "for redirect mapping. You will need to add any redirect mappings to redirect_mappings.csv");
+            return;
         }
         // there is exactly one distinct new collection, so we'll redirect to it
         if (uniqueNewCollectionPids.size() == 1) {
