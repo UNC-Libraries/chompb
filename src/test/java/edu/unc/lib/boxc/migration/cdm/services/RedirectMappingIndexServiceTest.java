@@ -136,8 +136,8 @@ public class RedirectMappingIndexServiceTest {
 
     @Test
     public void tableIsPopulatedCorrectlyInRedirectMappingIndexForCompoundObjects() throws Exception {
-        List<String> cdm_object_ids = new ArrayList<>();
-        List<String> expected_ids = Arrays.asList("604", "607");
+        List<String> cdmObjectIds = new ArrayList<>();
+        List<String> expectedIds = Arrays.asList("604", "607");
         generateCompoundObjectProject();
         sipsService.generateSips(redirectMappingHelper.makeOptions());
         Connection conn = indexService.openDbConnection();
@@ -154,10 +154,10 @@ public class RedirectMappingIndexServiceTest {
             ResultSet rs = stmt.executeQuery("select cdm_object_id from redirect_mappings where " +
                     "cdm_object_id is not null and boxc_object_id is not null and boxc_file_id is null");
             while (rs.next()) {
-                cdm_object_ids.add(rs.getString("cdm_object_id"));
+                cdmObjectIds.add(rs.getString("cdm_object_id"));
             }
 
-            assertEquals("compound objects aren't represented correctly", expected_ids, cdm_object_ids);
+            assertEquals("compound objects aren't represented correctly", expectedIds, cdmObjectIds);
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
