@@ -19,7 +19,6 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
-import edu.unc.lib.boxc.model.api.ids.PID;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
@@ -92,33 +91,33 @@ public class RedirectMappingService {
      * @param sips list of MigrationSips
      */
     public void addCollectionRow(List<MigrationSip> sips) throws IOException {
-        List<String> destinationPids = new ArrayList<>();
-        List<String> newCollectionPids = new ArrayList<>();
+        List<String> destinationIds = new ArrayList<>();
+        List<String> newCollectionIds = new ArrayList<>();
 
         for (MigrationSip sip: sips) {
             if (sip.getDestinationId() != null) {
-                destinationPids.add(sip.getDestinationId());
+                destinationIds.add(sip.getDestinationId());
             }
             if (sip.getNewCollectionId() != null) {
-                newCollectionPids.add(sip.getNewCollectionId());
+                newCollectionIds.add(sip.getNewCollectionId());
             }
         }
 
-        Set<String> uniqueDestinationPids = new HashSet<>(destinationPids);
-        Set<String> uniqueNewCollectionPids = new HashSet<>(newCollectionPids);
+        Set<String> uniqueDestinationIds = new HashSet<>(destinationIds);
+        Set<String> uniqueNewCollectionIds = new HashSet<>(newCollectionIds);
 
         // there is more than one destination, so no redirect
-        if (uniqueDestinationPids.size() > 1) {
+        if (uniqueDestinationIds.size() > 1) {
             outputLogger.info("There were multiple possible destinations, so chompb can't select one " +
                     "for redirect mapping. You will need to add any redirect mappings to redirect_mappings.csv");
             return;
         }
         // there is exactly one distinct new collection, so we'll redirect to it
-        if (uniqueNewCollectionPids.size() == 1) {
-            csvPrinter.printRecord(cdmCollectionId, null, newCollectionPids.get(0), null);
+        if (uniqueNewCollectionIds.size() == 1) {
+            csvPrinter.printRecord(cdmCollectionId, null, newCollectionIds.get(0), null);
             return;
         }
         // there are 0 collections or there are multiple collections, so redirect to the boxc destination
-        csvPrinter.printRecord(cdmCollectionId, null, destinationPids.get(0), null);
+        csvPrinter.printRecord(cdmCollectionId, null, destinationIds.get(0), null);
     }
 }
