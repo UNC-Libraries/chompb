@@ -83,7 +83,11 @@ public class RedirectMappingIndexService {
 
                 PreparedStatement preparedStatement = conn.prepareStatement(INSERT_STATEMENT);
                 preparedStatement.setString(1, cdm_collection_id);
-                preparedStatement.setString(2, cdm_object_id);
+                if (cdm_object_id.isEmpty()) {
+                    preparedStatement.setNull(2, java.sql.Types.NULL);
+                } else {
+                    preparedStatement.setString(2, cdm_object_id);
+                }
                 preparedStatement.setString(3, boxc_object_id);
                 if (boxc_file_id.isEmpty()) {
                     preparedStatement.setNull(4, java.sql.Types.NULL);
