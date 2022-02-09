@@ -76,19 +76,23 @@ public class RedirectMappingIndexService {
         ) {
             conn = openDbConnection();
             for (CSVRecord originalRecord : originalParser) {
-                String cdm_collection_id = originalRecord.get(0);
-                String cdm_object_id = originalRecord.get(1);
-                String boxc_object_id = originalRecord.get(2);
-                String boxc_file_id = originalRecord.get(3);
+                String cdmCollectionId = originalRecord.get(0);
+                String cdmObjectId = originalRecord.get(1);
+                String boxcObjectId = originalRecord.get(2);
+                String boxcFileId = originalRecord.get(3);
 
                 PreparedStatement preparedStatement = conn.prepareStatement(INSERT_STATEMENT);
-                preparedStatement.setString(1, cdm_collection_id);
-                preparedStatement.setString(2, cdm_object_id);
-                preparedStatement.setString(3, boxc_object_id);
-                if (boxc_file_id.isEmpty()) {
+                preparedStatement.setString(1, cdmCollectionId);
+                if (cdmObjectId.isEmpty()) {
+                    preparedStatement.setNull(2, java.sql.Types.NULL);
+                } else {
+                    preparedStatement.setString(2, cdmObjectId);
+                }
+                preparedStatement.setString(3, boxcObjectId);
+                if (boxcFileId.isEmpty()) {
                     preparedStatement.setNull(4, java.sql.Types.NULL);
                 } else {
-                    preparedStatement.setString(4, boxc_file_id);
+                    preparedStatement.setString(4, boxcFileId);
                 }
 
                 preparedStatement.execute();

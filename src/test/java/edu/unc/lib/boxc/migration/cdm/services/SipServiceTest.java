@@ -613,6 +613,7 @@ public class SipServiceTest {
             assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
             assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
             assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
+            // there should not be a collection row
         }
     }
 
@@ -645,9 +646,10 @@ public class SipServiceTest {
             assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "27"); // ungrouped items first
             assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "25");
             assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "26");
-            // grouped files should have the same work ID
+            assertRedirectMappingCollectionRowContentIsCorrect(rows.get(3), project, DEST_UUID);
+            // grouped files should have the same boxc object ID
             assertEquals(rows.get(1).get("boxc_object_id"), rows.get(2).get("boxc_object_id"));
-            assertEquals(3, rows.size());
+            assertEquals(4, rows.size());
         }
     }
 
@@ -667,7 +669,7 @@ public class SipServiceTest {
 
 
         assertTrue(Files.exists(project.getRedirectMappingPath()));
-        // make sure that sequential sips generation work/file ID changes are reflected in the redirect mapping csv
+        // make sure that sequential sips generation object/file ID changes are reflected in the redirect mapping csv
         assertNotEquals(redirectFile, secondRedirectFile);
     }
 
@@ -699,6 +701,8 @@ public class SipServiceTest {
             assertRedirectMappingRowContentIsCorrect(rows.get(4), project, "605");
             assertRedirectMappingRowContentIsCorrect(rows.get(5), project, "606");
             assertRedirectMappingRowContentNoFileId(rows.get(6), project, "607");
+            // collection row should redirect to the boxc destination ID
+            assertRedirectMappingCollectionRowContentIsCorrect(rows.get(7), project, DEST_UUID);
             String cmpId1 = rows.get(3).get("boxc_object_id");
             assertEquals(cmpId1, rows.get(1).get("boxc_object_id"));
             assertEquals(cmpId1, rows.get(2).get("boxc_object_id"));
@@ -706,7 +710,65 @@ public class SipServiceTest {
             assertEquals(cmpId2, rows.get(4).get("boxc_object_id"));
             assertEquals(cmpId2, rows.get(5).get("boxc_object_id"));
 
-            assertEquals(7, rows.size());
+            assertEquals(8, rows.size());
+        }
+    }
+
+    @Test
+    public void generateSipsWithMultipleNewCollectionsAndRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, "001234");
+        // Inserting an extra destination which has one object mapped to it
+        try (BufferedWriter writer = Files.newBufferedWriter(project.getDestinationMappingsPath(), APPEND)) {
+            writer.write("26," + DEST_UUID + ",005678");
+        }
+
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(2, sips.size());
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals(4, rows.toArray().length);
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
+            // collection row should redirect to the boxc destination ID
+            assertRedirectMappingCollectionRowContentIsCorrect(rows.get(3), project, DEST_UUID);
+        }
+    }
+
+    @Test
+    public void generateSipWithNewCollectionAndRedirectMapping() throws Exception {
+        testHelper.indexExportData("export_1.xml");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, "001234");
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        String boxcCollectionId = sips.get(0).getNewCollectionId();
+        try (
+                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals(4, rows.toArray().length);
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
+            // collection row should redirect to the boxc collection ID
+            assertRedirectMappingCollectionRowContentIsCorrect(rows.get(3), project, boxcCollectionId);
         }
     }
 
@@ -740,6 +802,13 @@ public class SipServiceTest {
         assertEquals(project.getProjectProperties().getCdmCollectionId(), row.get("cdm_collection_id"));
         assertEquals(objectId, row.get("cdm_object_id"));
         assertFalse(StringUtils.isBlank(row.get("boxc_object_id")));
+        assertTrue(StringUtils.isBlank(row.get("boxc_file_id")));
+    }
+
+    private void assertRedirectMappingCollectionRowContentIsCorrect(CSVRecord row, MigrationProject project, String boxcObjectId) {
+        assertEquals(project.getProjectProperties().getCdmCollectionId(), row.get("cdm_collection_id"));
+        assertTrue(StringUtils.isBlank(row.get("cdm_object_id")));
+        assertEquals(boxcObjectId, row.get("boxc_object_id"));
         assertTrue(StringUtils.isBlank(row.get("boxc_file_id")));
     }
 }

@@ -159,7 +159,7 @@ public class SipService {
                     log.warn("Failed to cleanup TDB directory", e);
                 }
             }
-
+            redirectMappingService.addCollectionRow(sips);
             project.getProjectProperties().setSipsGeneratedDate(Instant.now());
             ProjectPropertiesSerialization.write(project);
 
