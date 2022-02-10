@@ -51,7 +51,7 @@ public class ProjectPropertiesCommandIT extends AbstractCommandIT {
                 "config", "list"};
         executeExpectSuccess(args);
 
-        assertOutputContains("hookId: null\ncollectionNumber: null\n");
+        assertOutputContains("hookId: <unset>\ncollectionNumber: <unset>\n");
     }
 
     @Test

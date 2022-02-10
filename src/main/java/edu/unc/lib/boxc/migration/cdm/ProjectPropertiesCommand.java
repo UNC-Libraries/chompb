@@ -51,6 +51,9 @@ public class ProjectPropertiesCommand {
             for (Map.Entry<String, String> entry : projectProperties.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
+                if (value == null) {
+                    value = "<unset>";
+                }
                 outputLogger.info(key + ": " + value);
             }
             return 0;
