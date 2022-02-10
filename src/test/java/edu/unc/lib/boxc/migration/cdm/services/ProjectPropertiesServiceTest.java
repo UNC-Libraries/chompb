@@ -15,6 +15,9 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import static edu.unc.lib.boxc.migration.cdm.services.ProjectPropertiesService.HOOK_ID;
+import static edu.unc.lib.boxc.migration.cdm.services.ProjectPropertiesService.COLLECTION_NUMBER;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
@@ -37,8 +40,6 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
  */
 public class ProjectPropertiesServiceTest {
     private static final String PROJECT_NAME = "gilmer";
-    public static final String HOOK_ID = "hookId";
-    public static final String COLLECTION_NUMBER = "collectionNumber";
 
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
