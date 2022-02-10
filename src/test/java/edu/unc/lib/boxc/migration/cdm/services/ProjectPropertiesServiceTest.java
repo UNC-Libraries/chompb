@@ -37,8 +37,8 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
  */
 public class ProjectPropertiesServiceTest {
     private static final String PROJECT_NAME = "gilmer";
-    private static final String HOOK_ID = "hookId";
-    private static final String COLLECTION_NUMBER = "collectionNumber";
+    public static final String HOOK_ID = "hookId";
+    public static final String COLLECTION_NUMBER = "collectionNumber";
 
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();

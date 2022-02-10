@@ -31,8 +31,8 @@ import java.util.Map;
 public class ProjectPropertiesService {
     private MigrationProject project;
 
-    private static final String HOOK_ID = "hookId";
-    private static final String COLLECTION_NUMBER = "collectionNumber";
+    public static final String HOOK_ID = "hookId";
+    public static final String COLLECTION_NUMBER = "collectionNumber";
 
     /**
      * List project properties that can be manually set/unset
@@ -40,7 +40,7 @@ public class ProjectPropertiesService {
      */
     public Map<String, String> getProjectProperties() throws IOException {
         Map<String, String> projectProperties = new HashMap<>();
-        projectProperties.put(HOOK_ID, project.getProjectProperties().getCollectionNumber());
+        projectProperties.put(HOOK_ID, project.getProjectProperties().getHookId());
         projectProperties.put(COLLECTION_NUMBER, project.getProjectProperties().getCollectionNumber());
         return projectProperties;
     }
