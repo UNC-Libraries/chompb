@@ -46,7 +46,8 @@ import picocli.CommandLine.ScopeType;
         SubmitSipsCommand.class,
         StatusCommand.class,
         GroupMappingCommand.class,
-        IndexRedirectCommand.class
+        IndexRedirectCommand.class,
+        ProjectPropertiesCommand.class
     })
 public class CLIMain implements Callable<Integer> {
     @Option(names = { "-w", "--work-dir" },
