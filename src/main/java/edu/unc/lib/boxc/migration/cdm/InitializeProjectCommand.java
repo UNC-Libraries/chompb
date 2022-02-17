@@ -30,6 +30,7 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.services.FindingAidService;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -62,11 +63,13 @@ public class InitializeProjectCommand implements Callable<Integer> {
 
     private CdmFieldService fieldService;
     private CloseableHttpClient httpClient;
+    private FindingAidService findingAidService;
 
     public InitializeProjectCommand() {
         httpClient = HttpClients.createMinimal();
         fieldService = new CdmFieldService();
         fieldService.setHttpClient(httpClient);
+        findingAidService = new FindingAidService();
     }
 
     @Override
@@ -99,6 +102,15 @@ public class InitializeProjectCommand implements Callable<Integer> {
             fieldService.persistFieldsToProject(project, fieldInfo);
         } catch (InvalidProjectStateException e) {
             outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
+            return 1;
+        }
+
+        //Record collection's finding aid (if available)
+        try {
+            findingAidService.setCdmFieldService(fieldService);
+            findingAidService.recordFindingAid();
+        } catch (MigrationException e) {
+            outputLogger.info("Failed to record finding aid for collection", e.getMessage());
             return 1;
         }
 
