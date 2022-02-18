@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class FindingAidService {
     public static final String CONTRI_FIELD = "contri";
     public static final String DESCRI_FIELD = "descri";
-    public static final String HOOK_ID = "hook id";
+    public static final String HOOK_ID = "hookid";
     public static final String COLLECTION_NUMBER = "collection number";
 
     private MigrationProject project;
@@ -42,7 +42,7 @@ public class FindingAidService {
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         Map<String, String> fields = fieldInfo.getFields().stream()
                 .filter(f -> !f.getSkipExport())
-                .collect(Collectors.toMap(CdmFieldInfo.CdmFieldEntry::getExportAs,
+                .collect(Collectors.toMap(CdmFieldInfo.CdmFieldEntry::getNickName,
                         CdmFieldInfo.CdmFieldEntry::getDescription));
 
         for (Map.Entry<String, String> entry : fields.entrySet()) {

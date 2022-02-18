@@ -15,6 +15,8 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import static edu.unc.lib.boxc.migration.cdm.services.FindingAidService.CONTRI_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.services.FindingAidService.DESCRI_FIELD;
 import static edu.unc.lib.boxc.migration.cdm.services.FindingAidService.HOOK_ID;
 import static edu.unc.lib.boxc.migration.cdm.services.FindingAidService.COLLECTION_NUMBER;
 import static org.junit.Assert.assertEquals;
@@ -54,11 +56,11 @@ public class FindingAidServiceTest {
 
     @Test
     public void recordFindingAidTest() throws Exception {
-        populateFieldInfo();
+        Files.copy(Paths.get("src/test/resources/findingaid_fields.csv"), project.getFieldsPath());
         service.recordFindingAid();
 
-        assertEquals(HOOK_ID, project.getProjectProperties().getHookId());
-        assertEquals(COLLECTION_NUMBER, project.getProjectProperties().getCollectionNumber());
+        assertEquals(CONTRI_FIELD, project.getProjectProperties().getHookId());
+        assertEquals(DESCRI_FIELD, project.getProjectProperties().getCollectionNumber());
     }
 
     @Test
