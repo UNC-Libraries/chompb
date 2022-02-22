@@ -94,8 +94,9 @@ public class InitializeProjectCommand implements Callable<Integer> {
         String username = System.getProperty("user.name");
 
         // Instantiate the project
+        MigrationProject project = null;
         try {
-            MigrationProject project = MigrationProjectFactory.createMigrationProject(
+            project = MigrationProjectFactory.createMigrationProject(
                     currentPath, projectName, cdmCollectionId, username);
 
             // Persist field info to the project
@@ -107,10 +108,11 @@ public class InitializeProjectCommand implements Callable<Integer> {
 
         //Record collection's finding aid (if available)
         try {
+            findingAidService.setProject(project);
             findingAidService.setCdmFieldService(fieldService);
             findingAidService.recordFindingAid();
-        } catch (MigrationException e) {
-            outputLogger.info("Failed to record finding aid for collection", e.getMessage());
+        } catch (Exception e) {
+            outputLogger.info("Failed to record finding aid for collection", e);
             return 1;
         }
 
