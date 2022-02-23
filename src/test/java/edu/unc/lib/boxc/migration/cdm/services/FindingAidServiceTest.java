@@ -64,7 +64,7 @@ public class FindingAidServiceTest {
     }
 
     @Test
-    public void recordFindingAidFailTest() throws Exception {
+    public void recordFindingAidNoFieldCsvTest() throws Exception {
         try {
             service.recordFindingAid();
             fail();
@@ -75,14 +75,10 @@ public class FindingAidServiceTest {
 
     @Test
     public void noFindingAidToRecordTest() throws Exception {
-        populateFieldInfo();
+        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         service.recordFindingAid();
 
         assertNull(project.getProjectProperties().getHookId());
         assertNull(project.getProjectProperties().getCollectionNumber());
-    }
-
-    private void populateFieldInfo() throws Exception {
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
     }
 }

@@ -21,6 +21,7 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -37,7 +38,11 @@ public class FindingAidService {
     private MigrationProject project;
     private CdmFieldService fieldService;
 
-    public void recordFindingAid() throws Exception {
+    /**
+     * Record a project's contri/descri fields if they're named HookID/Collection Number
+     * @throws IOException
+     */
+    public void recordFindingAid() throws IOException {
         fieldService.validateFieldsFile(project);
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         Map<String, String> fields = fieldInfo.getFields().stream()
@@ -51,11 +56,11 @@ public class FindingAidService {
             if (key.equalsIgnoreCase(CONTRI_FIELD) && value.equalsIgnoreCase(HOOK_ID)) {
                 project.getProjectProperties().setHookId(key);
                 ProjectPropertiesSerialization.write(project);
-                outputLogger.info("HookId was set. Use 'config list' to view the project property.");
+                outputLogger.info(HOOK_ID + " was set. Use 'config list' to view the project property.");
             } else if (key.equalsIgnoreCase(DESCRI_FIELD) && value.equalsIgnoreCase(COLLECTION_NUMBER)) {
                 project.getProjectProperties().setCollectionNumber(key);
                 ProjectPropertiesSerialization.write(project);
-                outputLogger.info("CollectionNumber was set. Use 'config list' to view the project property.");
+                outputLogger.info(COLLECTION_NUMBER + " was set. Use 'config list' to view the project property.");
             }
         }
     }
