@@ -30,6 +30,7 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.services.FindingAidService;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -62,11 +63,13 @@ public class InitializeProjectCommand implements Callable<Integer> {
 
     private CdmFieldService fieldService;
     private CloseableHttpClient httpClient;
+    private FindingAidService findingAidService;
 
     public InitializeProjectCommand() {
         httpClient = HttpClients.createMinimal();
         fieldService = new CdmFieldService();
         fieldService.setHttpClient(httpClient);
+        findingAidService = new FindingAidService();
     }
 
     @Override
@@ -91,14 +94,25 @@ public class InitializeProjectCommand implements Callable<Integer> {
         String username = System.getProperty("user.name");
 
         // Instantiate the project
+        MigrationProject project = null;
         try {
-            MigrationProject project = MigrationProjectFactory.createMigrationProject(
+            project = MigrationProjectFactory.createMigrationProject(
                     currentPath, projectName, cdmCollectionId, username);
 
             // Persist field info to the project
             fieldService.persistFieldsToProject(project, fieldInfo);
         } catch (InvalidProjectStateException e) {
             outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
+            return 1;
+        }
+
+        //Record collection's finding aid (if available)
+        try {
+            findingAidService.setProject(project);
+            findingAidService.setCdmFieldService(fieldService);
+            findingAidService.recordFindingAid();
+        } catch (Exception e) {
+            outputLogger.info("Failed to record finding aid for collection", e);
             return 1;
         }
 

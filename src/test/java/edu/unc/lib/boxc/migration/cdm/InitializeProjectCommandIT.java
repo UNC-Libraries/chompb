@@ -25,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -165,6 +166,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         assertEquals("Project name did not match expected value", expName, properties.getName());
         assertEquals("CDM Collection ID did not match expected value", expCollId, properties.getCdmCollectionId());
         assertNotNull("Created date not set", properties.getCreatedDate());
+        assertNull(properties.getHookId());
+        assertNull(properties.getCollectionNumber());
     }
 
     private void assertCdmFieldsPresent(MigrationProject project) throws IOException {
