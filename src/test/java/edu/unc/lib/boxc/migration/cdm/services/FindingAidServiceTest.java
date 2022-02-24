@@ -17,8 +17,6 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import static edu.unc.lib.boxc.migration.cdm.services.FindingAidService.CONTRI_FIELD;
 import static edu.unc.lib.boxc.migration.cdm.services.FindingAidService.DESCRI_FIELD;
-import static edu.unc.lib.boxc.migration.cdm.services.FindingAidService.HOOK_ID;
-import static edu.unc.lib.boxc.migration.cdm.services.FindingAidService.COLLECTION_NUMBER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;

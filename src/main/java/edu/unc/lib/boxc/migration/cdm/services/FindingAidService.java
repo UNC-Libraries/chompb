@@ -32,8 +32,8 @@ import java.util.stream.Collectors;
 public class FindingAidService {
     public static final String CONTRI_FIELD = "contri";
     public static final String DESCRI_FIELD = "descri";
-    public static final String HOOK_ID = "hookid";
-    public static final String COLLECTION_NUMBER = "collection number";
+    public static final String HOOK_ID_FIELD_DESC = "hookid";
+    public static final String COLLECTION_NUMBER_FIELD_DESC = "collection number";
 
     private MigrationProject project;
     private CdmFieldService fieldService;
@@ -53,14 +53,16 @@ public class FindingAidService {
         for (Map.Entry<String, String> entry : fields.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
-            if (key.equalsIgnoreCase(CONTRI_FIELD) && value.equalsIgnoreCase(HOOK_ID)) {
+            if (key.equalsIgnoreCase(CONTRI_FIELD) && value.equalsIgnoreCase(HOOK_ID_FIELD_DESC)) {
                 project.getProjectProperties().setHookId(key);
                 ProjectPropertiesSerialization.write(project);
-                outputLogger.info(HOOK_ID + " was set. Use 'config list' to view the project property.");
-            } else if (key.equalsIgnoreCase(DESCRI_FIELD) && value.equalsIgnoreCase(COLLECTION_NUMBER)) {
+                outputLogger.info(ProjectPropertiesService.HOOK_ID +
+                        " was set. Use 'config list' to view the project property.");
+            } else if (key.equalsIgnoreCase(DESCRI_FIELD) && value.equalsIgnoreCase(COLLECTION_NUMBER_FIELD_DESC)) {
                 project.getProjectProperties().setCollectionNumber(key);
                 ProjectPropertiesSerialization.write(project);
-                outputLogger.info(COLLECTION_NUMBER + " was set. Use 'config list' to view the project property.");
+                outputLogger.info(ProjectPropertiesService.COLLECTION_NUMBER +
+                        " was set. Use 'config list' to view the project property.");
             }
         }
     }
