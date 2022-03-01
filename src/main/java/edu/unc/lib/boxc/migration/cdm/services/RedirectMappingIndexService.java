@@ -21,6 +21,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,12 +34,15 @@ import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.util.Properties;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * Service for indexing the redirect mapping CSV into the chomping_block DB
  *
  * @author snluong
  */
 public class RedirectMappingIndexService {
+    private static final Logger log = getLogger(RedirectMappingIndexService.class);
     private final MigrationProject project;
     public String connectionString;
     public static final String INSERT_STATEMENT = " insert into redirect_mappings " +
@@ -76,10 +80,13 @@ public class RedirectMappingIndexService {
         ) {
             conn = openDbConnection();
             for (CSVRecord originalRecord : originalParser) {
+
                 String cdmCollectionId = originalRecord.get(0);
                 String cdmObjectId = originalRecord.get(1);
                 String boxcObjectId = originalRecord.get(2);
                 String boxcFileId = originalRecord.get(3);
+                log.debug("Indexing record number {}: cdmCollId: {} cdmObjId: {} boxcObjId: {} boxcFileId: {}",
+                        originalRecord.getRecordNumber(), cdmCollectionId, cdmObjectId, boxcObjectId, boxcFileId);
 
                 PreparedStatement preparedStatement = conn.prepareStatement(INSERT_STATEMENT);
                 preparedStatement.setString(1, cdmCollectionId);
