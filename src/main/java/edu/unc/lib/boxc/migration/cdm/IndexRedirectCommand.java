@@ -19,6 +19,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
+import org.slf4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
@@ -27,6 +28,7 @@ import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author snluong
@@ -34,6 +36,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 @Command(name = "index_redirects",
         description = "Index redirect mappings in DB")
 public class IndexRedirectCommand implements Callable<Integer> {
+    private static final Logger log = getLogger(IndexRedirectCommand.class);
     @ParentCommand
     private CLIMain parentCommand;
 
@@ -61,6 +64,7 @@ public class IndexRedirectCommand implements Callable<Integer> {
             return 0;
         } catch (MigrationException e) {
             outputLogger.info("Failed to index redirect mapping: {}", e.getMessage());
+            log.error("Failed to index redirect mapping", e);
             return 1;
         }
     }
