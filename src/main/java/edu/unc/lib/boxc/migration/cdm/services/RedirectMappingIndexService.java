@@ -160,7 +160,8 @@ public class RedirectMappingIndexService {
 
         String user = props.getProperty("db_user");
         String password = props.getProperty("db_password");
+        String dbName = props.getProperty("db_name");
 
-        return "jdbc:" + dbType + "://" + user + ":" + password + "@" + host + ":3306/chomping_block";
+        return "jdbc:" + dbType + "://" + user + ":" + password + "@" + host + ":3306/" + dbName;
     }
 }
