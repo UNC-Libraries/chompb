@@ -165,11 +165,10 @@ public class CdmIndexService {
                 .map(exportField -> {
                     Element childEl = objEl.getChild(exportField);
                     if (childEl == null) {
-                        throw new InvalidProjectStateException("Missing configured field " + exportField
-                                + " in export document, aborting indexing due to configuration mismatch");
+                        return "";
+                    } else {
+                        return childEl.getTextTrim();
                     }
-                    String value = childEl.getTextTrim();
-                    return value == null ? "" : value;
                 }).collect(Collectors.toList());
     }
 
