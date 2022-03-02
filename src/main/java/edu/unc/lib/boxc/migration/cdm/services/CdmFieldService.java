@@ -60,13 +60,24 @@ public class CdmFieldService {
 
     private static final String CDM_NICK_FIELD = "nick";
     private static final String CDM_NAME_FIELD = "name";
+    private static final String CDM_REQUIRED_FIELD = "req";
+    private static final String CDM_SEARCHABLE_FIELD = "search";
+    private static final String CDM_HIDDEN_FIELD = "hide";
+    private static final String CDM_VOCAB_FIELD = "vocab";
+    private static final String CDM_DC_MAPPING_FIELD = "dc";
 
     public static final String EXPORT_NICK_FIELD = "cdm_nick";
     public static final String EXPORT_AS_FIELD = "export_as";
     public static final String EXPORT_DESC_FIELD = "description";
     public static final String EXPORT_SKIP_FIELD = "skip_export";
+    public static final String EXPORT_CDM_REQUIRED = "cdm_required";
+    public static final String EXPORT_CDM_SEARCHABLE = "cdm_searchable";
+    public static final String EXPORT_CDM_HIDDEN = "cdm_hidden";
+    public static final String EXPORT_CDM_VOCAB = "cdm_vocab";
+    public static final String EXPORT_CDM_DC_MAPPING = "cdm_dc_mapping";
     public static final String[] EXPORT_CSV_HEADERS = new String[] {
-            EXPORT_NICK_FIELD, EXPORT_AS_FIELD, EXPORT_DESC_FIELD, EXPORT_SKIP_FIELD };
+            EXPORT_NICK_FIELD, EXPORT_AS_FIELD, EXPORT_DESC_FIELD, EXPORT_SKIP_FIELD, EXPORT_CDM_REQUIRED,
+            EXPORT_CDM_SEARCHABLE, EXPORT_CDM_HIDDEN, EXPORT_CDM_VOCAB, EXPORT_CDM_DC_MAPPING };
 
     public CdmFieldService() {
     }
@@ -109,11 +120,21 @@ public class CdmFieldService {
                 ObjectNode entryNode = mapper.readTree(parser);
                 String nick = entryNode.get(CDM_NICK_FIELD).asText();
                 String description = entryNode.get(CDM_NAME_FIELD).asText();
+                Boolean cdmRequired = (entryNode.get(CDM_REQUIRED_FIELD).asInt() == 1);
+                Boolean cdmSearchable = (entryNode.get(CDM_SEARCHABLE_FIELD).asInt() == 1);
+                Boolean cdmHidden = (entryNode.get(CDM_HIDDEN_FIELD).asInt() == 1);
+                Boolean cdmVocab = (entryNode.get(CDM_VOCAB_FIELD).asInt() == 1);
+                String dcMapping = entryNode.get(CDM_DC_MAPPING_FIELD).asText();
                 CdmFieldEntry fieldEntry = new CdmFieldEntry();
                 fieldEntry.setNickName(nick);
                 fieldEntry.setExportAs(nick);
                 fieldEntry.setDescription(description);
                 fieldEntry.setSkipExport(false);
+                fieldEntry.setCdmRequired(booleanToString(cdmRequired));
+                fieldEntry.setCdmSearchable(booleanToString(cdmSearchable));
+                fieldEntry.setCdmHidden(booleanToString(cdmHidden));
+                fieldEntry.setCdmVocab(booleanToString(cdmVocab));
+                fieldEntry.setCdmDcMapping(dcMapping);
                 fieldInfo.getFields().add(fieldEntry);
             }
         } catch (JsonParseException e) {
@@ -138,7 +159,8 @@ public class CdmFieldService {
         ) {
             for (CdmFieldEntry entry : fieldInfo.getFields()) {
                 csvPrinter.printRecord(entry.getNickName(), entry.getExportAs(), entry.getDescription(),
-                        entry.getSkipExport());
+                        entry.getSkipExport(), entry.getCdmRequired(), entry.getCdmSearchable(),
+                        entry.getCdmHidden(), entry.getCdmVocab(), entry.getCdmDcMapping());
             }
         }
     }
@@ -166,6 +188,11 @@ public class CdmFieldService {
                 entry.setExportAs(csvRecord.get(1));
                 entry.setDescription(csvRecord.get(2));
                 entry.setSkipExport(Boolean.parseBoolean(csvRecord.get(3)));
+                entry.setCdmRequired(csvRecord.get(4));
+                entry.setCdmSearchable(csvRecord.get(5));
+                entry.setCdmHidden(csvRecord.get(6));
+                entry.setCdmVocab(csvRecord.get(7));
+                entry.setCdmDcMapping(csvRecord.get(8));
                 fields.add(entry);
             }
             return fieldInfo;
@@ -189,7 +216,7 @@ public class CdmFieldService {
         ) {
             int line = 2;
             for (CSVRecord csvRecord : csvParser) {
-                if (csvRecord.size() != 4) {
+                if (csvRecord.size() != 9) {
                     throw new InvalidProjectStateException(
                             "Invalid CDM fields entry at line " + line);
                 }
@@ -219,6 +246,10 @@ public class CdmFieldService {
                     + field + "' at line " + line + ", values must be unique");
         }
         existing.add(field);
+    }
+
+    public String booleanToString(boolean bool) {
+        return bool ? "y" : "n";
     }
 
     public void setHttpClient(CloseableHttpClient httpClient) {

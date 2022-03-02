@@ -90,6 +90,11 @@ public class CdmFieldInfo {
         private String exportAs;
         private String description;
         private Boolean skipExport;
+        private String cdmRequired;
+        private String cdmSearchable;
+        private String cdmHidden;
+        private String cdmVocab;
+        private String cdmDcMapping;
 
         public String getNickName() {
             return nickName;
@@ -122,5 +127,25 @@ public class CdmFieldInfo {
         public void setSkipExport(Boolean skipExport) {
             this.skipExport = skipExport;
         }
+
+        public String getCdmRequired() { return cdmRequired; }
+
+        public void setCdmRequired(String cdmRequired) { this.cdmRequired = cdmRequired; }
+
+        public String getCdmSearchable() { return cdmSearchable; }
+
+        public void setCdmSearchable(String cdmSearchable) { this.cdmSearchable = cdmSearchable; }
+
+        public String getCdmHidden() { return cdmHidden; }
+
+        public void setCdmHidden(String cdmHidden) { this.cdmHidden = cdmHidden; }
+
+        public String getCdmVocab() { return cdmVocab; }
+
+        public void setCdmVocab(String cdmVocab) { this.cdmVocab = cdmVocab; }
+
+        public String getCdmDcMapping() { return cdmDcMapping; }
+
+        public void setCdmDcMapping(String cdmDcMapping) { this.cdmDcMapping = cdmDcMapping; }
     }
 }

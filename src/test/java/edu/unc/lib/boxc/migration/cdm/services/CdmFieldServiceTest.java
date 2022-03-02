@@ -86,11 +86,21 @@ public class CdmFieldServiceTest {
         CdmFieldInfo fieldInfo = service.retrieveFieldsForCollection(PROJECT_NAME);
         List<CdmFieldEntry> fields = fieldInfo.getFields();
 
-        assertHasFieldWithValue("title", "title", "Title", false, fields);
-        assertHasFieldWithValue("creato", "creato", "Creator", false, fields);
-        assertHasFieldWithValue("date", "date", "Creation Date", false, fields);
-        assertHasFieldWithValue("data", "data", "Date", false, fields);
-        assertHasFieldWithValue("digitb", "digitb", "Digital Collection", false, fields);
+        assertHasFieldWithValue("title", "title", "Title", false,
+                "y", "y", "n", "n",
+                "title", fields);
+        assertHasFieldWithValue("creato", "creato", "Creator", false,
+                "n", "y", "n", "y",
+                "creato", fields);
+        assertHasFieldWithValue("date", "date", "Creation Date", false,
+                "n", "y", "y", "n",
+                "datea", fields);
+        assertHasFieldWithValue("data", "data", "Date", false,
+                "n", "n", "n", "n",
+                "date", fields);
+        assertHasFieldWithValue("digitb", "digitb", "Digital Collection",
+                false, "n", "y", "n",
+                "n", "BLANK", fields);
     }
 
     @Test
@@ -157,6 +167,11 @@ public class CdmFieldServiceTest {
         field1.setExportAs("field1");
         field1.setDescription("First field");
         field1.setSkipExport(false);
+        field1.setCdmRequired("y");
+        field1.setCdmSearchable("y");
+        field1.setCdmHidden("y");
+        field1.setCdmVocab("y");
+        field1.setCdmDcMapping("field1");
         fieldsOriginal.add(field1);
 
         CdmFieldEntry field2 = new CdmFieldEntry();
@@ -164,6 +179,11 @@ public class CdmFieldServiceTest {
         field2.setExportAs("secondary");
         field2.setDescription("Secondary Field");
         field2.setSkipExport(true);
+        field2.setCdmRequired("n");
+        field2.setCdmSearchable("n");
+        field2.setCdmHidden("n");
+        field2.setCdmVocab("n");
+        field2.setCdmDcMapping("field2");
         fieldsOriginal.add(field2);
 
         service.persistFieldsToProject(project, fieldInfoOriginal);
@@ -172,8 +192,12 @@ public class CdmFieldServiceTest {
         CdmFieldInfo fieldInfoLoaded = service.loadFieldsFromProject(project);
         List<CdmFieldEntry> fieldsLoaded = fieldInfoLoaded.getFields();
         assertEquals(2, fieldsLoaded.size());
-        assertHasFieldWithValue("field1", "field1", "First field", false, fieldsLoaded);
-        assertHasFieldWithValue("field2", "secondary", "Secondary Field", true, fieldsLoaded);
+        assertHasFieldWithValue("field1", "field1", "First field", false,
+                "y", "y", "y", "y",
+                "field1", fieldsLoaded);
+        assertHasFieldWithValue("field2", "secondary", "Secondary Field", true,
+                "n", "n", "n", "n",
+                "field2", fieldsLoaded);
     }
 
     @Test
@@ -207,6 +231,11 @@ public class CdmFieldServiceTest {
         field1.setExportAs("field1");
         field1.setDescription("First field");
         field1.setSkipExport(false);
+        field1.setCdmRequired("y");
+        field1.setCdmSearchable("y");
+        field1.setCdmHidden("y");
+        field1.setCdmVocab("y");
+        field1.setCdmDcMapping("field1");
         fieldsOriginal.add(field1);
 
         CdmFieldEntry field2 = new CdmFieldEntry();
@@ -214,6 +243,11 @@ public class CdmFieldServiceTest {
         field2.setExportAs("secondary");
         field2.setDescription("Secondary Field");
         field2.setSkipExport(true);
+        field2.setCdmRequired("n");
+        field2.setCdmSearchable("n");
+        field2.setCdmHidden("n");
+        field2.setCdmVocab("n");
+        field2.setCdmDcMapping("field2");
         fieldsOriginal.add(field2);
 
         service.persistFieldsToProject(project, fieldInfoOriginal);
@@ -235,6 +269,11 @@ public class CdmFieldServiceTest {
         field1.setExportAs("field1");
         field1.setDescription("First field");
         field1.setSkipExport(false);
+        field1.setCdmRequired("y");
+        field1.setCdmSearchable("y");
+        field1.setCdmHidden("y");
+        field1.setCdmVocab("y");
+        field1.setCdmDcMapping("field1");
         fieldsOriginal.add(field1);
 
         CdmFieldEntry field2 = new CdmFieldEntry();
@@ -242,6 +281,11 @@ public class CdmFieldServiceTest {
         field2.setExportAs("field1");
         field2.setDescription("Secondary Field");
         field2.setSkipExport(true);
+        field2.setCdmRequired("n");
+        field2.setCdmSearchable("n");
+        field2.setCdmHidden("n");
+        field2.setCdmVocab("n");
+        field2.setCdmDcMapping("field2");
         fieldsOriginal.add(field2);
 
         service.persistFieldsToProject(project, fieldInfoOriginal);
@@ -284,20 +328,36 @@ public class CdmFieldServiceTest {
         CdmFieldInfo fieldInfoLoaded = service.loadFieldsFromProject(project);
         List<CdmFieldEntry> fieldsLoaded = fieldInfoLoaded.getFields();
 
-        assertHasFieldWithValue("title", "title", "Title", false, fieldsLoaded);
-        assertHasFieldWithValue("creato", "creato", "Creator", false, fieldsLoaded);
-        assertHasFieldWithValue("date", "date", "Creation Date", false, fieldsLoaded);
-        assertHasFieldWithValue("data", "data", "Date", false, fieldsLoaded);
-        assertHasFieldWithValue("digitb", "digitb", "Digital Collection", false, fieldsLoaded);
+        assertHasFieldWithValue("title", "title", "Title", false,
+                "y", "y", "n", "n",
+                "title", fieldsLoaded);
+        assertHasFieldWithValue("creato", "creato", "Creator", false,
+                "n", "y", "n", "y",
+                "creato", fieldsLoaded);
+        assertHasFieldWithValue("date", "date", "Creation Date", false,
+                "n", "y", "y", "n",
+                "datea", fieldsLoaded);
+        assertHasFieldWithValue("data", "data", "Date", false,
+                "n", "n", "n", "n",
+                "date", fieldsLoaded);
+        assertHasFieldWithValue("digitb", "digitb", "Digital Collection", false,
+                "n", "y", "n", "n",
+                "BLANK", fieldsLoaded);
     }
 
     private void assertHasFieldWithValue(String nick, String expectedExport, String expectedDesc,
-            boolean expectedSkip, List<CdmFieldEntry> fields) {
+            boolean expectedSkip, String expectedCdmRequired, String expectedCdmSearchable, String expectedCdmHidden,
+            String expectedCdmVocab, String expectedCdmDcMapping, List<CdmFieldEntry> fields) {
         Optional<CdmFieldEntry> matchOpt = fields.stream().filter(f -> nick.equals(f.getNickName())).findFirst();
         assertTrue("Field " + nick + " not present", matchOpt.isPresent());
         CdmFieldEntry entry = matchOpt.get();
         assertEquals(expectedDesc, entry.getDescription());
         assertEquals(expectedExport, entry.getExportAs());
         assertEquals(expectedSkip, entry.getSkipExport());
+        assertEquals(expectedCdmRequired, entry.getCdmRequired());
+        assertEquals(expectedCdmSearchable, entry.getCdmSearchable());
+        assertEquals(expectedCdmHidden, entry.getCdmHidden());
+        assertEquals(expectedCdmVocab, entry.getCdmVocab());
+        assertEquals(expectedCdmDcMapping, entry.getCdmDcMapping());
     }
 }
