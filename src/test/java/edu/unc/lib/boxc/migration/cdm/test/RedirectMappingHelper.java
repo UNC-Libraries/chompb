@@ -93,6 +93,7 @@ public class RedirectMappingHelper {
             prop.setProperty("db_host", "localhost");
             prop.setProperty("db_user", "root");
             prop.setProperty("db_password", "password");
+            prop.setProperty("db_name", "chomping_block");
         }
         prop.store(output, null);
 
