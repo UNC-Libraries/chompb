@@ -353,6 +353,8 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void rerunCompletedExportTest() throws Exception {
+        String originalExportBody = IOUtils.toString(getClass()
+                .getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8);
         stubFor(get(urlEqualTo( CDM_QUERY_BASE +"1/0/1/0/0/0/0/json"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
@@ -364,7 +366,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8))));
+                        .withBody(originalExportBody)));
 
         Path projPath = createProject();
 
@@ -376,10 +378,11 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         // Change response for export so it will be clear if a new export occurs
+        String modifiedBody = originalExportBody + "\n";
         stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8))));
+                        .withBody(modifiedBody)));
 
         String[] argsRerun = new String[] {
                 "-w", projPath.toString(),
@@ -393,7 +396,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         // Previous export should still be present
         assertExportFilesPresent(project, "export_1.xml");
-        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+        assertEquals(originalExportBody, FileUtils.readFileToString(
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
 
         // Retry with force restart
@@ -407,7 +410,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         assertExportFilesPresent(project, "export_1.xml");
         // Contents of file should match new contents
-        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
+        assertEquals(modifiedBody, FileUtils.readFileToString(
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
     }
 
