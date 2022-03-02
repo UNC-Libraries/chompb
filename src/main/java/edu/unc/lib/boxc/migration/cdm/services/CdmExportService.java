@@ -17,18 +17,24 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import com.google.common.collect.Lists;
 import edu.unc.lib.boxc.common.util.URIUtil;
+import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -102,8 +108,11 @@ public class CdmExportService {
         exportStateService.exportingCompleted();
     }
 
-    private void exportPageOfResults(int pageNum, List<String> pageIds, String fieldParams, CdmExportOptions options)
+    protected void exportPageOfResults(int pageNum, List<String> pageIds, String fieldParams, CdmExportOptions options)
             throws IOException {
+        if (log.isDebugEnabled()) {
+            log.debug("Exporting page of results containing ids: {}", String.join(",", pageIds));
+        }
         String exportFilename = "export_" + pageNum + ".xml";
         String cdmIds = String.join("%2C", pageIds);
         String bodyParams = "CISODB=%2F" + project.getProjectProperties().getCdmCollectionId()
@@ -122,6 +131,7 @@ public class CdmExportService {
         // Retrieve the export results
         Path exportFilePath = project.getExportPath().resolve(exportFilename);
         downloadExport(options, exportFilePath);
+        verifyExport(pageIds, exportFilePath);
 
         exportStateService.registerExported(pageIds);
     }
@@ -152,6 +162,31 @@ public class CdmExportService {
             }
             Files.copy(resp.getEntity().getContent(), exportFilePath, StandardCopyOption.REPLACE_EXISTING);
             log.debug("Downloaded export to file {}", exportFilePath);
+        }
+    }
+
+    private void verifyExport(List<String> cdmIds, Path exportPath) {
+        SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
+        Document doc = null;
+        try {
+            doc = builder.build(exportPath.toFile());
+        } catch (JDOMException | IOException e) {
+            throw new MigrationException("Unable to read export file: " + exportPath, e);
+        }
+        Element root = doc.getRootElement();
+        List<Element> recordEls = root.getChildren("record");
+        var exportedIds = recordEls.stream()
+                .map(el -> el.getChildTextTrim(CdmFieldInfo.CDM_ID))
+                .collect(Collectors.toList());
+        var missing = CollectionUtils.removeAll(cdmIds, exportedIds);
+        if (!missing.isEmpty()) {
+            throw new MigrationException("Export failure, document returned by CDM was missing the following records: "
+                + String.join(", ", missing));
+        }
+        if (exportedIds.size() != cdmIds.size()) {
+            var extra = CollectionUtils.removeAll(exportedIds, cdmIds);
+            throw new MigrationException("Export failure, document contained IDs not in the requested set: "
+                    + String.join(", ", extra));
         }
     }
 
