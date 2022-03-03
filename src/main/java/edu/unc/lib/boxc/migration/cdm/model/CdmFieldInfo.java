@@ -128,24 +128,44 @@ public class CdmFieldInfo {
             this.skipExport = skipExport;
         }
 
-        public String getCdmRequired() { return cdmRequired; }
+        public String getCdmRequired() {
+            return cdmRequired;
+        }
 
-        public void setCdmRequired(String cdmRequired) { this.cdmRequired = cdmRequired; }
+        public void setCdmRequired(String cdmRequired) {
+            this.cdmRequired = cdmRequired;
+        }
 
-        public String getCdmSearchable() { return cdmSearchable; }
+        public String getCdmSearchable() {
+            return cdmSearchable;
+        }
 
-        public void setCdmSearchable(String cdmSearchable) { this.cdmSearchable = cdmSearchable; }
+        public void setCdmSearchable(String cdmSearchable) {
+            this.cdmSearchable = cdmSearchable;
+        }
 
-        public String getCdmHidden() { return cdmHidden; }
+        public String getCdmHidden() {
+            return cdmHidden;
+        }
 
-        public void setCdmHidden(String cdmHidden) { this.cdmHidden = cdmHidden; }
+        public void setCdmHidden(String cdmHidden) {
+            this.cdmHidden = cdmHidden;
+        }
 
-        public String getCdmVocab() { return cdmVocab; }
+        public String getCdmVocab() {
+            return cdmVocab;
+        }
 
-        public void setCdmVocab(String cdmVocab) { this.cdmVocab = cdmVocab; }
+        public void setCdmVocab(String cdmVocab) {
+            this.cdmVocab = cdmVocab;
+        }
 
-        public String getCdmDcMapping() { return cdmDcMapping; }
+        public String getCdmDcMapping() {
+            return cdmDcMapping;
+        }
 
-        public void setCdmDcMapping(String cdmDcMapping) { this.cdmDcMapping = cdmDcMapping; }
+        public void setCdmDcMapping(String cdmDcMapping) {
+            this.cdmDcMapping = cdmDcMapping;
+        }
     }
 }
