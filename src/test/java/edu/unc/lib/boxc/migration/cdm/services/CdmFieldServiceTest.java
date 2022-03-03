@@ -307,7 +307,7 @@ public class CdmFieldServiceTest {
             service.validateFieldsFile(project);
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue(e.getMessage().contains("Invalid CDM fields entry at line 3"));
+            assertTrue(e.getMessage().contains("Invalid CDM fields entry at line 2"));
         }
     }
 
