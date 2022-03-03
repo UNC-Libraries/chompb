@@ -5,6 +5,7 @@ creato,creato,Creator,false,n,y,n,y,creato
 contri,contri,Contributor,false,n,y,n,y,contri
 date,date,Creation Date,false,n,y,y,n,datea
 data,data,Date,false,n,n,n,n,date
+search,search,Search by Decade,true,n,y,y,n,coverab
 descri,descri,Description,false,n,y,n,n,descri
 subjec,subjec,Subject (tgm),false,n,y,n,y,subjec
 subjea,subjea,Subject Topical,false,n,y,n,y,subjec
