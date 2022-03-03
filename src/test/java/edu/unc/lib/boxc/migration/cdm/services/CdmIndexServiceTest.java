@@ -265,12 +265,23 @@ public class CdmIndexServiceTest {
         FileUtils.writeStringToFile(project.getFieldsPath().toFile(), fieldString, ISO_8859_1);
         setExportedDate();
 
+        service.createDatabase(false);
+        service.indexAll();
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+
+        Connection conn = service.openDbConnection();
         try {
-            service.createDatabase(false);
-            service.indexAll();
-            fail();
-        } catch (InvalidProjectStateException e) {
-            assertTrue(e.getMessage().contains("Missing configured field mystery"));
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + Strings.join(exportFields, ",")
+                    + " from " + CdmIndexService.TB_NAME + " order by cdmid asc limit 1");
+            rs.next();
+            assertEquals(25, rs.getInt("cdmid"));
+            assertEquals("Redoubt C", rs.getString("title"));
+            assertEquals("", rs.getString("mystery"));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
         }
     }
 

@@ -95,11 +95,11 @@ public class CdmIndexService {
                 indexDocument(doc, conn, fieldInfo);
             }
         } catch (IOException e) {
-            throw new MigrationException("Failed to read export files: " + e.getMessage());
+            throw new MigrationException("Failed to read export files", e);
         } catch (SQLException e) {
-            throw new MigrationException("Failed to update database: " + e.getMessage());
+            throw new MigrationException("Failed to update database", e);
         } catch (JDOMException e) {
-            throw new MigrationException("Failed to parse export file: " + e.getMessage());
+            throw new MigrationException("Failed to parse export file", e);
         } finally {
             closeDbConnection(conn);
         }
@@ -147,6 +147,7 @@ public class CdmIndexService {
         Element metadataEl = childEl.getChild("pagemetadata");
         String pageId = childEl.getChildText("pageptr");
         String parentCdmId = parentReservedValues.get(0);
+        log.debug("Indexing compound child {} from parent {}", pageId, parentCdmId);
 
         List<String> values = listFieldValues(metadataEl, fieldInfo.listConfiguredFields());
         // Use the page id as the child's cdm id
@@ -165,11 +166,10 @@ public class CdmIndexService {
                 .map(exportField -> {
                     Element childEl = objEl.getChild(exportField);
                     if (childEl == null) {
-                        throw new InvalidProjectStateException("Missing configured field " + exportField
-                                + " in export document, aborting indexing due to configuration mismatch");
+                        return "";
+                    } else {
+                        return childEl.getTextTrim();
                     }
-                    String value = childEl.getTextTrim();
-                    return value == null ? "" : value;
                 }).collect(Collectors.toList());
     }
 

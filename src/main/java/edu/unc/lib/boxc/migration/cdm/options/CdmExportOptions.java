@@ -37,8 +37,8 @@ public class CdmExportOptions {
     @CommandLine.Option(names = {"-n", "--records-per-page"},
             description = {"Page size for exports.",
                     "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_EXPORT_RECORDS_PER_PAGE},
-            defaultValue = "1000")
-    private int pageSize = 1000;
+            defaultValue = "500")
+    private int pageSize = 500;
     public static final int MAX_LIST_IDS_PER_PAGE = 1000;
     @CommandLine.Option(names = {"--ids-per-page"},
             description = {"During initial listing of object IDs, the number of objects to list per page.",

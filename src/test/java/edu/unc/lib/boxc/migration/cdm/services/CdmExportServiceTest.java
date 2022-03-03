@@ -230,6 +230,64 @@ public class CdmExportServiceTest {
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
     }
 
+    @Test
+    public void exportPageMissingIdFromExportTest() throws Exception {
+        CdmFieldInfo fieldInfo = populateFieldInfo();
+        fieldService.persistFieldsToProject(project, fieldInfo);
+
+        var pageIds = Arrays.asList("216", "604", "607", "666");
+        exportStateService.startOrResumeExport(false);
+        // Include an extra id in the list of ids that isn't present in the export
+        exportStateService.objectCountCompleted(4);
+        exportStateService.transitionToListing(10);
+        exportStateService.registerObjectIds(pageIds);
+        exportStateService.listingComplete();
+        exportStateService.transitionToExporting(10);
+
+        when(postStatus.getStatusCode()).thenReturn(200);
+        when(getStatus.getStatusCode()).thenReturn(200);
+        when(getEntity.getContent())
+                .thenReturn(this.getClass().getResourceAsStream("/sample_exports/export_compounds.xml"));
+
+        try {
+            service.exportPageOfResults(0, pageIds, "", makeExportOptions());
+            fail();
+        } catch (MigrationException e) {
+            assertTrue(e.toString(), e.getMessage()
+                    .contains("document returned by CDM was missing the following records"));
+            assertTrue(e.toString(), e.getMessage().contains("666"));
+        }
+    }
+
+    @Test
+    public void exportPageExtraIdFromExportTest() throws Exception {
+        CdmFieldInfo fieldInfo = populateFieldInfo();
+        fieldService.persistFieldsToProject(project, fieldInfo);
+
+        var pageIds = Arrays.asList("604", "607");
+        exportStateService.startOrResumeExport(false);
+        // Include an extra id in the list of ids that isn't present in the export
+        exportStateService.objectCountCompleted(2);
+        exportStateService.transitionToListing(10);
+        exportStateService.registerObjectIds(pageIds);
+        exportStateService.listingComplete();
+        exportStateService.transitionToExporting(10);
+
+        when(postStatus.getStatusCode()).thenReturn(200);
+        when(getStatus.getStatusCode()).thenReturn(200);
+        when(getEntity.getContent())
+                .thenReturn(this.getClass().getResourceAsStream("/sample_exports/export_compounds.xml"));
+
+        try {
+            service.exportPageOfResults(0, pageIds, "", makeExportOptions());
+            fail();
+        } catch (MigrationException e) {
+            assertTrue(e.toString(), e.getMessage()
+                    .contains("document contained IDs not in the requested set"));
+            assertTrue(e.toString(), e.getMessage().contains("216"));
+        }
+    }
+
     private void assertExportFileCount(int expectedCount) throws Exception {
         try (Stream<Path> files = Files.list(project.getExportPath())) {
             long count = files.filter(p -> p.getFileName().toString().startsWith("export")).count();
