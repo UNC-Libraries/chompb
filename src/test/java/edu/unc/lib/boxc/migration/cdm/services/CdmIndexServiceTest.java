@@ -261,7 +261,7 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
                 project.getExportPath().resolve("export_all.xml"));
         String fieldString = FileUtils.readFileToString(new File("src/test/resources/gilmer_fields.csv"), ISO_8859_1);
-        fieldString += "\nmystery,mystery,Mysterious,false";
+        fieldString += "\nmystery,mystery,Mysterious,false,0,0,0,0,mystery";
         FileUtils.writeStringToFile(project.getFieldsPath().toFile(), fieldString, ISO_8859_1);
         setExportedDate();
 
