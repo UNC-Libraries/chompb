@@ -47,7 +47,8 @@ public class FieldAssessmentTemplateService {
     private CdmFieldService cdmFieldService;
     private static final List<String> COLUMN_NAMES = Arrays.asList("Field Label", "Alias", "MD Source",
             "All fields blank?", "Some fields blank?", "Repeated fields?", "Retain?", "Display?",
-            "MODS mapping", "Notes", "Remediation needed");
+            "MODS mapping", "Notes", "Remediation needed", "cdm_required", "cdm_searchable", "cdm_hidden",
+            "cdm_vocab", "cdm_dc_mapping");
 
     /**
      * Generate field assessment spreadsheet template for a collection
@@ -96,12 +97,12 @@ public class FieldAssessmentTemplateService {
         color.setTint(0.85);
         fill.setFillBackgroundColor(color);
         fill.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
-        CellRangeAddress[] regions = {CellRangeAddress.valueOf("A1:K200")};
+        CellRangeAddress[] regions = {CellRangeAddress.valueOf("A1:Z200")};
         sheetCF.addConditionalFormatting(regions, rule1);
 
         // Add a header row, and freeze it
         Row header = sheet.createRow(0);
-        sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, 10));
+        sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, 15));
         sheet.createFreezePane(0,1);
         header.setRowStyle(headerStyle);
         int cellNum = 0;
@@ -121,6 +122,11 @@ public class FieldAssessmentTemplateService {
             row.createCell(5).setCellValue("n");
             row.createCell(6).setCellValue("n");
             row.createCell(7).setCellValue("n");
+            row.createCell(11).setCellValue(fields.get(i).getCdmRequired());
+            row.createCell(12).setCellValue(fields.get(i).getCdmSearchable());
+            row.createCell(13).setCellValue(fields.get(i).getCdmHidden());
+            row.createCell(14).setCellValue(fields.get(i).getCdmVocab());
+            row.createCell(15).setCellValue(fields.get(i).getCdmDcMapping());
         }
 
         // Auto size the column widths

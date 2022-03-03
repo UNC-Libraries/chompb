@@ -70,9 +70,9 @@ public class FieldAssessmentTemplateServiceTest {
         Sheet sheet = workbook.getSheetAt(0);
 
         assertEquals(60, sheet.getLastRowNum());
-        assertEquals(11, sheet.getRow(0).getPhysicalNumberOfCells());
-        assertEquals(7, sheet.getRow(1).getPhysicalNumberOfCells());
-        assertEquals(7, sheet.getRow(60).getPhysicalNumberOfCells());
+        assertEquals(16, sheet.getRow(0).getPhysicalNumberOfCells());
+        assertEquals(12, sheet.getRow(1).getPhysicalNumberOfCells());
+        assertEquals(12, sheet.getRow(60).getPhysicalNumberOfCells());
         assertNull(sheet.getRow(1).getCell(2));
         assertNull(sheet.getRow(1).getCell(8));
         assertNull(sheet.getRow(1).getCell(9));
