@@ -178,15 +178,15 @@ public class CdmExportService {
         var exportedIds = recordEls.stream()
                 .map(el -> el.getChildTextTrim(CdmFieldInfo.CDM_ID))
                 .collect(Collectors.toList());
-        var missing = CollectionUtils.removeAll(cdmIds, exportedIds);
-        if (!missing.isEmpty()) {
+        var missingIds = CollectionUtils.removeAll(cdmIds, exportedIds);
+        if (!missingIds.isEmpty()) {
             throw new MigrationException("Export failure, document returned by CDM was missing the following records: "
-                + String.join(", ", missing));
+                + String.join(", ", missingIds));
         }
         if (exportedIds.size() != cdmIds.size()) {
-            var extra = CollectionUtils.removeAll(exportedIds, cdmIds);
+            var extraIds = CollectionUtils.removeAll(exportedIds, cdmIds);
             throw new MigrationException("Export failure, document contained IDs not in the requested set: "
-                    + String.join(", ", extra));
+                    + String.join(", ", extraIds));
         }
     }
 
