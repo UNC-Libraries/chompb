@@ -120,10 +120,10 @@ public class CdmFieldService {
                 ObjectNode entryNode = mapper.readTree(parser);
                 String nick = entryNode.get(CDM_NICK_FIELD).asText();
                 String description = entryNode.get(CDM_NAME_FIELD).asText();
-                Boolean cdmRequired = (entryNode.get(CDM_REQUIRED_FIELD).asInt() == 1);
-                Boolean cdmSearchable = (entryNode.get(CDM_SEARCHABLE_FIELD).asInt() == 1);
-                Boolean cdmHidden = (entryNode.get(CDM_HIDDEN_FIELD).asInt() == 1);
-                Boolean cdmVocab = (entryNode.get(CDM_VOCAB_FIELD).asInt() == 1);
+                boolean cdmRequired = (entryNode.get(CDM_REQUIRED_FIELD).asBoolean());
+                boolean cdmSearchable = (entryNode.get(CDM_SEARCHABLE_FIELD).asBoolean());
+                boolean cdmHidden = (entryNode.get(CDM_HIDDEN_FIELD).asBoolean());
+                boolean cdmVocab = (entryNode.get(CDM_VOCAB_FIELD).asBoolean());
                 String dcMapping = entryNode.get(CDM_DC_MAPPING_FIELD).asText();
                 CdmFieldEntry fieldEntry = new CdmFieldEntry();
                 fieldEntry.setNickName(nick);
@@ -248,7 +248,7 @@ public class CdmFieldService {
         existing.add(field);
     }
 
-    public String booleanToString(boolean bool) {
+    private String booleanToString(boolean bool) {
         return bool ? "y" : "n";
     }
 
