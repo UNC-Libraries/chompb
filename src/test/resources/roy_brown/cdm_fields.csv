@@ -1,0 +1,71 @@
+cdm_nick,export_as,description,skip_export,cdm_required,cdm_searchable,cdm_hidden,cdm_vocab,cdm_dc_mapping
+collec,collec,Collection in Repository,false,n,y,n,n,source
+descri,descri,Collection Number,false,n,y,n,y,relatig
+findin,findin,Finding Aid,false,n,n,n,n,BLANK
+locati,locati,Location in Collection,false,n,y,n,n,descri
+title,title,Object,false,y,n,n,n,title
+prefer,prefer,Citation,false,n,n,n,n,BLANK
+creato,creato,Container Type,false,n,y,y,n,BLANK
+contri,contri,HookID,false,n,y,y,y,BLANK
+relatid,relatid,filename,false,n,y,n,n,identi
+titlea,titlea,Title,false,n,y,n,n,title
+altern,altern,Alternative Title,false,n,y,n,n,titlea
+creata,creata,Creator,false,n,y,n,y,creato
+contra,contra,Contributor,false,n,y,n,y,creato
+creati,creati,Creation Date,false,n,y,y,n,datea
+date,date,Date,false,n,n,n,n,datea
+descra,descra,Description,false,n,y,n,n,descri
+subjec,subjec,Subject (tgm),false,n,y,n,y,subjec
+subjea,subjea,Subject - Name,false,n,y,n,y,subjec
+subjeb,subjeb,Subject - Topical,false,n,y,n,y,subjec
+subjed,subjed,Subject - Geographic,false,n,y,n,y,subjec
+subjee,subjee,Subject Topical Other,false,n,y,n,y,subjec
+coordi,coordi,Coordinates,false,n,n,n,n,coveraa
+geonam,geonam,geonamesid,false,n,n,y,n,coveraa
+digita,digita,Digital Collection,false,n,y,n,n,BLANK
+reposi,reposi,Repository,false,n,n,n,y,publis
+host,host,Host,false,n,n,n,y,publis
+usage,usage,Usage Rights,false,n,n,n,n,rights
+copyri,copyri,Copyright Holder,false,n,n,n,n,rights
+additi,additi,Additional Display,false,n,y,y,y,BLANK
+transc,transc,Transcription,false,n,y,y,n,BLANK
+captio,captio,Caption,false,n,y,n,n,descri
+notes,notes,Notes,false,n,y,n,n,descri
+titleb,titleb,Title Note,false,n,n,n,n,descri
+contrb,contrb,Contributor Note,false,n,n,n,n,descri
+sponso,sponso,Sponsor,false,n,n,n,n,BLANK
+relate,relate,Related Resource,false,n,n,n,n,relati
+author,author,Author Chief Source,false,n,n,n,n,creato
+publis,publis,Publisher,false,n,y,n,y,publis
+place,place,Place of Publication,false,n,y,n,y,BLANK
+catalo,catalo,Cataloging Agency,false,n,n,y,y,BLANK
+is,is,Is Part Of,false,n,n,n,n,relatig
+has,has,Has Part Of,false,n,n,n,n,relatih
+form,form,Form,false,n,y,n,y,type
+resour,resour,Resource Type,false,n,n,n,y,type
+medium,medium,Medium,false,n,y,n,y,formatb
+condit,condit,Condition,false,n,y,n,y,descri
+langub,langub,Language,false,n,y,n,y,langua
+physic,physic,Physical Description of Analog Original,false,n,n,n,n,formata
+creatb,creatb,Creator Nationality/Culture,false,n,y,n,n,creato
+stylep,stylep,Style/Period,false,n,y,n,y,coverab
+volume,volume,Volume/Issue,false,n,n,n,n,descri
+scale,scale,Scale,false,n,n,n,n,descri
+projec,projec,Projection,false,n,y,n,y,descri
+map,map,Map Type,false,n,y,n,y,descri
+mapa,mapa,Map Details,false,n,y,n,y,descri
+curren,curren,Current Location,false,n,y,n,n,coveraa
+path,path,path,false,n,n,n,n,BLANK
+local,local,Local Identifier,false,n,y,n,n,identi
+creatc,creatc,Creator Identifier,false,n,y,n,n,identi
+search,search,Search by Decade,false,n,y,y,n,coverab
+pagina,pagina,Pagination,false,n,n,n,n,descri
+sort,sort,Sort Me,false,n,y,y,n,BLANK
+stream,stream,StreamingFile,false,n,n,n,y,BLANK
+duracl,duracl,duracloudSpace,false,n,n,n,y,identi
+fullrs,fullrs,Archival file,false,n,n,y,n,BLANK
+dmoclcno,dmoclcno,OCLC number,false,n,n,y,n,BLANK
+dmcreated,dmcreated,Date created,false,y,n,y,n,BLANK
+dmmodified,dmmodified,Date modified,false,y,n,y,n,BLANK
+dmrecord,dmrecord,CONTENTdm number,false,y,y,y,n,BLANK
+find,find,CONTENTdm file name,false,y,n,y,n,BLANK

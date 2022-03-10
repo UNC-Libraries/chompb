@@ -32,8 +32,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,7 +48,6 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
-import joptsimple.internal.Strings;
 
 /**
  * @author bbpennel
@@ -91,7 +92,7 @@ public class CdmIndexServiceTest {
         Connection conn = service.openDbConnection();
         try {
             Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + Strings.join(exportFields, ",")
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
                     + " from " + CdmIndexService.TB_NAME + " order by cdmid asc");
             rs.next();
             assertEquals(25, rs.getInt("cdmid"));
@@ -145,7 +146,7 @@ public class CdmIndexServiceTest {
         Connection conn = service.openDbConnection();
         try {
             Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + Strings.join(exportFields, ",")
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
                     + " from " + CdmIndexService.TB_NAME + " order by cdmid asc");
             rs.next();
             assertEquals(25, rs.getInt("cdmid"));
@@ -274,7 +275,7 @@ public class CdmIndexServiceTest {
         Connection conn = service.openDbConnection();
         try {
             Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + Strings.join(exportFields, ",")
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
                     + " from " + CdmIndexService.TB_NAME + " order by cdmid asc limit 1");
             rs.next();
             assertEquals(25, rs.getInt("cdmid"));
@@ -305,7 +306,7 @@ public class CdmIndexServiceTest {
         Connection conn = service.openDbConnection();
         try {
             Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + Strings.join(allFields, ",")
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", allFields)
                     + " from " + CdmIndexService.TB_NAME + " order by cdmid asc");
             rs.next();
             assertEquals(216, rs.getInt("cdmid"));
@@ -362,6 +363,41 @@ public class CdmIndexServiceTest {
             assertEquals("Tiffany's pillbox", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
+    public void indexExportReservedWordFieldTest() throws Exception {
+        Files.copy(Paths.get("src/test/resources/roy_brown/export_1.xml"),
+                project.getExportPath().resolve("export_1.xml"));
+        Files.copy(Paths.get("src/test/resources/roy_brown/cdm_fields.csv"), project.getFieldsPath());
+        setExportedDate();
+
+        service.createDatabase(false);
+        service.indexAll();
+
+        assertDateIndexedPresent();
+        assertRowCount(2);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+
+        Connection conn = service.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            String fields = exportFields.stream().map(f -> '"' + f + '"').collect(Collectors.joining(","));
+            ResultSet rs = stmt.executeQuery("select " + fields
+                    + " from " + CdmIndexService.TB_NAME + " order by cdmid asc");
+            rs.next();
+            assertEquals(0, rs.getInt("cdmid"));
+            assertEquals("Folder 5: 1950-1956: Scan 25", rs.getString("title"));
+
+            rs.next();
+            assertEquals(548, rs.getInt("cdmid"));
+            assertEquals("Folder 9: Reports and writings on social work: Scan 51", rs.getString("title"));
+
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
