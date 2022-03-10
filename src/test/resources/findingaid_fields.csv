@@ -1,62 +1,62 @@
-cdm_nick,export_as,description,skip_export
-title,title,Title,false
-altern,altern,Alternative Title,false
-creato,creato,Creator,false
-contri,contri,HookID,false
-date,date,Creation Date,false
-data,data,Date,false
-search,search,Search by Decade,true
-descri,descri,Collection Number,false
-subjec,subjec,Subject (tgm),false
-subjea,subjea,Subject Topical,false
-subjeb,subjeb,Subject Name,false
-subjed,subjed,Subject Geographic,false
-titla,titla,Title Note,false
-dcmi,dcmi,DCMI Type,false
-captio,captio,Caption,false
-contra,contra,Contributor Note,false
-notes,notes,Notes,false
-type,type,Original Form,false
-resour,resour,Resource Type,false
-covera,covera,Geographic Location,false
-langub,langub,Language Code,false
-langua,langua,Language,false
-format,format,Physical Description of Original,false
-medium,medium,Medium of Original,false
-source,source,Collection in Repository,false
-digitb,digitb,Digital Collection,false
-publis,publis,Repository,false
-host,host,Host,false
-educat,educat,N.C. Ed. Standard,false
-identi,identi,URL,false
-local,local,Local Identifier,false
-creata,creata,Creator Identifier,false
-sponso,sponso,Citation,false
-file,file,filename,false
-rights,rights,Copyright,false
-orderi,orderi,Usage Rights,false
-initia,initia,Raw Scan Filename,false
-digita,digita,Digital Scan Date Raw Scan,false
-digitc,digitc,Digital Scan Date filename,false
-creatb,creatb,Creator Raw Scan,false
-creatc,creatc,Creator filename,false
-hardwa,hardwa,Hardware Raw Scan,false
-hardwb,hardwb,Hardware filename,false
-softwa,softwa,Software Raw Scan,false
-softwb,softwb,Software filename,false
-pixel,pixel,Pixel Array Raw Scan,false
-pixea,pixea,Pixel Array filename,false
-bit,bit,Bit Depth Raw Scan,false
-bia,bia,Bit Depth filename,false
-color,color,Color Space Raw Scan,false
-coloa,coloa,Color Space filename,false
-fila,fila,File Format Raw Scan,false
-filb,filb,File Format filename,false
-full,full,path,false
-fullrs,fullrs,Full resolution,false
-groupa,groupa,Group A,false
-dmoclcno,dmoclcno,OCLC number,false
-dmcreated,dmcreated,Date created,false
-dmmodified,dmmodified,Date modified,false
-dmrecord,dmrecord,CONTENTdm number,false
-find,find,CONTENTdm file name,false
+cdm_nick,export_as,description,skip_export,cdm_required,cdm_searchable,cdm_hidden,cdm_vocab,cdm_dc_mapping
+title,title,Title,false,y,y,n,n,title
+altern,altern,Alternative Title,false,n,y,n,n,title
+creato,creato,Creator,false,n,y,n,y,creato
+contri,contri,HookID,false,n,y,n,y,contri
+date,date,Creation Date,false,n,y,y,n,datea
+data,data,Date,false,n,n,n,n,date
+search,search,Search by Decade,true,n,y,y,n,coverab
+descri,descri,Collection Number,false,n,y,n,n,descri
+subjec,subjec,Subject (tgm),false,n,y,n,y,subjec
+subjea,subjea,Subject Topical,false,n,y,n,y,subjec
+subjeb,subjeb,Subject Name,false,n,y,n,y,subjec
+subjed,subjed,Subject Geographic,false,n,y,n,y,subjec
+titla,titla,Title Note,false,n,y,n,n,descri
+dcmi,dcmi,DCMI Type,false,n,n,n,n,type
+captio,captio,Caption,false,n,y,n,n,descri
+contra,contra,Contributor Note,false,n,n,n,n,descri
+notes,notes,Notes,false,n,y,n,n,descri
+type,type,Original Form,false,n,y,n,y,format
+resour,resour,Resource Type,false,n,n,y,y,format
+covera,covera,Geographic Location,false,n,y,n,y,coveraa
+langub,langub,Language Code,false,n,y,y,y,langua
+langua,langua,Language,false,n,y,n,y,langua
+format,format,Physical Description of Original,false,n,n,n,n,formata
+medium,medium,Medium of Original,false,n,y,n,y,formatb
+source,source,Collection in Repository,false,n,n,n,n,source
+digitb,digitb,Digital Collection,false,n,y,n,n,BLANK
+publis,publis,Repository,false,n,n,n,y,publis
+host,host,Host,false,n,n,n,n,BLANK
+educat,educat,N.C. Ed. Standard,false,n,n,n,y,relatim
+identi,identi,URL,false,n,n,n,n,identi
+local,local,Local Identifier,false,n,y,n,n,identi
+creata,creata,Creator Identifier,false,n,y,n,n,identi
+sponso,sponso,Citation,false,n,n,n,n,identi
+file,file,filename,false,n,y,n,n,BLANK
+rights,rights,Copyright,false,n,y,n,n,rights
+orderi,orderi,Usage Rights,false,n,n,n,n,rights
+initia,initia,Raw Scan Filename,false,n,n,y,n,BLANK
+digita,digita,Digital Scan Date Raw Scan,false,n,n,y,n,BLANK
+digitc,digitc,Digital Scan Date filename,false,n,n,y,n,BLANK
+creatb,creatb,Creator Raw Scan,false,n,n,y,n,BLANK
+creatc,creatc,Creator filename,false,n,n,y,n,BLANK
+hardwa,hardwa,Hardware Raw Scan,false,n,n,y,n,BLANK
+hardwb,hardwb,Hardware filename,false,n,n,y,n,BLANK
+softwa,softwa,Software Raw Scan,false,n,n,y,n,BLANK
+softwb,softwb,Software filename,false,n,n,y,n,BLANK
+pixel,pixel,Pixel Array Raw Scan,false,n,n,y,n,BLANK
+pixea,pixea,Pixel Array filename,false,n,n,y,n,BLANK
+bit,bit,Bit Depth Raw Scan,false,n,n,y,n,BLANK
+bia,bia,Bit Depth filename,false,n,n,y,n,BLANK
+color,color,Color Space Raw Scan,false,n,n,y,n,BLANK
+coloa,coloa,Color Space filename,false,n,n,y,n,BLANK
+fila,fila,File Format Raw Scan,false,n,n,y,y,BLANK
+filb,filb,File Format filename,false,n,n,y,y,BLANK
+full,full,path,false,n,n,n,n,BLANK
+fullrs,fullrs,Full resolution,false,n,n,y,n,
+dmoclcno,dmoclcno,OCLC number,false,n,n,y,n,
+dmcreated,dmcreated,Date created,false,y,n,y,n,
+dmmodified,dmmodified,Date modified,false,y,n,y,n,
+dmrecord,dmrecord,CONTENTdm number,false,y,n,y,n,
+find,find,CONTENTdm file name,false,y,n,y,n,
+groupa,groupa,Group A,false,n,y,n,n,descri
