@@ -214,7 +214,7 @@ public class CdmIndexService {
         StringBuilder queryBuilder = new StringBuilder("CREATE TABLE " + TB_NAME + " (\n");
         for (int i = 0; i < exportFields.size(); i++) {
             String field = exportFields.get(i);
-            queryBuilder.append(field).append(' ');
+            queryBuilder.append('"').append(field).append("\" ");
             if (CdmFieldInfo.CDM_ID.equals(field)) {
                 queryBuilder.append("INT PRIMARY KEY NOT NULL");
             } else {
@@ -225,7 +225,7 @@ public class CdmIndexService {
             }
         }
         queryBuilder.append(')');
-        log.debug("Creating database with query: {}", queryBuilder);
+        log.error("Creating database with query: {}", queryBuilder);
 
         Connection conn = null;
         try {
