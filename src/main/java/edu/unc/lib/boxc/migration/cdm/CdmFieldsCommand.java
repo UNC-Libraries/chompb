@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -23,6 +24,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.FieldAssessmentTemplateService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import org.slf4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
@@ -32,6 +34,7 @@ import picocli.CommandLine.ParentCommand;
 @Command(name = "fields",
         description = "Interactions with CDM fields for the current project")
 public class CdmFieldsCommand {
+    private static final Logger log = getLogger(CdmFieldsCommand.class);
     @ParentCommand
     private CLIMain parentCommand;
 
@@ -51,6 +54,7 @@ public class CdmFieldsCommand {
             outputLogger.info("FAIL: {}", e.getMessage());
             return 1;
         } catch (MigrationException e) {
+            log.error("Failed to validate fields file", e);
             outputLogger.info("FAIL: Failed to validate fields file: {}", e.getMessage());
             return 1;
         }
@@ -70,6 +74,7 @@ public class CdmFieldsCommand {
             outputLogger.info("{}", e.getMessage());
             return 1;
         } catch (Exception e) {
+            log.error("Failed to generate report", e);
             outputLogger.info("Failed to generate report: {}", e.getMessage());
             return 1;
         }

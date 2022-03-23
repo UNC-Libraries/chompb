@@ -19,6 +19,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.ProjectPropertiesService;
+import org.slf4j.Logger;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Command to update migration project properties
@@ -35,6 +37,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 @Command(name = "config",
         description = "Configure a CDM migration project.")
 public class ProjectPropertiesCommand {
+    private static final Logger log = getLogger(ProjectPropertiesCommand.class);
     @ParentCommand
     private CLIMain parentCommand;
 
@@ -61,6 +64,7 @@ public class ProjectPropertiesCommand {
             outputLogger.info("{}", e.getMessage());
             return 1;
         } catch (Exception e) {
+            log.error("Failed to list project properties", e);
             outputLogger.info("Failed to list project properties", e.getMessage());
             return 1;
         }
@@ -84,6 +88,7 @@ public class ProjectPropertiesCommand {
             outputLogger.info("{}", e.getMessage());
             return 1;
         } catch (Exception e) {
+            log.error("Failed to set project property", e);
             outputLogger.info("Failed to set project property", e.getMessage());
             return 1;
         }
@@ -105,6 +110,7 @@ public class ProjectPropertiesCommand {
             outputLogger.info("{}", e.getMessage());
             return 1;
         } catch (Exception e) {
+            log.error("Failed to unset project property(ies)", e);
             outputLogger.info("Failed to unset project property(ies)", e.getMessage());
             return 1;
         }

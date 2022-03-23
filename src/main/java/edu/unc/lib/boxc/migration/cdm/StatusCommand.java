@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.status.ProjectStatusService;
+import org.slf4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
@@ -34,7 +36,7 @@ import picocli.CommandLine.ParentCommand;
 @Command(name = "status",
         description = "Display the status of the current project")
 public class StatusCommand implements Callable<Integer>  {
-
+    private static final Logger log = getLogger(StatusCommand.class);
     @ParentCommand
     private CLIMain parentCommand;
 
@@ -50,6 +52,7 @@ public class StatusCommand implements Callable<Integer>  {
 
             return 0;
         } catch (MigrationException e) {
+            log.error("Failed to report project status", e);
             outputLogger.info("Failed to report project status: {}", e.getMessage());
             return 1;
         }

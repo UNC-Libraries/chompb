@@ -89,6 +89,7 @@ public class DescriptionsCommand {
                     generated, project.getProjectName(), (System.nanoTime() - start) / 1e9);
             return 0;
         } catch (MigrationException e) {
+            log.error("Cannot generate descriptions", e);
             outputLogger.info("Cannot generate descriptions: {}", e.getMessage());
             return 1;
         } catch (Exception e) {

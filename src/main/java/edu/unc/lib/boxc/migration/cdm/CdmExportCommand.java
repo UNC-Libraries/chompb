@@ -32,6 +32,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.slf4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
@@ -43,6 +44,7 @@ import java.util.concurrent.Callable;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author bbpennel
@@ -52,6 +54,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
                 "If an export operation was started but did not complete, running this command again will "
                     + "resume from where it left off. To force a restart instead, use the --force option."})
 public class CdmExportCommand implements Callable<Integer> {
+    private static final Logger log = getLogger(CdmExportCommand.class);
     @ParentCommand
     private CLIMain parentCommand;
 
@@ -91,6 +94,7 @@ public class CdmExportCommand implements Callable<Integer> {
                     (System.nanoTime() - start) / 1e9);
             return 0;
         } catch (MigrationException e) {
+            log.error("Failed to export project", e);
             outputLogger.info("Failed to export project: {}", e.getMessage());
             return 1;
         }
