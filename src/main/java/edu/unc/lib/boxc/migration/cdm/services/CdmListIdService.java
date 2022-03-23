@@ -88,7 +88,7 @@ public class CdmListIdService {
                 return pager.get("total").asInt();
         } catch (JsonParseException e) {
             throw new MigrationException("Failed to parse response from URL " + totalUri
-                    + ": " + e.getMessage());
+                    + ": ", e);
         }
     }
 
@@ -154,7 +154,7 @@ public class CdmListIdService {
             }
         } catch (JsonParseException e) {
             throw new MigrationException("Failed to parse response from URL " + objectUri
-                    + ": " + e.getMessage());
+                    + ": ", e);
         }
         return objectIds;
     }

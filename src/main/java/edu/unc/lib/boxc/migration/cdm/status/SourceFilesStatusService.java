@@ -111,7 +111,7 @@ public class SourceFilesStatusService extends AbstractStatusService {
                 showField("Potential Matches", cntPotential);
             }
         } catch (IOException e) {
-            outputLogger.info("Failed to load mappings: {}", e.getMessage());
+            outputLogger.info("Failed to load mappings: {}", e);
         }
     }
 

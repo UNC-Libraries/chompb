@@ -63,7 +63,7 @@ public class GroupMappingStatusService extends AbstractStatusService {
             try {
                 modified = Files.getLastModifiedTime(mappingsPath).toInstant();
             } catch (IOException e) {
-                outputLogger.info("Failed to check mappings: {}", e.getMessage());
+                outputLogger.info("Failed to check mappings: {}", e);
             }
         }
         showField("Mappings Modified", modified == null ? "Not present" : modified);
@@ -103,7 +103,7 @@ public class GroupMappingStatusService extends AbstractStatusService {
                 showFieldListValues(groupList);
             }
         } catch (IOException e) {
-            outputLogger.info("Failed to load mappings: {}", e.getMessage());
+            outputLogger.info("Failed to load mappings: {}", e);
         }
     }
 }

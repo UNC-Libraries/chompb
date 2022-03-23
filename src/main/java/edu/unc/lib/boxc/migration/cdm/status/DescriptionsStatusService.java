@@ -62,7 +62,7 @@ public class DescriptionsStatusService extends AbstractStatusService {
                 showFieldListValues(indexedIds);
             }
         } catch (IOException e) {
-            outputLogger.info("Failed to list MODS records: {}", e.getMessage());
+            outputLogger.info("Failed to list MODS records: {}", e);
         }
     }
 

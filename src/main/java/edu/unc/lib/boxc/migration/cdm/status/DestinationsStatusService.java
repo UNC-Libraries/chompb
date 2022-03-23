@@ -138,7 +138,7 @@ public class DestinationsStatusService extends AbstractStatusService {
                 showFieldListValues(newColls);
             }
         } catch (IOException e) {
-            outputLogger.info("Failed to load destinations mapping: {}", e.getMessage());
+            outputLogger.info("Failed to load destinations mapping: {}", e);
         }
     }
 }
