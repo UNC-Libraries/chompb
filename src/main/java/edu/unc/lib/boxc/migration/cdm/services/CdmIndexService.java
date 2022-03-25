@@ -277,7 +277,7 @@ public class CdmIndexService {
                 conn.close();
             }
         } catch (SQLException e) {
-            throw new MigrationException("Failed to close database connection: " + e.getMessage());
+            throw new MigrationException("Failed to close database connection", e);
         }
     }
 

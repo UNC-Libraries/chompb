@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm.status;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -30,6 +31,7 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.migration.cdm.validators.SourceFilesValidator;
+import org.slf4j.Logger;
 
 /**
  * Service for displaying reports of source file mappings
@@ -37,6 +39,7 @@ import edu.unc.lib.boxc.migration.cdm.validators.SourceFilesValidator;
  * @author bbpennel
  */
 public class SourceFilesStatusService extends AbstractStatusService {
+    private static final Logger log = getLogger(SourceFilesStatusService.class);
     /**
      * Display a stand alone report of the source file mapping status
      * @param verbosity
@@ -111,6 +114,7 @@ public class SourceFilesStatusService extends AbstractStatusService {
                 showField("Potential Matches", cntPotential);
             }
         } catch (IOException e) {
+            log.error("Failed to load mappings", e);
             outputLogger.info("Failed to load mappings: {}", e.getMessage());
         }
     }

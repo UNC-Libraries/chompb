@@ -84,7 +84,7 @@ public class AbstractStatusService {
         } catch (FileNotFoundException e) {
             return 0;
         } catch (IOException e) {
-            outputLogger.info("Unable to count files for {}: {}", dirPath, e.getMessage());
+            outputLogger.info("Unable to count files for {}", dirPath, e);
             return 0;
         }
     }

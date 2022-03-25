@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -31,6 +32,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.FindingAidService;
+import org.slf4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -42,6 +44,7 @@ import picocli.CommandLine.ParentCommand;
 @Command(name = "init",
         description = "Initialize a new CDM migration project")
 public class InitializeProjectCommand implements Callable<Integer> {
+    private static final Logger log = getLogger(InitializeProjectCommand.class);
     @ParentCommand
     private CLIMain parentCommand;
 
@@ -86,6 +89,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
             fieldService.setCdmBaseUri(cdmBaseUri);
             fieldInfo = fieldService.retrieveFieldsForCollection(collId);
         } catch (IOException | MigrationException e) {
+            log.error("Failed to retrieve field information for collection in project", e);
             outputLogger.info("Failed to retrieve field information for collection {} in project {}:\n{}",
                     collId, projDisplayName, e.getMessage());
             return 1;
@@ -112,6 +116,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
             findingAidService.setCdmFieldService(fieldService);
             findingAidService.recordFindingAid();
         } catch (Exception e) {
+            log.error("Failed to record finding aid for collection", e);
             outputLogger.info("Failed to record finding aid for collection", e);
             return 1;
         }

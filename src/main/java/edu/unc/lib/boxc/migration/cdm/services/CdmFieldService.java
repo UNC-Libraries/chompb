@@ -138,8 +138,7 @@ public class CdmFieldService {
                 fieldInfo.getFields().add(fieldEntry);
             }
         } catch (JsonParseException e) {
-            throw new MigrationException("Failed to parse response from URL " + infoUri
-                    + ": " + e.getMessage());
+            throw new MigrationException("Failed to parse response from URL " + infoUri, e);
         }
         return fieldInfo;
     }
@@ -228,9 +227,9 @@ public class CdmFieldService {
                 throw new InvalidProjectStateException("CDM fields file is empty, it must contain at least 1 entry");
             }
         } catch (NoSuchFileException e) {
-            throw new InvalidProjectStateException("CDM fields file is missing, expected at path: " + e.getMessage());
+            throw new InvalidProjectStateException("CDM fields file is missing, expected at path", e);
         } catch (IOException e) {
-            throw new InvalidProjectStateException("Cannot read fields file: " + e.getMessage());
+            throw new InvalidProjectStateException("Cannot read fields file", e);
         }
     }
 

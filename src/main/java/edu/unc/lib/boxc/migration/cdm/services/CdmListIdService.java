@@ -87,8 +87,7 @@ public class CdmListIdService {
                 JsonNode pager = entryNode.get("pager");
                 return pager.get("total").asInt();
         } catch (JsonParseException e) {
-            throw new MigrationException("Failed to parse response from URL " + totalUri
-                    + ": " + e.getMessage());
+            throw new MigrationException("Failed to parse response from URL " + totalUri, e);
         }
     }
 
@@ -153,8 +152,7 @@ public class CdmListIdService {
                 throw new MigrationException("Retrieved no object ids for listing request: " + objectUri);
             }
         } catch (JsonParseException e) {
-            throw new MigrationException("Failed to parse response from URL " + objectUri
-                    + ": " + e.getMessage());
+            throw new MigrationException("Failed to parse response from URL " + objectUri, e);
         }
         return objectIds;
     }
