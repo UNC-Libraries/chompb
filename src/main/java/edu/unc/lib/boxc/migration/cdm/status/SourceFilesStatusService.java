@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.unc.lib.boxc.migration.cdm.AccessFilesCommand;
 import org.apache.commons.lang3.StringUtils;
 
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
