@@ -112,7 +112,6 @@ public class CdmFieldServiceTest {
             fail();
         } catch (MigrationException e) {
             assertTrue(e.getMessage().contains("Failed to parse response from URL"));
-            assertTrue(e.getMessage().contains("Unrecognized token"));
         }
     }
 
