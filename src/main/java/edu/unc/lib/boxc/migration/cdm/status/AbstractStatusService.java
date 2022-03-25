@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm.status;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -24,11 +25,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 
+import edu.unc.lib.boxc.migration.cdm.AccessFilesCommand;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.Iterators;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import org.slf4j.Logger;
 
 /**
  * @author bbpennel
@@ -84,7 +87,7 @@ public class AbstractStatusService {
         } catch (FileNotFoundException e) {
             return 0;
         } catch (IOException e) {
-            outputLogger.info("Unable to count files for {}: {}", dirPath, e);
+            outputLogger.info("Unable to count files for {}", dirPath, e);
             return 0;
         }
     }

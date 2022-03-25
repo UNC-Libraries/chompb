@@ -16,13 +16,16 @@
 package edu.unc.lib.boxc.migration.cdm.status;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Set;
 
+import edu.unc.lib.boxc.migration.cdm.AccessFilesCommand;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
+import org.slf4j.Logger;
 
 /**
  * Service for displaying status related to descriptive records
@@ -30,6 +33,7 @@ import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
  * @author bbpennel
  */
 public class DescriptionsStatusService extends AbstractStatusService {
+    private static final Logger log = getLogger(DescriptionsStatusService.class);
     private DescriptionsService descService;
 
     /**
@@ -62,7 +66,8 @@ public class DescriptionsStatusService extends AbstractStatusService {
                 showFieldListValues(indexedIds);
             }
         } catch (IOException e) {
-            outputLogger.info("Failed to list MODS records: {}", e);
+            log.error("Failed to list MODS records", e);
+            outputLogger.info("Failed to list MODS records: {}", e.getMessage());
         }
     }
 

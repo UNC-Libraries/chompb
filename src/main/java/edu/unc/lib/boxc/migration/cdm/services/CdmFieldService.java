@@ -138,8 +138,7 @@ public class CdmFieldService {
                 fieldInfo.getFields().add(fieldEntry);
             }
         } catch (JsonParseException e) {
-            throw new MigrationException("Failed to parse response from URL " + infoUri
-                    + ": ", e);
+            throw new MigrationException("Failed to parse response from URL " + infoUri, e);
         }
         return fieldInfo;
     }

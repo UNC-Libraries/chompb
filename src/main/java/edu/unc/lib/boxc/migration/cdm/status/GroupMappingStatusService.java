@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm.status;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,9 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import edu.unc.lib.boxc.migration.cdm.AccessFilesCommand;
 import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
+import org.slf4j.Logger;
 
 /**
  * Service to display status of object group mapping
@@ -36,6 +39,7 @@ import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
  * @author bbpennel
  */
 public class GroupMappingStatusService extends AbstractStatusService {
+    private static final Logger log = getLogger(GroupMappingStatusService.class);
 
     /**
      * Display a stand alone report of the source file mapping status
@@ -63,7 +67,8 @@ public class GroupMappingStatusService extends AbstractStatusService {
             try {
                 modified = Files.getLastModifiedTime(mappingsPath).toInstant();
             } catch (IOException e) {
-                outputLogger.info("Failed to check mappings: {}", e);
+                log.error("Failed to check mappings", e);
+                outputLogger.info("Failed to check mappings: {}", e.getMessage());
             }
         }
         showField("Mappings Modified", modified == null ? "Not present" : modified);
@@ -103,7 +108,8 @@ public class GroupMappingStatusService extends AbstractStatusService {
                 showFieldListValues(groupList);
             }
         } catch (IOException e) {
-            outputLogger.info("Failed to load mappings: {}", e);
+            log.error("Failed to load mappings", e);
+            outputLogger.info("Failed to load mappings: {}", e.getMessage());
         }
     }
 }

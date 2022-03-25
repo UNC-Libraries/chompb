@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm.status;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.unc.lib.boxc.migration.cdm.AccessFilesCommand;
 import org.apache.commons.lang3.StringUtils;
 
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
@@ -30,12 +32,14 @@ import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
+import org.slf4j.Logger;
 
 /**
  * Service which reports status of destination mappings
  * @author bbpennel
  */
 public class DestinationsStatusService extends AbstractStatusService {
+    private static final Logger log = getLogger(DestinationsStatusService.class);
     /**
      * Display a stand alone report of the destination mapping status
      * @param verbosity
@@ -138,7 +142,8 @@ public class DestinationsStatusService extends AbstractStatusService {
                 showFieldListValues(newColls);
             }
         } catch (IOException e) {
-            outputLogger.info("Failed to load destinations mapping: {}", e);
+            log.error("Failed to load destinations mapping", e);
+            outputLogger.info("Failed to load destinations mapping: {}", e.getMessage());
         }
     }
 }
