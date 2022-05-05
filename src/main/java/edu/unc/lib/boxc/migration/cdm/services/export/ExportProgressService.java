@@ -34,7 +34,6 @@ public class ExportProgressService {
 
     private ProgressState previousProgressState;
     private ExportStateService exportStateService;
-    private boolean listingNeedsClose;
     private boolean exportingNeedsClose;
 
     private Thread displayThread;
@@ -107,24 +106,22 @@ public class ExportProgressService {
         // Display counting message if starting or we missed the starting state and haven't displayed message yet
         if (ProgressState.STARTING.equals(currentProgress)
                 || (currentProgress != null && !currentState.isResuming() && lastUpdateState == null)) {
-            // First entered counting state
             if (lastUpdateState == null) {
-                outputLogger.info("Determining size of collection for export...");
+                outputLogger.info("Initiating export...");
+            }
+        }
+        if (ProgressState.DOWNLOADING_DESC.equals(currentProgress)) {
+            // Transitioning into download
+            if (!ProgressState.DOWNLOADING_DESC.equals(lastUpdateState)) {
+                outputLogger.info("Retrieving description file for collection...");
             }
         }
         if (ProgressState.LISTING_OBJECTS.equals(currentProgress)) {
             // Transitioning into listing state
             if (!ProgressState.LISTING_OBJECTS.equals(lastUpdateState)) {
-                outputLogger.info("Listing CDM Object IDs:");
-                listingNeedsClose = true;
+                outputLogger.info("Listing CDM Object IDs...");
             }
-            DisplayProgressUtil.displayProgress(currentState.getListedObjectCount(), currentState.getTotalObjects());
             return;
-        } else if (listingNeedsClose) {
-            // Final update of progress, to make sure it reaches end
-            DisplayProgressUtil.displayProgress(currentState.getListedObjectCount(), currentState.getTotalObjects());
-            DisplayProgressUtil.finishProgress();
-            listingNeedsClose = false;
         }
 
         // export count is the index plus one, unless none have been exported yet

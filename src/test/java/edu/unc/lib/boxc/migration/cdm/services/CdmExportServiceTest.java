@@ -21,12 +21,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,6 +61,8 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  * @author bbpennel
@@ -75,6 +79,8 @@ public class CdmExportServiceTest {
     private CdmExportService service;
     private ExportStateService exportStateService;
     @Mock
+    private CdmFileRetrievalService cdmFileRetrievalService;
+    @Mock
     private CloseableHttpClient httpClient;
     @Mock
     private CloseableHttpResponse getResp;
@@ -90,6 +96,7 @@ public class CdmExportServiceTest {
     private HttpEntity getEntity;
     @Captor
     private ArgumentCaptor<HttpUriRequest> requestCaptor;
+    private String descAllPath = "src/test/resources/descriptions/gilmer/index/description/desc.all";
 
     @Before
     public void setup() throws Exception {
@@ -106,6 +113,17 @@ public class CdmExportServiceTest {
         service.setProject(project);
         service.setCdmFieldService(fieldService);
         service.setExportStateService(exportStateService);
+        service.setFileRetrievalService(cdmFileRetrievalService);
+
+        // Trigger population of desc.all file
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                FileUtils.copyFile(new File(descAllPath),
+                        project.getExportPath().resolve(CdmFileRetrievalService.DESC_ALL_FILENAME).toFile());
+                return null;
+            }
+        }).when(cdmFileRetrievalService).downloadDescAllFile();
 
         // Mockito any matcher not differentiating between the different HttpPost/HttpGet params
         when(httpClient.execute(any())).thenReturn(getResp).thenReturn(getResp).thenReturn(postResp).thenReturn(getResp);
@@ -131,15 +149,14 @@ public class CdmExportServiceTest {
 
         when(postStatus.getStatusCode()).thenReturn(200);
         when(getStatus.getStatusCode()).thenReturn(200);
-        when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
-                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
+        when(getEntity.getContent())
                 .thenReturn(this.getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"));
 
         service.exportAll(makeExportOptions());
 
-        verify(httpClient, times(4)).execute(requestCaptor.capture());
+        verify(httpClient, times(2)).execute(requestCaptor.capture());
         List<HttpUriRequest> requests = requestCaptor.getAllValues();
-        HttpPost httpPost = (HttpPost) requests.get(2);
+        HttpPost httpPost = (HttpPost) requests.get(0);
         String postBody = IOUtils.toString(httpPost.getEntity().getContent(), ISO_8859_1);
         Map<String, String> submittedParams = Arrays.stream(postBody.split("&"))
             .collect(Collectors.toMap(f -> f.split("=")[0], f -> f.split("=")[1]));
@@ -163,7 +180,7 @@ public class CdmExportServiceTest {
         when(postStatus.getStatusCode()).thenReturn(400);
         when(postEntity.getContent()).thenReturn(new ByteArrayInputStream("bad".getBytes()));
         when(getStatus.getStatusCode()).thenReturn(200);
-        when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
+        when(getEntity.getContent())
                 .thenReturn(new ByteArrayInputStream("bad".getBytes()))
                 .thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
@@ -173,7 +190,8 @@ public class CdmExportServiceTest {
         } catch (MigrationException e) {
             // Should only have made one call
             verify(httpClient, times(2)).execute(any());
-            assertExportFileCount(0);
+            // only desc.all file should be present
+            assertExportFileCount(1);
         }
     }
 
@@ -185,16 +203,15 @@ public class CdmExportServiceTest {
         when(postStatus.getStatusCode()).thenReturn(200);
         // First status is for object listing requests
         when(getStatus.getStatusCode()).thenReturn(200, 200, 400);
-        when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
-                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
+        when(getEntity.getContent())
                 .thenReturn(new ByteArrayInputStream("bad".getBytes()));
 
         try {
             service.exportAll(makeExportOptions());
             fail();
         } catch (MigrationException e) {
-            verify(httpClient, times(4)).execute(any());
-            assertExportFileCount(0);
+            verify(httpClient, times(2)).execute(any());
+            assertExportFileCount(1);
         }
     }
 
@@ -206,15 +223,14 @@ public class CdmExportServiceTest {
 
         when(postStatus.getStatusCode()).thenReturn(200);
         when(getStatus.getStatusCode()).thenReturn(200);
-        when(getEntity.getContent()).thenReturn(this.getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"))
-                .thenReturn(this.getClass().getResourceAsStream("/sample_pages/page_all.json"))
+        when(getEntity.getContent())
                 .thenReturn(this.getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"));
 
         service.exportAll(makeExportOptions());
 
-        verify(httpClient, times(4)).execute(requestCaptor.capture());
+        verify(httpClient, times(2)).execute(requestCaptor.capture());
         List<HttpUriRequest> requests = requestCaptor.getAllValues();
-        HttpPost httpPost = (HttpPost) requests.get(2);
+        HttpPost httpPost = (HttpPost) requests.get(0);
         String postBody = IOUtils.toString(httpPost.getEntity().getContent(), ISO_8859_1);
         Map<String, String> submittedParams = Arrays.stream(postBody.split("&"))
             .collect(Collectors.toMap(f -> f.split("=")[0], f -> f.split("=")[1]));
@@ -238,11 +254,9 @@ public class CdmExportServiceTest {
         var pageIds = Arrays.asList("216", "604", "607", "666");
         exportStateService.startOrResumeExport(false);
         // Include an extra id in the list of ids that isn't present in the export
-        exportStateService.objectCountCompleted(4);
-        exportStateService.transitionToListing(10);
-        exportStateService.registerObjectIds(pageIds);
-        exportStateService.listingComplete();
-        exportStateService.transitionToExporting(10);
+        exportStateService.transitionToDownloadingDesc();
+        exportStateService.transitionToListing();
+        exportStateService.transitionToExporting(4, 10);
 
         when(postStatus.getStatusCode()).thenReturn(200);
         when(getStatus.getStatusCode()).thenReturn(200);
@@ -267,11 +281,9 @@ public class CdmExportServiceTest {
         var pageIds = Arrays.asList("604", "607");
         exportStateService.startOrResumeExport(false);
         // Include an extra id in the list of ids that isn't present in the export
-        exportStateService.objectCountCompleted(2);
-        exportStateService.transitionToListing(10);
-        exportStateService.registerObjectIds(pageIds);
-        exportStateService.listingComplete();
-        exportStateService.transitionToExporting(10);
+        exportStateService.transitionToDownloadingDesc();
+        exportStateService.transitionToListing();
+        exportStateService.transitionToExporting(2, 10);
 
         when(postStatus.getStatusCode()).thenReturn(200);
         when(getStatus.getStatusCode()).thenReturn(200);

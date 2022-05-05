@@ -59,7 +59,7 @@ public class CdmExportService {
     private CloseableHttpClient httpClient;
     private CdmFieldService cdmFieldService;
     private ExportStateService exportStateService;
-    private CdmListIdService listId;
+    private CdmFileRetrievalService fileRetrievalService;
     private MigrationProject project;
 
     public CdmExportService() {
@@ -80,13 +80,21 @@ public class CdmExportService {
                 .map(f -> f.getNickName() + "=" + f.getExportAs())
                 .collect(Collectors.joining("&"));
 
-        // Add paging to export
-        initializeListingService(options);
-        List<String> allIds = listId.listAllCdmIds();
+        // Retrieval desc.all file in order to get list of ids
+        if (exportStateService.inStateOrNotResuming(ProgressState.STARTING, ProgressState.DOWNLOADING_DESC)) {
+            exportStateService.transitionToDownloadingDesc();
+            initializeFileRetrievalService(options);
+            fileRetrievalService.downloadDescAllFile();
+            exportStateService.transitionToListing();
+        }
+
+        // Retrieve list of CDM ids
+        List<String> allIds = extractCdmIds();
+
         int pageSize = options.getPageSize();
         List<List<String>> chunks = Lists.partition(allIds, pageSize);
-        if (exportStateService.inStateOrNotResuming(ProgressState.LISTING_COMPLETED)) {
-            exportStateService.transitionToExporting(pageSize);
+        if (exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS)) {
+            exportStateService.transitionToExporting(allIds.size(), pageSize);
         }
         if (exportStateService.inStateOrNotResuming(ProgressState.EXPORTING)) {
             int exportPage = 0;
@@ -136,13 +144,16 @@ public class CdmExportService {
         exportStateService.registerExported(pageIds);
     }
 
-    private void initializeListingService(CdmExportOptions options) {
-        listId = new CdmListIdService();
-        listId.setHttpClient(httpClient);
-        listId.setCdmBaseUri(options.getCdmBaseUri());
-        listId.setExportStateService(exportStateService);
-        listId.setPageSize(options.getListingPageSize());
-        listId.setProject(project);
+    private void initializeFileRetrievalService(CdmExportOptions options) {
+        if (fileRetrievalService == null) {
+            fileRetrievalService = new CdmFileRetrievalService();
+            fileRetrievalService.setCdmHost(options.getCdmSshHost());
+            fileRetrievalService.setSshPassword(options.getCdmPassword());
+            fileRetrievalService.setSshPort(options.getCdmSshPort());
+            fileRetrievalService.setSshUsername(options.getCdmUsername());
+            fileRetrievalService.setDownloadBasePath(options.getCdmSshDownloadBasePath());
+            fileRetrievalService.setProject(project);
+        }
     }
 
     private void initializeExportDir(MigrationProject project) throws IOException {
@@ -190,6 +201,20 @@ public class CdmExportService {
         }
     }
 
+    private final static String CDM_ID_TAG = "<dmrecord>";
+    private final static int CDM_ID_TAG_LENGTH = CDM_ID_TAG.length();
+
+    private List<String> extractCdmIds() {
+        var descAllPath = project.getExportPath().resolve(CdmFileRetrievalService.DESC_ALL_FILENAME);
+        try (var lineStream = Files.lines(descAllPath)) {
+            return lineStream.filter(l -> l.contains(CDM_ID_TAG))
+                    .map(l -> l.substring(CDM_ID_TAG_LENGTH, l.indexOf("</")))
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new MigrationException("Failed to extract CDM IDs from " + descAllPath, e);
+        }
+    }
+
     public void setHttpClient(CloseableHttpClient httpClient) {
         this.httpClient = httpClient;
     }
@@ -200,6 +225,10 @@ public class CdmExportService {
 
     public void setExportStateService(ExportStateService exportStateService) {
         this.exportStateService = exportStateService;
+    }
+
+    public void setFileRetrievalService(CdmFileRetrievalService fileRetrievalService) {
+        this.fileRetrievalService = fileRetrievalService;
     }
 
     public void setProject(MigrationProject project) {

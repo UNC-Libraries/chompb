@@ -27,12 +27,8 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -84,7 +80,7 @@ public class ExportStateService {
             return;
         }
         // If resuming in initial steps, start over
-        if (ProgressState.STARTING.equals(progressState) || ProgressState.COUNT_COMPLETED.equals(progressState)) {
+        if (ProgressState.STARTING.equals(progressState)) {
             clearState();
             transitionToStarting();
             log.debug("Restarting export, had not reached listing or exporting states");
@@ -125,78 +121,35 @@ public class ExportStateService {
     }
 
     /**
-     * Record the count of objects in this collection has completed
-     * @param count
+     * Transition to downloading desc file
      * @throws IOException
      */
-    public void objectCountCompleted(int count) throws IOException {
+    public void transitionToDownloadingDesc() throws IOException {
         assertState(ProgressState.STARTING);
-        state.setTotalObjects(count);
-        state.setProgressState(ExportState.ProgressState.COUNT_COMPLETED);
+        state.setProgressState(ProgressState.DOWNLOADING_DESC);
         writeState();
     }
 
     /**
      * Transition the export to the listing object ids state
-     * @param listingPageSize
      * @throws IOException
      */
-    public void transitionToListing(int listingPageSize) throws IOException {
-        assertState(ProgressState.COUNT_COMPLETED);
+    public void transitionToListing() throws IOException {
+        assertState(ProgressState.DOWNLOADING_DESC);
         state.setProgressState(ProgressState.LISTING_OBJECTS);
-        state.setListIdPageSize(listingPageSize);
         writeState();
-    }
-
-    /**
-     * Indicate that listing of object ids has completed
-     * @throws IOException
-     */
-    public void listingComplete() throws IOException {
-        assertState(ProgressState.LISTING_OBJECTS);
-        state.setProgressState(ProgressState.LISTING_COMPLETED);
-        writeState();
-    }
-
-    /**
-     * Record a list of object ids which are included in this export
-     * @param ids
-     */
-    public void registerObjectIds(List<String> ids) throws IOException {
-        assertState(ProgressState.LISTING_OBJECTS);
-        // Join to line separated, with trailing newline so that the next page starts on a new line
-        String idsJoined = String.join("\r\n", ids) + "\r\n";
-        Files.write(
-                getObjectListPath(),
-                idsJoined.getBytes(),
-                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-        state.incrementListedObjectCount(ids.size());
-    }
-
-    /**
-     * @return the list of object ids for this CDM project
-     */
-    public List<String> retrieveObjectIds() throws IOException {
-        if (Files.notExists(getObjectListPath())) {
-            state.setListedObjectCount(0);
-            return new ArrayList<>();
-        }
-        try (Stream<String> lines = Files.lines(getObjectListPath())) {
-            List<String> ids = lines.collect(Collectors.toList());
-            // Sync up state's count of objects to count retrieved from file
-            state.setListedObjectCount(ids.size());
-            return ids;
-        }
     }
 
     /**
      * Transition the export to the exporting objects state
+     * @param totalObjects
      * @param exportPageSize
      * @throws IOException
      */
-    public void transitionToExporting(int exportPageSize) throws IOException {
-        assertState(ProgressState.LISTING_COMPLETED);
+    public void transitionToExporting(int totalObjects, int exportPageSize) throws IOException {
+        assertState(ProgressState.LISTING_OBJECTS);
         state.setProgressState(ProgressState.EXPORTING);
+        state.setTotalObjects(totalObjects);
         state.setExportPageSize(exportPageSize);
         writeState();
     }

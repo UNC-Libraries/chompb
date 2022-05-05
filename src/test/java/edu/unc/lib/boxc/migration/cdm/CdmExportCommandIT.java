@@ -15,6 +15,31 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
+import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -25,44 +50,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import com.github.tomakehurst.wiremock.stubbing.Scenario;
-import edu.unc.lib.boxc.migration.cdm.services.CdmListIdService;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-
 /**
  * @author bbpennel
  */
 public class CdmExportCommandIT extends AbstractCommandIT {
 
-    private final static String COLLECTION_ID = "my_coll";
+    private final static String COLLECTION_ID = "gilmer";
     private final static String PASSWORD = "supersecret";
-    public final static String CDM_QUERY_BASE = "/" + CdmListIdService.CDM_QUERY_BASE
-            + COLLECTION_ID + "/0/dmrecord/dmrecord/";
     private final static String BODY_RESP = "<xml>record</xml>";
     private final static String PAGESIZE = "50";
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+    private TestSshServer testSshServer;
 
     private CdmFieldService fieldService;
     private String cdmBaseUrl;
@@ -75,34 +75,41 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         stubFor(post(urlEqualTo("/cgi-bin/admin/exportxml.exe"))
                 .willReturn(aResponse()
                         .withStatus(200)));
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(BODY_RESP)));
+        testSshServer = new TestSshServer();
+        testSshServer.setPassword(PASSWORD);
+        testSshServer.startServer();
+    }
+
+    @After
+    public void cleanup() throws Exception {
+        testSshServer.stopServer();
+    }
+
+    private String[] exportArgs(Path projPath, String... extras) {
+        String[] defaultArgs = new String[] {
+                "-w", projPath.toString(),
+                "export",
+                "-D", Paths.get("src/test/resources/descriptions").toAbsolutePath().toString(),
+                "-P", "2222",
+                "--cdm-url", cdmBaseUrl,
+                "-p", PASSWORD};
+        return ArrayUtils.addAll(defaultArgs, extras);
     }
 
     @Test
     public void exportValidProjectTest() throws Exception {
-        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"1/0/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8))));
 
         Path projPath = createProject();
 
-        String[] args = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD};
+        String[] args = exportArgs(projPath);
         executeExpectSuccess(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
@@ -117,11 +124,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         System.clearProperty("user.name");
         Path projPath = createProject();
 
-        String[] args = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD };
+        String[] args = exportArgs(projPath);
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
@@ -148,12 +151,8 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     public void lessThanMinPageSizeTest() throws Exception {
         Path projPath = createProject();
 
-        String[] args = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD,
-                "-n", "0"};
+        String[] args = exportArgs(projPath,
+                "-n", "0");
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
@@ -165,12 +164,8 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     public void greaterThanMaxPageSizeTest() throws Exception {
         Path projPath = createProject();
 
-        String[] args = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD,
-                "-n", "50000"};
+        String[] args = exportArgs(projPath,
+                "-n", "50000");
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
@@ -180,25 +175,13 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void errorResponseTest() throws Exception {
-        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1/0/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
         stubFor(post(urlEqualTo("/cgi-bin/admin/exportxml.exe"))
                 .willReturn(aResponse()
                         .withStatus(400)));
 
         Path projPath = createProject();
 
-        String[] args = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD };
+        String[] args = exportArgs(projPath);
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
@@ -209,50 +192,38 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void exportLessThanPageSizeTest() throws Exception {
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .inScenario("Multiple Exports")
                 .whenScenarioStateIs(Scenario.STARTED)
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8)))
                 .willSetStateTo("Page 2"));
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .inScenario("Multiple Exports")
                 .whenScenarioStateIs("Page 2")
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_2.xml"), StandardCharsets.UTF_8)))
                 .willSetStateTo("Page 3"));
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .inScenario("Multiple Exports")
                 .whenScenarioStateIs("Page 3")
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_3.xml"), StandardCharsets.UTF_8)))
                 .willSetStateTo("Page 4"));
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .inScenario("Multiple Exports")
                 .whenScenarioStateIs("Page 4")
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_4.xml"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1/0/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
 
         Path projPath = createProject();
 
-        String[] args = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD,
-                "-n", PAGESIZE};
+        String[] args = exportArgs(projPath,
+                "-n", PAGESIZE);
         executeExpectSuccess(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
@@ -270,14 +241,14 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void multipageExportErrorAndResumeTest() throws Exception {
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .inScenario("Multiple Exports")
                 .whenScenarioStateIs(Scenario.STARTED)
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_1.xml"), StandardCharsets.UTF_8)))
                 .willSetStateTo("Page 2"));
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .inScenario("Multiple Exports")
                 .whenScenarioStateIs("Page 2")
                 .willReturn(aResponse()
@@ -286,42 +257,30 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 .willSetStateTo("Page 3"));
 
         // Error on the third page
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .inScenario("Multiple Exports")
                 .whenScenarioStateIs("Page 3")
                 .willReturn(aResponse()
                         .withStatus(400)));
 
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .inScenario("Multiple Exports")
                 .whenScenarioStateIs("Page 4")
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_4.xml"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1/0/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
 
         Path projPath = createProject();
 
-        String[] args = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD,
-                "-n", PAGESIZE};
+        String[] args = exportArgs(projPath,
+                "-n", PAGESIZE);
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         assertExportFilesPresent(project, "export_1.xml", "export_2.xml");
 
         // Correct the third page
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .inScenario("Multiple Exports")
                 .whenScenarioStateIs("Page 3")
                 .willReturn(aResponse()
@@ -355,40 +314,24 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     public void rerunCompletedExportTest() throws Exception {
         String originalExportBody = IOUtils.toString(getClass()
                 .getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8);
-        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"1/0/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo(CDM_QUERY_BASE + "1000/1/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_all.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(originalExportBody)));
 
         Path projPath = createProject();
 
-        String[] args = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD};
+        String[] args = exportArgs(projPath);
         executeExpectSuccess(args);
 
         // Change response for export so it will be clear if a new export occurs
         String modifiedBody = originalExportBody + "\n";
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/gilmer/index/description/export.xml"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(modifiedBody)));
 
-        String[] argsRerun = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD};
+        String[] argsRerun = exportArgs(projPath);
         executeExpectFailure(argsRerun);
         assertOutputContains("Export has already completed, must force restart to overwrite");
 
@@ -400,80 +343,13 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
 
         // Retry with force restart
-        String[] argsRestart = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD,
-                "--force"};
+        String[] argsRestart = exportArgs(projPath, "--force");
         executeExpectSuccess(argsRestart);
 
         assertExportFilesPresent(project, "export_1.xml");
         // Contents of file should match new contents
         assertEquals(modifiedBody, FileUtils.readFileToString(
                 project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
-    }
-
-    @Test
-    public void resumeDuringListingTest() throws Exception {
-        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"1/0/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-
-        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/1/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_1.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/51/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_2.json"), StandardCharsets.UTF_8))));
-        // Fail on the third page
-        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/101/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withStatus(400)));
-
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8))));
-
-        Path projPath = createProject();
-
-        String[] args = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD,
-                "--ids-per-page", "50"};
-        executeExpectFailure(args);
-        // Export no export files
-        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
-        assertExportFilesPresent(project);
-
-        // Succeed on third page this time
-        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/101/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_3.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo( CDM_QUERY_BASE +"50/151/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/page_4.json"), StandardCharsets.UTF_8))));
-
-        String[] argsResume = new String[] {
-                "-w", projPath.toString(),
-                "export",
-                "--cdm-url", cdmBaseUrl,
-                "-p", PASSWORD};
-        executeExpectSuccess(args);
-
-        assertExportFilesPresent(project, "export_1.xml");
-        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/sample_exports/gilmer/export_all.xml"), StandardCharsets.UTF_8), FileUtils.readFileToString(
-                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
-
-        assertEquals(161, Files.lines(project.getExportPath().resolve(".object_ids.txt")).count());
     }
 
     private void assertExportFilesPresent(MigrationProject project, String... expectedNames) throws IOException {
@@ -503,4 +379,5 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         fieldService.persistFieldsToProject(project, fieldInfo);
         return project.getProjectPath();
     }
+
 }

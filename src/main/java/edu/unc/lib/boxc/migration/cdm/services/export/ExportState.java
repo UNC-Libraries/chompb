@@ -28,16 +28,17 @@ import java.util.Arrays;
 public class ExportState {
     private Instant startTime;
     private Integer exportPageSize;
-    private Integer listIdPageSize;
     private Integer totalObjects;
-    private int listedObjectCount;
     // Int so it will start at 0 instead of null
     private int lastExportedIndex;
     private boolean resuming = false;
     private ProgressState progressState;
 
     public enum ProgressState {
-        STARTING, COUNT_COMPLETED, LISTING_OBJECTS, LISTING_COMPLETED, EXPORTING, EXPORT_COMPLETED;
+        STARTING,
+        DOWNLOADING_DESC,
+        LISTING_OBJECTS,
+        EXPORTING, EXPORT_COMPLETED;
     }
 
     public Instant getStartTime() {
@@ -54,27 +55,6 @@ public class ExportState {
 
     public void setExportPageSize(Integer exportPageSize) {
         this.exportPageSize = exportPageSize;
-    }
-
-    public Integer getListIdPageSize() {
-        return listIdPageSize;
-    }
-
-    public void setListIdPageSize(Integer listIdPageSize) {
-        this.listIdPageSize = listIdPageSize;
-    }
-
-    @JsonIgnore
-    public int getListedObjectCount() {
-        return listedObjectCount;
-    }
-
-    public void setListedObjectCount(int listedObjectCount) {
-        this.listedObjectCount = listedObjectCount;
-    }
-
-    public void incrementListedObjectCount(int increVal) {
-        this.listedObjectCount += increVal;
     }
 
     public Integer getTotalObjects() {

@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
+import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Bag;
@@ -62,7 +63,7 @@ import redis.embedded.RedisServer;
  * @author bbpennel
  */
 public class CompleteMigrationIT extends AbstractCommandIT {
-    private final static String COLLECTION_ID = "my_coll";
+    private final static String COLLECTION_ID = "mini_gilmer";
     private final static String CDM_PASSWORD = "supersecret";
     private final static String GROUPS = "my:admin:group";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
@@ -70,6 +71,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+    private TestSshServer testSshServer;
     private String cdmBaseUrl;
     private Path filesBasePath;
 
@@ -93,7 +95,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                         .withStatus(200)));
         String exportBody = FileUtils.readFileToString(new File("src/test/resources/sample_exports/export_1.xml"),
                 StandardCharsets.ISO_8859_1);
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/my_coll/index/description/export.xml"))
+        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/mini_gilmer/index/description/export.xml"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/octet-stream")
                         .withBody(exportBody)));
@@ -102,6 +104,10 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         System.setProperty("REDIS_HOST", "localhost");
         System.setProperty("REDIS_PORT", Integer.toString(REDIS_PORT));
         redisServer.start();
+
+        testSshServer = new TestSshServer();
+        testSshServer.setPassword(CDM_PASSWORD);
+        testSshServer.startServer();
     }
 
     public void initDepositStatusFactory() {
@@ -123,19 +129,11 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         if (jedisPool != null) {
             jedisPool.close();
         }
+        testSshServer.stopServer();
     }
 
     @Test
     public void migrateSimpleCollectionTest() throws Exception {
-        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1/0/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/cdm_listid_resp.json"), StandardCharsets.UTF_8))));
-        stubFor(get(urlEqualTo("/dmwebservices/index.php?q=dmQuery/my_coll/0/dmrecord/dmrecord/1000/1/1/0/0/0/0/json"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(IOUtils.toString(getClass().getResourceAsStream("/sample_pages/gilmer_3_page_all.json"), StandardCharsets.UTF_8))));
-
         String[] argsInit = new String[] {
                 "-w", baseDir.toString(),
                 "init",
@@ -149,6 +147,8 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         String[] argsExport = new String[] {
                 "-w", projPath.toString(),
                 "export",
+                "-D", Paths.get("src/test/resources/descriptions").toAbsolutePath().toString(),
+                "-P", "2222",
                 "--cdm-url", cdmBaseUrl,
                 "-p", CDM_PASSWORD };
         executeExpectSuccess(argsExport);
