@@ -87,28 +87,13 @@ public class ExportStateServiceTest {
     }
 
     @Test
-    public void startOrResumeExportResumeInCountedState() throws Exception {
-        ExportState initState = exportStateService.getState();
-        initState.setProgressState(ProgressState.COUNT_COMPLETED);
-        initState.setTotalObjects(99);
-        exportStateService.writeState();
-
-        exportStateService.startOrResumeExport(false);
-        ExportState state = exportStateService.readState();
-        assertFalse(state.isResuming());
-        assertEquals(ProgressState.STARTING, state.getProgressState());
-        assertNull(state.getTotalObjects());
-    }
-
-    @Test
     public void startOrResumeExportResumeInCompletedState() throws Exception {
         exportStateService.startOrResumeExport(false);
         ExportState initState = exportStateService.getState();
-        initState.setTotalObjects(99);
         List<String> cdmIds = generateIdList(99);
         initState.setProgressState(ProgressState.LISTING_OBJECTS);
-        exportStateService.registerObjectIds(cdmIds);
         initState.setProgressState(ProgressState.EXPORTING);
+        initState.setTotalObjects(99);
         exportStateService.registerExported(cdmIds);
         initState.setProgressState(ProgressState.EXPORT_COMPLETED);
         exportStateService.writeState();
@@ -123,7 +108,6 @@ public class ExportStateServiceTest {
         assertFalse(state.isResuming());
         assertEquals(ProgressState.EXPORT_COMPLETED, state.getProgressState());
         assertEquals(99, state.getTotalObjects().intValue());
-        assertEquals(cdmIds, exportStateService.retrieveObjectIds());
         assertEquals(cdmIds.size() - 1, state.getLastExportedIndex());
     }
 
@@ -131,11 +115,10 @@ public class ExportStateServiceTest {
     public void startOrResumeExportResumeInCompletedStateWithRestart() throws Exception {
         exportStateService.startOrResumeExport(false);
         ExportState initState = exportStateService.getState();
-        initState.setTotalObjects(99);
         List<String> cdmIds = generateIdList(99);
         initState.setProgressState(ProgressState.LISTING_OBJECTS);
-        exportStateService.registerObjectIds(cdmIds);
         initState.setProgressState(ProgressState.EXPORTING);
+        initState.setTotalObjects(99);
         exportStateService.registerExported(cdmIds);
         initState.setProgressState(ProgressState.EXPORT_COMPLETED);
         exportStateService.writeState();
@@ -146,7 +129,6 @@ public class ExportStateServiceTest {
         assertFalse(state.isResuming());
         assertEquals(ProgressState.STARTING, state.getProgressState());
         assertNull(state.getTotalObjects());
-        assertTrue(exportStateService.retrieveObjectIds().isEmpty());
         assertEquals(0, state.getLastExportedIndex());
     }
 
@@ -154,12 +136,11 @@ public class ExportStateServiceTest {
     public void startOrResumeExportResumeInExportingState() throws Exception {
         exportStateService.startOrResumeExport(false);
         ExportState initState = exportStateService.getState();
-        initState.setTotalObjects(99);
         initState.setExportPageSize(50);
         List<String> cdmIds = generateIdList(99);
         initState.setProgressState(ProgressState.LISTING_OBJECTS);
-        exportStateService.registerObjectIds(cdmIds);
         initState.setProgressState(ProgressState.EXPORTING);
+        initState.setTotalObjects(99);
         exportStateService.registerExported(cdmIds.subList(0, 50));
         exportStateService.writeState();
 
@@ -170,7 +151,6 @@ public class ExportStateServiceTest {
         assertFalse(state.isResuming());
         assertEquals(ProgressState.EXPORTING, state.getProgressState());
         assertEquals(99, state.getTotalObjects().intValue());
-        assertEquals(cdmIds, exportStateService.retrieveObjectIds());
         assertEquals(49, state.getLastExportedIndex());
 
         // Active state should indicate it was resumed
@@ -184,12 +164,11 @@ public class ExportStateServiceTest {
     public void startOrResumeExportResumeInExportingStateWithForceRestart() throws Exception {
         exportStateService.startOrResumeExport(false);
         ExportState initState = exportStateService.getState();
-        initState.setTotalObjects(99);
         initState.setExportPageSize(50);
         List<String> cdmIds = generateIdList(99);
         initState.setProgressState(ProgressState.LISTING_OBJECTS);
-        exportStateService.registerObjectIds(cdmIds);
         initState.setProgressState(ProgressState.EXPORTING);
+        initState.setTotalObjects(99);
         exportStateService.registerExported(cdmIds.subList(0, 50));
         exportStateService.writeState();
 
@@ -199,7 +178,6 @@ public class ExportStateServiceTest {
         assertFalse(state.isResuming());
         assertEquals(ProgressState.STARTING, state.getProgressState());
         assertNull(state.getTotalObjects());
-        assertTrue(exportStateService.retrieveObjectIds().isEmpty());
         assertEquals(0, state.getLastExportedIndex());
     }
 
@@ -222,7 +200,7 @@ public class ExportStateServiceTest {
         state.setProgressState(ProgressState.LISTING_OBJECTS);
         assertTrue(exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS));
         assertTrue(exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS,
-                ProgressState.LISTING_COMPLETED));
+                ProgressState.DOWNLOADING_DESC));
     }
 
     @Test
@@ -232,45 +210,46 @@ public class ExportStateServiceTest {
         state.setProgressState(ProgressState.EXPORTING);
         assertFalse(exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS));
         assertFalse(exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS,
-                ProgressState.LISTING_COMPLETED));
+                ProgressState.DOWNLOADING_DESC));
     }
 
     @Test
-    public void objectCountCompletedTest() throws Exception {
+    public void transitionToDownloadingTest() throws Exception {
         exportStateService.startOrResumeExport(false);
+        exportStateService.getState().setProgressState(ProgressState.STARTING);
+        exportStateService.writeState();
 
-        exportStateService.objectCountCompleted(120);
+        exportStateService.transitionToDownloadingDesc();
 
         ExportState state = exportStateService.readState();
-        assertEquals(ProgressState.COUNT_COMPLETED, state.getProgressState());
-        assertEquals(120, state.getTotalObjects().intValue());
+        assertEquals(ProgressState.DOWNLOADING_DESC, state.getProgressState());
     }
 
     @Test
-    public void objectCountCompletedWrongStateTest() throws Exception {
+    public void transitionToDownloadingInWrongStateTest() throws Exception {
         exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.EXPORTING);
+        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
+        exportStateService.writeState();
 
         try {
-            exportStateService.objectCountCompleted(120);
+            exportStateService.transitionToDownloadingDesc();
             fail();
         } catch (InvalidProjectStateException e) {
         }
         ExportState state = exportStateService.readState();
-        assertEquals(ProgressState.STARTING, state.getProgressState());
-        assertNull(state.getTotalObjects());
+        assertEquals(ProgressState.LISTING_OBJECTS, state.getProgressState());
     }
 
     @Test
     public void transitionToListingTest() throws Exception {
         exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.COUNT_COMPLETED);
+        exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_DESC);
+        exportStateService.writeState();
 
-        exportStateService.transitionToListing(100);
+        exportStateService.transitionToListing();
 
         ExportState state = exportStateService.readState();
         assertEquals(ProgressState.LISTING_OBJECTS, state.getProgressState());
-        assertEquals(100, state.getListIdPageSize().intValue());
     }
 
     @Test
@@ -278,32 +257,7 @@ public class ExportStateServiceTest {
         exportStateService.startOrResumeExport(false);
 
         try {
-            exportStateService.transitionToListing(100);
-            fail();
-        } catch (InvalidProjectStateException e) {
-        }
-        ExportState state = exportStateService.readState();
-        assertEquals(ProgressState.STARTING, state.getProgressState());
-        assertNull(state.getListIdPageSize());
-    }
-
-    @Test
-    public void listingCompleteTest() throws Exception {
-        exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-
-        exportStateService.listingComplete();
-
-        ExportState state = exportStateService.readState();
-        assertEquals(ProgressState.LISTING_COMPLETED, state.getProgressState());
-    }
-
-    @Test
-    public void listingCompleteWrongStateTest() throws Exception {
-        exportStateService.startOrResumeExport(false);
-
-        try {
-            exportStateService.listingComplete();
+            exportStateService.transitionToListing();
             fail();
         } catch (InvalidProjectStateException e) {
         }
@@ -314,13 +268,15 @@ public class ExportStateServiceTest {
     @Test
     public void transitionToExportingTest() throws Exception {
         exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.LISTING_COMPLETED);
+        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
+        exportStateService.writeState();
 
-        exportStateService.transitionToExporting(500);
+        exportStateService.transitionToExporting(100, 500);
 
         ExportState state = exportStateService.readState();
         assertEquals(ProgressState.EXPORTING, state.getProgressState());
         assertEquals(500, state.getExportPageSize().intValue());
+        assertEquals(100, state.getTotalObjects().intValue());
     }
 
     @Test
@@ -332,24 +288,6 @@ public class ExportStateServiceTest {
 
         ExportState state = exportStateService.readState();
         assertEquals(ProgressState.EXPORT_COMPLETED, state.getProgressState());
-    }
-
-    @Test
-    public void registerObjectIdsTest() throws Exception {
-        exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-        assertEquals(0, exportStateService.getState().getListedObjectCount());
-
-        List<String> allIds = generateIdList(100);
-        List<String> firstPage = allIds.subList(0, 50);
-        exportStateService.registerObjectIds(firstPage);
-        assertEquals(firstPage, exportStateService.retrieveObjectIds());
-        assertEquals(50, exportStateService.getState().getListedObjectCount());
-
-        List<String> secondPage = allIds.subList(50, 100);
-        exportStateService.registerObjectIds(secondPage);
-        assertEquals(allIds, exportStateService.retrieveObjectIds());
-        assertEquals(100, exportStateService.getState().getListedObjectCount());
     }
 
     @Test

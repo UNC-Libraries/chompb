@@ -60,11 +60,6 @@ public class CdmExportCommand implements Callable<Integer> {
 
     @CommandLine.Mixin
     private CdmExportOptions options;
-    @CommandLine.Option(names = {"-p", "--cdm-password"},
-            description = "Password for CDM requests. Required.",
-            arity = "0..1",
-            interactive = true)
-    private String cdmPassword;
 
     private CdmFieldService fieldService;
     private CdmExportService exportService;
@@ -134,7 +129,7 @@ public class CdmExportCommand implements Callable<Integer> {
         if (StringUtils.isBlank(options.getCdmUsername())) {
             throw new MigrationException("Must provided a CDM username");
         }
-        if (StringUtils.isBlank(cdmPassword)) {
+        if (StringUtils.isBlank(options.getCdmPassword())) {
             throw new MigrationException("Must provided a CDM password for user " + options.getCdmUsername());
         }
 
@@ -142,7 +137,7 @@ public class CdmExportCommand implements Callable<Integer> {
         outputLogger.info("Initializing connection to {}", URI.create(options.getCdmBaseUri()).getHost());
         AuthScope scope = new AuthScope(new HttpHost(URI.create(options.getCdmBaseUri()).getHost()));
         credsProvider.setCredentials(scope, new UsernamePasswordCredentials(
-                options.getCdmUsername(), cdmPassword));
+                options.getCdmUsername(), options.getCdmPassword()));
 
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setDefaultCredentialsProvider(credsProvider)
@@ -156,10 +151,6 @@ public class CdmExportCommand implements Callable<Integer> {
         if (options.getPageSize() < 1 || options.getPageSize() > CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE) {
             throw new MigrationException("Page size must be between 1 and "
                     + CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE);
-        }
-        if (options.getListingPageSize() < 1 || options.getListingPageSize() > CdmExportOptions.MAX_LIST_IDS_PER_PAGE) {
-            throw new MigrationException("Listing page size must be between 1 and "
-                    + CdmExportOptions.MAX_LIST_IDS_PER_PAGE);
         }
     }
 }

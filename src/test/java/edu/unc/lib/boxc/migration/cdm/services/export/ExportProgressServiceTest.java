@@ -56,96 +56,54 @@ public class ExportProgressServiceTest extends AbstractOutputTest {
 
         exportProgressService.update();
 
-        assertOutputContains("Determining size of collection for export");
+        assertOutputContains("Initiating export");
     }
 
     @Test
     public void updateListingFromNotStartedTest() throws Exception {
         exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-        exportStateService.getState().setTotalObjects(160);
 
         exportProgressService.update();
 
-        assertOutputContains("Determining size of collection for export");
-        assertOutputMatches(".*Listing CDM Object IDs:\n.* 0/160.*");
+        assertOutputContains("Initiating export");
+        assertOutputMatches(".*Listing CDM Object IDs.*");
     }
 
     @Test
-    public void updateListingFromCountCompletedTest() throws Exception {
-        exportStateService.getState().setProgressState(ProgressState.COUNT_COMPLETED);
-        exportStateService.getState().setTotalObjects(160);
+    public void updateListingFromDownloadTest() throws Exception {
+        exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_DESC);
         exportProgressService.update();
 
         resetOutput();
 
-        exportStateService.getState().setListedObjectCount(50);
         exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
 
         exportProgressService.update();
 
-        assertOutputDoesNotContain("Determining size of collection for export");
-        assertOutputMatches(".*Listing CDM Object IDs:\n.* 50/160.*");
-    }
-
-    @Test
-    public void updateListingThroughCompleteTest() throws Exception {
-        exportStateService.getState().setProgressState(ProgressState.COUNT_COMPLETED);
-        exportStateService.getState().setTotalObjects(160);
-        exportProgressService.update();
-        resetOutput();
-
-        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-
-        exportStateService.getState().incrementListedObjectCount(50);
-        exportProgressService.update();
-        assertOutputMatches(".*Listing CDM Object IDs:\n.* 50/160.*");
-        resetOutput();
-
-        // Update called without any changes
-        exportProgressService.update();
-        assertOutputMatches(".* 50/160.*");
-        resetOutput();
-
-        exportStateService.getState().incrementListedObjectCount(50);
-        exportProgressService.update();
-        assertOutputMatches(".* 100/160.*");
-        resetOutput();
-
-        exportStateService.getState().incrementListedObjectCount(50);
-        exportProgressService.update();
-        assertOutputMatches(".* 150/160.*");
-        resetOutput();
-
-        exportStateService.getState().incrementListedObjectCount(10);
-        exportStateService.getState().setProgressState(ProgressState.COUNT_COMPLETED);
-        exportProgressService.update();
-        assertOutputMatches(".* 160/160.*");
+        assertOutputDoesNotContain("Initiating export");
+        assertOutputMatches(".*Listing CDM Object IDs.*");
     }
 
     @Test
     public void updateExportFromListingTest() throws Exception {
         exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-        exportStateService.getState().setTotalObjects(160);
-        exportStateService.getState().setListedObjectCount(160);
         exportProgressService.update();
         resetOutput();
 
         exportStateService.getState().setProgressState(ProgressState.EXPORTING);
+        exportStateService.getState().setTotalObjects(160);
         exportProgressService.update();
-        // This is the finalization of the listing progress, since we skipped the completed step
-        assertOutputMatches(".* 160/160.*");
         assertOutputMatches(".*Exporting object metadata:\n.* 0/160.*");
     }
 
     @Test
     public void updateExportFromListCompletedTest() throws Exception {
-        exportStateService.getState().setProgressState(ProgressState.LISTING_COMPLETED);
-        exportStateService.getState().setTotalObjects(160);
-        exportStateService.getState().setListedObjectCount(160);
+        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
         exportProgressService.update();
         resetOutput();
 
         exportStateService.getState().setProgressState(ProgressState.EXPORTING);
+        exportStateService.getState().setTotalObjects(160);
         exportProgressService.update();
         assertOutputMatches(".*Exporting object metadata:\n.* 0/160.*");
         resetOutput();
@@ -167,24 +125,19 @@ public class ExportProgressServiceTest extends AbstractOutputTest {
             exportProgressService.setDisplayUpdateRate(10);
             exportProgressService.startProgressDisplay();
 
-            assertOutputDoesNotContain("Determining size of collection for export");
+            assertOutputDoesNotContain("Initiating export");
 
             exportStateService.getState().setProgressState(ProgressState.STARTING);
-            awaitOutputMatches(".*Determining size of collection for export.*");
+            awaitOutputMatches(".*Initiating export.*");
 
-            exportStateService.getState().setTotalObjects(160);
-            exportStateService.getState().setProgressState(ProgressState.COUNT_COMPLETED);
+            exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_DESC);
+            awaitOutputMatches(".*Retrieving description file for collection.*");
 
             exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-            awaitOutputMatches(".*Listing CDM Object IDs:\n.* 0/160.*");
-
-            exportStateService.getState().setListedObjectCount(100);
-            awaitOutputMatches(".* 100/160.*");
-
-            exportStateService.getState().setListedObjectCount(160);
-            exportStateService.getState().setProgressState(ProgressState.LISTING_COMPLETED);
+            awaitOutputMatches(".*Listing CDM Object IDs.*");
 
             exportStateService.getState().setProgressState(ProgressState.EXPORTING);
+            exportStateService.getState().setTotalObjects(160);
             awaitOutputMatches(".*Exporting object metadata:\n.* 0/160.*");
 
             exportStateService.getState().setLastExportedIndex(159);

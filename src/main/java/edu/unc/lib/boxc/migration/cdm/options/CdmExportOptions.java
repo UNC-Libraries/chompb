@@ -33,22 +33,36 @@ public class CdmExportOptions {
                     "Defaults to current user: ${DEFAULT-VALUE}"},
             defaultValue = "${sys:user.name}")
     private String cdmUsername;
+    @CommandLine.Option(names = {"-p", "--cdm-password"},
+            description = "Password for CDM requests. Required.",
+            arity = "0..1",
+            interactive = true)
+    private String cdmPassword;
     public static final int MAX_EXPORT_RECORDS_PER_PAGE = 5000;
     @CommandLine.Option(names = {"-n", "--records-per-page"},
             description = {"Page size for exports.",
                     "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_EXPORT_RECORDS_PER_PAGE},
             defaultValue = "500")
     private int pageSize = 500;
-    public static final int MAX_LIST_IDS_PER_PAGE = 1000;
-    @CommandLine.Option(names = {"--ids-per-page"},
-            description = {"During initial listing of object IDs, the number of objects to list per page.",
-                    "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_LIST_IDS_PER_PAGE},
-            defaultValue = "1000")
-    private int listingPageSize = 1000;
     @CommandLine.Option(names = { "-f", "--force"},
             description = "Force the export to restart from the beginning. Use if a previous export was started "
                     + "or completed, but you would like to begin the export again.")
     private boolean force;
+    @CommandLine.Option(names = { "-H", "--ssh-host"},
+            description = {"Host name of the CDM SSH server.",
+                    "Default: ${DEFAULT-VALUE}"},
+            defaultValue = "${env:CDM_SSH_HOST:-127.0.0.1}")
+    private String cdmSshHost;
+    @CommandLine.Option(names = { "-P", "--ssh-port"},
+            description = {"Port of the CDM SSH server.",
+                    "Default: ${DEFAULT-VALUE}"},
+            defaultValue = "22")
+    private int cdmSshPort;
+    @CommandLine.Option(names = { "-D", "--download-path"},
+            description = {"Remote base path where CDM files should be located for transfer via SSH.",
+                    "Default: ${DEFAULT-VALUE}"},
+            defaultValue = "${env:CDM_SSH_DOWNLOAD_PATH}")
+    private String cdmSshDownloadBasePath;
 
     public String getCdmBaseUri() {
         return cdmBaseUri;
@@ -66,6 +80,14 @@ public class CdmExportOptions {
         this.cdmUsername = cdmUsername;
     }
 
+    public String getCdmPassword() {
+        return cdmPassword;
+    }
+
+    public void setCdmPassword(String cdmPassword) {
+        this.cdmPassword = cdmPassword;
+    }
+
     public int getPageSize() {
         return pageSize;
     }
@@ -74,12 +96,28 @@ public class CdmExportOptions {
         this.pageSize = pageSize;
     }
 
-    public int getListingPageSize() {
-        return listingPageSize;
+    public String getCdmSshHost() {
+        return cdmSshHost;
     }
 
-    public void setListingPageSize(int listingPageSize) {
-        this.listingPageSize = listingPageSize;
+    public void setCdmSshHost(String cdmSshHost) {
+        this.cdmSshHost = cdmSshHost;
+    }
+
+    public int getCdmSshPort() {
+        return cdmSshPort;
+    }
+
+    public void setCdmSshPort(int cdmSshPort) {
+        this.cdmSshPort = cdmSshPort;
+    }
+
+    public String getCdmSshDownloadBasePath() {
+        return cdmSshDownloadBasePath;
+    }
+
+    public void setCdmSshDownloadBasePath(String cdmSshDownloadBasePath) {
+        this.cdmSshDownloadBasePath = cdmSshDownloadBasePath;
     }
 
     public boolean isForce() {
