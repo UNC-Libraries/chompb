@@ -28,6 +28,9 @@ import static org.junit.Assert.fail;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +64,7 @@ public class FieldUrlAssessmentServiceTest {
 
     @Before
     public void setup() throws Exception {
+        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         Files.createDirectories(project.getExportPath());
@@ -81,20 +85,20 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void retrieveCdmUrlsTest() throws Exception {
         indexExportSamples();
+        addUrlsToDb();
 
         Map<String, String> fieldsAndUrls = service.dbFieldAndUrls(project);
         System.out.println("Map of fields and urls: " + fieldsAndUrls);
 
-        assertEquals(1,fieldsAndUrls.size());
+        assertEquals(4,fieldsAndUrls.size());
     }
 
     @Test
     public void successfulUrlsTest() throws Exception {
-        stubFor(get(urlEqualTo( "http://finding-aids.lib.unc.edu/00276/"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-
+        stubUrls(200);
         indexExportSamples();
+        addUrlsToDb();
+
         service.validateUrls();
     }
 
@@ -104,53 +108,17 @@ public class FieldUrlAssessmentServiceTest {
                 .willReturn(aResponse()
                         .withStatus(300)
                         .withHeader("Location", "https://library.unc.edu/")));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/28"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", "https://library.unc.edu/")));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/29"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", "https://library.unc.edu/")));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/25"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", "https://library.unc.edu/")));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/26"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", "https://library.unc.edu/")));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/27"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", "https://library.unc.edu/")));
 
         indexExportSamples();
+        addUrlsToDb();
         service.validateUrls();
     }
 
     @Test
     public void errorUrlsTest() throws Exception {
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/00276/"))
-                .willReturn(aResponse()
-                        .withStatus(400)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/28"))
-                .willReturn(aResponse()
-                        .withStatus(400)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/29"))
-                .willReturn(aResponse()
-                        .withStatus(400)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/25"))
-                .willReturn(aResponse()
-                        .withStatus(400)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/26"))
-                .willReturn(aResponse()
-                        .withStatus(400)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/27"))
-                .willReturn(aResponse()
-                        .withStatus(400)));
-
+        stubUrls(400);
         indexExportSamples();
+        addUrlsToDb();
         service.validateUrls();
     }
 
@@ -181,5 +149,32 @@ public class FieldUrlAssessmentServiceTest {
         project.getProjectProperties().setExportedDate(Instant.now());
         indexService.createDatabase(false);
         indexService.indexAll();
+    }
+
+    private void stubUrls(int statusCode) {
+        stubFor(get(urlEqualTo( "http://finding-aids.lib.unc.edu/00276/"))
+                .willReturn(aResponse()
+                        .withStatus(statusCode)));
+        stubFor(get(urlEqualTo( "/new_url_description"))
+                .willReturn(aResponse()
+                        .withStatus(statusCode)));
+        stubFor(get(urlEqualTo( "/new_url_notes"))
+                .willReturn(aResponse()
+                        .withStatus(statusCode)));
+        stubFor(get(urlEqualTo( "/new_url_caption"))
+                .willReturn(aResponse()
+                        .withStatus(statusCode)));
+    }
+
+    private void addUrlsToDb() throws SQLException {
+        Connection conn = indexService.openDbConnection();
+        Statement stmt = conn.createStatement();
+        stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET descri = descri || '" +
+                cdmBaseUrl + "/new_url_description'");
+        stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET notes = notes || '" +
+                cdmBaseUrl + "/new_url_notes'");
+        stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET captio = captio || '" +
+                cdmBaseUrl + "/new_url_caption'");
+        CdmIndexService.closeDbConnection(conn);
     }
 }

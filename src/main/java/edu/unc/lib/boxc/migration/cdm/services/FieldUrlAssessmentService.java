@@ -66,37 +66,9 @@ public class FieldUrlAssessmentService {
             NICK_FIELD, URL, ERROR_INDICATOR, SUCCESSFUL_INDICATOR, REDIRECT_INDICATOR, REDIRECT_URL };
 
     /**
-     * List all fields and urls that were exported
+     * Generates a hashmap with field nicknames as keys and extracted URLs as values
      * @throws IOException
      */
-    //TODO: have this method return object with the field and url instead of list of urls
-    public List<String> dbFieldUrls(MigrationProject project) throws IOException {
-        indexService.setProject(project);
-        cdmFieldService.validateFieldsFile(project);
-        CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
-        List<String> exportFields = fieldInfo.listAllExportFields();
-
-        List<String> listFieldUrls = new ArrayList<>();
-        Connection conn = null;
-
-        try {
-            conn = indexService.openDbConnection();
-            Statement stmt = conn.createStatement();
-            for (String field : exportFields) {
-                ResultSet rs = stmt.executeQuery(" select distinct " + field
-                        + " from " + CdmIndexService.TB_NAME
-                        + " where " + field + " like " + "'%http%'");
-                while (rs.next()) {
-                    listFieldUrls.add(rs.getString(1));
-                }
-            }
-        } catch (SQLException e) {
-            throw new MigrationException("Failed to generate field urls", e);
-        } finally {
-            CdmIndexService.closeDbConnection(conn);
-        }
-        return listFieldUrls;
-    }
 
     public Map<String, String> dbFieldAndUrls(MigrationProject project) throws IOException {
         indexService.setProject(project);
@@ -111,6 +83,7 @@ public class FieldUrlAssessmentService {
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
             for (String field : exportFields) {
+                // skip the "find" field. may be expanded to include other skip fields in the future
                 if ("find".equals(field)) {
                     continue;
                 }
@@ -150,37 +123,30 @@ public class FieldUrlAssessmentService {
      * @throws IOException
      */
     public void validateUrls() throws IOException {
-        //List<String> listUrls = dbFieldUrls(project);
         var fieldsAndUrls = dbFieldAndUrls(project);
 
         Path projPath = project.getProjectPath();
         String filename = project.getProjectProperties().getName() + "_field_urls.csv";
         BufferedWriter writer = Files.newBufferedWriter(projPath.resolve(filename));
-//        BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
         CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
                 .withHeader(URL_CSV_HEADERS));
         var httpClient = HttpClients.createDefault();
 
         // row order: field, url, error, successful, redirect, redirect URL
         for(Map.Entry<String, String> entry : fieldsAndUrls.entrySet()) {
-        //for (String urlField : listUrls) {
-            //String url = extractUrls(urlField);
             String field = entry.getKey();
             String url = entry.getValue();
             HttpGet getMethod = new HttpGet(url);
             try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
                 int status = resp.getStatusLine().getStatusCode();
                 if (status >= 200 && status < 300) {
-//                    String success = "n,y,n, ";
-//                    csvPrinter.printRecord(url, success);
                     csvPrinter.printRecord(field, url, "n", "y", "n", null);
                 } else if (status >= 300 && status < 400) {
                     String redirect = "n,y,y,";
                     String redirectUrl = resp.getFirstHeader("Location").getValue();
                     csvPrinter.printRecord(url, redirect, redirectUrl);
                 } else if (status >= 400) {
-                    String error = "y,n,n, ";
-                    csvPrinter.printRecord(url, error);
+                    csvPrinter.printRecord(field, url, "y", "n", "n", null);
                 } else {
                     throw new IOException("");
                 }
