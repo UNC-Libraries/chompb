@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -74,36 +75,22 @@ public class FieldUrlAssessmentServiceTest {
         service.setIndexService(indexService);
 
         cdmBaseUrl = "http://localhost:" + wireMockRule.port();
+        fieldService.setCdmBaseUri(cdmBaseUrl);
     }
 
     @Test
     public void retrieveCdmUrlsTest() throws Exception {
         indexExportSamples();
 
-        List<String> listUrls = service.dbFieldUrls(project);
-        System.out.println("List of urls: " + listUrls);
+        Map<String, String> fieldsAndUrls = service.dbFieldAndUrls(project);
+        System.out.println("Map of fields and urls: " + fieldsAndUrls);
 
-        assertEquals(6,listUrls.size());
+        assertEquals(1,fieldsAndUrls.size());
     }
 
     @Test
     public void successfulUrlsTest() throws Exception {
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/00276/"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/28"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/29"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/25"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/26"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/cdm/ref/collection/gilmer/id/27"))
+        stubFor(get(urlEqualTo( "http://finding-aids.lib.unc.edu/00276/"))
                 .willReturn(aResponse()
                         .withStatus(200)));
 
@@ -176,7 +163,6 @@ public class FieldUrlAssessmentServiceTest {
     public void regenerateCsv() throws Exception {
         indexExportSamples();
 
-        service.validateUrls();
         service.validateUrls();
 
         Path projPath = project.getProjectPath();

@@ -18,12 +18,17 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import java.io.IOException;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,6 +98,37 @@ public class FieldUrlAssessmentService {
         return listFieldUrls;
     }
 
+    public Map<String, String> dbFieldAndUrls(MigrationProject project) throws IOException {
+        indexService.setProject(project);
+        cdmFieldService.validateFieldsFile(project);
+        CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+
+        Map<String, String> fieldsAndUrls = new HashMap<>();
+        Connection conn = null;
+
+        try {
+            conn = indexService.openDbConnection();
+            Statement stmt = conn.createStatement();
+            for (String field : exportFields) {
+                if ("find".equals(field)) {
+                    continue;
+                }
+                ResultSet rs = stmt.executeQuery(" select distinct " + field
+                        + " from " + CdmIndexService.TB_NAME
+                        + " where " + field + " like " + "'%http%'");
+                while (rs.next()) {
+                    fieldsAndUrls.put(field, extractUrls(rs.getString(1)));
+                }
+            }
+        } catch (SQLException e) {
+            throw new MigrationException("Failed to generate fields with urls", e);
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+        return fieldsAndUrls;
+    }
+
     /**
      * Extracts urls from each field
      * @throws IOException
@@ -114,25 +150,30 @@ public class FieldUrlAssessmentService {
      * @throws IOException
      */
     public void validateUrls() throws IOException {
-        List<String> listUrls = dbFieldUrls(project);
+        //List<String> listUrls = dbFieldUrls(project);
+        var fieldsAndUrls = dbFieldAndUrls(project);
 
-        //Path projPath = project.getProjectPath();
+        Path projPath = project.getProjectPath();
         String filename = project.getProjectProperties().getName() + "_field_urls.csv";
-        //BufferedWriter writer = Files.newBufferedWriter(projPath.resolve(filename));
-        BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+        BufferedWriter writer = Files.newBufferedWriter(projPath.resolve(filename));
+//        BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
         CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
                 .withHeader(URL_CSV_HEADERS));
         var httpClient = HttpClients.createDefault();
 
-        // order of y/n: error, successful, redirect, redirect URL
-        for (String urlField : listUrls) {
-            String url = extractUrls(urlField);
+        // row order: field, url, error, successful, redirect, redirect URL
+        for(Map.Entry<String, String> entry : fieldsAndUrls.entrySet()) {
+        //for (String urlField : listUrls) {
+            //String url = extractUrls(urlField);
+            String field = entry.getKey();
+            String url = entry.getValue();
             HttpGet getMethod = new HttpGet(url);
             try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
                 int status = resp.getStatusLine().getStatusCode();
                 if (status >= 200 && status < 300) {
-                    String success = "n,y,n, ";
-                    csvPrinter.printRecord(url, success);
+//                    String success = "n,y,n, ";
+//                    csvPrinter.printRecord(url, success);
+                    csvPrinter.printRecord(field, url, "n", "y", "n", null);
                 } else if (status >= 300 && status < 400) {
                     String redirect = "n,y,y,";
                     String redirectUrl = resp.getFirstHeader("Location").getValue();
@@ -147,7 +188,7 @@ public class FieldUrlAssessmentService {
                 log.error("Failed to retrieve url: {}", url, e);
             }
         }
-        writer.close();
+        csvPrinter.close();
     }
 
     public void setProject(MigrationProject project) {
