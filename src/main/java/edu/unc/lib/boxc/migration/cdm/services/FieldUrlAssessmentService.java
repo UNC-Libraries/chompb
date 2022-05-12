@@ -69,14 +69,14 @@ public class FieldUrlAssessmentService {
      * Generates a hashmap with field nicknames as keys and extracted URLs as values
      * @throws IOException
      */
-
-    public Map<String, String> dbFieldAndUrls(MigrationProject project) throws IOException {
+    public List<FieldUrlEntry> dbFieldAndUrls(MigrationProject project) throws IOException {
         indexService.setProject(project);
         cdmFieldService.validateFieldsFile(project);
         CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
 
         Map<String, String> fieldsAndUrls = new HashMap<>();
+        List<FieldUrlEntry> fieldUrlEntries = new ArrayList<>();
         Connection conn = null;
 
         try {
@@ -91,6 +91,7 @@ public class FieldUrlAssessmentService {
                         + " from " + CdmIndexService.TB_NAME
                         + " where " + field + " like " + "'%http%'");
                 while (rs.next()) {
+                    fieldUrlEntries.add(new FieldUrlEntry(field, extractUrls(rs.getString(1)));
                     fieldsAndUrls.put(field, extractUrls(rs.getString(1)));
                 }
             }
@@ -99,7 +100,7 @@ public class FieldUrlAssessmentService {
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
-        return fieldsAndUrls;
+        return fieldUrlEntries;
     }
 
     /**
@@ -166,5 +167,15 @@ public class FieldUrlAssessmentService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    public class FieldUrlEntry {
+        private String fieldName;
+        private String url;
+
+        public FieldUrlEntry(String fieldName, String url) {
+            this.fieldName = fieldName;
+            this.url = url;
+        }
     }
 }
