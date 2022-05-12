@@ -100,6 +100,12 @@ public class FieldUrlAssessmentServiceTest {
         addUrlsToDb();
 
         service.validateUrls();
+
+        // descri, cdmBaseUrl + "/new_url_description'", n, y, n,
+        // notes, cdmBaseUrl + "/new_url_notes'", n, y, n,
+        // captio, cdmBaseUrl + "/new_url_captio'", n, y, n,
+        // source, whatever, n, y, n,
+        // verify that only 4 entries are present
     }
 
     @Test

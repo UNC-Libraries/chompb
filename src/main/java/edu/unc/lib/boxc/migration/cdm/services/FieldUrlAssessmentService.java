@@ -25,12 +25,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -75,7 +78,6 @@ public class FieldUrlAssessmentService {
         CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
 
-        Map<String, String> fieldsAndUrls = new HashMap<>();
         List<FieldUrlEntry> fieldUrlEntries = new ArrayList<>();
         Connection conn = null;
 
@@ -92,7 +94,6 @@ public class FieldUrlAssessmentService {
                         + " where " + field + " like " + "'%http%'");
                 while (rs.next()) {
                     fieldUrlEntries.add(new FieldUrlEntry(field, extractUrls(rs.getString(1)));
-                    fieldsAndUrls.put(field, extractUrls(rs.getString(1)));
                 }
             }
         } catch (SQLException e) {
@@ -100,7 +101,7 @@ public class FieldUrlAssessmentService {
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
-        return fieldUrlEntries;
+        return fieldUrlEntries.stream().distinct().collect(Collectors.toList());
     }
 
     /**
@@ -176,6 +177,23 @@ public class FieldUrlAssessmentService {
         public FieldUrlEntry(String fieldName, String url) {
             this.fieldName = fieldName;
             this.url = url;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            FieldUrlEntry that = (FieldUrlEntry) o;
+            return Objects.equals(fieldName, that.fieldName) && Objects.equals(url, that.url);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(fieldName, url);
         }
     }
 }
