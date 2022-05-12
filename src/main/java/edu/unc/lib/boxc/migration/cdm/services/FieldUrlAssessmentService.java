@@ -93,7 +93,7 @@ public class FieldUrlAssessmentService {
                         + " from " + CdmIndexService.TB_NAME
                         + " where " + field + " like " + "'%http%'");
                 while (rs.next()) {
-                    fieldUrlEntries.add(new FieldUrlEntry(field, extractUrls(rs.getString(1)));
+                    fieldUrlEntries.add(new FieldUrlEntry(field, extractUrl(rs.getString(1))));
                 }
             }
         } catch (SQLException e) {
@@ -108,7 +108,7 @@ public class FieldUrlAssessmentService {
      * Extracts urls from each field
      * @throws IOException
      */
-    public String extractUrls(String string) throws IOException {
+    public String extractUrl(String string) throws IOException {
         String regex = "\\b((?:https?|ftp|file):" + "//[-a-zA-Z0-9+&@#/%?=" + "~_|!:, .;]*[-a-zA-Z0-9+"
                 + "&@#/%=~_|])";
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
@@ -135,9 +135,9 @@ public class FieldUrlAssessmentService {
         var httpClient = HttpClients.createDefault();
 
         // row order: field, url, error, successful, redirect, redirect URL
-        for(Map.Entry<String, String> entry : fieldsAndUrls.entrySet()) {
-            String field = entry.getKey();
-            String url = entry.getValue();
+        for(var entry : fieldsAndUrls) {
+            String field = entry.fieldName;
+            String url = entry.url;
             HttpGet getMethod = new HttpGet(url);
             try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
                 int status = resp.getStatusLine().getStatusCode();

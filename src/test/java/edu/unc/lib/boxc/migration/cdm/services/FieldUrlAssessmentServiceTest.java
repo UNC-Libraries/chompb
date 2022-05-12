@@ -86,11 +86,9 @@ public class FieldUrlAssessmentServiceTest {
     public void retrieveCdmUrlsTest() throws Exception {
         indexExportSamples();
         addUrlsToDb();
+        List<FieldUrlAssessmentService.FieldUrlEntry> fieldsAndUrls = service.dbFieldAndUrls(project);
 
-        Map<String, String> fieldsAndUrls = service.dbFieldAndUrls(project);
-        System.out.println("Map of fields and urls: " + fieldsAndUrls);
-
-        assertEquals(4,fieldsAndUrls.size());
+        assertEquals(5,fieldsAndUrls.size());
     }
 
     @Test
@@ -171,11 +169,15 @@ public class FieldUrlAssessmentServiceTest {
         Connection conn = indexService.openDbConnection();
         Statement stmt = conn.createStatement();
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET descri = descri || '" +
-                cdmBaseUrl + "/new_url_description'");
+                cdmBaseUrl + "/new_url_description' WHERE cdmid = 25");
+        stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET descri = descri || '" +
+                cdmBaseUrl + "/new_url_description' WHERE cdmid = 26");
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET notes = notes || '" +
-                cdmBaseUrl + "/new_url_notes'");
+                cdmBaseUrl + "/new_url_notes' WHERE cdmid = 28");
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET captio = captio || '" +
-                cdmBaseUrl + "/new_url_caption'");
+                cdmBaseUrl + "/new_url_caption' WHERE cdmid = 25");
+        stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET captio = captio || '" +
+                cdmBaseUrl + "/new_url_caption_again' WHERE cdmid = 26");
         CdmIndexService.closeDbConnection(conn);
     }
 }
