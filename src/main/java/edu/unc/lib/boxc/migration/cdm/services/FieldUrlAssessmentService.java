@@ -142,9 +142,8 @@ public class FieldUrlAssessmentService {
                 if (status >= 200 && status < 300) {
                     csvPrinter.printRecord(field, url, "n", "y", "n", null);
                 } else if (status >= 300 && status < 400) {
-                    String redirect = "n,y,y,";
                     String redirectUrl = resp.getFirstHeader("Location").getValue();
-                    csvPrinter.printRecord(url, redirect, redirectUrl);
+                    csvPrinter.printRecord(field, url, "n", "y", "y", redirectUrl);
                 } else if (status >= 400) {
                     csvPrinter.printRecord(field, url, "y", "n", "n", null);
                 } else {

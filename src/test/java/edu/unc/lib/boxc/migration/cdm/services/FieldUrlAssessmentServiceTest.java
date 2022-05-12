@@ -123,11 +123,6 @@ public class FieldUrlAssessmentServiceTest {
     }
 
     @Test
-    public void expectedCsv() throws Exception {
-
-    }
-
-    @Test
     public void regenerateCsv() throws Exception {
         indexExportSamples();
 
