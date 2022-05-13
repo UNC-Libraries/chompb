@@ -113,4 +113,23 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
 
         assertTrue(Files.exists(newPath));
     }
+
+    @Test
+    public void generateFieldsUrlReportTest() throws Exception {
+        tmpFolder.create();
+        MigrationProject project = MigrationProjectFactory.createMigrationProject(
+                tmpFolder.getRoot().toPath(), "gilmer", null, USERNAME);
+        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
+//        templateService.generate(project);
+
+        Path projectPath = project.getProjectPath();
+        Path reportPath = projectPath.resolve("gilmer_field_urls.csv");
+
+        String[] cmdArgs = new String[] {
+                "-w", projectPath.toString(),
+                "fields", "generate_field_url_report"};
+        executeExpectSuccess(cmdArgs);
+
+        assertTrue(Files.exists(reportPath));
+    }
 }

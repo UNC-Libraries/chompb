@@ -261,11 +261,9 @@ public class FieldUrlAssessmentServiceTest {
     }
 
     private void assertColumnValuesAreCorrect(List<CSVRecord> rows, String column, String correctValue) {
-        assertEquals(correctValue, rows.get(0).get(column));
-        assertEquals(correctValue, rows.get(1).get(column));
-        assertEquals(correctValue, rows.get(2).get(column));
-        assertEquals(correctValue, rows.get(3).get(column));
-        assertEquals(correctValue, rows.get(4).get(column));
+        for (CSVRecord row : rows) {
+            assertEquals(correctValue, row.get(column));
+        }
         assertEquals(5, rows.size());
     }
 }
