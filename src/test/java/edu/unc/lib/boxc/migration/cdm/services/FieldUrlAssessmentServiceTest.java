@@ -21,10 +21,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,8 +32,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,7 +46,7 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 
 /**
- * @author krwong
+ * @author krwong, snluong
  */
 public class FieldUrlAssessmentServiceTest {
     private static final String PROJECT_NAME = "gilmer";
@@ -99,23 +100,45 @@ public class FieldUrlAssessmentServiceTest {
 
         service.validateUrls();
 
-        // descri, cdmBaseUrl + "/new_url_description'", n, y, n,
-        // notes, cdmBaseUrl + "/new_url_notes'", n, y, n,
-        // captio, cdmBaseUrl + "/new_url_captio'", n, y, n,
-        // source, whatever, n, y, n,
-        // verify that only 4 entries are present
+        try (
+                Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertUrlsInCsvAreCorrect(rows);
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.ERROR_INDICATOR, "n");
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "y");
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "n");
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL, "");
+        }
     }
 
     @Test
     public void redirectUrlsTest() throws Exception {
-        stubFor(get(urlEqualTo( cdmBaseUrl + "/00276/"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", "https://library.unc.edu/")));
+        stubRedirectUrls();
 
         indexExportSamples();
         addUrlsToDb();
         service.validateUrls();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertUrlsInCsvAreCorrect(rows);
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.ERROR_INDICATOR, "n");
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "y");
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "y");
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL,
+                    cdmBaseUrl + "/redirect_url");
+        }
     }
 
     @Test
@@ -124,6 +147,21 @@ public class FieldUrlAssessmentServiceTest {
         indexExportSamples();
         addUrlsToDb();
         service.validateUrls();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertUrlsInCsvAreCorrect(rows);
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.ERROR_INDICATOR, "y");
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "n");
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "n");
+            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL, "");
+        }
     }
 
     @Test
@@ -151,7 +189,7 @@ public class FieldUrlAssessmentServiceTest {
     }
 
     private void stubUrls(int statusCode) {
-        stubFor(get(urlEqualTo( "http://finding-aids.lib.unc.edu/00276/"))
+        stubFor(get(urlEqualTo( "/00276/"))
                 .willReturn(aResponse()
                         .withStatus(statusCode)));
         stubFor(get(urlEqualTo( "/new_url_description"))
@@ -163,6 +201,35 @@ public class FieldUrlAssessmentServiceTest {
         stubFor(get(urlEqualTo( "/new_url_caption"))
                 .willReturn(aResponse()
                         .withStatus(statusCode)));
+        stubFor(get(urlEqualTo( "/new_url_caption_again"))
+                .willReturn(aResponse()
+                        .withStatus(statusCode)));
+    }
+
+    private void stubRedirectUrls() {
+        stubFor(get(urlEqualTo( "/redirect_url"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+        stubFor(get(urlEqualTo( "/00276/"))
+                .willReturn(aResponse()
+                        .withStatus(300)
+                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
+        stubFor(get(urlEqualTo( "/new_url_description"))
+                .willReturn(aResponse()
+                        .withStatus(300)
+                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
+        stubFor(get(urlEqualTo( "/new_url_notes"))
+                .willReturn(aResponse()
+                        .withStatus(300)
+                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
+        stubFor(get(urlEqualTo( "/new_url_caption"))
+                .willReturn(aResponse()
+                        .withStatus(300)
+                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
+        stubFor(get(urlEqualTo( "/new_url_caption_again"))
+                .willReturn(aResponse()
+                        .withStatus(300)
+                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
     }
 
     private void addUrlsToDb() throws SQLException {
@@ -178,6 +245,27 @@ public class FieldUrlAssessmentServiceTest {
                 cdmBaseUrl + "/new_url_caption' WHERE cdmid = 25");
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET captio = captio || '" +
                 cdmBaseUrl + "/new_url_caption_again' WHERE cdmid = 26");
+        stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET source = 'Jeremy Francis Gilmer Papers; " +
+                cdmBaseUrl + "/00276/'");
         CdmIndexService.closeDbConnection(conn);
+    }
+
+    private void assertUrlsInCsvAreCorrect(List<CSVRecord> rows) {
+        var column = FieldUrlAssessmentService.URL;
+        assertEquals(cdmBaseUrl + "/new_url_description", rows.get(0).get(column));
+        assertEquals(cdmBaseUrl + "/new_url_caption", rows.get(1).get(column));
+        assertEquals(cdmBaseUrl + "/new_url_caption_again", rows.get(2).get(column));
+        assertEquals(cdmBaseUrl + "/new_url_notes", rows.get(3).get(column));
+        assertEquals(cdmBaseUrl + "/00276/", rows.get(4).get(column));
+        assertEquals(5, rows.size());
+    }
+
+    private void assertColumnValuesAreCorrect(List<CSVRecord> rows, String column, String correctValue) {
+        assertEquals(correctValue, rows.get(0).get(column));
+        assertEquals(correctValue, rows.get(1).get(column));
+        assertEquals(correctValue, rows.get(2).get(column));
+        assertEquals(correctValue, rows.get(3).get(column));
+        assertEquals(correctValue, rows.get(4).get(column));
+        assertEquals(5, rows.size());
     }
 }
