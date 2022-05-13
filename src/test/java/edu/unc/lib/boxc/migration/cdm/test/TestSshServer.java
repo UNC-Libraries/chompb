@@ -33,7 +33,7 @@ public class TestSshServer {
     public TestSshServer() throws IOException {
         sshServer = SshServer.setUpDefaultServer();
         sshServer.setHost("127.0.0.1");
-        sshServer.setPort(2222);
+        sshServer.setPort(42222);
         sshServer.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
         sshServer.setCommandFactory(new ScpCommandFactory());
         sshServer.setPasswordAuthenticator((username, password, serverSession) -> {

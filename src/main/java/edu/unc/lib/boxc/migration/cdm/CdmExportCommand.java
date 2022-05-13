@@ -72,8 +72,6 @@ public class CdmExportCommand implements Callable<Integer> {
         long start = System.nanoTime();
 
         try {
-            validate();
-
             Path currentPath = parentCommand.getWorkingDirectory();
             project = MigrationProjectFactory.loadMigrationProject(currentPath);
             initializeServices();
@@ -105,7 +103,6 @@ public class CdmExportCommand implements Callable<Integer> {
         exportService.setExportStateService(exportStateService);
         exportProgressService = new ExportProgressService();
         exportProgressService.setExportStateService(exportStateService);
-        initializeAuthenticatedCdmClient();
     }
 
     private void startOrResumeExport() throws IOException {
@@ -122,35 +119,6 @@ public class CdmExportCommand implements Callable<Integer> {
                     outputLogger.info("Resuming export of object records");
                 }
             }
-        }
-    }
-
-    private void initializeAuthenticatedCdmClient() {
-        if (StringUtils.isBlank(options.getCdmUsername())) {
-            throw new MigrationException("Must provided a CDM username");
-        }
-        if (StringUtils.isBlank(options.getCdmPassword())) {
-            throw new MigrationException("Must provided a CDM password for user " + options.getCdmUsername());
-        }
-
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        outputLogger.info("Initializing connection to {}", URI.create(options.getCdmBaseUri()).getHost());
-        AuthScope scope = new AuthScope(new HttpHost(URI.create(options.getCdmBaseUri()).getHost()));
-        credsProvider.setCredentials(scope, new UsernamePasswordCredentials(
-                options.getCdmUsername(), options.getCdmPassword()));
-
-        CloseableHttpClient httpClient = HttpClients.custom()
-                .setDefaultCredentialsProvider(credsProvider)
-                .useSystemProperties()
-                .build();
-
-        exportService.setHttpClient(httpClient);
-    }
-
-    private void validate() {
-        if (options.getPageSize() < 1 || options.getPageSize() > CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE) {
-            throw new MigrationException("Page size must be between 1 and "
-                    + CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE);
         }
     }
 }

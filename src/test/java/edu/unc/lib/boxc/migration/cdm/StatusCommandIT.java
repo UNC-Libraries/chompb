@@ -111,9 +111,7 @@ public class StatusCommandIT extends AbstractCommandIT {
     @Test
     public void reportExported() throws Exception {
         Instant exported = Instant.now();
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-            Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                    project.getExportPath().resolve("export_1.xml"));
+        testHelper.indexExportData("mini_gilmer");
         project.getProjectProperties().setExportedDate(exported);
         ProjectPropertiesSerialization.write(project);
 
@@ -136,7 +134,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportIndexed() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -168,7 +166,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportMixedDestinations() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         String newCollId = "00123test";
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
         FileUtils.write(project.getDestinationMappingsPath().toFile(),
@@ -201,7 +199,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportDestinationsInvalid() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         String newCollId = "00123test";
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
         FileUtils.write(project.getDestinationMappingsPath().toFile(),
@@ -232,7 +230,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportSourceFilesPartiallyMapped() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.addSourceFile("276_182_E.tif");
         SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         testHelper.getSourceFileService().generateMapping(opts);
@@ -263,7 +261,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportAccessFilesPartiallyMapped() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
         testHelper.addAccessFile("276_182_E.tif");
         SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getAccessFilesBasePath());
@@ -297,7 +295,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportSipGeneratedWithNewCollection() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         String newCollId = "00123test";
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
         testHelper.populateDescriptions("gilmer_mods1.xml");

@@ -188,7 +188,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
 
     @Test
     public void statusValidTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -215,7 +215,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
 
     @Test
     public void statusValidQuietTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -243,7 +243,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
 
     @Test
     public void statusValidVerboseTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),

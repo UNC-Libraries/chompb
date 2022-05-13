@@ -36,6 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
@@ -248,16 +249,14 @@ public class SipServiceHelper {
                 .findFirst().orElseGet(null);
     }
 
-    public void indexExportData(String... filenames) throws Exception {
-        indexExportData(Paths.get("src/test/resources/gilmer_fields.csv"), filenames);
+    public void indexExportData(String descPath) throws Exception {
+        indexExportData(Paths.get("src/test/resources/gilmer_fields.csv"), descPath);
     }
 
-    public void indexExportData(Path fieldsPath, String... filenames) throws Exception {
+    public void indexExportData(Path fieldsPath, String descPath) throws Exception {
         Files.copy(fieldsPath, project.getFieldsPath(), REPLACE_EXISTING);
-        for (String filename : filenames) {
-            Files.copy(Paths.get("src/test/resources/sample_exports/" + filename),
-                    project.getExportPath().resolve(filename), REPLACE_EXISTING);
-        }
+        Files.copy(Paths.get("src/test/resources/descriptions/" + descPath + "/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project), REPLACE_EXISTING);
         project.getProjectProperties().setExportedDate(Instant.now());
         indexService.createDatabase(true);
         indexService.indexAll();

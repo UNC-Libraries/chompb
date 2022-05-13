@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -202,10 +203,8 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
 
     private void indexExportSamples() throws Exception {
         Files.createDirectories(project.getExportPath());
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_1.xml"));
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
-                project.getExportPath().resolve("export_2.xml"));
+        Files.copy(Paths.get("src/test/resources/descriptions/gilmer/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
 
         project.getProjectProperties().setExportedDate(Instant.now());

@@ -56,7 +56,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class CdmExportService {
     private static final Logger log = getLogger(CdmExportService.class);
 
-    private CloseableHttpClient httpClient;
     private CdmFieldService cdmFieldService;
     private ExportStateService exportStateService;
     private CdmFileRetrievalService fileRetrievalService;
@@ -74,11 +73,6 @@ public class CdmExportService {
         // Generate body of export request using the list of fields configure for export
         cdmFieldService.validateFieldsFile(project);
         initializeExportDir(project);
-        CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
-        String fieldParams = fieldInfo.getFields().stream()
-                .filter(f -> !f.getSkipExport())
-                .map(f -> f.getNickName() + "=" + f.getExportAs())
-                .collect(Collectors.joining("&"));
 
         // Retrieval desc.all file in order to get list of ids
         if (exportStateService.inStateOrNotResuming(ProgressState.STARTING, ProgressState.DOWNLOADING_DESC)) {
@@ -89,59 +83,14 @@ public class CdmExportService {
         }
 
         // Retrieve list of CDM ids
-        List<String> allIds = extractCdmIds();
+//        List<String> allIds = extractCdmIds();
 
-        int pageSize = options.getPageSize();
-        List<List<String>> chunks = Lists.partition(allIds, pageSize);
-        if (exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS)) {
-            exportStateService.transitionToExporting(allIds.size(), pageSize);
-        }
         if (exportStateService.inStateOrNotResuming(ProgressState.EXPORTING)) {
-            int exportPage = 0;
-            for (List<String> chunk : chunks) {
-                // Name each exported page
-                exportPage++;
-                // When resuming, skip over pages until past the previously recorded last exported record
-                if (exportStateService.isResuming()
-                        && (exportPage * pageSize - 1) <= exportStateService.getState().getLastExportedIndex()) {
-                    continue;
-                }
-                exportPageOfResults(exportPage, chunk, fieldParams, options);
-            }
-
             project.getProjectProperties().setExportedDate(Instant.now());
             ProjectPropertiesSerialization.write(project);
         }
 
         exportStateService.exportingCompleted();
-    }
-
-    protected void exportPageOfResults(int pageNum, List<String> pageIds, String fieldParams, CdmExportOptions options)
-            throws IOException {
-        if (log.isDebugEnabled()) {
-            log.debug("Exporting page of results containing ids: {}", String.join(",", pageIds));
-        }
-        String exportFilename = "export_" + pageNum + ".xml";
-        String cdmIds = String.join("%2C", pageIds);
-        String bodyParams = "CISODB=%2F" + project.getProjectProperties().getCdmCollectionId()
-                + "&CISOTYPE=standard&CISOPAGE=1&" + fieldParams + "&CISOPTRLIST=" + cdmIds;
-        // Trigger the export
-        String exportReqUrl = URIUtil.join(options.getCdmBaseUri(), "cgi-bin/admin/exportxml.exe");
-        log.debug("Requesting export from {}", exportReqUrl);
-        HttpPost postMethod = new HttpPost(exportReqUrl);
-        postMethod.setEntity(new StringEntity(bodyParams, ISO_8859_1));
-        try (CloseableHttpResponse resp = httpClient.execute(postMethod)) {
-            if (resp.getStatusLine().getStatusCode() != 200) {
-                throw new MigrationException("Failed to request export (" + resp.getStatusLine().getStatusCode()
-                        + "): " + IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1));
-            }
-        }
-        // Retrieve the export results
-        Path exportFilePath = project.getExportPath().resolve(exportFilename);
-        downloadExport(options, exportFilePath);
-        verifyExport(pageIds, exportFilePath);
-
-        exportStateService.registerExported(pageIds);
     }
 
     private void initializeFileRetrievalService(CdmExportOptions options) {
@@ -158,65 +107,6 @@ public class CdmExportService {
 
     private void initializeExportDir(MigrationProject project) throws IOException {
         Files.createDirectories(project.getExportPath());
-    }
-
-    private void downloadExport(CdmExportOptions options, Path exportFilePath) throws IOException {
-        String uri = URIUtil.join(options.getCdmBaseUri(), "cgi-bin/admin/getfile.exe?")
-                + "CISOMODE=1&CISOFILE=/" + project.getProjectProperties().getCdmCollectionId()
-                + "/index/description/export.xml";
-        log.debug("Downloading export from {}", uri);
-        HttpGet getMethod = new HttpGet(uri);
-        try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
-            if (resp.getStatusLine().getStatusCode() >= 400) {
-                throw new MigrationException("Failed to download export (" + resp.getStatusLine().getStatusCode()
-                        + "): " + IOUtils.toString(resp.getEntity().getContent(), ISO_8859_1));
-            }
-            Files.copy(resp.getEntity().getContent(), exportFilePath, StandardCopyOption.REPLACE_EXISTING);
-            log.debug("Downloaded export to file {}", exportFilePath);
-        }
-    }
-
-    private void verifyExport(List<String> cdmIds, Path exportPath) {
-        SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
-        Document doc = null;
-        try {
-            doc = builder.build(exportPath.toFile());
-        } catch (JDOMException | IOException e) {
-            throw new MigrationException("Unable to read export file: " + exportPath, e);
-        }
-        Element root = doc.getRootElement();
-        List<Element> recordEls = root.getChildren("record");
-        var exportedIds = recordEls.stream()
-                .map(el -> el.getChildTextTrim(CdmFieldInfo.CDM_ID))
-                .collect(Collectors.toList());
-        var missingIds = CollectionUtils.removeAll(cdmIds, exportedIds);
-        if (!missingIds.isEmpty()) {
-            throw new MigrationException("Export failure, document returned by CDM was missing the following records: "
-                + String.join(", ", missingIds));
-        }
-        if (exportedIds.size() != cdmIds.size()) {
-            var extraIds = CollectionUtils.removeAll(exportedIds, cdmIds);
-            throw new MigrationException("Export failure, document contained IDs not in the requested set: "
-                    + String.join(", ", extraIds));
-        }
-    }
-
-    private final static String CDM_ID_TAG = "<dmrecord>";
-    private final static int CDM_ID_TAG_LENGTH = CDM_ID_TAG.length();
-
-    private List<String> extractCdmIds() {
-        var descAllPath = project.getExportPath().resolve(CdmFileRetrievalService.DESC_ALL_FILENAME);
-        try (var lineStream = Files.lines(descAllPath)) {
-            return lineStream.filter(l -> l.contains(CDM_ID_TAG))
-                    .map(l -> l.substring(CDM_ID_TAG_LENGTH, l.indexOf("</")))
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            throw new MigrationException("Failed to extract CDM IDs from " + descAllPath, e);
-        }
-    }
-
-    public void setHttpClient(CloseableHttpClient httpClient) {
-        this.httpClient = httpClient;
     }
 
     public void setCdmFieldService(CdmFieldService cdmFieldService) {

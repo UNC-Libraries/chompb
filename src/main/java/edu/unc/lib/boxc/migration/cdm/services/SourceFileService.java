@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -117,7 +118,7 @@ public class SourceFileService {
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
             // Query for all non-compound objects. If the entry type is null, the object is a individual cdm object
-            ResultSet rs = stmt.executeQuery("select cdmid, " + options.getExportField()
+            ResultSet rs = stmt.executeQuery("select dmrecord, " + options.getExportField()
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
                         + " or " + ENTRY_TYPE_FIELD + " is null");
@@ -207,6 +208,9 @@ public class SourceFileService {
             public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
                 if (pathPattern == null || pathMatcher.matches(path)) {
                     String filename = path.getFileName().toString();
+                    if (options.isLowercaseTemplate()) {
+                        filename = filename.toLowerCase();
+                    }
                     List<String> paths = candidatePaths.computeIfAbsent(filename, f -> new ArrayList<>());
                     paths.add(basePath.relativize(path).toString());
                 }

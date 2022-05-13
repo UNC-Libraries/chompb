@@ -90,15 +90,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "text/json")
                         .withBody(validRespBody)));
-        stubFor(post(urlEqualTo("/cgi-bin/admin/exportxml.exe"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-        String exportBody = FileUtils.readFileToString(new File("src/test/resources/sample_exports/export_1.xml"),
-                StandardCharsets.ISO_8859_1);
-        stubFor(get(urlEqualTo("/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE=/mini_gilmer/index/description/export.xml"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/octet-stream")
-                        .withBody(exportBody)));
 
         redisServer = new RedisServer(REDIS_PORT);
         System.setProperty("REDIS_HOST", "localhost");
@@ -148,7 +139,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 "-w", projPath.toString(),
                 "export",
                 "-D", Paths.get("src/test/resources/descriptions").toAbsolutePath().toString(),
-                "-P", "2222",
+                "-P", "42222",
                 "--cdm-url", cdmBaseUrl,
                 "-p", CDM_PASSWORD };
         executeExpectSuccess(argsExport);
@@ -166,7 +157,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
         SipServiceHelper testHelper = new SipServiceHelper(project, filesBasePath);
         Path sourcePath1 = testHelper.addSourceFile("276_182_E.tif");
-        Path sourcePath2 = testHelper.addSourceFile("276_183B_E.tif");
+        Path sourcePath2 = testHelper.addSourceFile("276_183_E.tif");
         Path sourcePath3 = testHelper.addSourceFile("276_203_E.tif");
 
         String[] argsSource = new String[] {

@@ -425,7 +425,7 @@ public class GroupMappingServiceTest {
 
     private void assertNumberOfGroups(Connection conn, int expected) throws Exception {
         Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("select count(distinct cdmid)"
+        ResultSet rs = stmt.executeQuery("select count(distinct dmrecord)"
                 + " from " + CdmIndexService.TB_NAME
                 + " where " + CdmIndexService.ENTRY_TYPE_FIELD
                     + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'");

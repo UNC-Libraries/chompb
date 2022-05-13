@@ -21,6 +21,7 @@ import org.apache.sshd.client.SshClient;
 import org.apache.sshd.scp.client.ScpClientCreator;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
@@ -58,11 +59,19 @@ public class CdmFileRetrievalService {
             var scpClient = scpClientCreator.createScpClient(sshSession);
             String collectionId = project.getProjectProperties().getCdmCollectionId();
             var remotePath = Paths.get(downloadBasePath, collectionId, DESC_SUBPATH).toString();
-            var localDestination = project.getExportPath().resolve(DESC_ALL_FILENAME);
+            var localDestination = getDescAllPath(project);
             scpClient.download(remotePath, localDestination);
         } catch (IOException e) {
             throw new MigrationException("Failed to download desc.all file", e);
         }
+    }
+
+    /**
+     * @param project
+     * @return Path where the exported desc all file is stored
+     */
+    public static Path getDescAllPath(MigrationProject project) {
+        return project.getExportPath().resolve(DESC_ALL_FILENAME);
     }
 
     public void setProject(MigrationProject project) {

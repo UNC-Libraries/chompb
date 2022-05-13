@@ -24,12 +24,14 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
@@ -210,10 +212,8 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
     @Test
     public void statusMissingMods() throws Exception {
         Files.createDirectories(project.getExportPath());
-        // Add second half of records as well
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
-                project.getExportPath().resolve("export_2.xml"));
-        indexExportSamples();
+        // Use full set of records
+        indexExportSamples("gilmer");
 
         // Only adding half of the MODS records
         Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
@@ -233,7 +233,7 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args2);
 
         assertOutputMatches(".*Last Expanded: +[0-9\\-T:]+.*");
-        assertOutputMatches(".*Object MODS Records: +3 \\(60.0%\\).*");
+        assertOutputMatches(".*Object MODS Records: +3 \\(1.9%\\).*");
         assertOutputMatches(".*MODS Files: +1.*");
         assertOutputNotMatches(".*Objects without MODS.*");
         assertOutputMatches(".*New Collections MODS: +0.*");
@@ -247,9 +247,9 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args3);
 
         assertOutputMatches(".*Last Expanded: +[0-9\\-T:]+.*");
-        assertOutputMatches(".*Object MODS Records: +3 \\(60.0%\\).*");
+        assertOutputMatches(".*Object MODS Records: +3 \\(1.9%\\).*");
         assertOutputMatches(".*MODS Files: +1.*");
-        assertOutputMatches(".*Objects without MODS: +2\n + \\* 28\n + \\* 29.*");
+        assertOutputMatches(".*Objects without MODS: +158\n + \\* 88\n + \\* 89.*");
         assertOutputMatches(".*New Collections MODS: +0.*");
     }
 
@@ -309,6 +309,10 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
     }
 
     private void indexExportSamples() throws Exception {
+        indexExportSamples("mini_gilmer");
+    }
+
+    private void indexExportSamples(String descPath) throws Exception {
         fieldService = new CdmFieldService();
         indexService = new CdmIndexService();
         indexService.setFieldService(fieldService);
@@ -316,8 +320,8 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
 
         Files.createDirectories(project.getDescriptionsPath());
         Files.createDirectories(project.getExportPath());
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_all.xml"));
+        Files.copy(Paths.get("src/test/resources/descriptions/" + descPath + "/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
 
         project.getProjectProperties().setExportedDate(Instant.now());
