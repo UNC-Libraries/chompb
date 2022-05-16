@@ -95,6 +95,7 @@ public class CdmIndexService {
             var recordBuilder = new StringBuilder("<record>");
             var incompleteRecord = false;
             for (var line: (Iterable<String>) lineStream::iterator) {
+                // Ampersands are not escaped in CDM's pseudo-XML, which causes problems when building XML
                 recordBuilder.append(line.replaceAll("&", "&amp;"));
                 incompleteRecord = true;
                 // reached the end of a record
@@ -115,7 +116,7 @@ public class CdmIndexService {
                         recordBuilder.toString());
             }
             // Assign type information to objects, based on compound object status
-            assignObjectTypes(conn, cpdToIdMap);
+            assignObjectTypeDetails(conn, cpdToIdMap);
         } catch (IOException e) {
             throw new MigrationException("Failed to read export files", e);
         } catch (SQLException e) {
@@ -164,7 +165,12 @@ public class CdmIndexService {
                     + PARENT_ID_FIELD + " = ?"
                     + " where " + CdmFieldInfo.CDM_ID + " = ?";
 
-    private void assignObjectTypes(Connection dbConn, Map<String, String> cpdToIdMap) {
+    /**
+     * Add additional information to records to indicate if they are compound objects or children of one.
+     * @param dbConn
+     * @param cpdToIdMap
+     */
+    private void assignObjectTypeDetails(Connection dbConn, Map<String, String> cpdToIdMap) {
         SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
         var cpdsPath = CdmFileRetrievalService.getExportedCpdsPath(project);
         cpdToIdMap.forEach((cpdFilename, cpdId) -> {

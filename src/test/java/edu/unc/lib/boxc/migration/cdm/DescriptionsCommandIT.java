@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
@@ -58,11 +59,13 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
     private MigrationProject project;
     private CdmIndexService indexService;
     private CdmFieldService fieldService;
+    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 baseDir, COLLECTION_ID, null, USERNAME);
+        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
     }
 
     @Test
@@ -313,20 +316,7 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
     }
 
     private void indexExportSamples(String descPath) throws Exception {
-        fieldService = new CdmFieldService();
-        indexService = new CdmIndexService();
-        indexService.setFieldService(fieldService);
-        indexService.setProject(project);
-
-        Files.createDirectories(project.getDescriptionsPath());
-        Files.createDirectories(project.getExportPath());
-        Files.copy(Paths.get("src/test/resources/descriptions/" + descPath + "/index/description/desc.all"),
-                CdmFileRetrievalService.getDescAllPath(project));
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-
-        project.getProjectProperties().setExportedDate(Instant.now());
-        indexService.createDatabase(true);
-        indexService.indexAll();
+        testHelper.indexExportData(descPath);
     }
 
     private void assertExpandedDescriptionFilesCount(int expected) throws Exception {
