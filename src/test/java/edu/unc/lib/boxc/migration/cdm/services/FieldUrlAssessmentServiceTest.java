@@ -26,13 +26,12 @@ import static org.junit.Assert.assertTrue;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.Instant;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -70,6 +69,9 @@ public class FieldUrlAssessmentServiceTest {
                 tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
         Files.createDirectories(project.getExportPath());
 
+        var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        testHelper.indexExportData("export_1.xml", "export_2.xml");
+
         fieldService = new CdmFieldService();
         indexService = new CdmIndexService();
         indexService.setProject(project);
@@ -81,12 +83,11 @@ public class FieldUrlAssessmentServiceTest {
 
         cdmBaseUrl = "http://localhost:" + wireMockRule.port();
         fieldService.setCdmBaseUri(cdmBaseUrl);
+        addUrlsToDb();
     }
 
     @Test
     public void retrieveCdmUrlsTest() throws Exception {
-        indexExportSamples();
-        addUrlsToDb();
         List<FieldUrlAssessmentService.FieldUrlEntry> fieldsAndUrls = service.dbFieldAndUrls(project);
 
         assertEquals(5,fieldsAndUrls.size());
@@ -95,9 +96,6 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void successfulUrlsTest() throws Exception {
         stubUrls(200);
-        indexExportSamples();
-        addUrlsToDb();
-
         service.validateUrls();
 
         try (
@@ -119,9 +117,6 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void redirectUrlsTest() throws Exception {
         stubRedirectUrls();
-
-        indexExportSamples();
-        addUrlsToDb();
         service.validateUrls();
 
         try (
@@ -144,8 +139,6 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void errorUrlsTest() throws Exception {
         stubUrls(400);
-        indexExportSamples();
-        addUrlsToDb();
         service.validateUrls();
 
         try (
@@ -166,26 +159,13 @@ public class FieldUrlAssessmentServiceTest {
 
     @Test
     public void regenerateCsv() throws Exception {
-        indexExportSamples();
-
+        stubUrls(200);
         service.validateUrls();
 
         Path projPath = project.getProjectPath();
         Path newPath = projPath.resolve("gilmer_field_urls.csv");
 
         assertTrue(Files.exists(newPath));
-    }
-
-    private void indexExportSamples() throws Exception {
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_1.xml"));
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
-                project.getExportPath().resolve("export_2.xml"));
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-
-        project.getProjectProperties().setExportedDate(Instant.now());
-        indexService.createDatabase(false);
-        indexService.indexAll();
     }
 
     private void stubUrls(int statusCode) {

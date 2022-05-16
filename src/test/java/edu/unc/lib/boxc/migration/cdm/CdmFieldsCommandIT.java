@@ -120,7 +120,6 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         tmpFolder.create();
         MigrationProject project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), "gilmer", null, USERNAME);
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         testHelper.indexExportData("export_1.xml");
 

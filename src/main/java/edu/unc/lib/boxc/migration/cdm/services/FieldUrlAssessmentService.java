@@ -17,7 +17,6 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import java.io.IOException;
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -25,11 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -135,7 +130,7 @@ public class FieldUrlAssessmentService {
         var httpClient = HttpClients.createDefault();
 
         // row order: field, url, error, successful, redirect, redirect URL
-        for(var entry : fieldsAndUrls) {
+        for (var entry : fieldsAndUrls) {
             String field = entry.fieldName;
             String url = entry.url;
             HttpGet getMethod = new HttpGet(url);
