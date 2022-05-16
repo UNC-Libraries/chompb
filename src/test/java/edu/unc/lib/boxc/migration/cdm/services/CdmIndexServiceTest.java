@@ -222,11 +222,15 @@ public class CdmIndexServiceTest {
         }
     }
 
-    @Ignore("Ignore until compound object support is reimplemented")
     @Test
     public void indexExportWithCompoundObjectsTest() throws Exception {
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_compounds.xml"),
-                project.getExportPath().resolve("export_all.xml"));
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
+        Files.createDirectories(CdmFileRetrievalService.getExportedCpdsPath(project));
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/image/617.cpd"),
+                CdmFileRetrievalService.getExportedCpdsPath(project).resolve("617.cpd"));
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/image/620.cpd"),
+                CdmFileRetrievalService.getExportedCpdsPath(project).resolve("620.cpd"));
         Files.copy(Paths.get("src/test/resources/keepsakes_fields.csv"), project.getFieldsPath());
         setExportedDate();
 
@@ -247,57 +251,57 @@ public class CdmIndexServiceTest {
                     + " from " + CdmIndexService.TB_NAME + " order by dmrecord asc");
             rs.next();
             assertEquals(216, rs.getInt("dmrecord"));
-            assertEquals("2012-05-18", rs.getString("cdmcreated"));
-            assertEquals("2014-01-17", rs.getString("cdmmodified"));
+            assertEquals("2012-05-18", rs.getString("dmcreated"));
+            assertEquals("2014-01-17", rs.getString("dmmodified"));
             assertEquals("Playmakers, circa 1974", rs.getString("title"));
             assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
             assertEquals(602, rs.getInt("dmrecord"));
-            assertEquals("2014-01-20", rs.getString("cdmcreated"));
-            assertEquals("2014-01-20", rs.getString("cdmmodified"));
+            assertEquals("2012-09-11", rs.getString("dmcreated"));
+            assertEquals("2012-09-11", rs.getString("dmmodified"));
             assertEquals("World War II ration book", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("604", rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
             assertEquals(603, rs.getInt("dmrecord"));
-            assertEquals("2014-01-20", rs.getString("cdmcreated"));
-            assertEquals("2014-01-20", rs.getString("cdmmodified"));
+            assertEquals("2012-09-11", rs.getString("dmcreated"));
+            assertEquals("2012-09-11", rs.getString("dmmodified"));
             assertEquals("World War II ration book (instructions)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("604", rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
             assertEquals(604, rs.getInt("dmrecord"));
-            assertEquals("2014-01-20", rs.getString("cdmcreated"));
-            assertEquals("2014-01-20", rs.getString("cdmmodified"));
+            assertEquals("2014-01-17", rs.getString("dmcreated"));
+            assertEquals("2014-01-17", rs.getString("dmmodified"));
             assertEquals("World War II ration book, 1943", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
             assertEquals(605, rs.getInt("dmrecord"));
-            assertEquals("2014-02-17", rs.getString("cdmcreated"));
-            assertEquals("2014-03-17", rs.getString("cdmmodified"));
-            assertEquals("Tiffany's pillbox (closed, in box)", rs.getString("title"));
+            assertEquals("2012-09-11", rs.getString("dmcreated"));
+            assertEquals("2012-09-11", rs.getString("dmmodified"));
+            assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
             assertEquals(606, rs.getInt("dmrecord"));
-            assertEquals("2014-02-17", rs.getString("cdmcreated"));
-            assertEquals("2014-03-17", rs.getString("cdmmodified"));
-            assertEquals("Tiffany's pillbox (open, next to box)", rs.getString("title"));
+            assertEquals("2012-09-11", rs.getString("dmcreated"));
+            assertEquals("2012-09-11", rs.getString("dmmodified"));
+            assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (open, next to box)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
             assertEquals(607, rs.getInt("dmrecord"));
-            assertEquals("2014-02-17", rs.getString("cdmcreated"));
-            assertEquals("2014-03-17", rs.getString("cdmmodified"));
-            assertEquals("Tiffany's pillbox", rs.getString("title"));
+            assertEquals("2014-02-17", rs.getString("dmcreated"));
+            assertEquals("2014-02-17", rs.getString("dmmodified"));
+            assertEquals("Tiffany's pillbox commemorating UNC's bicentennial", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
         } finally {

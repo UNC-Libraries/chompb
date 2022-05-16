@@ -95,7 +95,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         testHelper.assertObjectPopulatedInSip(workResc3F, dirManagerF, modelF, stagingLocs.get(1), null, "27");
 
         // Add missing file and rerun without force
-        List<Path> stagingLocs2 = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs2 = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         executeExpectSuccess(args);
 
@@ -121,7 +121,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -159,7 +159,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         String newCollId = "00123test";
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),

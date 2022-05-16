@@ -22,6 +22,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
@@ -445,7 +446,6 @@ public class SipServiceTest {
         assertEquals(2, listedSips.size());
     }
 
-    @Ignore("Disabled until grouping reimplemented")
     @Test
     public void generateSipsWithGroupedWork() throws Exception {
         testHelper.indexExportData("mini_gilmer");
@@ -485,7 +485,6 @@ public class SipServiceTest {
         assertPersistedSipInfoMatches(sip);
     }
 
-    @Ignore("Disabled until grouping reimplemented")
     @Test
     public void generateSipsWithGroupedWorkWithAccessCopies() throws Exception {
         testHelper.indexExportData("mini_gilmer");
@@ -527,16 +526,17 @@ public class SipServiceTest {
         assertPersistedSipInfoMatches(sip);
     }
 
-    @Ignore("Disabled until compound objects reimplemented")
     @Test
     public void generateSipWithCompoundObjects() throws Exception {
-        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         DescriptionsService descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         descriptionsService.generateDocuments(false);
         descriptionsService.expandDescriptions();
-        List<Path> stagingLocs = testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+        var sourceOptions = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        sourceOptions.setExportField("filena");
+        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
                 "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
@@ -555,7 +555,7 @@ public class SipServiceTest {
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
-        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-20");
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-17");
         testHelper.assertGroupedWorkPopulatedInSip(workResc2, dirManager, model, "604", false,
                 stagingLocs.get(1), stagingLocs.get(2));
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2014-02-17");
@@ -621,7 +621,6 @@ public class SipServiceTest {
         }
     }
 
-    @Ignore("Disabled until grouping reimplemented")
     @Test
     public void generateSipsWithGroupedWorkAndRedirectMapping() throws Exception {
         testHelper.indexExportData("mini_gilmer");
@@ -678,16 +677,17 @@ public class SipServiceTest {
         assertNotEquals(redirectFile, secondRedirectFile);
     }
 
-    @Ignore("Disabled until compounds reimplemented")
     @Test
     public void generateSipWithCompoundObjectsAndRedirectMapping() throws Exception {
-        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         DescriptionsService descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         descriptionsService.generateDocuments(false);
         descriptionsService.expandDescriptions();
-        List<Path> stagingLocs = testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+        var sourceOptions = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        sourceOptions.setExportField("filena");
+        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
                 "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
 
         service.generateSips(makeOptions());

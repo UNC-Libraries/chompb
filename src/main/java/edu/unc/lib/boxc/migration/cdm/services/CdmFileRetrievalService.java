@@ -18,6 +18,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.scp.client.ScpClientCreator;
 
 import java.io.IOException;
@@ -81,11 +82,13 @@ public class CdmFileRetrievalService {
 
     public void downloadFiles(String remoteSubPath, Path localDestination) {
         SshClient client = SshClient.setUpDefaultClient();
+        client.setFilePasswordProvider(FilePasswordProvider.of(sshPassword));
         client.start();
         try (var sshSession = client.connect(sshUsername, cdmHost, sshPort)
                 .verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .getSession()) {
             sshSession.addPasswordIdentity(sshPassword);
+
             sshSession.auth().verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             var scpClientCreator = ScpClientCreator.instance();

@@ -31,10 +31,11 @@ import java.util.stream.Stream;
 public class CdmFieldInfo {
     public static final String CDM_ID = "dmrecord";
     public static final String CDM_CREATED = "dmcreated";
+    public static final String CDM_FILE_FIELD = "find";
     public static final Set<String> IGNORE_FIELDS = new HashSet<>(Arrays.asList(
             "dmoclcno", "dmad1", "dmad2"));
     public static final List<String> RESERVED_FIELDS = Arrays.asList(
-            CDM_ID, CDM_CREATED, "dmmodified", "find");
+            CDM_ID, CDM_CREATED, "dmmodified", CDM_FILE_FIELD);
 
     private List<CdmFieldEntry> fields;
     private List<String> exportFields;

@@ -516,11 +516,11 @@ public class SourceFileServiceTest {
         });
     }
 
-    @Ignore("Disabling until compounds are reimplemented")
     @Test
     public void generateCompoundExactMatchTest() throws Exception {
-        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         SourceFileMappingOptions options = makeDefaultOptions();
+        options.setExportField("filena");
         Path srcPath1 = testHelper.addSourceFile("nccg_ck_09.tif");
         Path srcPath2 = testHelper.addSourceFile("nccg_ck_1042-22_v1.tif");
         Path srcPath3 = testHelper.addSourceFile("nccg_ck_1042-22_v2.tif");

@@ -257,6 +257,19 @@ public class SipServiceHelper {
         Files.copy(fieldsPath, project.getFieldsPath(), REPLACE_EXISTING);
         Files.copy(Paths.get("src/test/resources/descriptions/" + descPath + "/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project), REPLACE_EXISTING);
+        // Copy over any associate CPD files
+        var cpdsSrc = Paths.get("src/test/resources/descriptions/" + descPath + "/image/");
+        var cpdsDest = CdmFileRetrievalService.getExportedCpdsPath(project);
+        Files.createDirectories(cpdsDest);
+        if (Files.isDirectory(cpdsSrc)) {
+            Files.list(cpdsSrc).forEach(cpdFile -> {
+                try {
+                    Files.copy(cpdFile, cpdsDest.resolve(cpdFile.getFileName()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
         project.getProjectProperties().setExportedDate(Instant.now());
         indexService.createDatabase(true);
         indexService.indexAll();
@@ -271,8 +284,12 @@ public class SipServiceHelper {
     }
 
     public List<Path> populateSourceFiles(String... filenames) throws Exception {
+        return populateSourceFiles(makeSourceFileOptions(sourceFilesBasePath), filenames);
+    }
+
+    public List<Path> populateSourceFiles(SourceFileMappingOptions options, String... filenames) throws Exception {
         List<Path> sourcePaths = Arrays.stream(filenames).map(this::addSourceFile).collect(Collectors.toList());
-        sourceFileService.generateMapping(makeSourceFileOptions(sourceFilesBasePath));
+        sourceFileService.generateMapping(options);
         return sourcePaths;
     }
 

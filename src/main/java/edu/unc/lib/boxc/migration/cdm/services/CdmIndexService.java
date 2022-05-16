@@ -22,6 +22,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -38,11 +39,12 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -76,9 +78,12 @@ public class CdmIndexService {
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
+        // Add extra migration fields into list of cdm fields in order to generate the insert template
         List<String> allFields = new ArrayList<>(exportFields);
         allFields.addAll(MIGRATION_FIELDS);
         recordInsertSqlTemplate = makeInsertTemplate(allFields);
+
+        var cpdToIdMap = new HashMap<String, String>();
 
         SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
         var descAllPath = CdmFileRetrievalService.getDescAllPath(project);
@@ -95,9 +100,10 @@ public class CdmIndexService {
                 // reached the end of a record
                 if (line.contains(CLOSE_CDM_ID_TAG)) {
                     recordBuilder.append("</record>");
-//                    log.error("Built record:\n {}", recordBuilder.toString());
                     Document doc = builder.build(new ByteArrayInputStream(
                             recordBuilder.toString().getBytes(StandardCharsets.UTF_8)));
+                    // Store details about where info about compound children can be found
+                    recordIfCompoundObject(doc, cpdToIdMap);
                     indexDocument(doc, conn, fieldInfo);
                     // reset the record builder for the next record
                     recordBuilder = new StringBuilder("<record>");
@@ -108,6 +114,8 @@ public class CdmIndexService {
                 throw new MigrationException("Failed to parse desc.all file, incomplete record with body:\n" +
                         recordBuilder.toString());
             }
+            // Assign type information to objects, based on compound object status
+            assignObjectTypes(conn, cpdToIdMap);
         } catch (IOException e) {
             throw new MigrationException("Failed to read export files", e);
         } catch (SQLException e) {
@@ -115,28 +123,6 @@ public class CdmIndexService {
         } catch (JDOMException e) {
             throw new MigrationException("Failed to parse export file", e);
         }
-
-//        SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
-//        Connection conn = null;
-//        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(project.getExportPath(), "export*.xml")) {
-//            conn = openDbConnection();
-//
-//            Iterator<Path> it = dirStream.iterator();
-//            while (it.hasNext()) {
-//                Path exportPath = it.next();
-//                outputLogger.info("Indexing file: {}", exportPath.getFileName());
-//                Document doc = builder.build(exportPath.toFile());
-//                indexDocument(doc, conn, fieldInfo);
-//            }
-//        } catch (IOException e) {
-//            throw new MigrationException("Failed to read export files", e);
-//        } catch (SQLException e) {
-//            throw new MigrationException("Failed to update database", e);
-//        } catch (JDOMException e) {
-//            throw new MigrationException("Failed to parse export file", e);
-//        } finally {
-//            closeDbConnection(conn);
-//        }
 
         project.getProjectProperties().setIndexedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
@@ -158,50 +144,53 @@ public class CdmIndexService {
             throws SQLException {
         Element root = doc.getRootElement();
         List<String> values = listFieldValues(root, fieldInfo.listConfiguredFields());
-//        List<String> reserved = listFieldValues(root, CdmFieldInfo.RESERVED_FIELDS);
-//        values.addAll(reserved);
-        indexObject(conn, values, null, null);
+        indexObject(conn, values);
     }
-//
-//    private void indexDocument(Document doc, Connection conn, CdmFieldInfo fieldInfo)
-//            throws SQLException {
-//        Element root = doc.getRootElement();
-//        List<Element> recordEls = root.getChildren("record");
-//        for (Element recordEl : recordEls) {
-//            Element structEl = recordEl.getChild("structure");
-//            List<Element> pageEls = structEl.getChildren("page");
-//            String objType = pageEls.size() > 0 ? ENTRY_TYPE_COMPOUND_OBJECT : null;
-//
-//            List<String> values = listFieldValues(recordEl, fieldInfo.listConfiguredFields());
-//            List<String> reserved = listFieldValues(recordEl, CdmFieldInfo.RESERVED_FIELDS);
-//            values.addAll(reserved);
-//            indexObject(conn, values, null, objType);
-//
-//            if (!pageEls.isEmpty()) {
-//                for (Element pageEl : pageEls) {
-//                    indexCompoundChild(pageEl, conn, fieldInfo, reserved);
-//                }
-//            }
-//        }
-//    }
 
-    private void indexCompoundChild(Element childEl, Connection conn, CdmFieldInfo fieldInfo,
-                                    List<String> parentReservedValues) throws SQLException {
-        Element metadataEl = childEl.getChild("pagemetadata");
-        String pageId = childEl.getChildText("pageptr");
-        String parentCdmId = parentReservedValues.get(0);
-        log.debug("Indexing compound child {} from parent {}", pageId, parentCdmId);
+    private void recordIfCompoundObject(Document doc, Map<String, String> cpdToIdMap) {
+        var recordEl = doc.getRootElement();
+        var fileValue = recordEl.getChildTextTrim(CdmFieldInfo.CDM_FILE_FIELD);
+        if (StringUtils.endsWithIgnoreCase(fileValue, ".cpd")) {
+            var cdmId = recordEl.getChildTextTrim(CdmFieldInfo.CDM_ID);
+            cpdToIdMap.put(fileValue, cdmId);
+        }
+    }
 
-        List<String> values = listFieldValues(metadataEl, fieldInfo.listConfiguredFields());
-        // Use the page id as the child's cdm id
-        values.add(pageId);
-        // Compound child record doesn't timestamp fields, so use parents
-        values.add(parentReservedValues.get(1));
-        values.add(parentReservedValues.get(2));
-        // Clear the cdmfile and cdmpath values for the child
-        values.add(null);
-        values.add(null);
-        indexObject(conn, values, parentCdmId, ENTRY_TYPE_COMPOUND_CHILD);
+    private static final String ASSIGN_PARENT_COMPOUND_TYPE_TEMPLATE =
+            "update " + TB_NAME + " set " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_OBJECT
+                    + "' where " + CdmFieldInfo.CDM_ID + " = ?";
+    private static final String ASSIGN_CHILD_INFO_TEMPLATE =
+            "update " + TB_NAME + " set " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "', "
+                    + PARENT_ID_FIELD + " = ?"
+                    + " where " + CdmFieldInfo.CDM_ID + " = ?";
+
+    private void assignObjectTypes(Connection dbConn, Map<String, String> cpdToIdMap) {
+        SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
+        var cpdsPath = CdmFileRetrievalService.getExportedCpdsPath(project);
+        cpdToIdMap.forEach((cpdFilename, cpdId) -> {
+            var cpdPath = cpdsPath.resolve(cpdFilename);
+            try (var parentTypeStmt = dbConn.prepareStatement(ASSIGN_PARENT_COMPOUND_TYPE_TEMPLATE)) {
+                // Assign compound object type to parent object
+                parentTypeStmt.setString(1, cpdId);
+                parentTypeStmt.executeUpdate();
+
+                var cpdDoc = builder.build(cpdPath.toFile());
+                var cpdRoot = cpdDoc.getRootElement();
+                // Assign each child object to its parent compound
+                for (var pageEl : cpdRoot.getChildren("page")) {
+                    var childId = pageEl.getChildTextTrim("pageptr");
+                    try (var childStmt = dbConn.prepareStatement(ASSIGN_CHILD_INFO_TEMPLATE)) {
+                        childStmt.setString(1, cpdId);
+                        childStmt.setString(2, childId);
+                        childStmt.executeUpdate();
+                    }
+                }
+            } catch (JDOMException | IOException e) {
+                throw new MigrationException("Failed to parse CPD file " + cpdPath, e);
+            } catch (SQLException e) {
+                throw new MigrationException("Failed to update type information for " + cpdId, e);
+            }
+        });
     }
 
     private List<String> listFieldValues(Element objEl, List<String> exportFields) {
@@ -222,32 +211,25 @@ public class CdmIndexService {
      * @param exportFieldValues Values of all configured and reserved fields which belong to the object being indexed.
      *                          Must be ordered with configured fields first, followed by reserved fields
      *                          as defined in CdmFieldInfo.RESERVED_FIELDS
-     * @param migrationFieldValues Array of migration specific fields, in the order defined in
-     *                             CdmIndexService.MIGRATION_FIELDS
      * @throws SQLException
      */
-    private void indexObject(Connection conn, List<String> exportFieldValues, String... migrationFieldValues)
+    private void indexObject(Connection conn, List<String> exportFieldValues)
             throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement(recordInsertSqlTemplate);
-        int i = 0;
-        for (; i < exportFieldValues.size(); i++) {
-            String value = exportFieldValues.get(i);
-            stmt.setString(i + 1, value);
-        }
-
-        // Add in migration generated fields
-        for (int j = 0; j < migrationFieldValues.length; j++) {
-            if (migrationFieldValues[j] == null) {
-                stmt.setNull(i + j + 1, Types.LONGVARCHAR);
-            } else {
-                stmt.setString(i + j + 1, migrationFieldValues[j]);
+        try (PreparedStatement stmt = conn.prepareStatement(recordInsertSqlTemplate)) {
+            for (int i = 0; i < exportFieldValues.size(); i++) {
+                String value = exportFieldValues.get(i);
+                stmt.setString(i + 1, value);
             }
-        }
 
-        stmt.executeUpdate();
-        stmt.close();
+            stmt.executeUpdate();
+        }
     }
 
+    /**
+     * Create the index database with all cdm and migration fields
+     * @param force
+     * @throws IOException
+     */
     public void createDatabase(boolean force) throws IOException {
         ensureDatabaseState(force);
 
