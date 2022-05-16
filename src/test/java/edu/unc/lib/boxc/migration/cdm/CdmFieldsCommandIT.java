@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,7 +36,7 @@ import edu.unc.lib.boxc.migration.cdm.services.FieldAssessmentTemplateService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 
 /**
- * @author bbpennel
+ * @author bbpennel, snluong
  */
 public class CdmFieldsCommandIT extends AbstractCommandIT {
 
@@ -120,7 +121,8 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         MigrationProject project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), "gilmer", null, USERNAME);
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-//        templateService.generate(project);
+        var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        testHelper.indexExportData("export_1.xml");
 
         Path projectPath = project.getProjectPath();
         Path reportPath = projectPath.resolve("gilmer_field_urls.csv");
