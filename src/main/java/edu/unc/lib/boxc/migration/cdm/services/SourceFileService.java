@@ -15,9 +15,20 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
-import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
-import static org.slf4j.LoggerFactory.getLogger;
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
+import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -42,7 +53,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -50,21 +60,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-
-import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service for interacting with source files

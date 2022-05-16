@@ -15,38 +15,17 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import com.google.common.collect.Lists;
-import edu.unc.lib.boxc.common.util.URIUtil;
-import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.input.SAXBuilder;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -79,13 +58,11 @@ public class CdmExportService {
             exportStateService.transitionToDownloadingDesc();
             initializeFileRetrievalService(options);
             fileRetrievalService.downloadDescAllFile();
-            exportStateService.transitionToListing();
+            exportStateService.transitionToDownloadingCpd();
         }
 
-        // Retrieve list of CDM ids
-//        List<String> allIds = extractCdmIds();
-
-        if (exportStateService.inStateOrNotResuming(ProgressState.EXPORTING)) {
+        if (exportStateService.inStateOrNotResuming(ProgressState.DOWNLOADING_CPD)) {
+            fileRetrievalService.downloadCpdFiles();
             project.getProjectProperties().setExportedDate(Instant.now());
             ProjectPropertiesSerialization.write(project);
         }

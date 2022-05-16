@@ -23,8 +23,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.jena.ext.com.google.common.collect.Streams;
-
 /**
  * Information describing the fields present in a CDM collection
  *

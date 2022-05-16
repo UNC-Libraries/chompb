@@ -22,13 +22,13 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.List;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -40,7 +40,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class ExportStateService {
     private static final Logger log = getLogger(ExportStateService.class);
-    private static final String IDS_FILENAME = ".object_ids.txt";
     private static final String STATE_FILENAME = ".export_state.json";
     private static final ObjectWriter STATE_WRITER;
     private static final ObjectReader STATE_READER;
@@ -131,44 +130,12 @@ public class ExportStateService {
     }
 
     /**
-     * Transition the export to the listing object ids state
+     * Transition to downloading CPD files
      * @throws IOException
      */
-    public void transitionToListing() throws IOException {
+    public void transitionToDownloadingCpd() throws IOException {
         assertState(ProgressState.DOWNLOADING_DESC);
-        state.setProgressState(ProgressState.LISTING_OBJECTS);
-        writeState();
-    }
-
-    /**
-     * Transition the export to the exporting objects state
-     * @param totalObjects
-     * @param exportPageSize
-     * @throws IOException
-     */
-    public void transitionToExporting(int totalObjects, int exportPageSize) throws IOException {
-        assertState(ProgressState.LISTING_OBJECTS);
-        state.setProgressState(ProgressState.EXPORTING);
-        state.setTotalObjects(totalObjects);
-        state.setExportPageSize(exportPageSize);
-        writeState();
-    }
-
-    /**
-     * Register a list of object ids as having been exported
-     * @param objectIds
-     * @throws IOException
-     */
-    public void registerExported(List<String> objectIds) throws IOException {
-        assertState(ProgressState.EXPORTING);
-        int lastIndex;
-        if (state.getLastExportedIndex() == 0) {
-            // Subtract 1 from size to shift to 0 based index for the first page
-            lastIndex = objectIds.size() - 1;
-        } else {
-            lastIndex = state.getLastExportedIndex() + objectIds.size();
-        }
-        state.setLastExportedIndex(lastIndex);
+        state.setProgressState(ProgressState.DOWNLOADING_CPD);
         writeState();
     }
 
@@ -177,13 +144,9 @@ public class ExportStateService {
      * @throws IOException
      */
     public void exportingCompleted() throws IOException {
-        assertState(ProgressState.EXPORTING);
+        assertState(ProgressState.DOWNLOADING_CPD);
         state.setProgressState(ProgressState.EXPORT_COMPLETED);
         writeState();
-    }
-
-    public Path getObjectListPath() {
-        return project.getExportPath().resolve(IDS_FILENAME);
     }
 
     public Path getExportStatePath() {
@@ -229,17 +192,7 @@ public class ExportStateService {
      */
     public void clearState() throws IOException {
         if (Files.exists(project.getExportPath())) {
-            Files.deleteIfExists(getExportStatePath());
-            Files.deleteIfExists(getObjectListPath());
-            Files.list(project.getExportPath())
-                    .filter(p -> p.getFileName().toString().startsWith("export"))
-                    .forEach(p -> {
-                        try {
-                            Files.delete(p);
-                        } catch (IOException e) {
-                            log.error("Failed to cleanup file", e);
-                        }
-                    });
+            FileUtils.deleteDirectory(project.getExportPath().toFile());
         }
         state = new ExportState();
     }

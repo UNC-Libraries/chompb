@@ -17,6 +17,7 @@ package edu.unc.lib.boxc.migration.cdm.services.export;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import org.junit.Before;
 import org.junit.Rule;
@@ -89,14 +90,9 @@ public class ExportStateServiceTest {
     @Test
     public void startOrResumeExportResumeInCompletedState() throws Exception {
         exportStateService.startOrResumeExport(false);
-        ExportState initState = exportStateService.getState();
-        List<String> cdmIds = generateIdList(99);
-        initState.setProgressState(ProgressState.LISTING_OBJECTS);
-        initState.setProgressState(ProgressState.EXPORTING);
-        initState.setTotalObjects(99);
-        exportStateService.registerExported(cdmIds);
-        initState.setProgressState(ProgressState.EXPORT_COMPLETED);
-        exportStateService.writeState();
+        exportStateService.transitionToDownloadingDesc();
+        exportStateService.transitionToDownloadingCpd();
+        exportStateService.exportingCompleted();
 
         try {
             exportStateService.startOrResumeExport(false);
@@ -107,78 +103,55 @@ public class ExportStateServiceTest {
         ExportState state = exportStateService.readState();
         assertFalse(state.isResuming());
         assertEquals(ProgressState.EXPORT_COMPLETED, state.getProgressState());
-        assertEquals(99, state.getTotalObjects().intValue());
-        assertEquals(cdmIds.size() - 1, state.getLastExportedIndex());
     }
 
     @Test
     public void startOrResumeExportResumeInCompletedStateWithRestart() throws Exception {
         exportStateService.startOrResumeExport(false);
-        ExportState initState = exportStateService.getState();
-        List<String> cdmIds = generateIdList(99);
-        initState.setProgressState(ProgressState.LISTING_OBJECTS);
-        initState.setProgressState(ProgressState.EXPORTING);
-        initState.setTotalObjects(99);
-        exportStateService.registerExported(cdmIds);
-        initState.setProgressState(ProgressState.EXPORT_COMPLETED);
-        exportStateService.writeState();
+        exportStateService.transitionToDownloadingDesc();
+        exportStateService.transitionToDownloadingCpd();
+        exportStateService.exportingCompleted();
 
         exportStateService.startOrResumeExport(true);
 
         ExportState state = exportStateService.readState();
         assertFalse(state.isResuming());
         assertEquals(ProgressState.STARTING, state.getProgressState());
-        assertNull(state.getTotalObjects());
-        assertEquals(0, state.getLastExportedIndex());
     }
 
     @Test
-    public void startOrResumeExportResumeInExportingState() throws Exception {
+    public void startOrResumeExportResumeInDownloadingCpdState() throws Exception {
         exportStateService.startOrResumeExport(false);
-        ExportState initState = exportStateService.getState();
-        initState.setExportPageSize(50);
-        List<String> cdmIds = generateIdList(99);
-        initState.setProgressState(ProgressState.LISTING_OBJECTS);
-        initState.setProgressState(ProgressState.EXPORTING);
-        initState.setTotalObjects(99);
-        exportStateService.registerExported(cdmIds.subList(0, 50));
-        exportStateService.writeState();
+        exportStateService.transitionToDownloadingDesc();
+        exportStateService.transitionToDownloadingCpd();
+
+        var cpdPath = CdmFileRetrievalService.getExportedCpdsPath(project);
+        Files.createDirectories(cpdPath);
 
         exportStateService.startOrResumeExport(false);
 
         // Persisted state should not be modified during resumption
         ExportState state = exportStateService.readState();
         assertFalse(state.isResuming());
-        assertEquals(ProgressState.EXPORTING, state.getProgressState());
-        assertEquals(99, state.getTotalObjects().intValue());
-        assertEquals(49, state.getLastExportedIndex());
-
-        // Active state should indicate it was resumed
-        ExportState activeState = exportStateService.getState();
-        assertTrue(activeState.isResuming());
-        assertEquals(ProgressState.EXPORTING, activeState.getProgressState());
-        assertEquals(49, state.getLastExportedIndex());
+        assertEquals(ProgressState.DOWNLOADING_CPD, state.getProgressState());
+        assertTrue("CPD export path must still exist", Files.isDirectory(cpdPath));
     }
 
     @Test
     public void startOrResumeExportResumeInExportingStateWithForceRestart() throws Exception {
         exportStateService.startOrResumeExport(false);
-        ExportState initState = exportStateService.getState();
-        initState.setExportPageSize(50);
-        List<String> cdmIds = generateIdList(99);
-        initState.setProgressState(ProgressState.LISTING_OBJECTS);
-        initState.setProgressState(ProgressState.EXPORTING);
-        initState.setTotalObjects(99);
-        exportStateService.registerExported(cdmIds.subList(0, 50));
-        exportStateService.writeState();
+        exportStateService.transitionToDownloadingDesc();
+        exportStateService.transitionToDownloadingCpd();
+
+        var cpdPath = CdmFileRetrievalService.getExportedCpdsPath(project);
+        Files.createDirectories(cpdPath);
 
         exportStateService.startOrResumeExport(true);
 
         ExportState state = exportStateService.getState();
         assertFalse(state.isResuming());
         assertEquals(ProgressState.STARTING, state.getProgressState());
-        assertNull(state.getTotalObjects());
-        assertEquals(0, state.getLastExportedIndex());
+        assertFalse("CPD export path must not exist", Files.isDirectory(cpdPath));
     }
 
     @Test
@@ -189,17 +162,17 @@ public class ExportStateServiceTest {
     @Test
     public void inStateOrNotResumingNoResumeInStateTest() throws Exception {
         ExportState state = exportStateService.getState();
-        state.setProgressState(ProgressState.LISTING_OBJECTS);
-        assertTrue(exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS));
+        state.setProgressState(ProgressState.DOWNLOADING_DESC);
+        assertTrue(exportStateService.inStateOrNotResuming(ProgressState.DOWNLOADING_DESC));
     }
 
     @Test
     public void inStateOrNotResumingIsResumingInStateTest() throws Exception {
         ExportState state = exportStateService.getState();
         state.setResuming(true);
-        state.setProgressState(ProgressState.LISTING_OBJECTS);
-        assertTrue(exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS));
-        assertTrue(exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS,
+        state.setProgressState(ProgressState.DOWNLOADING_CPD);
+        assertTrue(exportStateService.inStateOrNotResuming(ProgressState.DOWNLOADING_CPD));
+        assertTrue(exportStateService.inStateOrNotResuming(ProgressState.DOWNLOADING_CPD,
                 ProgressState.DOWNLOADING_DESC));
     }
 
@@ -207,10 +180,10 @@ public class ExportStateServiceTest {
     public void inStateOrNotResumingIsResumingNotInStateTest() throws Exception {
         ExportState state = exportStateService.getState();
         state.setResuming(true);
-        state.setProgressState(ProgressState.EXPORTING);
-        assertFalse(exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS));
-        assertFalse(exportStateService.inStateOrNotResuming(ProgressState.LISTING_OBJECTS,
-                ProgressState.DOWNLOADING_DESC));
+        state.setProgressState(ProgressState.DOWNLOADING_DESC);
+        assertFalse(exportStateService.inStateOrNotResuming(ProgressState.DOWNLOADING_CPD));
+        assertFalse(exportStateService.inStateOrNotResuming(ProgressState.STARTING,
+                ProgressState.DOWNLOADING_CPD));
     }
 
     @Test
@@ -228,7 +201,7 @@ public class ExportStateServiceTest {
     @Test
     public void transitionToDownloadingInWrongStateTest() throws Exception {
         exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
+        exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_CPD);
         exportStateService.writeState();
 
         try {
@@ -237,27 +210,27 @@ public class ExportStateServiceTest {
         } catch (InvalidProjectStateException e) {
         }
         ExportState state = exportStateService.readState();
-        assertEquals(ProgressState.LISTING_OBJECTS, state.getProgressState());
+        assertEquals(ProgressState.DOWNLOADING_CPD, state.getProgressState());
     }
 
     @Test
-    public void transitionToListingTest() throws Exception {
+    public void transitionToDownloadingCpdTest() throws Exception {
         exportStateService.startOrResumeExport(false);
         exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_DESC);
         exportStateService.writeState();
 
-        exportStateService.transitionToListing();
+        exportStateService.transitionToDownloadingCpd();
 
         ExportState state = exportStateService.readState();
-        assertEquals(ProgressState.LISTING_OBJECTS, state.getProgressState());
+        assertEquals(ProgressState.DOWNLOADING_CPD, state.getProgressState());
     }
 
     @Test
-    public void transitionToListingWrongStateTest() throws Exception {
+    public void transitionToDownloadingCpdWrongStateTest() throws Exception {
         exportStateService.startOrResumeExport(false);
 
         try {
-            exportStateService.transitionToListing();
+            exportStateService.transitionToDownloadingCpd();
             fail();
         } catch (InvalidProjectStateException e) {
         }
@@ -266,46 +239,14 @@ public class ExportStateServiceTest {
     }
 
     @Test
-    public void transitionToExportingTest() throws Exception {
-        exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-        exportStateService.writeState();
-
-        exportStateService.transitionToExporting(100, 500);
-
-        ExportState state = exportStateService.readState();
-        assertEquals(ProgressState.EXPORTING, state.getProgressState());
-        assertEquals(500, state.getExportPageSize().intValue());
-        assertEquals(100, state.getTotalObjects().intValue());
-    }
-
-    @Test
     public void exportingCompletedTest() throws Exception {
         exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.EXPORTING);
+        exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_CPD);
 
         exportStateService.exportingCompleted();
 
         ExportState state = exportStateService.readState();
         assertEquals(ProgressState.EXPORT_COMPLETED, state.getProgressState());
-    }
-
-    @Test
-    public void registerExportedTest() throws Exception {
-        exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.EXPORTING);
-
-        List<String> allIds = generateIdList(120);
-        List<String> firstPage = allIds.subList(0, 50);
-        List<String> secondPage = allIds.subList(50, 100);
-        List<String> thirdPage = allIds.subList(100, 120);
-
-        exportStateService.registerExported(firstPage);
-        assertEquals(49, exportStateService.getState().getLastExportedIndex());
-        exportStateService.registerExported(secondPage);
-        assertEquals(99, exportStateService.getState().getLastExportedIndex());
-        exportStateService.registerExported(thirdPage);
-        assertEquals(119, exportStateService.getState().getLastExportedIndex());
     }
 
     private List<String> generateIdList(int count) {

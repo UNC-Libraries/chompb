@@ -15,8 +15,6 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
@@ -29,24 +27,13 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -96,8 +83,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
 
         assertTrue("Export folder not created", Files.exists(project.getExportPath()));
-        assertEquals(IOUtils.toString(getClass().getResourceAsStream("/descriptions/gilmer/index/description/desc.all"), StandardCharsets.UTF_8),
-                FileUtils.readFileToString(CdmFileRetrievalService.getDescAllPath(project).toFile(), StandardCharsets.UTF_8));
+        assertDescAllFilePresent(project, "/descriptions/gilmer/index/description/desc.all");
     }
 
     @Test
@@ -129,19 +115,15 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void errorResponseTest() throws Exception {
-        stubFor(post(urlEqualTo("/cgi-bin/admin/exportxml.exe"))
-                .willReturn(aResponse()
-                        .withStatus(400)));
-
-        Path projPath = createProject();
+        Path projPath = createProject("bad_colletion");
 
         String[] args = exportArgs(projPath);
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
 
-        assertFalse("Export file should not be created", Files.exists(project.getExportPath().resolve("export_1.xml")));
-        assertOutputContains("Failed to request export");
+        assertFalse("Export file should not be created", Files.exists(CdmFileRetrievalService.getDescAllPath(project)));
+        assertOutputContains("Failed to download desc.all file");
     }
 
     @Test
@@ -151,8 +133,6 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         String[] args = exportArgs(projPath);
         executeExpectSuccess(args);
 
-        // Change response for export so it will be clear if a new export occurs
-
         String[] argsRerun = exportArgs(projPath);
         executeExpectFailure(argsRerun);
         assertOutputContains("Export has already completed, must force restart to overwrite");
@@ -160,33 +140,52 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
 
         // Previous export should still be present
-        assertExportFilesPresent(project, "export_1.xml");
-        assertEquals(originalExportBody, FileUtils.readFileToString(
-                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
+        assertDescAllFilePresent(project, "/descriptions/gilmer/index/description/desc.all");
+
+        // Remove file so we can see that it gets repopulated
+        Files.delete(CdmFileRetrievalService.getDescAllPath(project));
 
         // Retry with force restart
         String[] argsRestart = exportArgs(projPath, "--force");
         executeExpectSuccess(argsRestart);
 
-        assertExportFilesPresent(project, "export_1.xml");
         // Contents of file should match new contents
-        assertEquals(modifiedBody, FileUtils.readFileToString(
-                project.getExportPath().resolve("export_1.xml").toFile(), StandardCharsets.UTF_8));
+        assertDescAllFilePresent(project, "/descriptions/gilmer/index/description/desc.all");
     }
 
-    private void assertExportFilesPresent(MigrationProject project, String... expectedNames) throws IOException {
-        List<String> exportNames = Files.list(project.getExportPath())
-                .map(p -> p.getFileName().toString())
-                .filter(p -> p.startsWith("export"))
-                .collect(Collectors.toList());
-        assertTrue("Expected names: " + String.join(", ", expectedNames
-            + "\nBut found names: " + exportNames), exportNames.containsAll(Arrays.asList(expectedNames)));
-        assertEquals(expectedNames.length, exportNames.size());
+    @Test
+    public void exportValidProjectWithCompoundsTest() throws Exception {
+        Path projPath = createProject("mini_keepsakes");
+
+        String[] args = exportArgs(projPath);
+        executeExpectSuccess(args);
+
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
+
+        assertTrue("Export folder not created", Files.exists(project.getExportPath()));
+        assertDescAllFilePresent(project, "/descriptions/mini_keepsakes/index/description/desc.all");
+
+        assertCpdFilePresent(project, "617.cpd", "/descriptions/mini_keepsakes/image/617.cpd");
+        assertCpdFilePresent(project, "620.cpd", "/descriptions/mini_keepsakes/image/620.cpd");
+    }
+
+    private void assertDescAllFilePresent(MigrationProject project, String expectedContentPath) throws Exception {
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream(expectedContentPath), StandardCharsets.UTF_8),
+                FileUtils.readFileToString(CdmFileRetrievalService.getDescAllPath(project).toFile(), StandardCharsets.UTF_8));
+    }
+
+    private void assertCpdFilePresent(MigrationProject project, String exportedFilename, String expectedContentPath) throws Exception {
+        assertEquals(IOUtils.toString(getClass().getResourceAsStream(expectedContentPath), StandardCharsets.UTF_8),
+                FileUtils.readFileToString(CdmFileRetrievalService.getExportedCpdsPath(project).resolve(exportedFilename).toFile(), StandardCharsets.UTF_8));
     }
 
     private Path createProject() throws Exception {
+        return createProject(COLLECTION_ID);
+    }
+
+    private Path createProject(String collId) throws Exception {
         MigrationProject project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
+                baseDir, collId, null, USERNAME);
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
         CdmFieldEntry fieldEntry = new CdmFieldEntry();
         fieldEntry.setNickName("title");

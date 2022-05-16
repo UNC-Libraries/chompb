@@ -380,10 +380,10 @@ public class SipServiceHelper {
     }
 
     public void initializeDefaultProjectState(String dest_uuid) throws Exception {
-        indexExportData("export_1.xml");
+        indexExportData("mini_gilmer");
         generateDefaultDestinationsMapping(dest_uuid, null);
         populateDescriptions("gilmer_mods1.xml");
-        populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
     }
 
     public void addSipsSubmitted() {

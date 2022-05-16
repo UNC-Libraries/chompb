@@ -79,7 +79,8 @@ public class CdmExportServiceTest {
     private ExportStateService exportStateService;
     @Mock
     private CdmFileRetrievalService cdmFileRetrievalService;
-    private String descAllPath = "src/test/resources/descriptions/gilmer/index/description/desc.all";
+    private String descAllResourcePath = "/descriptions/gilmer/index/description/desc.all";
+    private String descAllPath = "src/test/resources" + descAllResourcePath;
 
     @Before
     public void setup() throws Exception {
@@ -122,8 +123,7 @@ public class CdmExportServiceTest {
         service.exportAll(makeExportOptions());
 
         assertTrue("Export folder not created", Files.exists(project.getExportPath()));
-        assertExportFileCount(1);
-        assertExportedFileContentsMatch(descAllPath);
+        assertExportedFileContentsMatch(descAllResourcePath);
     }
 
     @Test
@@ -137,15 +137,8 @@ public class CdmExportServiceTest {
             service.exportAll(makeExportOptions());
             fail();
         } catch (MigrationException e) {
-            // no files sohuld be present
-            assertExportFileCount(0);
-        }
-    }
-
-    private void assertExportFileCount(int expectedCount) throws Exception {
-        try (Stream<Path> files = Files.list(project.getExportPath())) {
-            long count = files.filter(p -> p.getFileName().toString().startsWith("export")).count();
-            assertEquals(expectedCount, count);
+            // no files should be present
+            assertFalse(Files.exists(CdmFileRetrievalService.getDescAllPath(project)));
         }
     }
 

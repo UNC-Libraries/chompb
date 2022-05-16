@@ -15,7 +15,6 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services.export;
 
-import edu.unc.lib.boxc.migration.cdm.util.DisplayProgressUtil;
 import org.slf4j.Logger;
 
 import java.util.concurrent.TimeUnit;
@@ -34,7 +33,6 @@ public class ExportProgressService {
 
     private ProgressState previousProgressState;
     private ExportStateService exportStateService;
-    private boolean exportingNeedsClose;
 
     private Thread displayThread;
     private boolean displayActive;
@@ -59,11 +57,9 @@ public class ExportProgressService {
                 } catch (InterruptedException e) {
                     log.warn("Interrupting progress display");
                     displayActive = false;
-                    DisplayProgressUtil.finishProgress();
                     return;
                 } catch (Exception e) {
                     displayActive = false;
-                    DisplayProgressUtil.finishProgress();
                     throw e;
                 }
             }
@@ -111,34 +107,22 @@ public class ExportProgressService {
             }
         }
         if (ProgressState.DOWNLOADING_DESC.equals(currentProgress)) {
-            // Transitioning into download
+            // Transitioning into download desc
             if (!ProgressState.DOWNLOADING_DESC.equals(lastUpdateState)) {
                 outputLogger.info("Retrieving description file for collection...");
             }
         }
-        if (ProgressState.LISTING_OBJECTS.equals(currentProgress)) {
-            // Transitioning into listing state
-            if (!ProgressState.LISTING_OBJECTS.equals(lastUpdateState)) {
-                outputLogger.info("Listing CDM Object IDs...");
+        if (ProgressState.DOWNLOADING_CPD.equals(currentProgress)) {
+            // Transitioning into download cpds
+            if (!ProgressState.DOWNLOADING_CPD.equals(lastUpdateState)) {
+                outputLogger.info("Retrieving compound object files for collection...");
             }
-            return;
         }
-
-        // export count is the index plus one, unless none have been exported yet
-        int exportCount = currentState.getLastExportedIndex() == 0 ? 0 : (currentState.getLastExportedIndex() + 1);
-        if (ProgressState.EXPORTING.equals(currentProgress)) {
-            // Transitioning into listing state
-            if (!ProgressState.EXPORTING.equals(lastUpdateState)) {
-                outputLogger.info("Exporting object metadata:");
-                exportingNeedsClose = true;
+        if (ProgressState.EXPORT_COMPLETED.equals(currentProgress)) {
+            // Transitioning into completed state
+            if (!ProgressState.EXPORT_COMPLETED.equals(lastUpdateState)) {
+                outputLogger.info("Finished exporting");
             }
-            DisplayProgressUtil.displayProgress(exportCount, currentState.getTotalObjects());
-            return;
-        } else if (exportingNeedsClose) {
-            // Final update of progress, to make sure it reaches end
-            DisplayProgressUtil.displayProgress(exportCount, currentState.getTotalObjects());
-            DisplayProgressUtil.finishProgress();
-            exportingNeedsClose = false;
         }
     }
 

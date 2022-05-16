@@ -15,17 +15,24 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
-import static org.slf4j.LoggerFactory.getLogger;
+import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -35,24 +42,10 @@ import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.input.SAXBuilder;
-import org.slf4j.Logger;
-
-import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
-import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service for populating and querying the index of exported CDM records for a migration project

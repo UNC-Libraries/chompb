@@ -176,7 +176,7 @@ public class RedirectMappingIndexServiceTest {
 
     private void generateCompoundObjectProject() throws Exception {
         testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"),
-                "export_compounds.xml");
+                "mini_keepsakes");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.getDescriptionsService().generateDocuments(true);
         testHelper.getDescriptionsService().expandDescriptions();
