@@ -140,7 +140,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 "export",
                 "-D", Paths.get("src/test/resources/descriptions").toAbsolutePath().toString(),
                 "-P", "42222",
-                "--cdm-url", cdmBaseUrl,
                 "-p", CDM_PASSWORD };
         executeExpectSuccess(argsExport);
 
