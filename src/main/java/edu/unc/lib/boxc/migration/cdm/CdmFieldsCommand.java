@@ -76,6 +76,7 @@ public class CdmFieldsCommand {
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("{}", e.getMessage());
+            log.error("Failed to generate fields assessment report", e);
             return 1;
         } catch (Exception e) {
             log.error("Failed to generate report", e);
@@ -99,6 +100,7 @@ public class CdmFieldsCommand {
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("{}", e.getMessage());
+            log.error("Failed to generate fields with URLs report", e);
             return 1;
         } catch (Exception e) {
             log.error("Failed to generate fields with URLs report", e);
