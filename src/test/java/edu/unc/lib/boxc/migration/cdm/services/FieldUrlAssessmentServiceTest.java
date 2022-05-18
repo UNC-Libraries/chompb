@@ -88,7 +88,7 @@ public class FieldUrlAssessmentServiceTest {
 
     @Test
     public void retrieveCdmUrlsTest() throws Exception {
-        List<FieldUrlAssessmentService.FieldUrlEntry> fieldsAndUrls = service.dbFieldAndUrls(project);
+        List<FieldUrlAssessmentService.FieldUrlEntry> fieldsAndUrls = service.dbFieldAndUrls();
 
         assertEquals(5,fieldsAndUrls.size());
     }

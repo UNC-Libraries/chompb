@@ -53,7 +53,7 @@ public class FieldUrlAssessmentService {
     private CdmFieldService cdmFieldService;
     private CdmIndexService indexService;
 
-    // header: field, url, error, successful, redirect, redirect url
+    // header order: field, url, error, successful, redirect, redirect url
     public static final String NICK_FIELD = "cdm_nick";
     public static final String URL = "url";
     public static final String ERROR_INDICATOR = "error?";
@@ -64,11 +64,9 @@ public class FieldUrlAssessmentService {
             NICK_FIELD, URL, ERROR_INDICATOR, SUCCESSFUL_INDICATOR, REDIRECT_INDICATOR, REDIRECT_URL };
 
     /**
-     * Generates a hashmap with field nicknames as keys and extracted URLs as values
-     * @throws IOException
+     * Generates a List of FieldUrlEntries that have the CDM field and associated URLs as attributes
      */
-    public List<FieldUrlEntry> dbFieldAndUrls(MigrationProject project) throws IOException {
-        indexService.setProject(project);
+    public List<FieldUrlEntry> dbFieldAndUrls() throws IOException {
         cdmFieldService.validateFieldsFile(project);
         CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
@@ -100,10 +98,9 @@ public class FieldUrlAssessmentService {
     }
 
     /**
-     * Extracts urls from each field
-     * @throws IOException
+     * Extracts url from the passed in CDM field value
      */
-    public String extractUrl(String string) throws IOException {
+    public String extractUrl(String string) {
         String regex = "\\b((?:https?|ftp|file):" + "//[-a-zA-Z0-9+&@#/%?=" + "~_|!:, .;]*[-a-zA-Z0-9+"
                 + "&@#/%=~_|])";
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
@@ -117,10 +114,9 @@ public class FieldUrlAssessmentService {
 
     /**
      * Validate urls, list redirect urls, and write to csv file
-     * @throws IOException
      */
     public void validateUrls() throws IOException {
-        var fieldsAndUrls = dbFieldAndUrls(project);
+        var fieldsAndUrls = dbFieldAndUrls();
 
         Path projPath = project.getProjectPath();
         String filename = project.getProjectProperties().getName() + "_field_urls.csv";

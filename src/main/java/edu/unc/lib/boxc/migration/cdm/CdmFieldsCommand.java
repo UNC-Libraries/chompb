@@ -93,6 +93,7 @@ public class CdmFieldsCommand {
             fieldUrlAssessmentService.setProject(project);
             fieldUrlAssessmentService.setIndexService(indexService);
             fieldUrlAssessmentService.setCdmFieldService(fieldService);
+            indexService.setProject(project);
             fieldUrlAssessmentService.validateUrls();
             outputLogger.info("Fields with URLs report generated");
             return 0;
