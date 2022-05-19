@@ -32,6 +32,7 @@ import java.util.List;
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -120,13 +121,13 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateNoSourceFilesTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         service.generateMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", null);
-        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
@@ -134,7 +135,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateExactMatchTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
@@ -142,7 +143,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
@@ -150,7 +151,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateTransformedMatchTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setFieldMatchingPattern("(\\d+)\\_([^_]+)\\_E.tif");
         options.setFilenameTemplate("00$1_op0$2_0001_e.tif");
@@ -162,7 +163,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", srcPath3);
 
         assertMappedDatePresent();
@@ -170,17 +171,17 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateNestedMatchesTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*.tif");
         Path srcPath1 = testHelper.addSourceFile("nested/path/276_182_E.tif");
-        Path srcPath2 = testHelper.addSourceFile("276_183B_E.tif");
+        Path srcPath2 = testHelper.addSourceFile("276_183_E.tif");
 
         service.generateMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183B_E.tif", srcPath2);
+        assertMappingPresent(info, "26", "276_183_E.tif", srcPath2);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
@@ -188,7 +189,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateTransformedNestedMatchTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setFieldMatchingPattern("(\\d+)\\_([^_]+)\\_E.tif");
         options.setFilenameTemplate("00$1_op0$2_0001_e.tif");
@@ -200,7 +201,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
@@ -208,18 +209,18 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateMultipleMatchesForSameObjectTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*.tif");
         Path srcPath1 = testHelper.addSourceFile("nested/path/276_182_E.tif");
         Path srcPath1Dupe = testHelper.addSourceFile("nested/276_182_E.tif");
-        Path srcPath2 = testHelper.addSourceFile("276_183B_E.tif");
+        Path srcPath2 = testHelper.addSourceFile("276_183_E.tif");
 
         service.generateMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", null, srcPath1, srcPath1Dupe);
-        assertMappingPresent(info, "26", "276_183B_E.tif", srcPath2);
+        assertMappingPresent(info, "26", "276_183_E.tif", srcPath2);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
@@ -228,7 +229,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateDryRunTest() throws Exception {
         OutputHelper.captureOutput(() -> {
-            testHelper.indexExportData("export_1.xml");
+            testHelper.indexExportData("mini_gilmer");
             SourceFileMappingOptions options = makeDefaultOptions();
             options.setDryRun(true);
             testHelper.addSourceFile("276_182_E.tif");
@@ -243,7 +244,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateMappingExistsTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
@@ -251,11 +252,11 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         // Add extra matching source file, which should not show up during rejected run
-        Path srcPath2 = testHelper.addSourceFile("276_183B_E.tif");
+        Path srcPath2 = testHelper.addSourceFile("276_183_E.tif");
         try {
             service.generateMapping(options);
             fail();
@@ -265,7 +266,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info2 = service.loadMappings();
         assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
 
         // Try again with force
@@ -274,7 +275,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info3 = service.loadMappings();
         assertMappingPresent(info3, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info3, "26", "276_183B_E.tif", srcPath2);
+        assertMappingPresent(info3, "26", "276_183_E.tif", srcPath2);
         assertMappingPresent(info3, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
@@ -282,17 +283,17 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateMatchesLowercaseTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setLowercaseTemplate(true);
         Path srcPath1 = testHelper.addSourceFile("276_182_e.tif");
-        Path srcPath2 = testHelper.addSourceFile("276_183b_e.tif");
+        Path srcPath2 = testHelper.addSourceFile("276_183_E.tif");
 
         service.generateMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183B_E.tif", srcPath2);
+        assertMappingPresent(info, "26", "276_183_E.tif", srcPath2);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
@@ -300,7 +301,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateUpdateNoExistingFileTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setUpdate(true);
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
@@ -309,7 +310,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
@@ -317,7 +318,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateUpdateExistingNoChangesTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
@@ -325,7 +326,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
@@ -335,31 +336,31 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info2 = service.loadMappings();
         assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
     }
 
     @Test
     public void generateUpdateAddNewSourceFileTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
         service.generateMapping(options);
 
-        Path srcPath2 = testHelper.addSourceFile("276_183B_E.tif");
+        Path srcPath2 = testHelper.addSourceFile("276_183_E.tif");
         options.setUpdate(true);
         service.generateMapping(options);
 
         SourceFilesInfo info2 = service.loadMappings();
         assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info2, "26", "276_183B_E.tif", srcPath2);
+        assertMappingPresent(info2, "26", "276_183_E.tif", srcPath2);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
     }
 
     @Test
     public void generateUpdateChangeSourceFileTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
@@ -374,13 +375,13 @@ public class SourceFileServiceTest {
         SourceFilesInfo info2 = service.loadMappings();
         // Should still list the original source path
         assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
     }
 
     @Test
     public void generateUpdateChangeSourceFileWithForceTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
@@ -396,13 +397,13 @@ public class SourceFileServiceTest {
         SourceFilesInfo info2 = service.loadMappings();
         // Should be using the new path
         assertMappingPresent(info2, "25", "276_182_E.tif", srcPath2);
-        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
     }
 
     @Test
     public void generateUpdateAddPotentialMatchToExistingMatchTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
@@ -416,20 +417,20 @@ public class SourceFileServiceTest {
         SourceFilesInfo info2 = service.loadMappings();
         // Should be using the new path
         assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
     }
 
     @Test
     public void generateUpdateAddPotentialMatchTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
 
         service.generateMapping(options);
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", null);
-        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
@@ -440,13 +441,13 @@ public class SourceFileServiceTest {
         SourceFilesInfo info2 = service.loadMappings();
         // Should be using the new path
         assertMappingPresent(info2, "25", "276_182_E.tif", null, srcPath1, srcPath2);
-        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
     }
 
     @Test
     public void generateUpdateAddPotentialMatchWithExistingPotentialTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
 
@@ -456,7 +457,7 @@ public class SourceFileServiceTest {
         service.generateMapping(options);
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "276_182_E.tif", null, srcPath1, srcPath2);
-        assertMappingPresent(info, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         Path srcPath3 = testHelper.addSourceFile("another/276_182_E.tif");
@@ -466,20 +467,20 @@ public class SourceFileServiceTest {
         SourceFilesInfo info2 = service.loadMappings();
         // Should be using the new path
         assertMappingPresent(info2, "25", "276_182_E.tif", null, srcPath1, srcPath2, srcPath3);
-        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
     }
 
     @Test
     public void generateUpdateAddNewRecordsTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
         service.generateMapping(options);
 
         // Add more exported objects
-        testHelper.indexExportData("export_1.xml", "export_2.xml");
+        testHelper.indexExportData("gilmer");
 
         Path srcPath2 = testHelper.addSourceFile("276_245a_E.tif");
         options.setUpdate(true);
@@ -487,7 +488,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info2 = service.loadMappings();
         assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
-        assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
         assertMappingPresent(info2, "28", "276_241_E.tif", null);
         assertMappingPresent(info2, "29", "276_245a_E.tif", srcPath2);
@@ -495,14 +496,14 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateUpdateDryRunAddNewSourceFileTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
         service.generateMapping(options);
 
         OutputHelper.captureOutput(() -> {
-            testHelper.addSourceFile("276_183B_E.tif");
+            testHelper.addSourceFile("276_183_E.tif");
             options.setUpdate(true);
             options.setDryRun(true);
             service.generateMapping(options);
@@ -510,15 +511,16 @@ public class SourceFileServiceTest {
             SourceFilesInfo info2 = service.loadMappings();
             assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
             // Mapping should be unchanged
-            assertMappingPresent(info2, "26", "276_183B_E.tif", null);
+            assertMappingPresent(info2, "26", "276_183_E.tif", null);
             assertMappingPresent(info2, "27", "276_203_E.tif", null);
         });
     }
 
     @Test
     public void generateCompoundExactMatchTest() throws Exception {
-        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         SourceFileMappingOptions options = makeDefaultOptions();
+        options.setExportField("filena");
         Path srcPath1 = testHelper.addSourceFile("nccg_ck_09.tif");
         Path srcPath2 = testHelper.addSourceFile("nccg_ck_1042-22_v1.tif");
         Path srcPath3 = testHelper.addSourceFile("nccg_ck_1042-22_v2.tif");

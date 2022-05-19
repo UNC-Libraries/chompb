@@ -176,11 +176,13 @@ public class RedirectMappingIndexServiceTest {
 
     private void generateCompoundObjectProject() throws Exception {
         testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"),
-                "export_compounds.xml");
+                "mini_keepsakes");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.getDescriptionsService().generateDocuments(true);
         testHelper.getDescriptionsService().expandDescriptions();
-        testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+        var options = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        options.setExportField("filena");
+        testHelper.populateSourceFiles(options, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
                 "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
     }
 }

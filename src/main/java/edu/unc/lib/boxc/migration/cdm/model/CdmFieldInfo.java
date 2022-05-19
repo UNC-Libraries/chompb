@@ -23,20 +23,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.jena.ext.com.google.common.collect.Streams;
-
 /**
  * Information describing the fields present in a CDM collection
  *
  * @author bbpennel
  */
 public class CdmFieldInfo {
-    public static final String CDM_ID = "cdmid";
-    public static final String CDM_CREATED = "cdmcreated";
+    public static final String CDM_ID = "dmrecord";
+    public static final String CDM_CREATED = "dmcreated";
+    public static final String CDM_MODIFIED = "dmmodified";
+    public static final String CDM_FILE_FIELD = "find";
     public static final Set<String> IGNORE_FIELDS = new HashSet<>(Arrays.asList(
-            "dmoclcno", "dmcreated", "dmmodified", "dmrecord"));
-    public static final List<String> RESERVED_FIELDS = Arrays.asList(
-            CDM_ID, CDM_CREATED, "cdmmodified", "cdmfile", "cdmpath");
+            "dmoclcno", "dmad1", "dmad2"));
 
     private List<CdmFieldEntry> fields;
     private List<String> exportFields;
@@ -69,8 +67,7 @@ public class CdmFieldInfo {
      */
     public List<String> listAllExportFields() {
         if (exportFields == null) {
-            exportFields = Streams.concat(streamConfiguredFields(), RESERVED_FIELDS.stream())
-                    .collect(Collectors.toList());
+            exportFields = streamConfiguredFields().collect(Collectors.toList());
         }
         return exportFields;
     }

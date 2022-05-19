@@ -71,7 +71,6 @@ public class ProjectStatusService extends AbstractStatusService {
         if (exported == null) {
             return;
         }
-        showField("Export files", countXmlDocuments(project.getExportPath()));
         sectionDivider();
 
         outputLogger.info("Index of CDM Objects");

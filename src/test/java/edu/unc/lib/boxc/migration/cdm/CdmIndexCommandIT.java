@@ -24,8 +24,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
@@ -43,15 +45,13 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
     private MigrationProject project;
 
     @Test
-    public void indexMultipleFilesTest() throws Exception {
+    public void indexGilmerTest() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 baseDir, COLLECTION_ID, null, USERNAME);
         Files.createDirectories(project.getExportPath());
 
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_1.xml"));
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
-                project.getExportPath().resolve("export_2.xml"));
+        Files.copy(Paths.get("src/test/resources/descriptions/gilmer/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
 
@@ -70,8 +70,8 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
                 baseDir, COLLECTION_ID, null, USERNAME);
         Files.createDirectories(project.getExportPath());
 
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_1.xml"));
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_gilmer/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
 
@@ -90,8 +90,8 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         assertDateIndexedPresent();
 
         // Add more data and index again with force flag
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
-                project.getExportPath().resolve("export_2.xml"));
+        Files.copy(Paths.get("src/test/resources/descriptions/gilmer/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project), StandardCopyOption.REPLACE_EXISTING);
 
         String[] argsForce = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -109,9 +109,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
                 baseDir, COLLECTION_ID, null, USERNAME);
         Files.createDirectories(project.getExportPath());
 
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_1.xml"));
-        FileUtils.write(project.getExportPath().resolve("export_2.xml").toFile(), "uh oh", ISO_8859_1);
+        FileUtils.write(CdmFileRetrievalService.getDescAllPath(project).toFile(), "uh oh", ISO_8859_1);
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
 
@@ -119,7 +117,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "index"};
         executeExpectFailure(args);
-        assertOutputContains("Failed to parse export file");
+        assertOutputContains("Failed to parse desc.all file");
         assertDateIndexedNotPresent();
         assertTrue("Index file should be cleaned up", Files.notExists(project.getIndexPath()));
     }

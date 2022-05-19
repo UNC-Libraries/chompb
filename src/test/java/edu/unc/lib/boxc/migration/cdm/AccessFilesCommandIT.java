@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,12 +43,14 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
 
     private MigrationProject project;
     private Path basePath;
+    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 baseDir, COLLECTION_ID, null, USERNAME);
         basePath = tmpFolder.newFolder().toPath();
+        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
     }
 
     @Test
@@ -123,7 +126,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getAccessFilesMappingPath()));
         assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
-        assertTrue(output.contains("26,276_183B_E.tif,,"));
+        assertTrue(output.contains("26,276_183_E.tif,,"));
         assertTrue(output.contains("27,276_203_E.tif,,"));
 
         assertUpdatedDateNotPresent();
@@ -146,24 +149,14 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getAccessFilesMappingPath()));
         assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
-        assertTrue(output.contains("26,276_183B_E.tif,,"));
+        assertTrue(output.contains("26,276_183_E.tif,,"));
         assertTrue(output.contains("27,276_203_E.tif," + srcPath3 + ","));
 
         assertUpdatedDateNotPresent();
     }
 
     private void indexExportSamples() throws Exception {
-        Files.createDirectories(project.getExportPath());
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_all.xml"));
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "index"};
-        executeExpectSuccess(args);
+        testHelper.indexExportData("mini_gilmer");
     }
 
     private Path addSourceFile(String relPath) throws IOException {

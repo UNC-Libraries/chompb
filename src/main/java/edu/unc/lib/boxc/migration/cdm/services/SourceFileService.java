@@ -15,9 +15,21 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
-import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
-import static org.slf4j.LoggerFactory.getLogger;
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
+import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -49,21 +61,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-
-import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service for interacting with source files
@@ -117,7 +117,7 @@ public class SourceFileService {
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
             // Query for all non-compound objects. If the entry type is null, the object is a individual cdm object
-            ResultSet rs = stmt.executeQuery("select cdmid, " + options.getExportField()
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", " + options.getExportField()
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
                         + " or " + ENTRY_TYPE_FIELD + " is null");
@@ -207,6 +207,9 @@ public class SourceFileService {
             public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
                 if (pathPattern == null || pathMatcher.matches(path)) {
                     String filename = path.getFileName().toString();
+                    if (options.isLowercaseTemplate()) {
+                        filename = filename.toLowerCase();
+                    }
                     List<String> paths = candidatePaths.computeIfAbsent(filename, f -> new ArrayList<>());
                     paths.add(basePath.relativize(path).toString());
                 }

@@ -18,17 +18,17 @@ titla,titla,Title Note,false,n,n,n,n,descri
 origin,origin,Form,false,n,y,n,y,format
 resour,resour,Resource Type,false,n,n,n,y,type
 physic,physic,Physical Description,false,n,n,n,n,formata
-publis,publis,Publisher,false,n,n,n,y,publis
+publis,publis,Publisher,false,n,y,n,y,publis
 collec,collec,Collection in Repository,false,n,n,n,n,source
 digita,digita,Digital Collection,false,n,y,n,y,relatig
 reposi,reposi,Repository,false,n,n,n,y,publis
 host,host,Host,false,n,n,n,n,publis
-local,local,Local Identifier,false,false,n,y,n,n,identi
+local,local,Local Identifier,false,n,y,n,n,identi
 citati,citati,Citation,false,n,n,n,n,BLANK
 langua,langua,Language,false,n,y,y,y,langua
 condit,condit,Condition,false,n,y,n,n,descri
 additi,additi,Additional display,false,n,y,y,y,BLANK
-file,file,filename,false,n,n,n,n,BLANK
+filena,filena,filename,false,n,n,n,n,BLANK
 fullrs,fullrs,Archival file,false,n,n,y,n,BLANK
 dmoclcno,dmoclcno,OCLC number,false,n,n,y,n,BLANK
 dmcreated,dmcreated,Date created,false,y,n,y,n,BLANK

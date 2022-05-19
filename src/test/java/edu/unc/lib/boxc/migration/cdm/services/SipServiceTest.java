@@ -22,6 +22,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
@@ -39,6 +40,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.jdom2.Document;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -98,8 +100,8 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsDestinationsNotGenerated() throws Exception {
-        testHelper.indexExportData("export_1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
         try {
@@ -113,9 +115,9 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsDescriptionsNotGenerated() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         try {
             service.generateSips(makeOptions());
@@ -128,7 +130,7 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsSourceFilesNotMapped() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
@@ -143,10 +145,10 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsSingleDestination() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -174,10 +176,10 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsNewCollectionDestination() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, "001234");
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -215,11 +217,11 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsNewCollectionDestinationWithDescription() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         String newCollId = "00123a";
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         // Add a mods file at the expected path
         Path newCollDescPath = project.getNewCollectionDescriptionsPath().resolve(newCollId + ".xml");
         String newCollDesc = "<mods:mods xmlns:mods=\"http://www.loc.gov/mods/v3\"><mods:titleInfo>"
@@ -262,10 +264,10 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsWithAccessFiles() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         List<Path> accessLocs = testHelper.populateAccessFiles("276_182_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
@@ -294,7 +296,7 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsMissingSourceFile() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
         // Only populating 2 out of 3 source files expected from the export
@@ -311,7 +313,7 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsMissingSourceFileWithForce() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
         // Only populating 2 out of 3 source files expected from the export
@@ -343,12 +345,12 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsMissingDescription() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
         // Deleting one description so that it is missing
         Files.delete(testHelper.getDescriptionsService().getExpandedDescriptionFilePath("26"));
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         try {
             service.generateSips(makeOptions());
@@ -361,12 +363,12 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsMissingDescriptionWithForce() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
         // Deleting one description so that it is missing
         Files.delete(testHelper.getDescriptionsService().getExpandedDescriptionFilePath("27"));
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         SipGenerationOptions options = makeOptions(true);
 
@@ -394,7 +396,7 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsMultipleDestinations() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         // Inserting an extra destination which has one object mapped to it
         try (BufferedWriter writer = Files.newBufferedWriter(project.getDestinationMappingsPath(), APPEND)) {
@@ -402,7 +404,7 @@ public class SipServiceTest {
         }
 
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(2, sips.size());
@@ -446,10 +448,10 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsWithGroupedWork() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         GroupMappingOptions groupOptions = new GroupMappingOptions();
         groupOptions.setGroupField("groupa");
@@ -485,10 +487,10 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsWithGroupedWorkWithAccessCopies() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         List<Path> accessLocs = testHelper.populateAccessFiles("276_182_E.tif", "276_203_E.tif");
 
         GroupMappingOptions groupOptions = new GroupMappingOptions();
@@ -526,13 +528,15 @@ public class SipServiceTest {
 
     @Test
     public void generateSipWithCompoundObjects() throws Exception {
-        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         DescriptionsService descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         descriptionsService.generateDocuments(false);
         descriptionsService.expandDescriptions();
-        List<Path> stagingLocs = testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+        var sourceOptions = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        sourceOptions.setExportField("filena");
+        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
                 "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
@@ -551,7 +555,7 @@ public class SipServiceTest {
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
-        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-20");
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-17");
         testHelper.assertGroupedWorkPopulatedInSip(workResc2, dirManager, model, "604", false,
                 stagingLocs.get(1), stagingLocs.get(2));
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2014-02-17");
@@ -563,10 +567,10 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsWithRedirectMapping() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         service.generateSips(makeOptions());
 
@@ -588,7 +592,7 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsWithMultipleDestinationsAndRedirectMapping() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         // Inserting an extra destination which has one object mapped to it
         try (BufferedWriter writer = Files.newBufferedWriter(project.getDestinationMappingsPath(), APPEND)) {
@@ -596,7 +600,7 @@ public class SipServiceTest {
         }
 
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(2, sips.size());
@@ -619,10 +623,10 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsWithGroupedWorkAndRedirectMapping() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         GroupMappingOptions groupOptions = new GroupMappingOptions();
         groupOptions.setGroupField("groupa");
@@ -655,10 +659,10 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsTwiceOverwritesRedirectMapping() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         service.generateSips(makeOptions());
         String redirectFile = FileUtils.readFileToString(project.getRedirectMappingPath().toFile(), StandardCharsets.UTF_8);
@@ -675,13 +679,15 @@ public class SipServiceTest {
 
     @Test
     public void generateSipWithCompoundObjectsAndRedirectMapping() throws Exception {
-        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         DescriptionsService descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         descriptionsService.generateDocuments(false);
         descriptionsService.expandDescriptions();
-        List<Path> stagingLocs = testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+        var sourceOptions = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        sourceOptions.setExportField("filena");
+        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
                 "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
 
         service.generateSips(makeOptions());
@@ -716,7 +722,7 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsWithMultipleNewCollectionsAndRedirectMapping() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, "001234");
         // Inserting an extra destination which has one object mapped to it
         try (BufferedWriter writer = Files.newBufferedWriter(project.getDestinationMappingsPath(), APPEND)) {
@@ -724,7 +730,7 @@ public class SipServiceTest {
         }
 
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(2, sips.size());
@@ -748,10 +754,10 @@ public class SipServiceTest {
 
     @Test
     public void generateSipWithNewCollectionAndRedirectMapping() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, "001234");
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         String boxcCollectionId = sips.get(0).getNewCollectionId();

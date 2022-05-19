@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,11 +47,13 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
 
     private MigrationProject project;
     private CdmIndexService indexService;
+    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 baseDir, COLLECTION_ID, null, USERNAME);
+        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
     }
 
     @Test
@@ -201,18 +205,6 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
     }
 
     private void indexExportSamples() throws Exception {
-        Files.createDirectories(project.getExportPath());
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_1.xml"));
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
-                project.getExportPath().resolve("export_2.xml"));
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "index"};
-        executeExpectSuccess(args);
+        testHelper.indexExportData("mini_gilmer");
     }
 }

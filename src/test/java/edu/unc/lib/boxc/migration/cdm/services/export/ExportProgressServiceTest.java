@@ -60,63 +60,13 @@ public class ExportProgressServiceTest extends AbstractOutputTest {
     }
 
     @Test
-    public void updateListingFromNotStartedTest() throws Exception {
-        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
+    public void updateDownloadingCpdFromNotStartedTest() throws Exception {
+        exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_CPD);
 
         exportProgressService.update();
 
         assertOutputContains("Initiating export");
-        assertOutputMatches(".*Listing CDM Object IDs.*");
-    }
-
-    @Test
-    public void updateListingFromDownloadTest() throws Exception {
-        exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_DESC);
-        exportProgressService.update();
-
-        resetOutput();
-
-        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-
-        exportProgressService.update();
-
-        assertOutputDoesNotContain("Initiating export");
-        assertOutputMatches(".*Listing CDM Object IDs.*");
-    }
-
-    @Test
-    public void updateExportFromListingTest() throws Exception {
-        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-        exportProgressService.update();
-        resetOutput();
-
-        exportStateService.getState().setProgressState(ProgressState.EXPORTING);
-        exportStateService.getState().setTotalObjects(160);
-        exportProgressService.update();
-        assertOutputMatches(".*Exporting object metadata:\n.* 0/160.*");
-    }
-
-    @Test
-    public void updateExportFromListCompletedTest() throws Exception {
-        exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-        exportProgressService.update();
-        resetOutput();
-
-        exportStateService.getState().setProgressState(ProgressState.EXPORTING);
-        exportStateService.getState().setTotalObjects(160);
-        exportProgressService.update();
-        assertOutputMatches(".*Exporting object metadata:\n.* 0/160.*");
-        resetOutput();
-
-        exportStateService.getState().setLastExportedIndex(99);
-        exportProgressService.update();
-        assertOutputMatches(".* 100/160.*");
-        resetOutput();
-
-        exportStateService.getState().setLastExportedIndex(159);
-        exportStateService.getState().setProgressState(ProgressState.EXPORT_COMPLETED);
-        exportProgressService.update();
-        assertOutputMatches(".* 160/160.*");
+        assertOutputMatches(".*Retrieving compound object files for collection.*");
     }
 
     @Test
@@ -133,16 +83,11 @@ public class ExportProgressServiceTest extends AbstractOutputTest {
             exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_DESC);
             awaitOutputMatches(".*Retrieving description file for collection.*");
 
-            exportStateService.getState().setProgressState(ProgressState.LISTING_OBJECTS);
-            awaitOutputMatches(".*Listing CDM Object IDs.*");
+            exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_CPD);
+            awaitOutputMatches(".*Retrieving compound object files for collection.*");
 
-            exportStateService.getState().setProgressState(ProgressState.EXPORTING);
-            exportStateService.getState().setTotalObjects(160);
-            awaitOutputMatches(".*Exporting object metadata:\n.* 0/160.*");
-
-            exportStateService.getState().setLastExportedIndex(159);
             exportStateService.getState().setProgressState(ProgressState.EXPORT_COMPLETED);
-            awaitOutputMatches(".* 160/160.*");
+            awaitOutputMatches(".*Finished exporting.*");
         } finally {
             exportProgressService.endProgressDisplay();
         }

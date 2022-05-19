@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,12 +42,14 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
     private MigrationProject project;
     private Path basePath;
+    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 baseDir, COLLECTION_ID, null, USERNAME);
         basePath = tmpFolder.newFolder().toPath();
+        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
     }
 
     @Test
@@ -112,7 +116,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
-        assertOutputContains("26,276_183B_E.tif,,");
+        assertOutputContains("26,276_183_E.tif,,");
         assertOutputContains("27,276_203_E.tif,,");
     }
 
@@ -133,7 +137,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
-        assertOutputContains("26,276_183B_E.tif,,");
+        assertOutputContains("26,276_183_E.tif,,");
         assertOutputContains("27,276_203_E.tif," + srcPath3 + ",");
     }
 
@@ -148,7 +152,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
-        Path srcPath2 = addSourceFile("276_183B_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
         String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "generate",
@@ -158,7 +162,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args2);
 
         assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
-        assertOutputContains("26,276_183B_E.tif," + srcPath2.toString() + ",");
+        assertOutputContains("26,276_183_E.tif," + srcPath2.toString() + ",");
         assertOutputContains("27,276_203_E.tif,,");
     }
 
@@ -168,7 +172,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     public void validateValidTest() throws Exception {
         indexExportSamples();
         addSourceFile("276_182_E.tif");
-        addSourceFile("276_183B_E.tif");
+        addSourceFile("276_183_E.tif");
         addSourceFile("276_203_E.tif");
 
         String[] args = new String[] {
@@ -212,7 +216,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     public void statusValidTest() throws Exception {
         indexExportSamples();
         addSourceFile("276_182_E.tif");
-        addSourceFile("276_183B_E.tif");
+        addSourceFile("276_183_E.tif");
         addSourceFile("276_203_E.tif");
 
         String[] args = new String[] {
@@ -260,17 +264,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     private void indexExportSamples() throws Exception {
-        Files.createDirectories(project.getExportPath());
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_all.xml"));
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "index"};
-        executeExpectSuccess(args);
+        testHelper.indexExportData("mini_gilmer");
     }
 
     private Path addSourceFile(String relPath) throws IOException {

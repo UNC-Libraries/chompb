@@ -22,27 +22,17 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmExportService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportProgressService;
-import edu.unc.lib.boxc.migration.cdm.services.export.ExportState;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
-import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -105,7 +95,6 @@ public class CdmExportCommand implements Callable<Integer> {
         exportService.setExportStateService(exportStateService);
         exportProgressService = new ExportProgressService();
         exportProgressService.setExportStateService(exportStateService);
-        initializeAuthenticatedCdmClient();
     }
 
     private void startOrResumeExport() throws IOException {
@@ -113,44 +102,15 @@ public class CdmExportCommand implements Callable<Integer> {
         if (exportStateService.isResuming()) {
             outputLogger.info("Resuming incomplete export started {} from where it left off...",
                     exportStateService.getState().getStartTime());
-            ExportState exportState = exportStateService.getState();
-            if (ProgressState.LISTING_OBJECTS.equals(exportState.getProgressState())) {
-                outputLogger.info("Resuming listing of object IDs");
-            } else {
-                outputLogger.info("Listing of object IDs complete");
-                if (ProgressState.EXPORTING.equals(exportState.getProgressState())) {
-                    outputLogger.info("Resuming export of object records");
-                }
-            }
         }
     }
 
-    private void initializeAuthenticatedCdmClient() {
+    private void validate() {
         if (StringUtils.isBlank(options.getCdmUsername())) {
             throw new MigrationException("Must provided a CDM username");
         }
         if (StringUtils.isBlank(options.getCdmPassword())) {
             throw new MigrationException("Must provided a CDM password for user " + options.getCdmUsername());
-        }
-
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        outputLogger.info("Initializing connection to {}", URI.create(options.getCdmBaseUri()).getHost());
-        AuthScope scope = new AuthScope(new HttpHost(URI.create(options.getCdmBaseUri()).getHost()));
-        credsProvider.setCredentials(scope, new UsernamePasswordCredentials(
-                options.getCdmUsername(), options.getCdmPassword()));
-
-        CloseableHttpClient httpClient = HttpClients.custom()
-                .setDefaultCredentialsProvider(credsProvider)
-                .useSystemProperties()
-                .build();
-
-        exportService.setHttpClient(httpClient);
-    }
-
-    private void validate() {
-        if (options.getPageSize() < 1 || options.getPageSize() > CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE) {
-            throw new MigrationException("Page size must be between 1 and "
-                    + CdmExportOptions.MAX_EXPORT_RECORDS_PER_PAGE);
         }
     }
 }

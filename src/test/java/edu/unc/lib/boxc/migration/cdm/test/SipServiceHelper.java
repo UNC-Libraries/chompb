@@ -36,6 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
@@ -248,15 +249,26 @@ public class SipServiceHelper {
                 .findFirst().orElseGet(null);
     }
 
-    public void indexExportData(String... filenames) throws Exception {
-        indexExportData(Paths.get("src/test/resources/gilmer_fields.csv"), filenames);
+    public void indexExportData(String descPath) throws Exception {
+        indexExportData(Paths.get("src/test/resources/gilmer_fields.csv"), descPath);
     }
 
-    public void indexExportData(Path fieldsPath, String... filenames) throws Exception {
+    public void indexExportData(Path fieldsPath, String descPath) throws Exception {
         Files.copy(fieldsPath, project.getFieldsPath(), REPLACE_EXISTING);
-        for (String filename : filenames) {
-            Files.copy(Paths.get("src/test/resources/sample_exports/" + filename),
-                    project.getExportPath().resolve(filename), REPLACE_EXISTING);
+        Files.copy(Paths.get("src/test/resources/descriptions/" + descPath + "/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project), REPLACE_EXISTING);
+        // Copy over any associate CPD files
+        var cpdsSrc = Paths.get("src/test/resources/descriptions/" + descPath + "/image/");
+        var cpdsDest = CdmFileRetrievalService.getExportedCpdsPath(project);
+        Files.createDirectories(cpdsDest);
+        if (Files.isDirectory(cpdsSrc)) {
+            Files.list(cpdsSrc).forEach(cpdFile -> {
+                try {
+                    Files.copy(cpdFile, cpdsDest.resolve(cpdFile.getFileName()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
         project.getProjectProperties().setExportedDate(Instant.now());
         indexService.createDatabase(true);
@@ -272,8 +284,12 @@ public class SipServiceHelper {
     }
 
     public List<Path> populateSourceFiles(String... filenames) throws Exception {
+        return populateSourceFiles(makeSourceFileOptions(sourceFilesBasePath), filenames);
+    }
+
+    public List<Path> populateSourceFiles(SourceFileMappingOptions options, String... filenames) throws Exception {
         List<Path> sourcePaths = Arrays.stream(filenames).map(this::addSourceFile).collect(Collectors.toList());
-        sourceFileService.generateMapping(makeSourceFileOptions(sourceFilesBasePath));
+        sourceFileService.generateMapping(options);
         return sourcePaths;
     }
 
@@ -381,10 +397,10 @@ public class SipServiceHelper {
     }
 
     public void initializeDefaultProjectState(String dest_uuid) throws Exception {
-        indexExportData("export_1.xml");
+        indexExportData("mini_gilmer");
         generateDefaultDestinationsMapping(dest_uuid, null);
         populateDescriptions("gilmer_mods1.xml");
-        populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
     }
 
     public void addSipsSubmitted() {

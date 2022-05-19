@@ -16,6 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -24,6 +25,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -112,8 +114,8 @@ public class StatusCommandIT extends AbstractCommandIT {
     public void reportExported() throws Exception {
         Instant exported = Instant.now();
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-            Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                    project.getExportPath().resolve("export_1.xml"));
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_gilmer/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project), REPLACE_EXISTING);
         project.getProjectProperties().setExportedDate(exported);
         ProjectPropertiesSerialization.write(project);
 
@@ -128,7 +130,6 @@ public class StatusCommandIT extends AbstractCommandIT {
 
         assertOutputContains("CDM Collection Exports");
         assertOutputMatches(".*Last Exported: +" + exported + ".*");
-        assertOutputMatches(".*Export files: +1\n.*");
 
         assertOutputContains("Index of CDM Objects");
         assertOutputMatches(".*Last Indexed: +Not completed.*");
@@ -136,7 +137,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportIndexed() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -168,7 +169,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportMixedDestinations() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         String newCollId = "00123test";
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
         FileUtils.write(project.getDestinationMappingsPath().toFile(),
@@ -201,7 +202,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportDestinationsInvalid() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         String newCollId = "00123test";
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
         FileUtils.write(project.getDestinationMappingsPath().toFile(),
@@ -232,7 +233,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportSourceFilesPartiallyMapped() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         testHelper.addSourceFile("276_182_E.tif");
         SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         testHelper.getSourceFileService().generateMapping(opts);
@@ -263,8 +264,8 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportAccessFilesPartiallyMapped() throws Exception {
-        testHelper.indexExportData("export_1.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         testHelper.addAccessFile("276_182_E.tif");
         SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getAccessFilesBasePath());
         testHelper.getAccessFileService().generateMapping(opts);
@@ -297,12 +298,12 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportSipGeneratedWithNewCollection() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         String newCollId = "00123test";
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
         testHelper.populateDescriptions("gilmer_mods1.xml");
         Files.createFile(project.getNewCollectionDescriptionsPath().resolve(newCollId + ".xml"));
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183B_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         SipService sipService = testHelper.createSipsService();
         SipGenerationOptions sipOpts = new SipGenerationOptions();
         sipOpts.setUsername(USERNAME);
@@ -342,12 +343,14 @@ public class StatusCommandIT extends AbstractCommandIT {
 
     @Test
     public void reportSipGeneratedWithCompoundObjects() throws Exception {
-        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "export_compounds.xml");
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         String newCollId = "00123test";
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.getDescriptionsService().generateDocuments(true);
         testHelper.getDescriptionsService().expandDescriptions();
-        testHelper.populateSourceFiles("nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+        var sourceOptions = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        sourceOptions.setExportField("filena");
+        testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
                 "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
         SipService sipService = testHelper.createSipsService();
         SipGenerationOptions sipOpts = new SipGenerationOptions();

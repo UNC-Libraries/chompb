@@ -59,7 +59,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void destinationsNotGeneratedTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         statusService.report(Verbosity.NORMAL);
 
         assertOutputMatches(".*Last Generated: +Not completed.*");
@@ -67,7 +67,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void destinationsNotValidTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("default,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "27,3f3c5bcf-d5d6-46ad-,"));
 
@@ -86,7 +86,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void destinationsNotValidVerboseTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("default,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "27,3f3c5bcf-d5d6-46ad-,"));
 
@@ -106,7 +106,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void destinationsNotValidQuietTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("default,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "27,3f3c5bcf-d5d6-46ad-,"));
 
@@ -125,7 +125,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unmappedObjectsTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("26,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "27,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,"));
 
@@ -145,7 +145,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unmappedObjectsVerboseTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("26,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "27,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,"));
 
@@ -165,7 +165,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unknownObjectsTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("25,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "26,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "27,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
@@ -187,7 +187,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unknownObjectsVerboseTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("25,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "26,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "27,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
@@ -209,7 +209,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void allMappedDefaultTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("default,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,001234"));
 
         statusService.report(Verbosity.NORMAL);
@@ -228,7 +228,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unpopulatedDestObjectsTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("25,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "26,,",
                              "27,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,"));
@@ -249,7 +249,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unpopulatedDestWithDefaultTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("default,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
                              "27,,"));
 

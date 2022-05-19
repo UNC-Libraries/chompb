@@ -60,7 +60,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void mappingsNotGeneratedTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         statusService.report(Verbosity.NORMAL);
 
         assertOutputMatches(".*Last Updated: +Not completed.*");
@@ -68,7 +68,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unlistedObjectsTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +","));
 
@@ -85,7 +85,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unlistedObjectsVerboseTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +","));
 
@@ -103,7 +103,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void blankPathsTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +",",
                              "26,,,",
@@ -123,7 +123,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void potentialMatchesTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         Path path3 = testHelper.addSourceFile("27.txt");
         writeCsv(mappingBody("25,," + path1 +",",
@@ -142,7 +142,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unknownIdTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         Path path2 = testHelper.addSourceFile("26.txt");
         Path path3 = testHelper.addSourceFile("27.txt");
@@ -162,7 +162,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
 
     @Test
     public void unknownIdVerboseTest() throws Exception {
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         Path path2 = testHelper.addSourceFile("26.txt");
         Path path3 = testHelper.addSourceFile("27.txt");

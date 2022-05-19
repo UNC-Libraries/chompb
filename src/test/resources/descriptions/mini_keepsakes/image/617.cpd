@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<cpd>
+  <type>Document</type>
+  <page>
+    <pagetitle>World War II ration book</pagetitle>
+    <pagefile>615.jp2</pagefile>
+    <pageptr>602</pageptr>
+  </page>
+  <page>
+    <pagetitle>World War II ration book (instructions)</pagetitle>
+    <pagefile>616.jp2</pagefile>
+    <pageptr>603</pageptr>
+  </page>
+</cpd>

@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,6 +65,7 @@ public class GroupMappingServiceTest {
     private CdmIndexService indexService;
     private CdmFieldService fieldService;
     private GroupMappingService service;
+    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
@@ -79,6 +81,8 @@ public class GroupMappingServiceTest {
         service.setIndexService(indexService);
         service.setProject(project);
         service.setFieldService(fieldService);
+
+        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
     }
 
     @Test
@@ -399,7 +403,7 @@ public class GroupMappingServiceTest {
                 + " where " + CdmFieldInfo.CDM_ID + " = '" + workId + "'");
         while (rs.next()) {
             String cdmTitle = rs.getString("title");
-            String cdmCreated = rs.getString("cdmcreated");
+            String cdmCreated = rs.getString(CdmFieldInfo.CDM_CREATED);
             assertEquals(expectedTitle, cdmTitle);
             assertEquals(expectedCreated, cdmCreated);
             assertEquals(CdmIndexService.ENTRY_TYPE_GROUPED_WORK, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
@@ -425,7 +429,7 @@ public class GroupMappingServiceTest {
 
     private void assertNumberOfGroups(Connection conn, int expected) throws Exception {
         Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("select count(distinct cdmid)"
+        ResultSet rs = stmt.executeQuery("select count(distinct " + CdmFieldInfo.CDM_ID + ")"
                 + " from " + CdmIndexService.TB_NAME
                 + " where " + CdmIndexService.ENTRY_TYPE_FIELD
                     + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'");
@@ -498,14 +502,6 @@ public class GroupMappingServiceTest {
     }
 
     private void indexExportSamples() throws Exception {
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_1.xml"),
-                project.getExportPath().resolve("export_1.xml"));
-        Files.copy(Paths.get("src/test/resources/sample_exports/export_2.xml"),
-                project.getExportPath().resolve("export_2.xml"));
-        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-
-        project.getProjectProperties().setExportedDate(Instant.now());
-        indexService.createDatabase(true);
-        indexService.indexAll();
+        testHelper.indexExportData("grouped_gilmer");
     }
 }

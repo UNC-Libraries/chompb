@@ -23,11 +23,6 @@ import picocli.CommandLine;
  * @author bbpennel
  */
 public class CdmExportOptions {
-    @CommandLine.Option(names = { "--cdm-url" },
-            description = {"Base URL to the CDM web service API. Falls back to CDM_BASE_URL env variable.",
-                    "Default: ${DEFAULT-VALUE}"},
-            defaultValue = "${env:CDM_BASE_URL:-http://localhost:82/}")
-    private String cdmBaseUri;
     @CommandLine.Option(names = { "-u", "--cdm-user"},
             description = {"User name for CDM requests.",
                     "Defaults to current user: ${DEFAULT-VALUE}"},
@@ -38,12 +33,6 @@ public class CdmExportOptions {
             arity = "0..1",
             interactive = true)
     private String cdmPassword;
-    public static final int MAX_EXPORT_RECORDS_PER_PAGE = 5000;
-    @CommandLine.Option(names = {"-n", "--records-per-page"},
-            description = {"Page size for exports.",
-                    "Default: ${DEFAULT-VALUE}. Max page size is " + MAX_EXPORT_RECORDS_PER_PAGE},
-            defaultValue = "500")
-    private int pageSize = 500;
     @CommandLine.Option(names = { "-f", "--force"},
             description = "Force the export to restart from the beginning. Use if a previous export was started "
                     + "or completed, but you would like to begin the export again.")
@@ -64,14 +53,6 @@ public class CdmExportOptions {
             defaultValue = "${env:CDM_SSH_DOWNLOAD_PATH}")
     private String cdmSshDownloadBasePath;
 
-    public String getCdmBaseUri() {
-        return cdmBaseUri;
-    }
-
-    public void setCdmBaseUri(String cdmBaseUri) {
-        this.cdmBaseUri = cdmBaseUri;
-    }
-
     public String getCdmUsername() {
         return cdmUsername;
     }
@@ -86,14 +67,6 @@ public class CdmExportOptions {
 
     public void setCdmPassword(String cdmPassword) {
         this.cdmPassword = cdmPassword;
-    }
-
-    public int getPageSize() {
-        return pageSize;
-    }
-
-    public void setPageSize(int pageSize) {
-        this.pageSize = pageSize;
     }
 
     public String getCdmSshHost() {

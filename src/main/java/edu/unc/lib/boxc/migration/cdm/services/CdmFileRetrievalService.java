@@ -18,9 +18,12 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.scp.client.ScpClientCreator;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +38,8 @@ public class CdmFileRetrievalService {
     private static final int SSH_TIMEOUT_SECONDS = 10;
     private static final String DESC_SUBPATH = "index/description/desc.all";
     public static final String DESC_ALL_FILENAME = "desc.all";
+    private static final String CPD_SUBPATH = "image/*.cpd";
+    public static final String CPD_EXPORT_PATH = "cpds";
 
     private String downloadBasePath;
     private String sshUsername;
@@ -46,19 +51,50 @@ public class CdmFileRetrievalService {
      * Download the desc.all file for the collection being migrated
      */
     public void downloadDescAllFile() {
+        downloadFiles(DESC_SUBPATH, getDescAllPath(project));
+    }
+
+    /**
+     * @param project
+     * @return Path where the exported desc all file is stored
+     */
+    public static Path getDescAllPath(MigrationProject project) {
+        return project.getExportPath().resolve(DESC_ALL_FILENAME);
+    }
+
+    /**
+     * Download all cpd files
+     */
+    public void downloadCpdFiles() {
+        var cpdsPath = getExportedCpdsPath(project);
+        try {
+            // Ensure that the CPD folder exists
+            Files.createDirectories(cpdsPath);
+        } catch (IOException e) {
+            throw new MigrationException("Failed to create CPD export directory", e);
+        }
+        downloadFiles(CPD_SUBPATH, cpdsPath);
+    }
+
+    public static Path getExportedCpdsPath(MigrationProject project) {
+        return project.getExportPath().resolve(CPD_EXPORT_PATH);
+    }
+
+    public void downloadFiles(String remoteSubPath, Path localDestination) {
         SshClient client = SshClient.setUpDefaultClient();
+        client.setFilePasswordProvider(FilePasswordProvider.of(sshPassword));
         client.start();
         try (var sshSession = client.connect(sshUsername, cdmHost, sshPort)
                 .verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .getSession()) {
             sshSession.addPasswordIdentity(sshPassword);
+
             sshSession.auth().verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             var scpClientCreator = ScpClientCreator.instance();
             var scpClient = scpClientCreator.createScpClient(sshSession);
             String collectionId = project.getProjectProperties().getCdmCollectionId();
-            var remotePath = Paths.get(downloadBasePath, collectionId, DESC_SUBPATH).toString();
-            var localDestination = project.getExportPath().resolve(DESC_ALL_FILENAME);
+            var remotePath = Paths.get(downloadBasePath, collectionId, remoteSubPath).toString();
             scpClient.download(remotePath, localDestination);
         } catch (IOException e) {
             throw new MigrationException("Failed to download desc.all file", e);

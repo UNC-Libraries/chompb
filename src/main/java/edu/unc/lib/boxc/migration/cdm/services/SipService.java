@@ -15,39 +15,9 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
-import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.IOException;
-import java.io.Writer;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.rdf.model.Bag;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.vocabulary.RDF;
-import org.slf4j.Logger;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
-
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -73,6 +43,34 @@ import edu.unc.lib.boxc.model.api.rdf.Premis;
 import edu.unc.lib.boxc.model.fcrepo.ids.AgentPids;
 import edu.unc.lib.boxc.operations.api.events.PremisLogger;
 import edu.unc.lib.boxc.operations.api.events.PremisLoggerFactory;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.rdf.model.Bag;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDF;
+import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service for generation and access to migration SIPs
