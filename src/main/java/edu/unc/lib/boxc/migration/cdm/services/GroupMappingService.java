@@ -99,10 +99,10 @@ public class GroupMappingService {
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
-            ResultSet rs = stmt.executeQuery("select dmrecord, " + options.getGroupField()
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", " + options.getGroupField()
                 + " from " + CdmIndexService.TB_NAME
                 + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
-                + " order by dmrecord ASC");
+                + " order by " + CdmFieldInfo.CDM_ID + " ASC");
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 String matchedValue = rs.getString(2);

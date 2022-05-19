@@ -18,6 +18,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
@@ -116,7 +117,7 @@ public class SourceFileService {
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
             // Query for all non-compound objects. If the entry type is null, the object is a individual cdm object
-            ResultSet rs = stmt.executeQuery("select dmrecord, " + options.getExportField()
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", " + options.getExportField()
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
                         + " or " + ENTRY_TYPE_FIELD + " is null");

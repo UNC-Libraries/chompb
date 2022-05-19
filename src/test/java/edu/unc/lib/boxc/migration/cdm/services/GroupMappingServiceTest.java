@@ -403,7 +403,7 @@ public class GroupMappingServiceTest {
                 + " where " + CdmFieldInfo.CDM_ID + " = '" + workId + "'");
         while (rs.next()) {
             String cdmTitle = rs.getString("title");
-            String cdmCreated = rs.getString("dmcreated");
+            String cdmCreated = rs.getString(CdmFieldInfo.CDM_CREATED);
             assertEquals(expectedTitle, cdmTitle);
             assertEquals(expectedCreated, cdmCreated);
             assertEquals(CdmIndexService.ENTRY_TYPE_GROUPED_WORK, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
@@ -429,7 +429,7 @@ public class GroupMappingServiceTest {
 
     private void assertNumberOfGroups(Connection conn, int expected) throws Exception {
         Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("select count(distinct dmrecord)"
+        ResultSet rs = stmt.executeQuery("select count(distinct " + CdmFieldInfo.CDM_ID + ")"
                 + " from " + CdmIndexService.TB_NAME
                 + " where " + CdmIndexService.ENTRY_TYPE_FIELD
                     + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'");

@@ -91,10 +91,10 @@ public class CdmIndexServiceTest {
         try {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
-                    + " from " + CdmIndexService.TB_NAME + " order by dmrecord asc");
+                    + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
             rs.next();
-            assertEquals(25, rs.getInt("dmrecord"));
-            assertEquals("2005-11-23", rs.getString("dmcreated"));
+            assertEquals(25, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2005-11-23", rs.getString(CdmFieldInfo.CDM_CREATED));
             assertEquals("Redoubt C", rs.getString("title"));
             assertEquals("Paper is discolored.", rs.getString("notes"));
             assertEquals("276_182_E.tif", rs.getString("file"));
@@ -105,15 +105,15 @@ public class CdmIndexServiceTest {
             }
 
             rs.next();
-            assertEquals(26, rs.getInt("dmrecord"));
-            assertEquals("2005-11-24", rs.getString("dmcreated"));
+            assertEquals(26, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2005-11-24", rs.getString(CdmFieldInfo.CDM_CREATED));
             assertEquals("Plan of Battery McIntosh", rs.getString("title"));
             assertEquals("Paper", rs.getString("medium"));
             assertEquals("276_183_E.tif", rs.getString("file"));
 
             rs.next();
-            assertEquals(27, rs.getInt("dmrecord"));
-            assertEquals("2005-12-08", rs.getString("dmcreated"));
+            assertEquals(27, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2005-12-08", rs.getString(CdmFieldInfo.CDM_CREATED));
             assertEquals("Fort DeRussy on Red River, Louisiana", rs.getString("title"));
             assertEquals("Bill Richards", rs.getString("creatb"));
             assertEquals("276_203_E.tif", rs.getString("file"));
@@ -212,9 +212,9 @@ public class CdmIndexServiceTest {
         try {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
-                    + " from " + CdmIndexService.TB_NAME + " order by dmrecord asc limit 1");
+                    + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc limit 1");
             rs.next();
-            assertEquals(25, rs.getInt("dmrecord"));
+            assertEquals(25, rs.getInt(CdmFieldInfo.CDM_ID));
             assertEquals("Redoubt C", rs.getString("title"));
             assertEquals("", rs.getString("mystery"));
         } finally {
@@ -248,59 +248,59 @@ public class CdmIndexServiceTest {
         try {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + String.join(",", allFields)
-                    + " from " + CdmIndexService.TB_NAME + " order by dmrecord asc");
+                    + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
             rs.next();
-            assertEquals(216, rs.getInt("dmrecord"));
-            assertEquals("2012-05-18", rs.getString("dmcreated"));
-            assertEquals("2014-01-17", rs.getString("dmmodified"));
+            assertEquals(216, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2012-05-18", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2014-01-17", rs.getString(CdmFieldInfo.CDM_MODIFIED));
             assertEquals("Playmakers, circa 1974", rs.getString("title"));
             assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
-            assertEquals(602, rs.getInt("dmrecord"));
-            assertEquals("2012-09-11", rs.getString("dmcreated"));
-            assertEquals("2012-09-11", rs.getString("dmmodified"));
+            assertEquals(602, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2012-09-11", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2012-09-11", rs.getString(CdmFieldInfo.CDM_MODIFIED));
             assertEquals("World War II ration book", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("604", rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
-            assertEquals(603, rs.getInt("dmrecord"));
-            assertEquals("2012-09-11", rs.getString("dmcreated"));
-            assertEquals("2012-09-11", rs.getString("dmmodified"));
+            assertEquals(603, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2012-09-11", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2012-09-11", rs.getString(CdmFieldInfo.CDM_MODIFIED));
             assertEquals("World War II ration book (instructions)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("604", rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
-            assertEquals(604, rs.getInt("dmrecord"));
-            assertEquals("2014-01-17", rs.getString("dmcreated"));
-            assertEquals("2014-01-17", rs.getString("dmmodified"));
+            assertEquals(604, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2014-01-17", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2014-01-17", rs.getString(CdmFieldInfo.CDM_MODIFIED));
             assertEquals("World War II ration book, 1943", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
-            assertEquals(605, rs.getInt("dmrecord"));
-            assertEquals("2012-09-11", rs.getString("dmcreated"));
-            assertEquals("2012-09-11", rs.getString("dmmodified"));
+            assertEquals(605, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2012-09-11", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2012-09-11", rs.getString(CdmFieldInfo.CDM_MODIFIED));
             assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
-            assertEquals(606, rs.getInt("dmrecord"));
-            assertEquals("2012-09-11", rs.getString("dmcreated"));
-            assertEquals("2012-09-11", rs.getString("dmmodified"));
+            assertEquals(606, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2012-09-11", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2012-09-11", rs.getString(CdmFieldInfo.CDM_MODIFIED));
             assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (open, next to box)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
 
             rs.next();
-            assertEquals(607, rs.getInt("dmrecord"));
-            assertEquals("2014-02-17", rs.getString("dmcreated"));
-            assertEquals("2014-02-17", rs.getString("dmmodified"));
+            assertEquals(607, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2014-02-17", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2014-02-17", rs.getString(CdmFieldInfo.CDM_MODIFIED));
             assertEquals("Tiffany's pillbox commemorating UNC's bicentennial", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
@@ -330,13 +330,13 @@ public class CdmIndexServiceTest {
             Statement stmt = conn.createStatement();
             String fields = exportFields.stream().map(f -> '"' + f + '"').collect(Collectors.joining(","));
             ResultSet rs = stmt.executeQuery("select " + fields
-                    + " from " + CdmIndexService.TB_NAME + " order by dmrecord asc");
+                    + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
             rs.next();
-            assertEquals(0, rs.getInt("dmrecord"));
+            assertEquals(0, rs.getInt(CdmFieldInfo.CDM_ID));
             assertEquals("Folder 5: 1950-1956: Scan 25", rs.getString("title"));
 
             rs.next();
-            assertEquals(548, rs.getInt("dmrecord"));
+            assertEquals(548, rs.getInt(CdmFieldInfo.CDM_ID));
             assertEquals("Folder 9: Reports and writings on social work: Scan 51", rs.getString("title"));
 
         } finally {
