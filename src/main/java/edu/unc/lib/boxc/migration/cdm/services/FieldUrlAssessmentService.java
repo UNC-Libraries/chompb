@@ -82,9 +82,9 @@ public class FieldUrlAssessmentService {
                 if ("find".equals(field)) {
                     continue;
                 }
-                ResultSet rs = stmt.executeQuery(" select distinct " + field
-                        + " from " + CdmIndexService.TB_NAME
-                        + " where " + field + " like " + "'%http%'");
+                ResultSet rs = stmt.executeQuery(" select distinct \"" + field
+                        + "\" from " + CdmIndexService.TB_NAME
+                        + " where \"" + field + "\" like " + "'%http%'");
                 while (rs.next()) {
                     fieldUrlEntries.add(new FieldUrlEntry(field, extractUrl(rs.getString(1))));
                 }
