@@ -44,7 +44,7 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 
 /**
  * Service for validating cdm field urls report
- * @author krwong
+ * @author krwong, snluong
  */
 public class FieldUrlAssessmentService {
     private static final Logger log = LoggerFactory.getLogger(FieldUrlAssessmentService.class);
@@ -140,7 +140,7 @@ public class FieldUrlAssessmentService {
                 } else if (status >= 400) {
                     csvPrinter.printRecord(field, url, "y", "n", "n", null);
                 } else {
-                    throw new IOException("");
+                    throw new IOException("Unrecognized response status: " + status + " for " + url);
                 }
             } catch (IOException e) {
                 log.error("Failed to retrieve url: {}", url, e);
