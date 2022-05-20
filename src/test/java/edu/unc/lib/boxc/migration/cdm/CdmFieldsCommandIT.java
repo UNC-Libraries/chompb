@@ -121,7 +121,7 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         MigrationProject project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder.getRoot().toPath(), "gilmer", null, USERNAME);
         var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
-        testHelper.indexExportData("export_1.xml");
+        testHelper.indexExportData("mini_gilmer");
 
         Path projectPath = project.getProjectPath();
         Path reportPath = projectPath.resolve("gilmer_field_urls.csv");

@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -70,7 +71,7 @@ public class FieldUrlAssessmentServiceTest {
         Files.createDirectories(project.getExportPath());
 
         var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
-        testHelper.indexExportData("export_1.xml", "export_2.xml");
+        testHelper.indexExportData("gilmer");
 
         fieldService = new CdmFieldService();
         indexService = new CdmIndexService();
@@ -216,15 +217,15 @@ public class FieldUrlAssessmentServiceTest {
         Connection conn = indexService.openDbConnection();
         Statement stmt = conn.createStatement();
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET descri = descri || '" +
-                cdmBaseUrl + "/new_url_description' WHERE cdmid = 25");
+                cdmBaseUrl + "/new_url_description' WHERE " + CdmFieldInfo.CDM_ID + " = 25");
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET descri = descri || '" +
-                cdmBaseUrl + "/new_url_description' WHERE cdmid = 26");
+                cdmBaseUrl + "/new_url_description' WHERE " + CdmFieldInfo.CDM_ID + " = 26");
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET notes = notes || '" +
-                cdmBaseUrl + "/new_url_notes' WHERE cdmid = 28");
+                cdmBaseUrl + "/new_url_notes' WHERE " + CdmFieldInfo.CDM_ID + "= 28");
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET captio = captio || '" +
-                cdmBaseUrl + "/new_url_caption' WHERE cdmid = 25");
+                cdmBaseUrl + "/new_url_caption' WHERE " + CdmFieldInfo.CDM_ID + " = 25");
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET captio = captio || '" +
-                cdmBaseUrl + "/new_url_caption_again' WHERE cdmid = 26");
+                cdmBaseUrl + "/new_url_caption_again' WHERE " + CdmFieldInfo.CDM_ID + " = 26");
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET source = 'Jeremy Francis Gilmer Papers; " +
                 cdmBaseUrl + "/00276/'");
         CdmIndexService.closeDbConnection(conn);
