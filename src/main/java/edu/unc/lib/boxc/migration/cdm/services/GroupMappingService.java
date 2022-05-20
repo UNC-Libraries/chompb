@@ -319,12 +319,14 @@ public class GroupMappingService {
                 if (groupEntry.getValue().size() <= 1) {
                     continue;
                 }
+
+                var joinedFields = "\"" + String.join("\",\"", exportFields) + "\"";
                 // Clone the first child's data as the base data for the new work
                 String firstChild = groupEntry.getValue().get(0);
                 stmt.executeUpdate("insert into " + CdmIndexService.TB_NAME
-                        + " (" + String.join(",", exportFields) + ","
+                        + " (" + joinedFields + ","
                             + CdmFieldInfo.CDM_ID + "," + CdmIndexService.ENTRY_TYPE_FIELD + ")"
-                        + " select " + String.join(",", exportFields)
+                        + " select " + joinedFields
                             + ",'" + groupEntry.getKey() + "','" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
                         + " from " + CdmIndexService.TB_NAME
                         + " where " + CdmFieldInfo.CDM_ID + " = " + firstChild);

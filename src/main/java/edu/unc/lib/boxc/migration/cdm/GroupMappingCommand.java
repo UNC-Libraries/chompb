@@ -68,6 +68,7 @@ public class GroupMappingCommand {
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("Cannot generate group mapping: {}", e.getMessage());
+            log.warn("Cannot generate group mapping", e);
             return 1;
         } catch (Exception e) {
             log.error("Failed to map group objects", e);
@@ -90,6 +91,7 @@ public class GroupMappingCommand {
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("Cannot sync group mappings: {}", e.getMessage());
+            log.warn("Cannot sync group mapping", e);
             return 1;
         } catch (Exception e) {
             log.error("Failed to sync group mappings", e);
@@ -110,6 +112,7 @@ public class GroupMappingCommand {
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("Status failed: {}", e.getMessage());
+            log.warn("Status failed", e);
             return 1;
         } catch (Exception e) {
             log.error("Status failed", e);
