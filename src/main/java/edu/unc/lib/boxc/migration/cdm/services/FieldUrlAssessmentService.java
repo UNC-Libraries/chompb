@@ -90,7 +90,7 @@ public class FieldUrlAssessmentService {
                 }
             }
         } catch (SQLException e) {
-            throw new MigrationException("Failed to generate fields with urls", e);
+            throw new MigrationException("Failed to query DB for URLs", e);
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
