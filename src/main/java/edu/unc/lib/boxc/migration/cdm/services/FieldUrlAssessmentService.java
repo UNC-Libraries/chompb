@@ -53,15 +53,14 @@ public class FieldUrlAssessmentService {
     private CdmFieldService cdmFieldService;
     private CdmIndexService indexService;
 
-    // header order: field, url, error, successful, redirect, redirect url
+    // header order: field, url, successful, redirect, redirect url
     public static final String NICK_FIELD = "cdm_nick";
     public static final String URL = "url";
-    public static final String ERROR_INDICATOR = "error?";
     public static final String SUCCESSFUL_INDICATOR = "successful?";
     public static final String REDIRECT_INDICATOR = "redirect?";
     public static final String REDIRECT_URL = "redirect url";
     public static final String[] URL_CSV_HEADERS = new String[] {
-            NICK_FIELD, URL, ERROR_INDICATOR, SUCCESSFUL_INDICATOR, REDIRECT_INDICATOR, REDIRECT_URL };
+            NICK_FIELD, URL, SUCCESSFUL_INDICATOR, REDIRECT_INDICATOR, REDIRECT_URL };
 
     /**
      * Generates a List of FieldUrlEntries that have the CDM field and associated URLs as attributes
@@ -125,7 +124,7 @@ public class FieldUrlAssessmentService {
                 .withHeader(URL_CSV_HEADERS));
         var httpClient = HttpClients.createDefault();
 
-        // row order: field, url, error, successful, redirect, redirect URL
+        // row order: field, url, successful, redirect, redirect URL
         for (var entry : fieldsAndUrls) {
             String field = entry.fieldName;
             String url = entry.url;
@@ -134,25 +133,25 @@ public class FieldUrlAssessmentService {
             try {
                 getMethod = new HttpGet(url);
             } catch (IllegalArgumentException e) {
-                csvPrinter.printRecord(field, url, "y", "n", "n", null);
+                csvPrinter.printRecord(field, url, "n", "n", null);
                 continue;
             }
 
             try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
                 int status = resp.getStatusLine().getStatusCode();
                 if (status >= 200 && status < 300) {
-                    csvPrinter.printRecord(field, url, "n", "y", "n", null);
+                    csvPrinter.printRecord(field, url, "y", "n", null);
                 } else if (status >= 300 && status < 400) {
                     String redirectUrl = resp.getFirstHeader("Location").getValue();
-                    csvPrinter.printRecord(field, url, "n", "y", "y", redirectUrl);
+                    csvPrinter.printRecord(field, url, "y", "y", redirectUrl);
                 } else if (status >= 400) {
-                    csvPrinter.printRecord(field, url, "y", "n", "n", null);
+                    csvPrinter.printRecord(field, url, "n", "n", null);
                 } else {
                     throw new IOException("Unrecognized response status: " + status + " for " + url);
                 }
             } catch (IOException e) {
                 // invalid URL will be logged as an error url
-                csvPrinter.printRecord(field, url, "y", "n", "n", null);
+                csvPrinter.printRecord(field, url, "n", "n", null);
             }
         }
         csvPrinter.close();

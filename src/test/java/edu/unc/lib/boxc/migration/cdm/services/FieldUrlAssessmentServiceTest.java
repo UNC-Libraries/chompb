@@ -108,7 +108,6 @@ public class FieldUrlAssessmentServiceTest {
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertUrlsInCsvAreCorrect(rows);
-            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.ERROR_INDICATOR, "n");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "y");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "n");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL, "");
@@ -129,7 +128,6 @@ public class FieldUrlAssessmentServiceTest {
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertUrlsInCsvAreCorrect(rows);
-            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.ERROR_INDICATOR, "n");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "y");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "y");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL,
@@ -151,7 +149,6 @@ public class FieldUrlAssessmentServiceTest {
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertUrlsInCsvAreCorrect(rows);
-            assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.ERROR_INDICATOR, "y");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "n");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "n");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL, "");
@@ -189,7 +186,6 @@ public class FieldUrlAssessmentServiceTest {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("y", rows.get(0).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("n", rows.get(1).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
-            assertEquals("y", rows.get(1).get(FieldUrlAssessmentService.ERROR_INDICATOR));
             assertEquals("y", rows.get(2).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("y", rows.get(3).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("y", rows.get(4).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
@@ -216,7 +212,6 @@ public class FieldUrlAssessmentServiceTest {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("y", rows.get(0).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("n", rows.get(1).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
-            assertEquals("y", rows.get(1).get(FieldUrlAssessmentService.ERROR_INDICATOR));
             assertEquals("y", rows.get(2).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("y", rows.get(3).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("y", rows.get(4).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
