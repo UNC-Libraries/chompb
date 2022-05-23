@@ -34,6 +34,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +123,8 @@ public class FieldUrlAssessmentService {
         BufferedWriter writer = Files.newBufferedWriter(projPath.resolve(filename));
         CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
                 .withHeader(URL_CSV_HEADERS));
-        var httpClient = HttpClients.createDefault();
+        //var httpClient = HttpClients.createDefault();
+        var httpClient = HttpClientBuilder.create().disableRedirectHandling().build();
 
         // row order: field, url, successful, redirect, redirect URL
         for (var entry : fieldsAndUrls) {
