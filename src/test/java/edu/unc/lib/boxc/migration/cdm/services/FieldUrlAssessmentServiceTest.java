@@ -171,7 +171,7 @@ public class FieldUrlAssessmentServiceTest {
 
     @Test
     public void urlWithSpaceTest() throws Exception {
-        var wrongUrl = cdmBaseUrl = "/wrong";
+        var wrongUrl = cdmBaseUrl + "/wrong";
         addProblematicUrlToDb(wrongUrl + " .html");
         stubUrls(200);
         stubFor(get(urlEqualTo( "/wrong"))
