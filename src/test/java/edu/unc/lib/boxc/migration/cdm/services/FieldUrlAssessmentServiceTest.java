@@ -169,6 +169,63 @@ public class FieldUrlAssessmentServiceTest {
         assertTrue(Files.exists(newPath));
     }
 
+    @Test
+    public void urlWithSpaceTest() throws Exception {
+        var wrongUrl = cdmBaseUrl = "/wrong";
+        addProblematicUrlToDb(wrongUrl + " .html");
+        stubUrls(200);
+        stubFor(get(urlEqualTo( "/wrong"))
+                .willReturn(aResponse()
+                        .withStatus(400)));
+        service.validateUrls();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals("y", rows.get(0).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("n", rows.get(1).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("y", rows.get(1).get(FieldUrlAssessmentService.ERROR_INDICATOR));
+            assertEquals("y", rows.get(2).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("y", rows.get(3).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("y", rows.get(4).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("y", rows.get(5).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+
+            assertEquals(wrongUrl, rows.get(1).get(FieldUrlAssessmentService.URL));
+        }
+    }
+
+    @Test
+    public void invalidUrlTest() throws Exception {
+        var invalidUrl = cdmBaseUrl + "&";
+        addProblematicUrlToDb(invalidUrl);
+        stubUrls(200);
+        service.validateUrls();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals("y", rows.get(0).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("n", rows.get(1).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("y", rows.get(1).get(FieldUrlAssessmentService.ERROR_INDICATOR));
+            assertEquals("y", rows.get(2).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("y", rows.get(3).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("y", rows.get(4).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals("y", rows.get(5).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+
+            assertEquals(invalidUrl, rows.get(1).get(FieldUrlAssessmentService.URL));
+        }
+    }
+
     private void stubUrls(int statusCode) {
         stubFor(get(urlEqualTo( "/00276/"))
                 .willReturn(aResponse()
@@ -228,6 +285,14 @@ public class FieldUrlAssessmentServiceTest {
                 cdmBaseUrl + "/new_url_caption_again' WHERE " + CdmFieldInfo.CDM_ID + " = 26");
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET source = 'Jeremy Francis Gilmer Papers; " +
                 cdmBaseUrl + "/00276/'");
+        CdmIndexService.closeDbConnection(conn);
+    }
+
+    private void addProblematicUrlToDb(String url) throws SQLException {
+        Connection conn = indexService.openDbConnection();
+        Statement stmt = conn.createStatement();
+        stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET descri = descri || '" +
+                url + "' WHERE " + CdmFieldInfo.CDM_ID + " = 100");
         CdmIndexService.closeDbConnection(conn);
     }
 

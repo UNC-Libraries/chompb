@@ -101,7 +101,7 @@ public class FieldUrlAssessmentService {
      * Extracts url from the passed in CDM field value
      */
     public String extractUrl(String string) {
-        String regex = "\\b((?:https?|ftp|file):" + "//[-a-zA-Z0-9+&@#/%?=" + "~_|!:, .;]*[-a-zA-Z0-9+"
+        String regex = "\\b((?:https?|ftp|file):" + "//[-a-zA-Z0-9+&@#/%?=" + "~_|!:,.;]*[-a-zA-Z0-9+"
                 + "&@#/%=~_|])";
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(string);
@@ -129,7 +129,15 @@ public class FieldUrlAssessmentService {
         for (var entry : fieldsAndUrls) {
             String field = entry.fieldName;
             String url = entry.url;
-            HttpGet getMethod = new HttpGet(url);
+            HttpGet getMethod;
+
+            try {
+                getMethod = new HttpGet(url);
+            } catch (IllegalArgumentException e) {
+                csvPrinter.printRecord(field, url, "y", "n", "n", null);
+                continue;
+            }
+
             try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
                 int status = resp.getStatusLine().getStatusCode();
                 if (status >= 200 && status < 300) {
@@ -143,7 +151,8 @@ public class FieldUrlAssessmentService {
                     throw new IOException("Unrecognized response status: " + status + " for " + url);
                 }
             } catch (IOException e) {
-                log.error("Failed to retrieve url: {}", url, e);
+                // invalid URL will be logged as an error url
+                csvPrinter.printRecord(field, url, "y", "n", "n", null);
             }
         }
         csvPrinter.close();
