@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -89,23 +88,14 @@ public class GroupMappingStatusService extends AbstractStatusService {
             Map<String, List<String>> mappings = groupInfo.getGroupedMappings();
             int totalGroups = 0;
             int childrenInGroups = 0;
-            List<String> groupList = new ArrayList<>();
             for (Entry<String, List<String>> entry : mappings.entrySet()) {
                 if (entry.getValue().size() > 1) {
                     totalGroups++;
                     childrenInGroups += entry.getValue().size();
-                    if (verbosity.isVerbose()) {
-                        String matched = groupInfo.getMatchedValueByGroupKey(entry.getKey());
-                        groupList.add(matched + " (with id " + entry.getKey() + "): " + entry.getValue().size());
-                    }
                 }
             }
             showField("Total Groups", totalGroups);
             showFieldWithPercent("Objects In Groups", childrenInGroups, totalObjects);
-            if (verbosity.isVerbose()) {
-                showField("Counts per group", "");
-                showFieldListValues(groupList);
-            }
         } catch (IOException e) {
             log.error("Failed to load mappings", e);
             outputLogger.info("Failed to load mappings: {}", e.getMessage());

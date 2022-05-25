@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
@@ -126,13 +125,12 @@ public class GroupMappingService {
                 // Add empty mapping for records either not in groups or in groups with fewer than 2 members
                 if (StringUtils.isBlank(matchedValue) || !groupSet.contains(matchedValue)) {
                     log.debug("No matching field for object {}", cdmId);
-                    csvPrinter.printRecord(cdmId, null, null);
+                    csvPrinter.printRecord(cdmId, null);
                     continue;
                 }
 
-                String groupKey = matchedToGroup.computeIfAbsent(matchedValue,
-                        (k) ->  GroupMappingInfo.GROUPED_WORK_PREFIX + UUID.randomUUID());
-                csvPrinter.printRecord(cdmId, options.getGroupField() + ":" + matchedValue, groupKey);
+                String groupKey = GroupMappingInfo.GROUPED_WORK_PREFIX + options.getGroupField() + ":" + matchedValue;
+                csvPrinter.printRecord(cdmId, groupKey);
             }
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
@@ -213,8 +211,7 @@ public class GroupMappingService {
             for (CSVRecord originalRecord : originalParser) {
                 GroupMapping origMapping = new GroupMapping();
                 origMapping.setCdmId(originalRecord.get(0));
-                origMapping.setMatchedValue(originalRecord.get(1));
-                origMapping.setGroupKey(originalRecord.get(2));
+                origMapping.setGroupKey(originalRecord.get(1));
 
                 GroupMapping updateMapping = updateInfo.getMappingByCdmId(origMapping.getCdmId());
                 if (updateMapping != null && updateMapping.getGroupKey() != null) {
@@ -249,7 +246,7 @@ public class GroupMappingService {
     }
 
     private void writeMapping(CSVPrinter csvPrinter, GroupMapping mapping) throws IOException {
-        csvPrinter.printRecord(mapping.getCdmId(), mapping.getMatchedValue(), mapping.getGroupKey());
+        csvPrinter.printRecord(mapping.getCdmId(), mapping.getGroupKey());
     }
 
     protected void setUpdatedDate(Instant timestamp) throws IOException {
@@ -280,10 +277,9 @@ public class GroupMappingService {
             info.setGroupedMappings(grouped);
             for (CSVRecord csvRecord : csvParser) {
                 String id = csvRecord.get(0);
-                String groupKey = csvRecord.get(2);
+                String groupKey = csvRecord.get(1);
                 GroupMapping mapping = new GroupMapping();
                 mapping.setCdmId(id);
-                mapping.setMatchedValue(csvRecord.get(1));
                 mapping.setGroupKey(groupKey);
                 mappings.add(mapping);
                 if (StringUtils.isBlank(groupKey)) {
