@@ -99,6 +99,22 @@ public class GroupMappingService {
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
+
+            // Return set of all group keys that have at least 2 records in them
+            var groupSet = new HashSet<String>();
+            ResultSet groupRs = stmt.executeQuery("select " + options.getGroupField()
+                    + " from " + CdmIndexService.TB_NAME
+                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                    + " group by " + options.getGroupField()
+                    + " having count(*) > 1");
+            while (groupRs.next()) {
+                var groupValue = groupRs.getString(1);
+                if (StringUtils.isBlank(groupValue)) {
+                    continue;
+                }
+                groupSet.add(groupValue);
+            }
+
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", " + options.getGroupField()
                 + " from " + CdmIndexService.TB_NAME
                 + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
@@ -107,11 +123,13 @@ public class GroupMappingService {
                 String cdmId = rs.getString(1);
                 String matchedValue = rs.getString(2);
 
-                if (StringUtils.isBlank(matchedValue)) {
+                // Add empty mapping for records either not in groups or in groups with fewer than 2 members
+                if (StringUtils.isBlank(matchedValue) || !groupSet.contains(matchedValue)) {
                     log.debug("No matching field for object {}", cdmId);
                     csvPrinter.printRecord(cdmId, null, null);
                     continue;
                 }
+
                 String groupKey = matchedToGroup.computeIfAbsent(matchedValue,
                         (k) ->  GroupMappingInfo.GROUPED_WORK_PREFIX + UUID.randomUUID());
                 csvPrinter.printRecord(cdmId, options.getGroupField() + ":" + matchedValue, groupKey);

@@ -106,17 +106,16 @@ public class GroupMappingServiceTest {
 
         GroupMappingInfo info = service.loadMappings();
         String group1Key = info.getGroupKeyByMatchedValue("groupa:group1");
-        String group2Key = info.getGroupKeyByMatchedValue("groupa:group2");
         assertMappingPresent(info, "25", "groupa:group1", group1Key);
         assertMappingPresent(info, "26", "groupa:group1", group1Key);
-        assertMappingPresent(info, "27", "groupa:group2", group2Key);
+        // Single member group should not be mapped
+        assertMappingPresent(info, "27", null, null);
         assertMappingPresent(info, "28", null, null);
         assertMappingPresent(info, "29", null, null);
         assertEquals(5, info.getMappings().size());
 
         assertGroupingPresent(info, group1Key, "25", "26");
-        assertGroupingPresent(info, group2Key, "27");
-        assertEquals(2, info.getGroupedMappings().size());
+        assertEquals(1, info.getGroupedMappings().size());
 
         assertMappedDatePresent();
     }
@@ -156,10 +155,9 @@ public class GroupMappingServiceTest {
         // mapping state should be unchanged
         GroupMappingInfo info = service.loadMappings();
         String group1Key = info.getGroupKeyByMatchedValue("groupa:group1");
-        String group2Key = info.getGroupKeyByMatchedValue("groupa:group2");
         assertMappingPresent(info, "25", "groupa:group1", group1Key);
         assertMappingPresent(info, "26", "groupa:group1", group1Key);
-        assertMappingPresent(info, "27", "groupa:group2", group2Key);
+        assertMappingPresent(info, "27", null, null);
         assertMappingPresent(info, "28", null, null);
         assertMappingPresent(info, "29", null, null);
         assertEquals(5, info.getMappings().size());
@@ -179,10 +177,9 @@ public class GroupMappingServiceTest {
             // mapping state should be unchanged
             GroupMappingInfo info = service.loadMappings();
             String group1Key = info.getGroupKeyByMatchedValue("groupa:group1");
-            String group2Key = info.getGroupKeyByMatchedValue("groupa:group2");
             assertMappingPresent(info, "25", "groupa:group1", group1Key);
             assertMappingPresent(info, "26", "groupa:group1", group1Key);
-            assertMappingPresent(info, "27", "groupa:group2", group2Key);
+            assertMappingPresent(info, "27", null, null);
             assertMappingPresent(info, "28", null, null);
             assertMappingPresent(info, "29", null, null);
             assertEquals(5, info.getMappings().size());
@@ -198,10 +195,9 @@ public class GroupMappingServiceTest {
 
         GroupMappingInfo info = service.loadMappings();
         String group1Key = info.getGroupKeyByMatchedValue("groupa:group1");
-        String group2Key = info.getGroupKeyByMatchedValue("groupa:group2");
         assertMappingPresent(info, "25", "groupa:group1", group1Key);
         assertMappingPresent(info, "26", "groupa:group1", group1Key);
-        assertMappingPresent(info, "27", "groupa:group2", group2Key);
+        assertMappingPresent(info, "27", null, null);
         assertMappingPresent(info, "28", null, null);
         assertMappingPresent(info, "29", null, null);
         assertEquals(5, info.getMappings().size());
@@ -214,19 +210,15 @@ public class GroupMappingServiceTest {
         // Mapping state should have been overwritten
         GroupMappingInfo info2 = service.loadMappings();
         String group1Key2 = info2.getGroupKeyByMatchedValue("digitc:2005-11-10");
-        String group2Key2 = info2.getGroupKeyByMatchedValue("digitc:2005-11-09");
-        String group3Key2 = info2.getGroupKeyByMatchedValue("digitc:2005-11-11");
         assertMappingPresent(info2, "25", "digitc:2005-11-10", group1Key2);
-        assertMappingPresent(info2, "26", "digitc:2005-11-09", group2Key2);
-        assertMappingPresent(info2, "27", "digitc:2005-11-11", group3Key2);
+        assertMappingPresent(info2, "26", null, null);
+        assertMappingPresent(info2, "27", null, null);
         assertMappingPresent(info2, "28", "digitc:2005-11-10", group1Key2);
         assertMappingPresent(info2, "29", "digitc:2005-11-10", group1Key2);
         assertEquals(5, info2.getMappings().size());
 
         assertGroupingPresent(info2, group1Key2, "25", "28", "29");
-        assertGroupingPresent(info2, group2Key2, "26");
-        assertGroupingPresent(info2, group3Key2, "27");
-        assertEquals(3, info2.getGroupedMappings().size());
+        assertEquals(1, info2.getGroupedMappings().size());
 
         assertMappedDatePresent();
     }
@@ -248,11 +240,10 @@ public class GroupMappingServiceTest {
         // Mapping state should have been overwritten
         GroupMappingInfo info2 = service.loadMappings();
         String group1Key = info2.getGroupKeyByMatchedValue("groupa:group1");
-        String group2Key = info2.getGroupKeyByMatchedValue("groupa:group2");
         String group3Key = info2.getGroupKeyByMatchedValue("digitc:2005-11-10");
         assertMappingPresent(info2, "25", "groupa:group1", group1Key);
         assertMappingPresent(info2, "26", "groupa:group1", group1Key);
-        assertMappingPresent(info2, "27", "groupa:group2", group2Key);
+        assertMappingPresent(info2, "27", null, null);
         assertMappingPresent(info2, "28", "digitc:2005-11-10", group3Key);
         assertMappingPresent(info2, "29", "digitc:2005-11-10", group3Key);
         assertEquals(5, info2.getMappings().size());
@@ -269,11 +260,9 @@ public class GroupMappingServiceTest {
 
         GroupMappingInfo info = service.loadMappings();
         String group1Key = info.getGroupKeyByMatchedValue("digitc:2005-11-10");
-        String group2Key = info.getGroupKeyByMatchedValue("digitc:2005-11-09");
-        String group3Key = info.getGroupKeyByMatchedValue("digitc:2005-11-11");
         assertMappingPresent(info, "25", "digitc:2005-11-10", group1Key);
-        assertMappingPresent(info, "26", "digitc:2005-11-09", group2Key);
-        assertMappingPresent(info, "27", "digitc:2005-11-11", group3Key);
+        assertMappingPresent(info, "26", null, null);
+        assertMappingPresent(info, "27", null, null);
         assertMappingPresent(info, "28", "digitc:2005-11-10", group1Key);
         assertMappingPresent(info, "29", "digitc:2005-11-10", group1Key);
         assertEquals(5, info.getMappings().size());
@@ -285,11 +274,10 @@ public class GroupMappingServiceTest {
 
         GroupMappingInfo info2 = service.loadMappings();
         String group1Key2 = info2.getGroupKeyByMatchedValue("groupa:group1");
-        String group2Key2 = info2.getGroupKeyByMatchedValue("groupa:group2");
         String group3Key2 = info2.getGroupKeyByMatchedValue("digitc:2005-11-10");
         assertMappingPresent(info2, "25", "groupa:group1", group1Key2);
         assertMappingPresent(info2, "26", "groupa:group1", group1Key2);
-        assertMappingPresent(info2, "27", "groupa:group2", group2Key2);
+        assertMappingPresent(info2, "27", null, null);
         assertMappingPresent(info2, "28", "digitc:2005-11-10", group3Key2);
         assertMappingPresent(info2, "29", "digitc:2005-11-10", group3Key2);
         assertEquals(5, info2.getMappings().size());
@@ -378,7 +366,6 @@ public class GroupMappingServiceTest {
         try {
             GroupMappingInfo info = service.loadMappings();
             String group1Key = info.getGroupKeyByMatchedValue("groupa:group1");
-            String group2Key = info.getGroupKeyByMatchedValue("groupa:group2");
             conn = indexService.openDbConnection();
             assertWorkSynched(conn, group1Key, "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, group1Key, "25", "26");
@@ -387,8 +374,7 @@ public class GroupMappingServiceTest {
             assertParentIdsPresent(conn, group1Key, null);
 
             assertGroupingPresent(info, group1Key, "25", "26");
-            assertGroupingPresent(info, group2Key, "27");
-            assertEquals(2, info.getGroupedMappings().size());
+            assertEquals(1, info.getGroupedMappings().size());
 
             assertSynchedDatePresent();
         } finally {
