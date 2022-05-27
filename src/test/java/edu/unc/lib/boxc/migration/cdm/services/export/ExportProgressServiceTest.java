@@ -37,7 +37,7 @@ public class ExportProgressServiceTest extends AbstractOutputTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.getTestEnv());
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV);
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);
         exportProgressService = new ExportProgressService();

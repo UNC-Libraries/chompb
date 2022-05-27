@@ -23,6 +23,7 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
@@ -70,7 +71,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
     public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
     private TestSshServer testSshServer;
     private Path filesBasePath;
-    private String cdmEnvConfig;
 
     private RedisServer redisServer;
     private DepositStatusFactory depositStatusFactory;
@@ -96,11 +96,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         testSshServer.setPassword(CDM_PASSWORD);
         testSshServer.startServer();
 
-        var cdmEnvPath = tmpFolder.getRoot().toPath().resolve("cdm_envs.json");
-        var envMapping = CdmEnvironmentHelper.getTestMapping();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(Files.newOutputStream(cdmEnvPath), envMapping);
-        cdmEnvConfig = cdmEnvPath.toString();
+        setupChompbConfig();
     }
 
     public void initDepositStatusFactory() {
@@ -129,8 +125,8 @@ public class CompleteMigrationIT extends AbstractCommandIT {
     public void migrateSimpleCollectionTest() throws Exception {
         String[] argsInit = new String[] {
                 "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--env-config", cdmEnvConfig,
                 "-p", COLLECTION_ID };
         executeExpectSuccess(argsInit);
 
@@ -139,6 +135,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
         String[] argsExport = new String[] {
                 "-w", projPath.toString(),
+                "--env-config", chompbConfigPath,
                 "export",
                 "-p", CDM_PASSWORD };
         executeExpectSuccess(argsExport);

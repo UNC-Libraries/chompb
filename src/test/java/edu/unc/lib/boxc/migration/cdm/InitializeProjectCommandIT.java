@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
@@ -62,7 +63,6 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
 
     private CdmFieldService fieldService;
-    private String cdmEnvConfig;
 
     @Before
     public void setUp() throws Exception {
@@ -82,19 +82,15 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                         .withHeader("Content-Type", "text/json")
                         .withBody(validRespBody)));
 
-        var cdmEnvPath = tmpFolder.getRoot().toPath().resolve("cdm_envs.json");
-        var envMapping = CdmEnvironmentHelper.getTestMapping();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(Files.newOutputStream(cdmEnvPath), envMapping);
-        cdmEnvConfig = cdmEnvPath.toString();
+        setupChompbConfig();
     }
 
     @Test
     public void initValidProjectTest() throws Exception {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--env-config", cdmEnvConfig,
                 "-p", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
@@ -113,8 +109,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         Files.createDirectory(projDir);
         String[] initArgs = new String[] {
                 "-w", projDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--env-config", cdmEnvConfig,
                 "-c", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
@@ -131,8 +127,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     public void initCdmCollectioNotFoundTest() throws Exception {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--env-config", cdmEnvConfig,
                 "-p", "unknowncoll" };
         executeExpectFailure(initArgs);
 
@@ -147,8 +143,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         Files.createDirectory(projDir);
         String[] initArgs = new String[] {
                 "-w", projDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--env-config", cdmEnvConfig,
                 "-c", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
@@ -170,8 +166,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     public void initUnknownEnvTest() throws Exception {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--env-config", cdmEnvConfig,
                 "-e", "what",
                 "-p", COLLECTION_ID };
         executeExpectFailure(initArgs);
@@ -189,7 +185,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-p", COLLECTION_ID };
         executeExpectFailure(initArgs);
 
-        assertOutputContains("Must provide and env-config option");
+        assertOutputContains("Must provide an env-config option");
 
         assertProjectDirectoryNotCreate();
     }

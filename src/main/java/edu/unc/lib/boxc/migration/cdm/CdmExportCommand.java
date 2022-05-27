@@ -78,14 +78,14 @@ public class CdmExportCommand implements Callable<Integer> {
             outputLogger.info("Exported project {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
-        } catch (MigrationException e) {
+        } catch (MigrationException | IOException e) {
             log.error("Failed to export project", e);
             outputLogger.info("Failed to export project: {}", e.getMessage());
             return 1;
         }
     }
 
-    public void initializeServices() {
+    public void initializeServices() throws IOException {
         fieldService = new CdmFieldService();
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);
@@ -93,6 +93,7 @@ public class CdmExportCommand implements Callable<Integer> {
         exportService.setProject(project);
         exportService.setCdmFieldService(fieldService);
         exportService.setExportStateService(exportStateService);
+        exportService.setChompbConfig(parentCommand.getChompbConfig());
         exportProgressService = new ExportProgressService();
         exportProgressService.setExportStateService(exportStateService);
     }

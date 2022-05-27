@@ -15,7 +15,9 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
@@ -25,6 +27,7 @@ import org.slf4j.Logger;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.nio.file.Files;
 
 import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -43,6 +46,7 @@ public class AbstractCommandIT extends AbstractOutputTest {
     protected SipServiceHelper testHelper;
 
     protected MigrationProject project;
+    protected String chompbConfigPath;
 
     @After
     public void resetProps() {
@@ -61,13 +65,22 @@ public class AbstractCommandIT extends AbstractOutputTest {
     }
 
     protected void initProject() throws IOException {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, PROJECT_ID, COLLECTION_ID, USERNAME, CdmEnvironmentHelper.getTestEnv());
+        project = MigrationProjectFactory.createMigrationProject(baseDir, PROJECT_ID, COLLECTION_ID, USERNAME,
+                CdmEnvironmentHelper.DEFAULT_ENV);
     }
 
     protected void initProjectAndHelper() throws IOException {
         initProject();
         initTestHelper();
+    }
+
+    protected void setupChompbConfig() throws IOException {
+        var configPath = tmpFolder.getRoot().toPath().resolve("config.json");
+        var config = new ChompbConfigService.ChompbConfig();
+        config.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(Files.newOutputStream(configPath), config);
+        chompbConfigPath = configPath.toString();
     }
 
     protected void executeExpectSuccess(String[] args) {

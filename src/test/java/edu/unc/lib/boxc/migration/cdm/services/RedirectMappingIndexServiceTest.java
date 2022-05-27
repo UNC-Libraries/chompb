@@ -64,7 +64,7 @@ public class RedirectMappingIndexServiceTest {
     public void setup() throws Exception {
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.getTestEnv());
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV);
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         redirectMappingHelper = new RedirectMappingHelper(project);
         redirectMappingHelper.createRedirectMappingsTableInDb();

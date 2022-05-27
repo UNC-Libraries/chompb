@@ -15,33 +15,27 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import edu.unc.lib.boxc.migration.cdm.services.FindingAidService;
+import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.Callable;
+
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Command to initialize new migration projects
@@ -55,14 +49,10 @@ public class InitializeProjectCommand implements Callable<Integer> {
     private CLIMain parentCommand;
 
     @Option(names = { "-e", "--cdm-env" },
-            description = "CDM environment used for retrieving data. Env-config must be set. Values: test, qa, prod. "
+            description = "CDM environment used for retrieving data. Env-config must be set. "
                     + "Default: ${DEFAULT-VALUE}",
-            defaultValue = "${env:CDM_ENV:-test}")
+            defaultValue = "${env:CDM_ENV}")
     private String cdmEnv;
-    @Option(names = { "--env-config" },
-            description = "Path to the chompb environment configuration file. Default: ${DEFAULT-VALUE}",
-            defaultValue = "${env:ENV_CONFIG}")
-    private Path envConfigPath;
     @Option(names = { "-c", "--cdm-coll-id" },
             description = "Identifier of the CDM collection to migrate. Use if the name of the project directory"
                     + " does not match the CDM Collection ID.")
@@ -89,24 +79,20 @@ public class InitializeProjectCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         long start = System.nanoTime();
 
-        if (envConfigPath == null) {
-            outputLogger.info("Must provide and env-config option");
-            return 1;
-        }
-
-        Map<String, CdmEnvironment> cdmEnvMapping;
+        ChompbConfig config;
         try {
-            cdmEnvMapping = loadCdmEnvironmentMapping();
-            if (!cdmEnvMapping.containsKey(cdmEnv)) {
+            config = parentCommand.getChompbConfig();
+            if (!config.getCdmEnvironments().containsKey(cdmEnv)) {
                 outputLogger.info("Unknown cdm-env value {}, configured values are: {}",
-                        cdmEnv, String.join(", ", cdmEnvMapping.keySet()));
+                        cdmEnv, String.join(", ", config.getCdmEnvironments().keySet()));
                 return 1;
             }
-        } catch (IOException e) {
-            outputLogger.info("Unable to read cdm environment", e);
+        } catch (IllegalArgumentException | IOException e) {
+            outputLogger.info("Unable to read application configuration: {}", e.getMessage());
+            log.error("Unable to read application configuration", e);
             return 1;
         }
-        var cdmEnvConfig = cdmEnvMapping.get(cdmEnv);
+        var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnv);
 
         Path currentPath = parentCommand.getWorkingDirectory();
         String projDisplayName = projectName == null ? currentPath.getFileName().toString() : projectName;
@@ -130,7 +116,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
         MigrationProject project = null;
         try {
             project = MigrationProjectFactory.createMigrationProject(
-                    currentPath, projectName, cdmCollectionId, username, cdmEnvConfig);
+                    currentPath, projectName, cdmCollectionId, username, cdmEnv);
 
             // Persist field info to the project
             fieldService.persistFieldsToProject(project, fieldInfo);
@@ -152,11 +138,5 @@ public class InitializeProjectCommand implements Callable<Integer> {
 
         outputLogger.info("Initialized project {} in {}s", projDisplayName, (System.nanoTime() - start) / 1e9);
         return 0;
-    }
-
-    private Map<String, CdmEnvironment> loadCdmEnvironmentMapping() throws IOException {
-        var typeRef = new TypeReference<HashMap<String, CdmEnvironment>>() {};
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(Files.newInputStream(envConfigPath), typeRef);
     }
 }

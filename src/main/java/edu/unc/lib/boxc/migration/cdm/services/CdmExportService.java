@@ -18,6 +18,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.slf4j.Logger;
 
@@ -39,6 +40,7 @@ public class CdmExportService {
     private ExportStateService exportStateService;
     private CdmFileRetrievalService fileRetrievalService;
     private MigrationProject project;
+    private ChompbConfig chompbConfig;
 
     public CdmExportService() {
     }
@@ -75,6 +77,7 @@ public class CdmExportService {
             fileRetrievalService = new CdmFileRetrievalService();
             fileRetrievalService.setSshPassword(options.getCdmPassword());
             fileRetrievalService.setSshUsername(options.getCdmUsername());
+            fileRetrievalService.setChompbConfig(chompbConfig);
             fileRetrievalService.setProject(project);
         }
     }
@@ -97,5 +100,9 @@ public class CdmExportService {
 
     public void setProject(MigrationProject project) {
         this.project = project;
+    }
+
+    public void setChompbConfig(ChompbConfig chompbConfig) {
+        this.chompbConfig = chompbConfig;
     }
 }

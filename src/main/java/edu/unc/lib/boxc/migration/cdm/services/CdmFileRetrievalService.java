@@ -17,6 +17,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.scp.client.ScpClientCreator;
@@ -43,6 +44,7 @@ public class CdmFileRetrievalService {
 
     private String sshUsername;
     private String sshPassword;
+    private ChompbConfig chompbConfig;
 
     /**
      * Download the desc.all file for the collection being migrated
@@ -81,7 +83,7 @@ public class CdmFileRetrievalService {
         SshClient client = SshClient.setUpDefaultClient();
         client.setFilePasswordProvider(FilePasswordProvider.of(sshPassword));
         client.start();
-        var cdmEnv = project.getProjectProperties().getCdmEnvironment();
+        var cdmEnv = chompbConfig.getCdmEnvironments().get(project.getProjectProperties().getCdmEnvironment());
         try (var sshSession = client.connect(sshUsername, cdmEnv.getSshHost(), cdmEnv.getSshPort())
                 .verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .getSession()) {
@@ -109,5 +111,9 @@ public class CdmFileRetrievalService {
 
     public void setSshPassword(String sshPassword) {
         this.sshPassword = sshPassword;
+    }
+
+    public void setChompbConfig(ChompbConfig chompbConfig) {
+        this.chompbConfig = chompbConfig;
     }
 }

@@ -80,7 +80,7 @@ public class SipServiceTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.getTestEnv());
+                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV);
 
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         service = testHelper.createSipsService();

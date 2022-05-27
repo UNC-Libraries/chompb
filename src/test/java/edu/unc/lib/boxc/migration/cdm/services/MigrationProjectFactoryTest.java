@@ -49,7 +49,7 @@ public class MigrationProjectFactoryTest {
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
     private Path projectsBase;
-    private CdmEnvironment testEnv = CdmEnvironmentHelper.getTestEnv();
+    private String testEnv = CdmEnvironmentHelper.DEFAULT_ENV;
 
     @Before
     public void setup() throws Exception {
@@ -234,9 +234,6 @@ public class MigrationProjectFactoryTest {
         assertEquals("Project name did not match expected value", expName, properties.getName());
         assertEquals("CDM Collection ID did not match expected value", expCollId, properties.getCdmCollectionId());
         assertNotNull("Created date not set", properties.getCreatedDate());
-        var cdmEnv = properties.getCdmEnvironment();
-        assertEquals(42222, cdmEnv.getSshPort());
-        assertEquals("localhost", cdmEnv.getSshHost());
-        assertEquals("http://localhost:46888", cdmEnv.getHttpBaseUrl());
+        assertEquals("test", properties.getCdmEnvironment());
     }
 }

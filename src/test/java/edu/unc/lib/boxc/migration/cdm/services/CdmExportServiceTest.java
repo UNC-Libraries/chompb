@@ -56,6 +56,7 @@ public class CdmExportServiceTest {
     private MigrationProject project;
     private CdmFieldService fieldService;
     private CdmExportService service;
+    private ChompbConfigService.ChompbConfig chompbConfig;
     private ExportStateService exportStateService;
     @Mock
     private CdmFileRetrievalService cdmFileRetrievalService;
@@ -67,7 +68,7 @@ public class CdmExportServiceTest {
         initMocks(this);
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.getTestEnv());
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV);
         fieldService = new CdmFieldService();
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);
@@ -77,6 +78,9 @@ public class CdmExportServiceTest {
         service.setCdmFieldService(fieldService);
         service.setExportStateService(exportStateService);
         service.setFileRetrievalService(cdmFileRetrievalService);
+        var chompbConfig = new ChompbConfigService.ChompbConfig();
+        chompbConfig.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
+        service.setChompbConfig(chompbConfig);
 
         // Trigger population of desc.all file
         doAnswer(new Answer<Void>() {

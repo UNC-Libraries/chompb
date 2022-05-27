@@ -15,19 +15,17 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Instant;
-
-import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.util.Assert;
-
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.Assert;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
 
 /**
  * Service which provides MigrationProject objects
@@ -44,11 +42,12 @@ public class MigrationProjectFactory {
      * @param name
      * @param collectionId
      * @param user
+     * @param cdmEnv
      * @return
      * @throws IOException
      */
     public static MigrationProject createMigrationProject(Path path, String name,
-                                                          String collectionId, String user, CdmEnvironment cdmEnv)
+                                                          String collectionId, String user, String cdmEnv)
             throws IOException {
         Assert.notNull(path, "Project path not set");
         Assert.notNull(user, "Username not set");

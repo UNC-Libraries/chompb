@@ -57,6 +57,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         testSshServer = new TestSshServer();
         testSshServer.setPassword(PASSWORD);
         testSshServer.startServer();
+        setupChompbConfig();
     }
 
     @After
@@ -67,6 +68,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     private String[] exportArgs(Path projPath, String... extras) {
         String[] defaultArgs = new String[] {
                 "-w", projPath.toString(),
+                "--env-config", chompbConfigPath,
                 "export",
                 "-p", PASSWORD};
         return ArrayUtils.addAll(defaultArgs, extras);
@@ -184,7 +186,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     private Path createProject(String collId) throws Exception {
         MigrationProject project = MigrationProjectFactory.createMigrationProject(
-                baseDir, collId, null, USERNAME, CdmEnvironmentHelper.getTestEnv());
+                baseDir, collId, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV);
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
         CdmFieldEntry fieldEntry = new CdmFieldEntry();
         fieldEntry.setNickName("title");
