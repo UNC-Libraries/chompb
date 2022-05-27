@@ -346,7 +346,6 @@ public class SipService {
             fileObjResc.addLiteral(CdrDeposit.createTime, cdmCreated);
 
             workBag.add(fileObjResc);
-            workBag.addProperty(Cdr.primaryObject, fileObjResc);
 
             // Link source file
             Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
