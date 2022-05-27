@@ -34,6 +34,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +123,6 @@ public class FieldUrlAssessmentService {
         BufferedWriter writer = Files.newBufferedWriter(projPath.resolve(filename));
         CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
                 .withHeader(URL_CSV_HEADERS));
-        //var httpClient = HttpClients.createDefault();
         var httpClient = HttpClientBuilder.create().disableRedirectHandling().build();
 
         // row order: field, url, successful, redirect, redirect URL
@@ -140,12 +140,14 @@ public class FieldUrlAssessmentService {
 
             try (CloseableHttpResponse resp = httpClient.execute(getMethod)) {
                 int status = resp.getStatusLine().getStatusCode();
-                if (status >= 200 && status < 300) {
+                if (isSuccess(status)) {
                     csvPrinter.printRecord(field, url, "y", "n", null);
                 } else if (status >= 300 && status < 400) {
-                    String redirectUrl = resp.getFirstHeader("Location").getValue();
-                    csvPrinter.printRecord(field, url, "y", "y", redirectUrl);
-                } else if (status >= 400) {
+                    var result = getStatusAndFinalRedirectUrl(url);
+                    var successString = result[0];
+                    var finalRedirectUrl = result[1];
+                    csvPrinter.printRecord(field, url, successString, "y", finalRedirectUrl);
+                } else if (isFailure(status)) {
                     csvPrinter.printRecord(field, url, "n", "n", null);
                 } else {
                     throw new IOException("Unrecognized response status: " + status + " for " + url);
@@ -158,6 +160,24 @@ public class FieldUrlAssessmentService {
         csvPrinter.close();
     }
 
+    private Object[] getStatusAndFinalRedirectUrl(String url) throws IOException {
+        HttpClientContext context = HttpClientContext.create();
+        HttpGet getMethod;
+        var httpClient = HttpClientBuilder.create().build();
+        getMethod = new HttpGet(url);
+        CloseableHttpResponse resp = httpClient.execute(getMethod, context);
+        int status = resp.getStatusLine().getStatusCode();
+        String successString = isSuccess(status) ? "y" : "n";
+
+        // get very last redirect url
+        var redirectURIs = context.getRedirectLocations();
+        if (redirectURIs != null && !redirectURIs.isEmpty()) {
+            var finalUrl = redirectURIs.get(redirectURIs.size() - 1).toString();
+            return new Object[] {successString, finalUrl};
+        }
+        return new Object[] {successString, null};
+    }
+
     public void setProject(MigrationProject project) {
         this.project = project;
     }
@@ -168,6 +188,14 @@ public class FieldUrlAssessmentService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    private boolean isSuccess(int status) {
+        return status >= 200 && status < 300;
+    }
+
+    private boolean isFailure(int status) {
+        return status >= 400;
     }
 
     public class FieldUrlEntry {

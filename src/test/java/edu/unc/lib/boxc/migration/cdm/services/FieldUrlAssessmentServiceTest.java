@@ -17,6 +17,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.permanentRedirect;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
@@ -36,6 +37,7 @@ import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -131,7 +133,7 @@ public class FieldUrlAssessmentServiceTest {
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "y");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "y");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL,
-                    cdmBaseUrl + "/redirect_url");
+                    cdmBaseUrl + "/final_redirect_url");
         }
     }
 
@@ -157,7 +159,7 @@ public class FieldUrlAssessmentServiceTest {
 
     @Test
     public void regenerateCsv() throws Exception {
-        stubUrls(200);
+        stubUrls(HttpStatus.SC_OK);
         service.validateUrls();
 
         Path projPath = project.getProjectPath();
@@ -240,29 +242,21 @@ public class FieldUrlAssessmentServiceTest {
     }
 
     private void stubRedirectUrls() {
-        stubFor(get(urlEqualTo( "/redirect_url"))
+        stubFor(get(urlEqualTo("/00276/"))
+                .willReturn(permanentRedirect(cdmBaseUrl + "/new_redirect_url")));
+        stubFor(get(urlEqualTo("/new_url_notes"))
+                .willReturn(permanentRedirect(cdmBaseUrl + "/new_redirect_url")));
+        stubFor(get(urlEqualTo("/new_url_description"))
+                .willReturn(permanentRedirect(cdmBaseUrl + "/new_redirect_url")));
+        stubFor(get(urlEqualTo("/new_url_caption"))
+                .willReturn(permanentRedirect(cdmBaseUrl + "/new_redirect_url")));
+        stubFor(get(urlEqualTo("/new_url_caption_again"))
+                .willReturn(permanentRedirect(cdmBaseUrl + "/new_redirect_url")));
+        stubFor(get(urlEqualTo("/new_redirect_url"))
+                .willReturn(permanentRedirect(cdmBaseUrl + "/final_redirect_url")));
+        stubFor(get(urlEqualTo( "/final_redirect_url"))
                 .willReturn(aResponse()
-                        .withStatus(200)));
-        stubFor(get(urlEqualTo( "/00276/"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
-        stubFor(get(urlEqualTo( "/new_url_description"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
-        stubFor(get(urlEqualTo( "/new_url_notes"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
-        stubFor(get(urlEqualTo( "/new_url_caption"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
-        stubFor(get(urlEqualTo( "/new_url_caption_again"))
-                .willReturn(aResponse()
-                        .withStatus(300)
-                        .withHeader("Location", cdmBaseUrl + "/redirect_url")));
+                        .withStatus(HttpStatus.SC_OK)));
     }
 
     private void addUrlsToDb() throws SQLException {
