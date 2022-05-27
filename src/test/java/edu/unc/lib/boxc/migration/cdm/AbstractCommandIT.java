@@ -15,24 +15,34 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static org.junit.Assert.fail;
-import static org.slf4j.LoggerFactory.getLogger;
-
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;
-
 import picocli.CommandLine;
+
+import java.io.IOException;
+
+import static org.junit.Assert.fail;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author bbpennel
  */
 public class AbstractCommandIT extends AbstractOutputTest {
     private static final Logger log = getLogger(AbstractCommandIT.class);
+    protected final static String COLLECTION_ID = "my_coll";
+    protected final static String PROJECT_ID = "my_proj";
     protected final static String USERNAME = "theuser";
     private final String initialUser = System.getProperty("user.name");
 
     protected CommandLine migrationCommand;
+    protected SipServiceHelper testHelper;
+
+    protected MigrationProject project;
 
     @After
     public void resetProps() {
@@ -43,6 +53,21 @@ public class AbstractCommandIT extends AbstractOutputTest {
     public void baseSetUp() throws Exception {
         System.setProperty("user.name", USERNAME);
         migrationCommand = new CommandLine(new CLIMain());
+        tmpFolder.create();
+    }
+
+    protected void initTestHelper() throws IOException {
+        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());;
+    }
+
+    protected void initProject() throws IOException {
+        project = MigrationProjectFactory.createMigrationProject(
+                baseDir, PROJECT_ID, COLLECTION_ID, USERNAME, CdmEnvironmentHelper.getTestEnv());
+    }
+
+    protected void initProjectAndHelper() throws IOException {
+        initProject();
+        initTestHelper();
     }
 
     protected void executeExpectSuccess(String[] args) {

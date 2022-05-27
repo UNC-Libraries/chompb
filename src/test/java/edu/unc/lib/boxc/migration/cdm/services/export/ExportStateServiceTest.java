@@ -19,22 +19,21 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -53,7 +52,7 @@ public class ExportStateServiceTest {
     public void setup() throws Exception {
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.getTestEnv());
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);

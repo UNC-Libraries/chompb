@@ -30,6 +30,7 @@ import java.nio.file.NoSuchFileException;
 import java.util.List;
 import java.util.Optional;
 
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -70,7 +71,7 @@ public class CdmFieldServiceTest {
         initMocks(this);
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.getTestEnv());
         service = new CdmFieldService();
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);

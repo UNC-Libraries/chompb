@@ -15,24 +15,9 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.Instant;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
-import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
+import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
@@ -40,13 +25,20 @@ import org.jdom2.output.XMLOutputter;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
-import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author bbpennel
@@ -54,18 +46,10 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 public class DescriptionsCommandIT extends AbstractCommandIT {
     private final static Pattern GENERATED_PATH_PATTERN = Pattern.compile(
             ".*Description file generated at: ([^\\s]+).*", Pattern.DOTALL);
-    private final static String COLLECTION_ID = "my_coll";
-
-    private MigrationProject project;
-    private CdmIndexService indexService;
-    private CdmFieldService fieldService;
-    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        initProjectAndHelper();
     }
 
     @Test

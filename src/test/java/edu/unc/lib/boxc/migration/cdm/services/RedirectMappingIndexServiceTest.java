@@ -17,6 +17,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.RedirectMappingHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.apache.commons.csv.CSVFormat;
@@ -63,7 +64,7 @@ public class RedirectMappingIndexServiceTest {
     public void setup() throws Exception {
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.getTestEnv());
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         redirectMappingHelper = new RedirectMappingHelper(project);
         redirectMappingHelper.createRedirectMappingsTableInDb();

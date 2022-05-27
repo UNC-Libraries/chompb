@@ -15,39 +15,29 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static org.junit.Assert.assertEquals;
+import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
+import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
+import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.io.FileUtils;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.Test;
-
-import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
-import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author bbpennel
  */
 public class DestinationsCommandIT extends AbstractCommandIT {
-    private final static String COLLECTION_ID = "my_coll";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
-
-    private MigrationProject project;
-    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
-        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
+        initProjectAndHelper();
     }
 
     @Test

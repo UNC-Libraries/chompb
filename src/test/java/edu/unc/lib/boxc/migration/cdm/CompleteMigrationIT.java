@@ -15,25 +15,18 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.junit.Assert.assertEquals;
-
-import java.io.File;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.DepositField;
+import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
+import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
-import org.apache.commons.io.FileUtils;
+import edu.unc.lib.boxc.persist.api.PackagingType;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -43,20 +36,24 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-
-import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.DepositField;
-import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
-import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
-import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.persist.api.PackagingType;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.embedded.RedisServer;
+
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test which runs a single collection through a full set of migration steps
@@ -70,10 +67,10 @@ public class CompleteMigrationIT extends AbstractCommandIT {
     private final static int REDIS_PORT = 46380;
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+    public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
     private TestSshServer testSshServer;
-    private String cdmBaseUrl;
     private Path filesBasePath;
+    private String cdmEnvConfig;
 
     private RedisServer redisServer;
     private DepositStatusFactory depositStatusFactory;
@@ -82,7 +79,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
     @Before
     public void setup() throws Exception {
         filesBasePath = tmpFolder.newFolder().toPath();
-        cdmBaseUrl = "http://localhost:" + wireMockRule.port();
         String validRespBody = IOUtils.toString(this.getClass().getResourceAsStream("/cdm_fields_resp.json"),
                 StandardCharsets.UTF_8);
 
@@ -99,6 +95,12 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         testSshServer = new TestSshServer();
         testSshServer.setPassword(CDM_PASSWORD);
         testSshServer.startServer();
+
+        var cdmEnvPath = tmpFolder.getRoot().toPath().resolve("cdm_envs.json");
+        var envMapping = CdmEnvironmentHelper.getTestMapping();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(Files.newOutputStream(cdmEnvPath), envMapping);
+        cdmEnvConfig = cdmEnvPath.toString();
     }
 
     public void initDepositStatusFactory() {
@@ -128,7 +130,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         String[] argsInit = new String[] {
                 "-w", baseDir.toString(),
                 "init",
-                "--cdm-url", cdmBaseUrl,
+                "--env-config", cdmEnvConfig,
                 "-p", COLLECTION_ID };
         executeExpectSuccess(argsInit);
 
@@ -138,8 +140,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         String[] argsExport = new String[] {
                 "-w", projPath.toString(),
                 "export",
-                "-D", Paths.get("src/test/resources/descriptions").toAbsolutePath().toString(),
-                "-P", "42222",
                 "-p", CDM_PASSWORD };
         executeExpectSuccess(argsExport);
 

@@ -26,6 +26,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,6 +49,7 @@ public class MigrationProjectFactoryTest {
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
     private Path projectsBase;
+    private CdmEnvironment testEnv = CdmEnvironmentHelper.getTestEnv();
 
     @Before
     public void setup() throws Exception {
@@ -57,7 +60,7 @@ public class MigrationProjectFactoryTest {
     @Test
     public void createNoUserTest() throws Exception {
         try {
-            MigrationProjectFactory.createMigrationProject(projectsBase, null, null, null);
+            MigrationProjectFactory.createMigrationProject(projectsBase, null, null, null, testEnv);
             fail();
         } catch (IllegalArgumentException e) {
             // Expected
@@ -68,7 +71,7 @@ public class MigrationProjectFactoryTest {
     @Test
     public void createWithNameTest() throws Exception {
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME);
+                .createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv);
 
         assertNotNull(project);
         assertEquals(projectsBase.resolve(PROJ_NAME), project.getProjectPath());
@@ -83,7 +86,7 @@ public class MigrationProjectFactoryTest {
         Files.createDirectory(projectsBase.resolve(PROJ_NAME));
 
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME);
+                .createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv);
 
         assertNotNull(project);
         assertEquals(projectsBase.resolve(PROJ_NAME), project.getProjectPath());
@@ -97,7 +100,7 @@ public class MigrationProjectFactoryTest {
         Files.createFile(projectsBase.resolve(PROJ_NAME));
         try {
             // Create file at expected project path
-            MigrationProjectFactory.createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME);
+            MigrationProjectFactory.createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv);
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue(e.getMessage().contains("already exists and is not a directory"));
@@ -107,7 +110,7 @@ public class MigrationProjectFactoryTest {
     @Test
     public void createWithNameAndCollectionTest() throws Exception {
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME);
+                .createMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME, testEnv);
 
         assertNotNull(project);
         assertEquals(projectsBase.resolve(PROJ_NAME), project.getProjectPath());
@@ -123,7 +126,7 @@ public class MigrationProjectFactoryTest {
         Files.createDirectory(projectPath);
 
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectPath, null, null, USERNAME);
+                .createMigrationProject(projectPath, null, null, USERNAME, testEnv);
 
         assertNotNull(project);
         assertEquals(projectPath, project.getProjectPath());
@@ -139,7 +142,7 @@ public class MigrationProjectFactoryTest {
         Files.createDirectory(projectPath);
 
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectPath, null, COLL_ID, USERNAME);
+                .createMigrationProject(projectPath, null, COLL_ID, USERNAME, testEnv);
 
         assertNotNull(project);
         assertEquals(projectPath, project.getProjectPath());
@@ -151,11 +154,11 @@ public class MigrationProjectFactoryTest {
     @Test
     public void createProjectAlreadyExistsTest() throws Exception {
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME);
+                .createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv);
 
         try {
             // Create file at expected project path
-            MigrationProjectFactory.createMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME);
+            MigrationProjectFactory.createMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME, testEnv);
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue(e.getMessage().contains("directory already contains a migration project"));
@@ -199,7 +202,7 @@ public class MigrationProjectFactoryTest {
     public void loadValidProject() throws Exception {
         Path projectPath = projectsBase.resolve(PROJ_NAME);
         MigrationProject projectCreated = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME);
+                .createMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME, testEnv);
 
         MigrationProject projectLoaded = MigrationProjectFactory.loadMigrationProject(projectPath);
 
@@ -231,5 +234,9 @@ public class MigrationProjectFactoryTest {
         assertEquals("Project name did not match expected value", expName, properties.getName());
         assertEquals("CDM Collection ID did not match expected value", expCollId, properties.getCdmCollectionId());
         assertNotNull("Created date not set", properties.getCreatedDate());
+        var cdmEnv = properties.getCdmEnvironment();
+        assertEquals(42222, cdmEnv.getSshPort());
+        assertEquals("localhost", cdmEnv.getSshHost());
+        assertEquals("http://localhost:46888", cdmEnv.getHttpBaseUrl());
     }
 }

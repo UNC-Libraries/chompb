@@ -41,11 +41,8 @@ public class CdmFileRetrievalService {
     private static final String CPD_SUBPATH = "image/*.cpd";
     public static final String CPD_EXPORT_PATH = "cpds";
 
-    private String downloadBasePath;
     private String sshUsername;
-    private String cdmHost;
     private String sshPassword;
-    private int sshPort;
 
     /**
      * Download the desc.all file for the collection being migrated
@@ -84,7 +81,8 @@ public class CdmFileRetrievalService {
         SshClient client = SshClient.setUpDefaultClient();
         client.setFilePasswordProvider(FilePasswordProvider.of(sshPassword));
         client.start();
-        try (var sshSession = client.connect(sshUsername, cdmHost, sshPort)
+        var cdmEnv = project.getProjectProperties().getCdmEnvironment();
+        try (var sshSession = client.connect(sshUsername, cdmEnv.getSshHost(), cdmEnv.getSshPort())
                 .verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .getSession()) {
             sshSession.addPasswordIdentity(sshPassword);
@@ -94,7 +92,7 @@ public class CdmFileRetrievalService {
             var scpClientCreator = ScpClientCreator.instance();
             var scpClient = scpClientCreator.createScpClient(sshSession);
             String collectionId = project.getProjectProperties().getCdmCollectionId();
-            var remotePath = Paths.get(downloadBasePath, collectionId, remoteSubPath).toString();
+            var remotePath = Paths.get(cdmEnv.getSshDownloadBasePath(), collectionId, remoteSubPath).toString();
             scpClient.download(remotePath, localDestination);
         } catch (IOException e) {
             throw new MigrationException("Failed to download desc.all file", e);
@@ -105,23 +103,11 @@ public class CdmFileRetrievalService {
         this.project = project;
     }
 
-    public void setDownloadBasePath(String downloadBasePath) {
-        this.downloadBasePath = downloadBasePath;
-    }
-
     public void setSshUsername(String sshUsername) {
         this.sshUsername = sshUsername;
     }
 
-    public void setCdmHost(String cdmHost) {
-        this.cdmHost = cdmHost;
-    }
-
     public void setSshPassword(String sshPassword) {
         this.sshPassword = sshPassword;
-    }
-
-    public void setSshPort(int sshPort) {
-        this.sshPort = sshPort;
     }
 }

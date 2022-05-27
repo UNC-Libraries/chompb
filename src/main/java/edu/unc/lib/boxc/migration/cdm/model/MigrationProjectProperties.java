@@ -41,6 +41,7 @@ public class MigrationProjectProperties {
     private Set<String> sipsSubmitted;
     private String hookId;
     private String collectionNumber;
+    private CdmEnvironment cdmEnvironment;
 
     public MigrationProjectProperties() {
         sipsSubmitted = new HashSet<>();
@@ -220,5 +221,16 @@ public class MigrationProjectProperties {
 
     public void setCollectionNumber(String collectionNumber) {
         this.collectionNumber = collectionNumber;
+    }
+
+    /**
+     * @return configuration information related to the CDM environment being used for this migration
+     */
+    public CdmEnvironment getCdmEnvironment() {
+        return cdmEnvironment;
+    }
+
+    public void setCdmEnvironment(CdmEnvironment cdmEnvironment) {
+        this.cdmEnvironment = cdmEnvironment;
     }
 }

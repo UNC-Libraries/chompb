@@ -73,11 +73,8 @@ public class CdmExportService {
     private void initializeFileRetrievalService(CdmExportOptions options) {
         if (fileRetrievalService == null) {
             fileRetrievalService = new CdmFileRetrievalService();
-            fileRetrievalService.setCdmHost(options.getCdmSshHost());
             fileRetrievalService.setSshPassword(options.getCdmPassword());
-            fileRetrievalService.setSshPort(options.getCdmSshPort());
             fileRetrievalService.setSshUsername(options.getCdmUsername());
-            fileRetrievalService.setDownloadBasePath(options.getCdmSshDownloadBasePath());
             fileRetrievalService.setProject(project);
         }
     }

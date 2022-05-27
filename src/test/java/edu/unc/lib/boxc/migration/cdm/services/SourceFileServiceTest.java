@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.Before;
@@ -66,7 +67,7 @@ public class SourceFileServiceTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.getTestEnv());
         Files.createDirectories(project.getExportPath());
 
         basePath = tmpFolder.newFolder().toPath();

@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 
+import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
 
@@ -47,7 +48,8 @@ public class MigrationProjectFactory {
      * @throws IOException
      */
     public static MigrationProject createMigrationProject(Path path, String name,
-            String collectionId, String user) throws IOException {
+                                                          String collectionId, String user, CdmEnvironment cdmEnv)
+            throws IOException {
         Assert.notNull(path, "Project path not set");
         Assert.notNull(user, "Username not set");
 
@@ -80,6 +82,7 @@ public class MigrationProjectFactory {
         properties.setCreatedDate(Instant.now());
         properties.setName(projectName);
         properties.setCdmCollectionId(collectionId == null ? projectName : collectionId);
+        properties.setCdmEnvironment(cdmEnv);
         project.setProjectProperties(properties);
         ProjectPropertiesSerialization.write(propertiesPath, properties);
 

@@ -15,9 +15,26 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static java.nio.file.StandardOpenOption.APPEND;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.DepositField;
+import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
+import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
+import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
+import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
+import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
+import edu.unc.lib.boxc.migration.cdm.services.SipService;
+import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
+import edu.unc.lib.boxc.model.api.ids.PIDMinter;
+import edu.unc.lib.boxc.model.fcrepo.ids.RepositoryPIDMinter;
+import edu.unc.lib.boxc.operations.impl.events.PremisLoggerFactoryImpl;
+import edu.unc.lib.boxc.persist.api.PackagingType;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+import redis.embedded.RedisServer;
 
 import java.io.BufferedWriter;
 import java.net.URI;
@@ -26,43 +43,19 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.DepositField;
-import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
-import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
-import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
-import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
-import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
-import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.services.SipService;
-import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.model.api.ids.PIDMinter;
-import edu.unc.lib.boxc.model.fcrepo.ids.RepositoryPIDMinter;
-import edu.unc.lib.boxc.operations.impl.events.PremisLoggerFactoryImpl;
-import edu.unc.lib.boxc.persist.api.PackagingType;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-import redis.embedded.RedisServer;
+import static java.nio.file.StandardOpenOption.APPEND;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author bbpennel
  */
 public class SubmitSipsCommandIT extends AbstractCommandIT {
-    private final static String COLLECTION_ID = "my_coll";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
     private static final String DEST_UUID2 = "8ae56bbc-400e-496d-af4b-3c585e20dba1";
     private final static int REDIS_PORT = 46380;
     private final static String GROUPS = "my:admin:group";
 
-    private MigrationProject project;
-    private SipServiceHelper testHelper;
     private RedisServer redisServer;
     private SipService sipService;
 
@@ -79,9 +72,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
 
     @Before
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        initProjectAndHelper();
         redisServer = new RedisServer(REDIS_PORT);
         System.setProperty("REDIS_HOST", "localhost");
         System.setProperty("REDIS_PORT", Integer.toString(REDIS_PORT));
@@ -300,7 +291,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
         assertEquals(sip.getSipPath(), Paths.get(URI.create(sourceUri)));
         assertEquals("true", status.get(DepositField.excludeDepositRecord.name()));
         assertEquals(USERNAME + "@ad.unc.edu", status.get(DepositField.depositorEmail.name()));
-        assertEquals("Cdm2Bxc my_coll " + sip.getDepositId(), status.get(DepositField.depositSlug.name()));
+        assertEquals("Cdm2Bxc my_proj " + sip.getDepositId(), status.get(DepositField.depositSlug.name()));
         assertEquals("unc:onyen:theuser;my:admin:group", status.get(DepositField.permissionGroups.name()));
         assertEquals(PackagingType.BAG_WITH_N3.getUri(), status.get(DepositField.packagingType.name()));
     }

@@ -15,42 +15,32 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
-
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import org.junit.Before;
-import org.junit.Test;
-
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
-
 /**
  * @author bbpennel
  */
 public class AccessFilesCommandIT extends AbstractCommandIT {
-    private final static String COLLECTION_ID = "my_coll";
 
-    private MigrationProject project;
+
     private Path basePath;
-    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
+        initProjectAndHelper();
         basePath = tmpFolder.newFolder().toPath();
-        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
     }
 
     @Test

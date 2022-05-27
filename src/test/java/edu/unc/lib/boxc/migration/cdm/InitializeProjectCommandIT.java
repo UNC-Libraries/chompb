@@ -35,7 +35,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.IOUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,16 +59,15 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "my_coll";
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+    public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
 
     private CdmFieldService fieldService;
-    private String cdmBaseUrl;
+    private String cdmEnvConfig;
 
     @Before
     public void setUp() throws Exception {
         fieldService = new CdmFieldService();
 
-        cdmBaseUrl = "http://localhost:" + wireMockRule.port();
         String validRespBody = IOUtils.toString(this.getClass().getResourceAsStream("/cdm_fields_resp.json"),
                 StandardCharsets.UTF_8);
 
@@ -79,6 +81,12 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "text/json")
                         .withBody(validRespBody)));
+
+        var cdmEnvPath = tmpFolder.getRoot().toPath().resolve("cdm_envs.json");
+        var envMapping = CdmEnvironmentHelper.getTestMapping();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(Files.newOutputStream(cdmEnvPath), envMapping);
+        cdmEnvConfig = cdmEnvPath.toString();
     }
 
     @Test
@@ -86,7 +94,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
                 "init",
-                "--cdm-url", cdmBaseUrl,
+                "--env-config", cdmEnvConfig,
                 "-p", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
@@ -106,7 +114,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         String[] initArgs = new String[] {
                 "-w", projDir.toString(),
                 "init",
-                "--cdm-url", cdmBaseUrl,
+                "--env-config", cdmEnvConfig,
                 "-c", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
@@ -124,16 +132,13 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
                 "init",
-                "--cdm-url", cdmBaseUrl,
+                "--env-config", cdmEnvConfig,
                 "-p", "unknowncoll" };
         executeExpectFailure(initArgs);
 
         assertOutputContains("No collection with ID 'unknowncoll' found on server");
 
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(baseDir)) {
-            assertFalse("Project directory should not have been created, so base dir should be empty",
-                    dirStream.iterator().hasNext());
-        }
+        assertProjectDirectoryNotCreate();
     }
 
     @Test
@@ -143,7 +148,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         String[] initArgs = new String[] {
                 "-w", projDir.toString(),
                 "init",
-                "--cdm-url", cdmBaseUrl,
+                "--env-config", cdmEnvConfig,
                 "-c", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
@@ -159,6 +164,41 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         assertTrue("Description folder not created", Files.exists(project.getDescriptionsPath()));
 
         assertCdmFieldsPresent(project);
+    }
+
+    @Test
+    public void initUnknownEnvTest() throws Exception {
+        String[] initArgs = new String[] {
+                "-w", baseDir.toString(),
+                "init",
+                "--env-config", cdmEnvConfig,
+                "-e", "what",
+                "-p", COLLECTION_ID };
+        executeExpectFailure(initArgs);
+
+        assertOutputContains("Unknown cdm-env value");
+
+        assertProjectDirectoryNotCreate();
+    }
+
+    @Test
+    public void initNoEnvMappingPathTest() throws Exception {
+        String[] initArgs = new String[] {
+                "-w", baseDir.toString(),
+                "init",
+                "-p", COLLECTION_ID };
+        executeExpectFailure(initArgs);
+
+        assertOutputContains("Must provide and env-config option");
+
+        assertProjectDirectoryNotCreate();
+    }
+
+    private void assertProjectDirectoryNotCreate() throws IOException {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(baseDir)) {
+            assertFalse("Project directory should not have been created, so base dir should be empty",
+                    dirStream.iterator().hasNext());
+        }
     }
 
     private void assertPropertiesSet(MigrationProjectProperties properties, String expName, String expCollId) {

@@ -15,45 +15,32 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static java.nio.charset.StandardCharsets.US_ASCII;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.util.List;
-
+import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
+import edu.unc.lib.boxc.migration.cdm.services.SipService;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.services.SipService;
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.Instant;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * @author bbpennel
  */
 public class StatusCommandIT extends AbstractCommandIT {
-    private final static String COLLECTION_ID = "my_coll";
-    private final static String PROJECT_ID = "my_proj";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
-
-    private MigrationProject project;
-    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, PROJECT_ID, COLLECTION_ID, USERNAME);
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        initProjectAndHelper();
     }
 
     @Test

@@ -15,45 +15,29 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import org.junit.Before;
-import org.junit.Test;
-
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author bbpennel
  */
 public class GroupMappingCommandIT extends AbstractCommandIT {
-    private final static String COLLECTION_ID = "my_coll";
-
-    private MigrationProject project;
-    private CdmIndexService indexService;
-    private SipServiceHelper testHelper;
-
     @Before
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
-        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
+        initProjectAndHelper();
     }
 
     @Test
@@ -94,7 +78,7 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
                 "group_mapping", "sync" };
         executeExpectSuccess(args2);
 
-        indexService = new CdmIndexService();
+        var indexService = new CdmIndexService();
         indexService.setProject(project);
         Connection conn = null;
         try {
