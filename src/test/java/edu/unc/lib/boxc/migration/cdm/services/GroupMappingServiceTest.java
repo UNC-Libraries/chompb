@@ -101,17 +101,7 @@ public class GroupMappingServiceTest {
         service.generateMapping(options);
 
         GroupMappingInfo info = service.loadMappings();
-        assertMappingPresent(info, "25", "groupa:group1");
-        assertMappingPresent(info, "26", "groupa:group1");
-        // Single member group should not be mapped
-        assertMappingPresent(info, "27", null);
-        assertMappingPresent(info, "28", null);
-        assertMappingPresent(info, "29", null);
-        assertEquals(5, info.getMappings().size());
-
-        assertGroupingPresent(info, "groupa:group1", "25", "26");
-        assertEquals(1, info.getGroupedMappings().size());
-
+        assertGroupAMappingsPresent(info);
         assertMappedDatePresent();
     }
 
@@ -149,12 +139,7 @@ public class GroupMappingServiceTest {
 
         // mapping state should be unchanged
         GroupMappingInfo info = service.loadMappings();
-        assertMappingPresent(info, "25", "groupa:group1");
-        assertMappingPresent(info, "26", "groupa:group1");
-        assertMappingPresent(info, "27", null);
-        assertMappingPresent(info, "28", null);
-        assertMappingPresent(info, "29", null);
-        assertEquals(5, info.getMappings().size());
+        assertGroupAMappingsPresent(info);
 
         assertMappedDatePresent();
     }
@@ -170,12 +155,7 @@ public class GroupMappingServiceTest {
             service.generateMapping(options);
             // mapping state should be unchanged
             GroupMappingInfo info = service.loadMappings();
-            assertMappingPresent(info, "25", "groupa:group1");
-            assertMappingPresent(info, "26", "groupa:group1");
-            assertMappingPresent(info, "27", null);
-            assertMappingPresent(info, "28", null);
-            assertMappingPresent(info, "29", null);
-            assertEquals(5, info.getMappings().size());
+            assertGroupAMappingsPresent(info);
             assertMappedDatePresent();
         });
     }
@@ -187,12 +167,7 @@ public class GroupMappingServiceTest {
         service.generateMapping(options);
 
         GroupMappingInfo info = service.loadMappings();
-        assertMappingPresent(info, "25", "groupa:group1");
-        assertMappingPresent(info, "26", "groupa:group1");
-        assertMappingPresent(info, "27", null);
-        assertMappingPresent(info, "28", null);
-        assertMappingPresent(info, "29", null);
-        assertEquals(5, info.getMappings().size());
+        assertGroupAMappingsPresent(info);
 
         options.setForce(true);
         options.setGroupField("digitc");
@@ -422,6 +397,11 @@ public class GroupMappingServiceTest {
         assertEquals("Expected parent ids " + expected + " but found " + parentIds, expected.size(), parentIds.size());
     }
 
+    /**
+     * @param matchValue
+     * @return the provided match value (fieldname+value) with the group prefix added, which is the expected
+     *   format for group keys, or null if the value is null
+     */
     private String asGroupKey(String matchValue) {
         if (matchValue == null) {
             return null;
@@ -476,6 +456,19 @@ public class GroupMappingServiceTest {
     private void assertSynchedDateNotPresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
         assertNull(props.getGroupMappingsSynchedDate());
+    }
+
+    private void assertGroupAMappingsPresent(GroupMappingInfo info) {
+        assertMappingPresent(info, "25", "groupa:group1");
+        assertMappingPresent(info, "26", "groupa:group1");
+        // Single member group should not be mapped
+        assertMappingPresent(info, "27", null);
+        assertMappingPresent(info, "28", null);
+        assertMappingPresent(info, "29", null);
+        assertEquals(5, info.getMappings().size());
+
+        assertGroupingPresent(info, "groupa:group1", "25", "26");
+        assertEquals(1, info.getGroupedMappings().size());
     }
 
     private void indexExportSamples() throws Exception {

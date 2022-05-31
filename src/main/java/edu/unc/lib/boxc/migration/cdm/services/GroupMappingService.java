@@ -100,7 +100,7 @@ public class GroupMappingService {
             stmt.setFetchSize(FETCH_SIZE);
 
             // Return set of all group keys that have at least 2 records in them
-            var groupSet = new HashSet<String>();
+            var multiMemberGroupSet = new HashSet<String>();
             ResultSet groupRs = stmt.executeQuery("select " + options.getGroupField()
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
@@ -111,7 +111,7 @@ public class GroupMappingService {
                 if (StringUtils.isBlank(groupValue)) {
                     continue;
                 }
-                groupSet.add(groupValue);
+                multiMemberGroupSet.add(groupValue);
             }
 
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", " + options.getGroupField()
@@ -123,7 +123,7 @@ public class GroupMappingService {
                 String matchedValue = rs.getString(2);
 
                 // Add empty mapping for records either not in groups or in groups with fewer than 2 members
-                if (StringUtils.isBlank(matchedValue) || !groupSet.contains(matchedValue)) {
+                if (StringUtils.isBlank(matchedValue) || !multiMemberGroupSet.contains(matchedValue)) {
                     log.debug("No matching field for object {}", cdmId);
                     csvPrinter.printRecord(cdmId, null);
                     continue;

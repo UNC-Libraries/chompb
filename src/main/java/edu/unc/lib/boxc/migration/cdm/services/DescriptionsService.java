@@ -239,7 +239,10 @@ public class DescriptionsService {
      * @return The path for the individual MODS file
      */
     public Path getExpandedDescriptionFilePath(String cdmId) {
+        // To avoid having individual directories with too many files, MODS files are written to
+        // EXPANDED_FILES_BUCKETS number of bucket directories based on the hash code of the id provided
         String subdir = Integer.toString(Math.abs(cdmId.hashCode()) % EXPANDED_FILES_BUCKETS);
+        // Replace reserved filepath characters with underscores, primarily for grouped work ids
         String filename = cdmId.replaceAll("[: /\\\\<>|&]", "_");
         return project.getExpandedDescriptionsPath().resolve(subdir).resolve(filename + ".xml");
     }
