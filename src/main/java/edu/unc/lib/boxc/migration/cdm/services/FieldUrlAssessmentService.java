@@ -36,6 +36,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.jena.atlas.logging.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +67,7 @@ public class FieldUrlAssessmentService {
     /**
      * Generates a List of FieldUrlEntries that have the CDM field and associated URLs as attributes
      */
-    public List<FieldUrlEntry> dbFieldAndUrls() throws IOException {
+    protected List<FieldUrlEntry> dbFieldAndUrls() throws IOException {
         cdmFieldService.validateFieldsFile(project);
         CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
@@ -100,8 +101,8 @@ public class FieldUrlAssessmentService {
     /**
      * Extracts url from the passed in CDM field value
      */
-    public String extractUrl(String string) {
-        String regex = "\\b((?:https?|ftp|file):" + "//[-a-zA-Z0-9+&@#/%?=" + "~_|!:,.;]*[-a-zA-Z0-9+"
+    private String extractUrl(String string) {
+        String regex = "\\b((https?):" + "//[-a-zA-Z0-9+&@#/%?=" + "~_|!:,.;]*[-a-zA-Z0-9+"
                 + "&@#/%=~_|])";
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(string);
@@ -115,7 +116,7 @@ public class FieldUrlAssessmentService {
     /**
      * Validate urls, list redirect urls, and write to csv file
      */
-    public void validateUrls() throws IOException {
+    public void generateReport() throws IOException {
         var fieldsAndUrls = dbFieldAndUrls();
 
         Path projPath = project.getProjectPath();
@@ -131,6 +132,7 @@ public class FieldUrlAssessmentService {
             String url = entry.url;
             HttpGet getMethod;
 
+            // this try/catch is for syntactically invalid URLs
             try {
                 getMethod = new HttpGet(url);
             } catch (IllegalArgumentException e) {
@@ -153,6 +155,7 @@ public class FieldUrlAssessmentService {
                     throw new IOException("Unrecognized response status: " + status + " for " + url);
                 }
             } catch (IOException e) {
+                log.warn(e.getMessage(), e);
                 // invalid URL will be logged as an error url
                 csvPrinter.printRecord(field, url, "n", "n", null);
             }
@@ -160,22 +163,32 @@ public class FieldUrlAssessmentService {
         csvPrinter.close();
     }
 
+    /**
+     * Returns an array where the first element is "y" or "no" depending on status code
+     * second element is the final redirect url (or null if there isn't one)
+     * @param url is the original URL to test
+     * @return Object[]
+     */
     private Object[] getStatusAndFinalRedirectUrl(String url) throws IOException {
         HttpClientContext context = HttpClientContext.create();
         HttpGet getMethod;
-        var httpClient = HttpClientBuilder.create().build();
         getMethod = new HttpGet(url);
-        CloseableHttpResponse resp = httpClient.execute(getMethod, context);
-        int status = resp.getStatusLine().getStatusCode();
-        String successString = isSuccess(status) ? "y" : "n";
 
-        // get very last redirect url
-        var redirectURIs = context.getRedirectLocations();
-        if (redirectURIs != null && !redirectURIs.isEmpty()) {
-            var finalUrl = redirectURIs.get(redirectURIs.size() - 1).toString();
-            return new Object[] {successString, finalUrl};
+        try (
+                var httpClient = HttpClientBuilder.create().build();
+                CloseableHttpResponse resp = httpClient.execute(getMethod, context);
+            ) {
+            int status = resp.getStatusLine().getStatusCode();
+            String successString = isSuccess(status) ? "y" : "n";
+
+            // get very last redirect url
+            var redirectURIs = context.getRedirectLocations();
+            if (redirectURIs != null && !redirectURIs.isEmpty()) {
+                var finalUrl = redirectURIs.get(redirectURIs.size() - 1).toString();
+                return new Object[] {successString, finalUrl};
+            }
+            return new Object[] {successString, null};
         }
-        return new Object[] {successString, null};
     }
 
     public void setProject(MigrationProject project) {

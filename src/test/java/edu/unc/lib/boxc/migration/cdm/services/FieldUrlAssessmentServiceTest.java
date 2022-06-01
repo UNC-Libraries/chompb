@@ -23,6 +23,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.io.Reader;
 import java.nio.file.Files;
@@ -99,7 +100,7 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void successfulUrlsTest() throws Exception {
         stubUrls(200);
-        service.validateUrls();
+        service.generateReport();
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -109,7 +110,7 @@ public class FieldUrlAssessmentServiceTest {
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertUrlsInCsvAreCorrect(rows);
+            assertInfoInCsvAreCorrect(rows);
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "y");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "n");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL, "");
@@ -119,7 +120,7 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void redirectUrlsTest() throws Exception {
         stubRedirectUrls();
-        service.validateUrls();
+        service.generateReport();
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -129,7 +130,7 @@ public class FieldUrlAssessmentServiceTest {
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertUrlsInCsvAreCorrect(rows);
+            assertInfoInCsvAreCorrect(rows);
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "y");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "y");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL,
@@ -140,7 +141,7 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void errorUrlsTest() throws Exception {
         stubUrls(400);
-        service.validateUrls();
+        service.generateReport();
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -150,7 +151,7 @@ public class FieldUrlAssessmentServiceTest {
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertUrlsInCsvAreCorrect(rows);
+            assertInfoInCsvAreCorrect(rows);
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.SUCCESSFUL_INDICATOR, "n");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_INDICATOR, "n");
             assertColumnValuesAreCorrect(rows, FieldUrlAssessmentService.REDIRECT_URL, "");
@@ -160,7 +161,7 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void regenerateCsv() throws Exception {
         stubUrls(HttpStatus.SC_OK);
-        service.validateUrls();
+        service.generateReport();
 
         Path projPath = project.getProjectPath();
         Path newPath = projPath.resolve("gilmer_field_urls.csv");
@@ -176,7 +177,7 @@ public class FieldUrlAssessmentServiceTest {
         stubFor(get(urlEqualTo( "/wrong"))
                 .willReturn(aResponse()
                         .withStatus(400)));
-        service.validateUrls();
+        service.generateReport();
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -187,6 +188,7 @@ public class FieldUrlAssessmentServiceTest {
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("y", rows.get(0).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            // the following one is the wrong url
             assertEquals("n", rows.get(1).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("y", rows.get(2).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("y", rows.get(3).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
@@ -202,7 +204,7 @@ public class FieldUrlAssessmentServiceTest {
         var invalidUrl = cdmBaseUrl + "&";
         addProblematicUrlToDb(invalidUrl);
         stubUrls(200);
-        service.validateUrls();
+        service.generateReport();
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -285,13 +287,20 @@ public class FieldUrlAssessmentServiceTest {
         CdmIndexService.closeDbConnection(conn);
     }
 
-    private void assertUrlsInCsvAreCorrect(List<CSVRecord> rows) {
-        var column = FieldUrlAssessmentService.URL;
-        assertEquals(cdmBaseUrl + "/new_url_description", rows.get(0).get(column));
-        assertEquals(cdmBaseUrl + "/new_url_caption", rows.get(1).get(column));
-        assertEquals(cdmBaseUrl + "/new_url_caption_again", rows.get(2).get(column));
-        assertEquals(cdmBaseUrl + "/new_url_notes", rows.get(3).get(column));
-        assertEquals(cdmBaseUrl + "/00276/", rows.get(4).get(column));
+    private void assertInfoInCsvAreCorrect(List<CSVRecord> rows) {
+        var urlColumn = FieldUrlAssessmentService.URL;
+        assertEquals(cdmBaseUrl + "/new_url_description", rows.get(0).get(urlColumn));
+        assertEquals(cdmBaseUrl + "/new_url_caption", rows.get(1).get(urlColumn));
+        assertEquals(cdmBaseUrl + "/new_url_caption_again", rows.get(2).get(urlColumn));
+        assertEquals(cdmBaseUrl + "/new_url_notes", rows.get(3).get(urlColumn));
+        assertEquals(cdmBaseUrl + "/00276/", rows.get(4).get(urlColumn));
+
+        var nickColumn = FieldUrlAssessmentService.NICK_FIELD;
+        assertEquals("descri", rows.get(0).get(nickColumn));
+        assertEquals("captio", rows.get(1).get(nickColumn));
+        assertEquals("captio", rows.get(2).get(nickColumn));
+        assertEquals("notes", rows.get(3).get(nickColumn));
+        assertEquals("source", rows.get(4).get(nickColumn));
         assertEquals(5, rows.size());
     }
 

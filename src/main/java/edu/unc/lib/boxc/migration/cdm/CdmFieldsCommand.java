@@ -95,7 +95,7 @@ public class CdmFieldsCommand {
             fieldUrlAssessmentService.setIndexService(indexService);
             fieldUrlAssessmentService.setCdmFieldService(fieldService);
             indexService.setProject(project);
-            fieldUrlAssessmentService.validateUrls();
+            fieldUrlAssessmentService.generateReport();
             outputLogger.info("Fields with URLs report generated!");
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
