@@ -113,7 +113,7 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         testHelper.indexExportData("mini_gilmer");
 
         Path projectPath = project.getProjectPath();
-        Path reportPath = projectPath.resolve("gilmer_field_urls.csv");
+        Path reportPath = projectPath.resolve("my_proj_field_urls.csv");
 
         String[] cmdArgs = new String[] {
                 "-w", projectPath.toString(),

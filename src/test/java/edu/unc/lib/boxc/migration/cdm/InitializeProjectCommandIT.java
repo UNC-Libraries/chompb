@@ -91,7 +91,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-p", COLLECTION_ID };
+                "-p", COLLECTION_ID,
+                "-e", "test" };
         executeExpectSuccess(initArgs);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(baseDir.resolve(COLLECTION_ID));
@@ -111,7 +112,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-w", projDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-c", COLLECTION_ID };
+                "-c", COLLECTION_ID,
+                "-e", "test"};
         executeExpectSuccess(initArgs);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projDir);
@@ -129,7 +131,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-p", "unknowncoll" };
+                "-p", "unknowncoll",
+                "-e", "test" };
         executeExpectFailure(initArgs);
 
         assertOutputContains("No collection with ID 'unknowncoll' found on server");
@@ -145,7 +148,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-w", projDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-c", COLLECTION_ID };
+                "-c", COLLECTION_ID,
+                "-e", "test" };
         executeExpectSuccess(initArgs);
 
         // Run it a second time, should cause a failure
@@ -182,7 +186,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
                 "init",
-                "-p", COLLECTION_ID };
+                "-p", COLLECTION_ID,
+                "-e", "test" };
         executeExpectFailure(initArgs);
 
         assertOutputContains("Must provide an env-config option");

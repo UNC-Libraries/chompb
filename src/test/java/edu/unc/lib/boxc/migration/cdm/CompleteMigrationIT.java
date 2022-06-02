@@ -127,7 +127,8 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-p", COLLECTION_ID };
+                "-p", COLLECTION_ID,
+                "-e", "test"};
         executeExpectSuccess(argsInit);
 
         Path projPath = baseDir.resolve(COLLECTION_ID);
