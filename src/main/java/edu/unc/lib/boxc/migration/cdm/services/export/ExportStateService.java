@@ -79,7 +79,7 @@ public class ExportStateService {
             return;
         }
         // If resuming in initial steps, start over
-        if (ProgressState.STARTING.equals(progressState)) {
+        if (ProgressState.STARTING.equals(progressState) || ProgressState.DOWNLOADING_DESC.equals(progressState)) {
             clearState();
             transitionToStarting();
             log.debug("Restarting export, had not reached listing or exporting states");
