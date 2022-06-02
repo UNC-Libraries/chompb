@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,7 +36,7 @@ import edu.unc.lib.boxc.migration.cdm.services.FieldAssessmentTemplateService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 
 /**
- * @author bbpennel
+ * @author bbpennel, snluong
  */
 public class CdmFieldsCommandIT extends AbstractCommandIT {
 
@@ -112,5 +113,24 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         Path newPath = projPath.resolve("field_assessment_gilmer.xlsx");
 
         assertTrue(Files.exists(newPath));
+    }
+
+    @Test
+    public void generateFieldsUrlReportTest() throws Exception {
+        tmpFolder.create();
+        MigrationProject project = MigrationProjectFactory.createMigrationProject(
+                tmpFolder.getRoot().toPath(), "gilmer", null, USERNAME);
+        var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        testHelper.indexExportData("mini_gilmer");
+
+        Path projectPath = project.getProjectPath();
+        Path reportPath = projectPath.resolve("gilmer_field_urls.csv");
+
+        String[] cmdArgs = new String[] {
+                "-w", projectPath.toString(),
+                "fields", "generate_field_url_report"};
+        executeExpectSuccess(cmdArgs);
+
+        assertTrue(Files.exists(reportPath));
     }
 }
