@@ -17,8 +17,12 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.FieldAssessmentTemplateService;
+import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +34,7 @@ import java.nio.file.Paths;
 import static org.junit.Assert.assertTrue;
 
 /**
- * @author bbpennel
+ * @author bbpennel, snluong
  */
 public class CdmFieldsCommandIT extends AbstractCommandIT {
 
@@ -100,5 +104,22 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         Path newPath = projPath.resolve("field_assessment_my_proj.xlsx");
 
         assertTrue(Files.exists(newPath));
+    }
+
+    @Test
+    public void generateFieldsUrlReportTest() throws Exception {
+        tmpFolder.create();
+        initProjectAndHelper();
+        testHelper.indexExportData("mini_gilmer");
+
+        Path projectPath = project.getProjectPath();
+        Path reportPath = projectPath.resolve("gilmer_field_urls.csv");
+
+        String[] cmdArgs = new String[] {
+                "-w", projectPath.toString(),
+                "fields", "generate_field_url_report"};
+        executeExpectSuccess(cmdArgs);
+
+        assertTrue(Files.exists(reportPath));
     }
 }

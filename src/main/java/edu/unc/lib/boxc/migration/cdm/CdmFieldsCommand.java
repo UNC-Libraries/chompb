@@ -22,7 +22,9 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
+import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.FieldAssessmentTemplateService;
+import edu.unc.lib.boxc.migration.cdm.services.FieldUrlAssessmentService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import org.slf4j.Logger;
 import picocli.CommandLine.Command;
@@ -40,6 +42,8 @@ public class CdmFieldsCommand {
 
     private CdmFieldService fieldService = new CdmFieldService();
     private FieldAssessmentTemplateService templateService = new FieldAssessmentTemplateService();
+    private FieldUrlAssessmentService fieldUrlAssessmentService = new FieldUrlAssessmentService();
+    private CdmIndexService indexService = new CdmIndexService();
 
     @Command(name = "validate",
             description = "Validate the cdm_fields.json file for this project")
@@ -72,10 +76,35 @@ public class CdmFieldsCommand {
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("{}", e.getMessage());
+            log.error("Failed to generate fields assessment report", e);
             return 1;
         } catch (Exception e) {
             log.error("Failed to generate report", e);
             outputLogger.info("Failed to generate report: {}", e.getMessage());
+            return 1;
+        }
+    }
+
+    @Command(name = "generate_field_url_report",
+            description = "Generate an informational list of CDM fields with URLs")
+    public int generateFieldsAndUrlsReport() throws Exception {
+        try {
+            MigrationProject project = MigrationProjectFactory
+                    .loadMigrationProject(parentCommand.getWorkingDirectory());
+            fieldUrlAssessmentService.setProject(project);
+            fieldUrlAssessmentService.setIndexService(indexService);
+            fieldUrlAssessmentService.setCdmFieldService(fieldService);
+            indexService.setProject(project);
+            fieldUrlAssessmentService.generateReport();
+            outputLogger.info("Fields with URLs report generated!");
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("{}", e.getMessage());
+            log.error("Failed to generate fields with URLs report", e);
+            return 1;
+        } catch (Exception e) {
+            log.error("Failed to generate fields with URLs report", e);
+            outputLogger.info("Failed to generate fields with URLs report: {}", e.getMessage());
             return 1;
         }
     }
