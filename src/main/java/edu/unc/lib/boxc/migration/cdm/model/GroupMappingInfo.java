@@ -28,10 +28,9 @@ import org.apache.commons.lang3.StringUtils;
 public class GroupMappingInfo {
     public static final String GROUPED_WORK_PREFIX = "grp:";
     public static final String GROUP_KEY = "group";
-    public static final String MATCHED_VALUE = "matched";
     public static final String ID_FIELD = "id";
     public static final String[] CSV_HEADERS = new String[] {
-            ID_FIELD, MATCHED_VALUE, GROUP_KEY };
+            ID_FIELD, GROUP_KEY };
 
     private Map<String, List<String>> groupedMappings = new HashMap<>();
     private List<GroupMapping> mappings = new ArrayList<>();
@@ -66,25 +65,8 @@ public class GroupMappingInfo {
         return mappings.stream().filter(m -> m.getCdmId().equals(cdmId)).findFirst().orElse(null);
     }
 
-    /**
-     * @param matchedValue
-     * @return Group key associated with the provided matchedValue, or null if no match
-     */
-    public String getGroupKeyByMatchedValue(String matchedValue) {
-        return mappings.stream().filter(m -> matchedValue.equals(m.getMatchedValue()))
-                .map(GroupMapping::getGroupKey)
-                .findFirst().orElse(null);
-    }
-
-    public String getMatchedValueByGroupKey(String groupKey) {
-        return mappings.stream().filter(m -> groupKey.equals(m.getGroupKey()))
-                .map(GroupMapping::getMatchedValue)
-                .findFirst().orElse(null);
-    }
-
     public static class GroupMapping {
         private String cdmId;
-        private String matchedValue;
         private String groupKey;
 
         public String getCdmId() {
@@ -104,18 +86,6 @@ public class GroupMappingInfo {
                 this.groupKey = null;
             } else {
                 this.groupKey = groupKey;
-            }
-        }
-
-        public String getMatchedValue() {
-            return matchedValue;
-        }
-
-        public void setMatchedValue(String matchedValue) {
-            if (StringUtils.isBlank(matchedValue)) {
-                this.matchedValue = null;
-            } else {
-                this.matchedValue = matchedValue;
             }
         }
     }

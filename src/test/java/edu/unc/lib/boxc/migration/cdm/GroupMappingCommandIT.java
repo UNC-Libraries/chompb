@@ -184,8 +184,6 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Total Groups: +1.*");
         assertOutputMatches(".*Objects In Groups: +2.*");
-        assertOutputMatches(".*Counts per group:.*");
-        assertOutputMatches(".*groupa:group1 \\(with id .+\\): 2.*");
     }
 
     private void assertFilesGrouped(Connection conn, String... expectedFileCdmIds)

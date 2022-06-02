@@ -148,7 +148,6 @@ public class SipServiceHelper {
         assertEquals(1, workChildren.size());
         Resource fileObjResc = workChildren.get(0).asResource();
         assertTrue(fileObjResc.hasProperty(RDF.type, Cdr.FileObject));
-        assertTrue(workBag.hasProperty(Cdr.primaryObject, fileObjResc));
 
         // Check for source file
         Resource origResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamOriginal).getResource();
