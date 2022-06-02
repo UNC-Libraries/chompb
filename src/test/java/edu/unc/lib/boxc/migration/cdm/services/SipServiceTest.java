@@ -449,7 +449,7 @@ public class SipServiceTest {
     public void generateSipsWithGroupedWork() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateDescriptions("grouped_mods.xml");
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         GroupMappingOptions groupOptions = new GroupMappingOptions();
@@ -476,7 +476,7 @@ public class SipServiceTest {
         assertEquals(2, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "25", false,
+        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", false,
                 stagingLocs.get(0), stagingLocs.get(1));
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
@@ -488,7 +488,7 @@ public class SipServiceTest {
     public void generateSipsWithGroupedWorkWithAccessCopies() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateDescriptions("grouped_mods.xml");
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         List<Path> accessLocs = testHelper.populateAccessFiles("276_182_E.tif", "276_203_E.tif");
 
@@ -516,7 +516,7 @@ public class SipServiceTest {
         assertEquals(2, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "25", true,
+        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", true,
                 stagingLocs.get(0), accessLocs.get(0), stagingLocs.get(1), null);
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model,
@@ -624,7 +624,7 @@ public class SipServiceTest {
     public void generateSipsWithGroupedWorkAndRedirectMapping() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateDescriptions("grouped_mods.xml");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         GroupMappingOptions groupOptions = new GroupMappingOptions();
@@ -649,6 +649,7 @@ public class SipServiceTest {
             assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "27"); // ungrouped items first
             assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "25");
             assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "26");
+            // Work generated for group should not have a redirect mapping
             assertRedirectMappingCollectionRowContentIsCorrect(rows.get(3), project, DEST_UUID);
             // grouped files should have the same boxc object ID
             assertEquals(rows.get(1).get("boxc_object_id"), rows.get(2).get("boxc_object_id"));

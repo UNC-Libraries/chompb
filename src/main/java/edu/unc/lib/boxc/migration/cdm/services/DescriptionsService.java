@@ -68,7 +68,7 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
  */
 public class DescriptionsService {
     private static final Logger log = LoggerFactory.getLogger(DescriptionsService.class);
-    private static final int EXPANDED_FILES_PER_DIR = 1024;
+    private static final int EXPANDED_FILES_BUCKETS = 1024;
 
     private static final QName TYPE_NAME = new QName("type");
     private static final QName DISPLAY_LABEL_NAME = new QName("displayLabel");
@@ -239,9 +239,12 @@ public class DescriptionsService {
      * @return The path for the individual MODS file
      */
     public Path getExpandedDescriptionFilePath(String cdmId) {
-        int cdmIdNum = Integer.parseInt(cdmId);
-        String subdir = Integer.toString(cdmIdNum / EXPANDED_FILES_PER_DIR);
-        return project.getExpandedDescriptionsPath().resolve(subdir).resolve(cdmId + ".xml");
+        // To avoid having individual directories with too many files, MODS files are written to
+        // EXPANDED_FILES_BUCKETS number of bucket directories based on the hash code of the id provided
+        String subdir = Integer.toString(Math.abs(cdmId.hashCode()) % EXPANDED_FILES_BUCKETS);
+        // Replace reserved filepath characters with underscores, primarily for grouped work ids
+        String filename = cdmId.replaceAll("[: /\\\\<>|&]", "_");
+        return project.getExpandedDescriptionsPath().resolve(subdir).resolve(filename + ".xml");
     }
 
     /**
