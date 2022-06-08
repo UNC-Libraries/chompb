@@ -28,6 +28,7 @@ import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil;
+import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -476,8 +477,11 @@ public class SipServiceTest {
         assertEquals(2, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", false,
+        Bag work1Bag = testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", false,
                 stagingLocs.get(0), stagingLocs.get(1));
+        // Assert that children of grouped work have descriptions added (only second file as a description)
+        Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
+        testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work1File2Resc.getURI()), "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
 
@@ -516,8 +520,12 @@ public class SipServiceTest {
         assertEquals(2, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", true,
+        Bag work1Bag = testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", true,
                 stagingLocs.get(0), accessLocs.get(0), stagingLocs.get(1), null);
+        // Assert that children of grouped work have descriptions added (only second file has a description)
+        Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
+        testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work1File2Resc.getURI()), "26");
+
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model,
                 stagingLocs.get(2), accessLocs.get(1), "27");
@@ -555,12 +563,20 @@ public class SipServiceTest {
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-17");
-        testHelper.assertGroupedWorkPopulatedInSip(workResc2, dirManager, model, "604", false,
+        Bag work2Bag = testHelper.assertGroupedWorkPopulatedInSip(workResc2, dirManager, model, "604", false,
                 stagingLocs.get(1), stagingLocs.get(2));
+        // Verify that the children of the compound object have descriptions added
+        Resource work2File1Resc = testHelper.findChildByStagingLocation(work2Bag, stagingLocs.get(1));
+        testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work2File1Resc.getURI()), "602");
+        Resource work2File2Resc = testHelper.findChildByStagingLocation(work2Bag, stagingLocs.get(2));
+        testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work2File2Resc.getURI()), "603");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2014-02-17");
-        testHelper.assertGroupedWorkPopulatedInSip(workResc3, dirManager, model, "607", false,
+        Bag work3Bag = testHelper.assertGroupedWorkPopulatedInSip(workResc3, dirManager, model, "607", false,
                 stagingLocs.get(3), stagingLocs.get(4));
-
+        Resource work3File1Resc = testHelper.findChildByStagingLocation(work3Bag, stagingLocs.get(3));
+        testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work3File1Resc.getURI()), "605");
+        Resource work3File2Resc = testHelper.findChildByStagingLocation(work3Bag, stagingLocs.get(4));
+        testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work3File2Resc.getURI()), "606");
         assertPersistedSipInfoMatches(sip);
     }
 
