@@ -17,6 +17,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.scp.client.ScpClientCreator;
@@ -41,11 +42,9 @@ public class CdmFileRetrievalService {
     private static final String CPD_SUBPATH = "image/*.cpd";
     public static final String CPD_EXPORT_PATH = "cpds";
 
-    private String downloadBasePath;
     private String sshUsername;
-    private String cdmHost;
     private String sshPassword;
-    private int sshPort;
+    private ChompbConfig chompbConfig;
 
     /**
      * Download the desc.all file for the collection being migrated
@@ -84,7 +83,9 @@ public class CdmFileRetrievalService {
         SshClient client = SshClient.setUpDefaultClient();
         client.setFilePasswordProvider(FilePasswordProvider.of(sshPassword));
         client.start();
-        try (var sshSession = client.connect(sshUsername, cdmHost, sshPort)
+        var cdmEnvId = project.getProjectProperties().getCdmEnvironmentId();
+        var cdmEnvConfig = chompbConfig.getCdmEnvironments().get(cdmEnvId);
+        try (var sshSession = client.connect(sshUsername, cdmEnvConfig.getSshHost(), cdmEnvConfig.getSshPort())
                 .verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .getSession()) {
             sshSession.addPasswordIdentity(sshPassword);
@@ -94,7 +95,7 @@ public class CdmFileRetrievalService {
             var scpClientCreator = ScpClientCreator.instance();
             var scpClient = scpClientCreator.createScpClient(sshSession);
             String collectionId = project.getProjectProperties().getCdmCollectionId();
-            var remotePath = Paths.get(downloadBasePath, collectionId, remoteSubPath).toString();
+            var remotePath = Paths.get(cdmEnvConfig.getSshDownloadBasePath(), collectionId, remoteSubPath).toString();
             scpClient.download(remotePath, localDestination);
         } catch (IOException e) {
             throw new MigrationException("Failed to download desc.all file", e);
@@ -105,23 +106,15 @@ public class CdmFileRetrievalService {
         this.project = project;
     }
 
-    public void setDownloadBasePath(String downloadBasePath) {
-        this.downloadBasePath = downloadBasePath;
-    }
-
     public void setSshUsername(String sshUsername) {
         this.sshUsername = sshUsername;
-    }
-
-    public void setCdmHost(String cdmHost) {
-        this.cdmHost = cdmHost;
     }
 
     public void setSshPassword(String sshPassword) {
         this.sshPassword = sshPassword;
     }
 
-    public void setSshPort(int sshPort) {
-        this.sshPort = sshPort;
+    public void setChompbConfig(ChompbConfig chompbConfig) {
+        this.chompbConfig = chompbConfig;
     }
 }

@@ -37,21 +37,6 @@ public class CdmExportOptions {
             description = "Force the export to restart from the beginning. Use if a previous export was started "
                     + "or completed, but you would like to begin the export again.")
     private boolean force;
-    @CommandLine.Option(names = { "-H", "--ssh-host"},
-            description = {"Host name of the CDM SSH server.",
-                    "Default: ${DEFAULT-VALUE}"},
-            defaultValue = "${env:CDM_SSH_HOST:-127.0.0.1}")
-    private String cdmSshHost;
-    @CommandLine.Option(names = { "-P", "--ssh-port"},
-            description = {"Port of the CDM SSH server.",
-                    "Default: ${DEFAULT-VALUE}"},
-            defaultValue = "22")
-    private int cdmSshPort;
-    @CommandLine.Option(names = { "-D", "--download-path"},
-            description = {"Remote base path where CDM files should be located for transfer via SSH.",
-                    "Default: ${DEFAULT-VALUE}"},
-            defaultValue = "${env:CDM_SSH_DOWNLOAD_PATH}")
-    private String cdmSshDownloadBasePath;
 
     public String getCdmUsername() {
         return cdmUsername;
@@ -67,30 +52,6 @@ public class CdmExportOptions {
 
     public void setCdmPassword(String cdmPassword) {
         this.cdmPassword = cdmPassword;
-    }
-
-    public String getCdmSshHost() {
-        return cdmSshHost;
-    }
-
-    public void setCdmSshHost(String cdmSshHost) {
-        this.cdmSshHost = cdmSshHost;
-    }
-
-    public int getCdmSshPort() {
-        return cdmSshPort;
-    }
-
-    public void setCdmSshPort(int cdmSshPort) {
-        this.cdmSshPort = cdmSshPort;
-    }
-
-    public String getCdmSshDownloadBasePath() {
-        return cdmSshDownloadBasePath;
-    }
-
-    public void setCdmSshDownloadBasePath(String cdmSshDownloadBasePath) {
-        this.cdmSshDownloadBasePath = cdmSshDownloadBasePath;
     }
 
     public boolean isForce() {

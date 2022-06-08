@@ -15,14 +15,10 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-
+import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
+import edu.unc.lib.boxc.model.api.rdf.Cdr;
+import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -31,29 +27,23 @@ import org.apache.jena.vocabulary.RDF;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.model.api.rdf.Cdr;
-import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author bbpennel
  */
 public class SipsCommandIT extends AbstractCommandIT {
-    private final static String COLLECTION_ID = "my_coll";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
-
-    private MigrationProject project;
-    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        initProjectAndHelper();
     }
 
     @Test

@@ -15,17 +15,19 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.Callable;
-
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.util.BannerUtility;
 import edu.unc.lib.boxc.migration.cdm.util.CLIConstants;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.concurrent.Callable;
 
 /**
  * Main class for the CLI utils
@@ -65,6 +67,13 @@ public class CLIMain implements Callable<Integer> {
             description = "Set output to quiet level of verbosity")
     private boolean quiet;
 
+    @Option(names = { "--env-config" },
+            description = "Path to the chompb environment configuration file. Default: ${DEFAULT-VALUE}",
+            defaultValue = "${env:ENV_CONFIG}")
+    private Path envConfigPath;
+
+    private ChompbConfigService.ChompbConfig chompbConfig;
+
     /**
      * @return Get the effective working directory
      */
@@ -84,6 +93,21 @@ public class CLIMain implements Callable<Integer> {
             return Verbosity.QUIET;
         }
         return Verbosity.NORMAL;
+    }
+
+    /**
+     * @return Application configuration
+     */
+    public ChompbConfigService.ChompbConfig getChompbConfig() throws IOException {
+        if (chompbConfig == null) {
+            if (envConfigPath == null) {
+                throw new IllegalArgumentException("Must provide an env-config option");
+            }
+            var configService = new ChompbConfigService();
+            configService.setEnvConfigPath(envConfigPath);
+            chompbConfig = configService.getConfig();
+        }
+        return chompbConfig;
     }
 
     protected CLIMain() {

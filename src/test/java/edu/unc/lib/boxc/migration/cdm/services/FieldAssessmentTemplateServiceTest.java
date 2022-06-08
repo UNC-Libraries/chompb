@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,7 +53,7 @@ public class FieldAssessmentTemplateServiceTest {
     public void setup() throws Exception {
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         fieldService = new CdmFieldService();
 
         service = new FieldAssessmentTemplateService();

@@ -34,6 +34,7 @@ import java.sql.Statement;
 import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -70,7 +71,7 @@ public class FieldUrlAssessmentServiceTest {
     public void setup() throws Exception {
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
         var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());

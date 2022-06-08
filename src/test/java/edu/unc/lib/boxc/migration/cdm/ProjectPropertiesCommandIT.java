@@ -30,16 +30,11 @@ import edu.unc.lib.boxc.migration.cdm.services.ProjectPropertiesService;
 public class ProjectPropertiesCommandIT extends AbstractCommandIT {
     private static final String PROJECT_NAME = "gilmer";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
-
-    private MigrationProject project;
     private ProjectPropertiesService propertiesService;
 
     @Before
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, PROJECT_NAME, null, "user");
+        initProject();
         propertiesService = new ProjectPropertiesService();
         propertiesService.setProject(project);
     }

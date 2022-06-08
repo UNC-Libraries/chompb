@@ -15,25 +15,23 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static org.junit.Assert.assertTrue;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.FieldAssessmentTemplateService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author bbpennel, snluong
@@ -42,9 +40,6 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
 
     private CdmFieldService fieldService;
     private FieldAssessmentTemplateService templateService;
-
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
     @Before
     public void setUp() throws Exception {
@@ -60,8 +55,7 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
 
     @Test
     public void validateValidFieldsConfigTest() throws Exception {
-        Path projPath = baseDir.resolve("proj");
-        MigrationProject project = MigrationProjectFactory.createMigrationProject(projPath, null, null, USERNAME);
+        initProject();
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
         CdmFieldEntry fieldEntry = new CdmFieldEntry();
         fieldEntry.setNickName("title");
@@ -71,15 +65,14 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         fieldService.persistFieldsToProject(project, fieldInfo);
 
         String[] cmdArgs = new String[] {
-                "-w", projPath.toString(),
+                "-w", project.getProjectPath().toString(),
                 "fields", "validate"};
         executeExpectSuccess(cmdArgs);
     }
 
     @Test
     public void validateInvalidFieldsConfigTest() throws Exception {
-        Path projPath = baseDir.resolve("proj");
-        MigrationProject project = MigrationProjectFactory.createMigrationProject(projPath, null, null, USERNAME);
+        initProject();
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
         CdmFieldEntry fieldEntry = new CdmFieldEntry();
         fieldEntry.setNickName("title");
@@ -94,7 +87,7 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         fieldService.persistFieldsToProject(project, fieldInfo);
 
         String[] cmdArgs = new String[] {
-                "-w", projPath.toString(),
+                "-w", project.getProjectPath().toString(),
                 "fields", "validate"};
         executeExpectFailure(cmdArgs);
 
@@ -103,14 +96,12 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
 
     @Test
     public void generateReportTest() throws Exception {
-        tmpFolder.create();
-        MigrationProject project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), "gilmer", null, USERNAME);
+        initProject();
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         templateService.generate(project);
 
         Path projPath = project.getProjectPath();
-        Path newPath = projPath.resolve("field_assessment_gilmer.xlsx");
+        Path newPath = projPath.resolve("field_assessment_my_proj.xlsx");
 
         assertTrue(Files.exists(newPath));
     }
@@ -118,13 +109,11 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
     @Test
     public void generateFieldsUrlReportTest() throws Exception {
         tmpFolder.create();
-        MigrationProject project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), "gilmer", null, USERNAME);
-        var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        initProjectAndHelper();
         testHelper.indexExportData("mini_gilmer");
 
         Path projectPath = project.getProjectPath();
-        Path reportPath = projectPath.resolve("gilmer_field_urls.csv");
+        Path reportPath = projectPath.resolve("my_proj_field_urls.csv");
 
         String[] cmdArgs = new String[] {
                 "-w", projectPath.toString(),

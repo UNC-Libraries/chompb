@@ -18,6 +18,7 @@ package edu.unc.lib.boxc.migration.cdm.services.export;
 import edu.unc.lib.boxc.migration.cdm.AbstractOutputTest;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,7 +37,7 @@ public class ExportProgressServiceTest extends AbstractOutputTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);
         exportProgressService = new ExportProgressService();

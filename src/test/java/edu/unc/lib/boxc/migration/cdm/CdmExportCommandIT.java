@@ -21,6 +21,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -32,7 +33,6 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -56,6 +56,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         testSshServer = new TestSshServer();
         testSshServer.setPassword(PASSWORD);
         testSshServer.startServer();
+        setupChompbConfig();
     }
 
     @After
@@ -66,9 +67,8 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     private String[] exportArgs(Path projPath, String... extras) {
         String[] defaultArgs = new String[] {
                 "-w", projPath.toString(),
+                "--env-config", chompbConfigPath,
                 "export",
-                "-D", Paths.get("src/test/resources/descriptions").toAbsolutePath().toString(),
-                "-P", "42222",
                 "-p", PASSWORD};
         return ArrayUtils.addAll(defaultArgs, extras);
     }
@@ -185,7 +185,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     private Path createProject(String collId) throws Exception {
         MigrationProject project = MigrationProjectFactory.createMigrationProject(
-                baseDir, collId, null, USERNAME);
+                baseDir, collId, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
         CdmFieldEntry fieldEntry = new CdmFieldEntry();
         fieldEntry.setNickName("title");

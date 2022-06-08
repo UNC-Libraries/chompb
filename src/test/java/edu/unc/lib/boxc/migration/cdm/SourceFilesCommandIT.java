@@ -15,41 +15,27 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
 
-import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import org.junit.Before;
-import org.junit.Test;
-
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author bbpennel
  */
 public class SourceFilesCommandIT extends AbstractCommandIT {
-    private final static String COLLECTION_ID = "my_coll";
-
-    private MigrationProject project;
     private Path basePath;
-    private SipServiceHelper testHelper;
 
     @Before
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
+        initProjectAndHelper();
         basePath = tmpFolder.newFolder().toPath();
-        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
     }
 
     @Test
@@ -115,7 +101,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-        assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
+        assertOutputContains("25,276_182_E.tif," + srcPath1 + ",");
         assertOutputContains("26,276_183_E.tif,,");
         assertOutputContains("27,276_203_E.tif,,");
     }
@@ -161,8 +147,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args2);
 
-        assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
-        assertOutputContains("26,276_183_E.tif," + srcPath2.toString() + ",");
+        assertOutputContains("25,276_182_E.tif," + srcPath1 + ",");
+        assertOutputContains("26,276_183_E.tif," + srcPath2 + ",");
         assertOutputContains("27,276_203_E.tif,,");
     }
 

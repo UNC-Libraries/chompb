@@ -15,27 +15,27 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.concurrent.Callable;
-
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import edu.unc.lib.boxc.migration.cdm.services.FindingAidService;
+import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.Callable;
+
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Command to initialize new migration projects
@@ -48,11 +48,11 @@ public class InitializeProjectCommand implements Callable<Integer> {
     @ParentCommand
     private CLIMain parentCommand;
 
-    @Option(names = { "--cdm-url" },
-            description = "Base URL to the CDM web service API. Falls back to CDM_BASE_URL env variable. "
+    @Option(names = { "-e", "--cdm-env" },
+            description = "CDM environment used for retrieving data. Env-config must be set. "
                     + "Default: ${DEFAULT-VALUE}",
-            defaultValue = "${env:CDM_BASE_URL:-http://localhost:82/}")
-    private String cdmBaseUri;
+            defaultValue = "${env:CDM_ENV}")
+    private String cdmEnvId;
     @Option(names = { "-c", "--cdm-coll-id" },
             description = "Identifier of the CDM collection to migrate. Use if the name of the project directory"
                     + " does not match the CDM Collection ID.")
@@ -79,6 +79,21 @@ public class InitializeProjectCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         long start = System.nanoTime();
 
+        ChompbConfig config;
+        try {
+            config = parentCommand.getChompbConfig();
+            if (!config.getCdmEnvironments().containsKey(cdmEnvId)) {
+                outputLogger.info("Unknown cdm-env value {}, configured values are: {}",
+                        cdmEnvId, String.join(", ", config.getCdmEnvironments().keySet()));
+                return 1;
+            }
+        } catch (IllegalArgumentException | IOException e) {
+            outputLogger.info("Unable to read application configuration: {}", e.getMessage());
+            log.error("Unable to read application configuration", e);
+            return 1;
+        }
+        var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnvId);
+
         Path currentPath = parentCommand.getWorkingDirectory();
         String projDisplayName = projectName == null ? currentPath.getFileName().toString() : projectName;
         String collId = cdmCollectionId == null ? projDisplayName : cdmCollectionId;
@@ -86,7 +101,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
         // Retrieve field information from CDM
         CdmFieldInfo fieldInfo;
         try {
-            fieldService.setCdmBaseUri(cdmBaseUri);
+            fieldService.setCdmBaseUri(cdmEnvConfig.getHttpBaseUrl());
             fieldInfo = fieldService.retrieveFieldsForCollection(collId);
         } catch (IOException | MigrationException e) {
             log.error("Failed to retrieve field information for collection in project", e);
@@ -101,7 +116,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
         MigrationProject project = null;
         try {
             project = MigrationProjectFactory.createMigrationProject(
-                    currentPath, projectName, cdmCollectionId, username);
+                    currentPath, projectName, cdmCollectionId, username, cdmEnvId);
 
             // Persist field info to the project
             fieldService.persistFieldsToProject(project, fieldInfo);

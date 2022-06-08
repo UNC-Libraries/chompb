@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -53,7 +54,7 @@ public class DescriptionsValidatorTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME);
+                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
         validator = new DescriptionsValidator();
         validator.setProject(project);

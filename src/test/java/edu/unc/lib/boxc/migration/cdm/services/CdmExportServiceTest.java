@@ -15,55 +15,35 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
-import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
+import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author bbpennel
@@ -76,6 +56,7 @@ public class CdmExportServiceTest {
     private MigrationProject project;
     private CdmFieldService fieldService;
     private CdmExportService service;
+    private ChompbConfigService.ChompbConfig chompbConfig;
     private ExportStateService exportStateService;
     @Mock
     private CdmFileRetrievalService cdmFileRetrievalService;
@@ -87,7 +68,7 @@ public class CdmExportServiceTest {
         initMocks(this);
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         fieldService = new CdmFieldService();
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);
@@ -97,6 +78,9 @@ public class CdmExportServiceTest {
         service.setCdmFieldService(fieldService);
         service.setExportStateService(exportStateService);
         service.setFileRetrievalService(cdmFileRetrievalService);
+        var chompbConfig = new ChompbConfigService.ChompbConfig();
+        chompbConfig.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
+        service.setChompbConfig(chompbConfig);
 
         // Trigger population of desc.all file
         doAnswer(new Answer<Void>() {

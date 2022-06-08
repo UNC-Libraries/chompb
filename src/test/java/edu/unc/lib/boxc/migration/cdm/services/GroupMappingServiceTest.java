@@ -23,6 +23,7 @@ import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo.GroupMapping;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
@@ -66,7 +67,7 @@ public class GroupMappingServiceTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user");
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
         fieldService = new CdmFieldService();

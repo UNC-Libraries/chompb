@@ -15,6 +15,17 @@
  */
 package edu.unc.lib.boxc.migration.cdm;
 
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.io.FileUtils;
+import org.junit.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.Instant;
+
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -22,32 +33,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.Instant;
-
-import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
-import org.apache.commons.io.FileUtils;
-import org.junit.Test;
-
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
-
 /**
  * @author bbpennel
  */
 public class CdmIndexCommandIT extends AbstractCommandIT {
-    private final static String COLLECTION_ID = "my_coll";
-
-    private MigrationProject project;
-
     @Test
     public void indexGilmerTest() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
+        initProject();
         Files.createDirectories(project.getExportPath());
 
         Files.copy(Paths.get("src/test/resources/descriptions/gilmer/index/description/desc.all"),
@@ -66,8 +58,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
 
     @Test
     public void indexAlreadyExistsTest() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
+        initProject();
         Files.createDirectories(project.getExportPath());
 
         Files.copy(Paths.get("src/test/resources/descriptions/mini_gilmer/index/description/desc.all"),
@@ -105,8 +96,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
 
     @Test
     public void indexingFailureTest() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                baseDir, COLLECTION_ID, null, USERNAME);
+        initProject();
         Files.createDirectories(project.getExportPath());
 
         FileUtils.write(CdmFileRetrievalService.getDescAllPath(project).toFile(), "uh oh", ISO_8859_1);

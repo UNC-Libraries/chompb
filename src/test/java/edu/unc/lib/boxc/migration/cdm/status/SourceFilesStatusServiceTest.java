@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
 
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -51,7 +52,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME);
+                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         statusService = new SourceFilesStatusService();

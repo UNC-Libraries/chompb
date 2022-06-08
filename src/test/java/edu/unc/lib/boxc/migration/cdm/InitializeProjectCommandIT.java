@@ -35,7 +35,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.IOUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,16 +60,14 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "my_coll";
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+    public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
 
     private CdmFieldService fieldService;
-    private String cdmBaseUrl;
 
     @Before
     public void setUp() throws Exception {
         fieldService = new CdmFieldService();
 
-        cdmBaseUrl = "http://localhost:" + wireMockRule.port();
         String validRespBody = IOUtils.toString(this.getClass().getResourceAsStream("/cdm_fields_resp.json"),
                 StandardCharsets.UTF_8);
 
@@ -79,15 +81,18 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "text/json")
                         .withBody(validRespBody)));
+
+        setupChompbConfig();
     }
 
     @Test
     public void initValidProjectTest() throws Exception {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--cdm-url", cdmBaseUrl,
-                "-p", COLLECTION_ID };
+                "-p", COLLECTION_ID,
+                "-e", "test" };
         executeExpectSuccess(initArgs);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(baseDir.resolve(COLLECTION_ID));
@@ -105,9 +110,10 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         Files.createDirectory(projDir);
         String[] initArgs = new String[] {
                 "-w", projDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--cdm-url", cdmBaseUrl,
-                "-c", COLLECTION_ID };
+                "-c", COLLECTION_ID,
+                "-e", "test"};
         executeExpectSuccess(initArgs);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projDir);
@@ -123,17 +129,15 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     public void initCdmCollectioNotFoundTest() throws Exception {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--cdm-url", cdmBaseUrl,
-                "-p", "unknowncoll" };
+                "-p", "unknowncoll",
+                "-e", "test" };
         executeExpectFailure(initArgs);
 
         assertOutputContains("No collection with ID 'unknowncoll' found on server");
 
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(baseDir)) {
-            assertFalse("Project directory should not have been created, so base dir should be empty",
-                    dirStream.iterator().hasNext());
-        }
+        assertProjectDirectoryNotCreate();
     }
 
     @Test
@@ -142,9 +146,10 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         Files.createDirectory(projDir);
         String[] initArgs = new String[] {
                 "-w", projDir.toString(),
+                "--env-config", chompbConfigPath,
                 "init",
-                "--cdm-url", cdmBaseUrl,
-                "-c", COLLECTION_ID };
+                "-c", COLLECTION_ID,
+                "-e", "test" };
         executeExpectSuccess(initArgs);
 
         // Run it a second time, should cause a failure
@@ -159,6 +164,42 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         assertTrue("Description folder not created", Files.exists(project.getDescriptionsPath()));
 
         assertCdmFieldsPresent(project);
+    }
+
+    @Test
+    public void initUnknownEnvTest() throws Exception {
+        String[] initArgs = new String[] {
+                "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
+                "init",
+                "-e", "what",
+                "-p", COLLECTION_ID };
+        executeExpectFailure(initArgs);
+
+        assertOutputContains("Unknown cdm-env value");
+
+        assertProjectDirectoryNotCreate();
+    }
+
+    @Test
+    public void initNoEnvMappingPathTest() throws Exception {
+        String[] initArgs = new String[] {
+                "-w", baseDir.toString(),
+                "init",
+                "-p", COLLECTION_ID,
+                "-e", "test" };
+        executeExpectFailure(initArgs);
+
+        assertOutputContains("Must provide an env-config option");
+
+        assertProjectDirectoryNotCreate();
+    }
+
+    private void assertProjectDirectoryNotCreate() throws IOException {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(baseDir)) {
+            assertFalse("Project directory should not have been created, so base dir should be empty",
+                    dirStream.iterator().hasNext());
+        }
     }
 
     private void assertPropertiesSet(MigrationProjectProperties properties, String expName, String expCollId) {

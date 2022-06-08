@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -65,7 +66,7 @@ public class DescriptionsServiceTest {
     @Before
     public void setup() throws Exception {
         basePath = tmpFolder.newFolder().toPath();
-        project = MigrationProjectFactory.createMigrationProject(basePath, PROJECT_NAME, null, "user");
+        project = MigrationProjectFactory.createMigrationProject(basePath, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getDescriptionsPath());
         service = new DescriptionsService();
         service.setProject(project);

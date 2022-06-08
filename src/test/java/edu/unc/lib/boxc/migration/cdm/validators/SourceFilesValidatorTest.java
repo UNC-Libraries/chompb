@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -52,7 +53,7 @@ public class SourceFilesValidatorTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME);
+                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
         validator = new SourceFilesValidator();
         validator.setProject(project);
