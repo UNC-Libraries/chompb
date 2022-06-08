@@ -33,7 +33,6 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -186,7 +185,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     private Path createProject(String collId) throws Exception {
         MigrationProject project = MigrationProjectFactory.createMigrationProject(
-                baseDir, collId, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV);
+                baseDir, collId, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
         CdmFieldEntry fieldEntry = new CdmFieldEntry();
         fieldEntry.setNickName("title");

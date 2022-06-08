@@ -53,7 +53,7 @@ public class SourceFilesValidatorTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV);
+                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
         validator = new SourceFilesValidator();
         validator.setProject(project);

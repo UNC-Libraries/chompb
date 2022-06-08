@@ -62,7 +62,7 @@ public class CdmIndexServiceTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV);
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
         fieldService = new CdmFieldService();

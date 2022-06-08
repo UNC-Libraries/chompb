@@ -83,8 +83,9 @@ public class CdmFileRetrievalService {
         SshClient client = SshClient.setUpDefaultClient();
         client.setFilePasswordProvider(FilePasswordProvider.of(sshPassword));
         client.start();
-        var cdmEnv = chompbConfig.getCdmEnvironments().get(project.getProjectProperties().getCdmEnvironment());
-        try (var sshSession = client.connect(sshUsername, cdmEnv.getSshHost(), cdmEnv.getSshPort())
+        var cdmEnvId = project.getProjectProperties().getCdmEnvironmentId();
+        var cdmEnvConfig = chompbConfig.getCdmEnvironments().get(cdmEnvId);
+        try (var sshSession = client.connect(sshUsername, cdmEnvConfig.getSshHost(), cdmEnvConfig.getSshPort())
                 .verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .getSession()) {
             sshSession.addPasswordIdentity(sshPassword);
@@ -94,7 +95,7 @@ public class CdmFileRetrievalService {
             var scpClientCreator = ScpClientCreator.instance();
             var scpClient = scpClientCreator.createScpClient(sshSession);
             String collectionId = project.getProjectProperties().getCdmCollectionId();
-            var remotePath = Paths.get(cdmEnv.getSshDownloadBasePath(), collectionId, remoteSubPath).toString();
+            var remotePath = Paths.get(cdmEnvConfig.getSshDownloadBasePath(), collectionId, remoteSubPath).toString();
             scpClient.download(remotePath, localDestination);
         } catch (IOException e) {
             throw new MigrationException("Failed to download desc.all file", e);

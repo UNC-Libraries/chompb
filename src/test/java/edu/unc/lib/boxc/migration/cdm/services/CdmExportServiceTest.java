@@ -68,7 +68,7 @@ public class CdmExportServiceTest {
         initMocks(this);
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV);
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         fieldService = new CdmFieldService();
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);

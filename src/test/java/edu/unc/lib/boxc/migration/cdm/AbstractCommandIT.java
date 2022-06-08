@@ -61,12 +61,12 @@ public class AbstractCommandIT extends AbstractOutputTest {
     }
 
     protected void initTestHelper() throws IOException {
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());;
+        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
     }
 
     protected void initProject() throws IOException {
         project = MigrationProjectFactory.createMigrationProject(baseDir, PROJECT_ID, COLLECTION_ID, USERNAME,
-                CdmEnvironmentHelper.DEFAULT_ENV);
+                CdmEnvironmentHelper.DEFAULT_ENV_ID);
     }
 
     protected void initProjectAndHelper() throws IOException {

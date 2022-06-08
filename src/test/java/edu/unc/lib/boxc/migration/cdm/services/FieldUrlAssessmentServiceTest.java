@@ -71,7 +71,7 @@ public class FieldUrlAssessmentServiceTest {
     public void setup() throws Exception {
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV);
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
         var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());

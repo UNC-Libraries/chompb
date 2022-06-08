@@ -52,7 +52,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
             description = "CDM environment used for retrieving data. Env-config must be set. "
                     + "Default: ${DEFAULT-VALUE}",
             defaultValue = "${env:CDM_ENV}")
-    private String cdmEnv;
+    private String cdmEnvId;
     @Option(names = { "-c", "--cdm-coll-id" },
             description = "Identifier of the CDM collection to migrate. Use if the name of the project directory"
                     + " does not match the CDM Collection ID.")
@@ -82,9 +82,9 @@ public class InitializeProjectCommand implements Callable<Integer> {
         ChompbConfig config;
         try {
             config = parentCommand.getChompbConfig();
-            if (!config.getCdmEnvironments().containsKey(cdmEnv)) {
+            if (!config.getCdmEnvironments().containsKey(cdmEnvId)) {
                 outputLogger.info("Unknown cdm-env value {}, configured values are: {}",
-                        cdmEnv, String.join(", ", config.getCdmEnvironments().keySet()));
+                        cdmEnvId, String.join(", ", config.getCdmEnvironments().keySet()));
                 return 1;
             }
         } catch (IllegalArgumentException | IOException e) {
@@ -92,7 +92,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
             log.error("Unable to read application configuration", e);
             return 1;
         }
-        var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnv);
+        var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnvId);
 
         Path currentPath = parentCommand.getWorkingDirectory();
         String projDisplayName = projectName == null ? currentPath.getFileName().toString() : projectName;
@@ -116,7 +116,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
         MigrationProject project = null;
         try {
             project = MigrationProjectFactory.createMigrationProject(
-                    currentPath, projectName, cdmCollectionId, username, cdmEnv);
+                    currentPath, projectName, cdmCollectionId, username, cdmEnvId);
 
             // Persist field info to the project
             fieldService.persistFieldsToProject(project, fieldInfo);

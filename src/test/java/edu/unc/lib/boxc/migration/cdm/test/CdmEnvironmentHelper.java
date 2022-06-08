@@ -16,7 +16,6 @@
 package edu.unc.lib.boxc.migration.cdm.test;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
-import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 
 import java.nio.file.Paths;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class CdmEnvironmentHelper {
     public static final String TEST_BASE_URL = "http://localhost:" + TEST_HTTP_PORT;
     public static final int TEST_SSH_PORT = 42222;
     public static final String TEST_SSH_HOST = "localhost";
-    public static final String DEFAULT_ENV = "test";
+    public static final String DEFAULT_ENV_ID = "test";
 
     private CdmEnvironmentHelper() {
     }
@@ -40,7 +39,7 @@ public class CdmEnvironmentHelper {
      * @return environment mapping containing test environment
      */
     public static Map<String, CdmEnvironment> getTestMapping() {
-        return Map.of(DEFAULT_ENV, getTestEnv());
+        return Map.of(DEFAULT_ENV_ID, getTestEnv());
     }
 
     /**

@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,7 +32,6 @@ import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -67,7 +65,7 @@ public class SourceFileServiceTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV);
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
         basePath = tmpFolder.newFolder().toPath();

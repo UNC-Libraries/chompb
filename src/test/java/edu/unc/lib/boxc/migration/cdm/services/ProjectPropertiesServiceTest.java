@@ -51,7 +51,7 @@ public class ProjectPropertiesServiceTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV);
+                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         service = new ProjectPropertiesService();
         service.setProject(project);
     }

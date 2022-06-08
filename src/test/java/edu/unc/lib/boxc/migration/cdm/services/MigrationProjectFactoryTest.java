@@ -26,7 +26,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,7 +48,7 @@ public class MigrationProjectFactoryTest {
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
     private Path projectsBase;
-    private String testEnv = CdmEnvironmentHelper.DEFAULT_ENV;
+    private String testEnv = CdmEnvironmentHelper.DEFAULT_ENV_ID;
 
     @Before
     public void setup() throws Exception {
@@ -234,6 +233,6 @@ public class MigrationProjectFactoryTest {
         assertEquals("Project name did not match expected value", expName, properties.getName());
         assertEquals("CDM Collection ID did not match expected value", expCollId, properties.getCdmCollectionId());
         assertNotNull("Created date not set", properties.getCreatedDate());
-        assertEquals("test", properties.getCdmEnvironment());
+        assertEquals("test", properties.getCdmEnvironmentId());
     }
 }

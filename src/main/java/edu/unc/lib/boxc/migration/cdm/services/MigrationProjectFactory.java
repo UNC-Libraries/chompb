@@ -81,7 +81,7 @@ public class MigrationProjectFactory {
         properties.setCreatedDate(Instant.now());
         properties.setName(projectName);
         properties.setCdmCollectionId(collectionId == null ? projectName : collectionId);
-        properties.setCdmEnvironment(cdmEnv);
+        properties.setCdmEnvironmentId(cdmEnv);
         project.setProjectProperties(properties);
         ProjectPropertiesSerialization.write(propertiesPath, properties);
 

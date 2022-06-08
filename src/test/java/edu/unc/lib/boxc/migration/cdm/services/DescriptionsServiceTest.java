@@ -66,7 +66,7 @@ public class DescriptionsServiceTest {
     @Before
     public void setup() throws Exception {
         basePath = tmpFolder.newFolder().toPath();
-        project = MigrationProjectFactory.createMigrationProject(basePath, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV);
+        project = MigrationProjectFactory.createMigrationProject(basePath, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getDescriptionsPath());
         service = new DescriptionsService();
         service.setProject(project);

@@ -52,7 +52,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV);
+                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         statusService = new SourceFilesStatusService();
