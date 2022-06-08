@@ -42,12 +42,12 @@ public class MigrationProjectFactory {
      * @param name
      * @param collectionId
      * @param user
-     * @param cdmEnv
+     * @param cdmEnvId
      * @return
      * @throws IOException
      */
     public static MigrationProject createMigrationProject(Path path, String name,
-                                                          String collectionId, String user, String cdmEnv)
+                                                          String collectionId, String user, String cdmEnvId)
             throws IOException {
         Assert.notNull(path, "Project path not set");
         Assert.notNull(user, "Username not set");
@@ -81,7 +81,7 @@ public class MigrationProjectFactory {
         properties.setCreatedDate(Instant.now());
         properties.setName(projectName);
         properties.setCdmCollectionId(collectionId == null ? projectName : collectionId);
-        properties.setCdmEnvironmentId(cdmEnv);
+        properties.setCdmEnvironmentId(cdmEnvId);
         project.setProjectProperties(properties);
         ProjectPropertiesSerialization.write(propertiesPath, properties);
 
