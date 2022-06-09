@@ -182,10 +182,12 @@ public class SipServiceHelper {
      * @param filePaths if withAccessCopies is false, then this is a list of staging paths. Otherwise,
      *      this array should alternate between staging and access paths, staging first. If there is no
      *       access path for an object, then null must be provided.
+     * @return the Bag resource representing the grouped work in the SIP's RDF model
      * @throws Exception
      */
-    public void assertGroupedWorkPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager, Model depModel,
-            String cdmId, boolean withAccessCopies, Path... filePaths) throws Exception {
+    public void assertGroupedWorkPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager,
+                                                         Model depModel, String cdmId, boolean withAccessCopies,
+                                                         Path... filePaths) throws Exception {
         List<Path> stagingPaths;
         List<Path> accessPaths = null;
         if (withAccessCopies) {
@@ -210,11 +212,7 @@ public class SipServiceHelper {
 
         for (int i = 0; i < stagingPaths.size(); i++) {
             Path stagingPath = stagingPaths.get(i);
-            String stagingUri = stagingPath.toUri().toString();
-            Resource fileObjResc = workChildren.stream().map(RDFNode::asResource)
-                .filter(c -> c.getProperty(CdrDeposit.hasDatastreamOriginal).getResource()
-                    .hasLiteral(CdrDeposit.stagingLocation, stagingUri))
-                .findFirst().get();
+            Resource fileObjResc = findChildByStagingLocation(workChildren, stagingPath);
             assertTrue(fileObjResc.hasProperty(RDF.type, Cdr.FileObject));
 
             Resource origResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamOriginal).getResource();
@@ -239,6 +237,23 @@ public class SipServiceHelper {
         assertMigrationEventPresent(dirManager, workPid);
 
         assertModsPresentWithCdmId(dirManager, workPid, cdmId);
+    }
+
+    public Resource findChildByStagingLocation(Bag workBag, Path stagingPath) {
+        return findChildByStagingLocation(workBag.iterator().toList(), stagingPath);
+    }
+
+    /**
+     * @param workChildren
+     * @param stagingPath
+     * @return resource of child from the provided list which has a stagingLocation matching the provided value
+     */
+    public Resource findChildByStagingLocation(List<RDFNode> workChildren, Path stagingPath) {
+        String stagingUri = stagingPath.toUri().toString();
+        return workChildren.stream().map(RDFNode::asResource)
+                .filter(c -> c.getProperty(CdrDeposit.hasDatastreamOriginal).getResource()
+                        .hasLiteral(CdrDeposit.stagingLocation, stagingUri))
+                .findFirst().get();
     }
 
     public Resource getResourceByCreateTime(List<RDFNode> depBagChildren, String createTime) {

@@ -230,6 +230,10 @@ public class SipService {
 
                     SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
                     PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
+                    var childDescPath = getDescriptionPath(cdmId, true);
+                    if (childDescPath != null) {
+                        copyDescriptionToSip(filePid, childDescPath);
+                    }
 
                     childPids.add(filePid);
                 }
