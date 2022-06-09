@@ -185,7 +185,7 @@ public class SipServiceHelper {
      * @return the Bag resource representing the grouped work in the SIP's RDF model
      * @throws Exception
      */
-    public Bag assertGroupedWorkPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager,
+    public void assertGroupedWorkPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager,
                                                          Model depModel, String cdmId, boolean withAccessCopies,
                                                          Path... filePaths) throws Exception {
         List<Path> stagingPaths;
@@ -237,7 +237,6 @@ public class SipServiceHelper {
         assertMigrationEventPresent(dirManager, workPid);
 
         assertModsPresentWithCdmId(dirManager, workPid, cdmId);
-        return workBag;
     }
 
     public Resource findChildByStagingLocation(Bag workBag, Path stagingPath) {
