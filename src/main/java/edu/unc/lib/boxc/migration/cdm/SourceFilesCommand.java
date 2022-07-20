@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.options.ExportUnmappedSourceFilesOptions;
+import edu.unc.lib.boxc.migration.cdm.services.CdmExportFilesService;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -52,6 +55,7 @@ public class SourceFilesCommand {
 
     private MigrationProject project;
     private SourceFileService sourceService;
+    private CdmIndexService indexService;
 
     @Command(name = "generate",
             description = {
@@ -138,6 +142,40 @@ public class SourceFilesCommand {
         }
     }
 
+    @Command(name = "export_unmapped",
+            description = "Export files for any items which are listed in the mapping but have no source assigned")
+    public int exportUnmapped(@Mixin ExportUnmappedSourceFilesOptions options) {
+        try {
+            initialize();
+            var fileRetrievalService = new CdmFileRetrievalService();
+            fileRetrievalService.setChompbConfig(parentCommand.getChompbConfig());
+            fileRetrievalService.setProject(project);
+            fileRetrievalService.setSshUsername(options.getCdmUsername());
+            fileRetrievalService.setSshPassword(options.getCdmPassword());
+            var exportFilesService = new CdmExportFilesService();
+            exportFilesService.setIndexService(indexService);
+            exportFilesService.setFileRetrievalService(fileRetrievalService);
+            exportFilesService.setProject(project);
+            exportFilesService.setSourceFileService(sourceService);
+
+            var result = exportFilesService.exportUnmapped();
+            if (result != null) {
+                // Problems were encountered, output message to user
+                outputLogger.info(result);
+                return 2;
+            } else {
+                return 0;
+            }
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Status failed: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Status failed", e);
+            outputLogger.info("Status failed: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
     private void validateOptions(SourceFileMappingOptions options) {
         if (options.getBasePath() == null) {
             throw new IllegalArgumentException("Must provide a base path");
@@ -150,7 +188,7 @@ public class SourceFilesCommand {
     private void initialize() throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
-        CdmIndexService indexService = new CdmIndexService();
+        indexService = new CdmIndexService();
         indexService.setProject(project);
         sourceService = new SourceFileService();
         sourceService.setIndexService(indexService);

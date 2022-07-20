@@ -16,10 +16,12 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
+import org.apache.sshd.scp.client.ScpClient;
 import org.apache.sshd.scp.client.ScpClientCreator;
 
 import java.io.IOException;
@@ -27,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Service for retrieving CDM files directly from a remote server file system
@@ -39,8 +42,10 @@ public class CdmFileRetrievalService {
     private static final int SSH_TIMEOUT_SECONDS = 10;
     private static final String DESC_SUBPATH = "index/description/desc.all";
     public static final String DESC_ALL_FILENAME = "desc.all";
-    private static final String CPD_SUBPATH = "image/*.cpd";
+    public static final String IMAGE_SUBPATH = "image";
+    private static final String CPD_SUBPATH = IMAGE_SUBPATH + "/*.cpd";
     public static final String CPD_EXPORT_PATH = "cpds";
+    public static final String EXPORTED_SOURCE_FILES_DIR = "source_files";
 
     private String sshUsername;
     private String sshPassword;
@@ -50,7 +55,14 @@ public class CdmFileRetrievalService {
      * Download the desc.all file for the collection being migrated
      */
     public void downloadDescAllFile() {
-        downloadFiles(DESC_SUBPATH, getDescAllPath(project));
+        executeDownloadBlock((scpClient) -> {
+            var remotePath = getSshCollectionPath().resolve(DESC_SUBPATH).toString();
+            try {
+                scpClient.download(remotePath, getDescAllPath(project));
+            } catch (IOException e) {
+                throw new MigrationException("Failed to download desc.all file", e);
+            }
+        });
     }
 
     /**
@@ -72,14 +84,25 @@ public class CdmFileRetrievalService {
         } catch (IOException e) {
             throw new MigrationException("Failed to create CPD export directory", e);
         }
-        downloadFiles(CPD_SUBPATH, cpdsPath);
+        executeDownloadBlock((scpClient) -> {
+            var remotePath = getSshCollectionPath().resolve(CPD_SUBPATH).toString();
+            try {
+                scpClient.download(remotePath, cpdsPath);
+            } catch (IOException e) {
+                throw new MigrationException("Failed to download cpd files", e);
+            }
+        });
     }
 
     public static Path getExportedCpdsPath(MigrationProject project) {
         return project.getExportPath().resolve(CPD_EXPORT_PATH);
     }
 
-    public void downloadFiles(String remoteSubPath, Path localDestination) {
+    /**
+     * Perform the provided download operations with a ScpClient
+     * @param downloadBlock method containing download operations
+     */
+    public void executeDownloadBlock(Consumer<ScpClient> downloadBlock) {
         SshClient client = SshClient.setUpDefaultClient();
         client.setFilePasswordProvider(FilePasswordProvider.of(sshPassword));
         client.start();
@@ -94,12 +117,29 @@ public class CdmFileRetrievalService {
 
             var scpClientCreator = ScpClientCreator.instance();
             var scpClient = scpClientCreator.createScpClient(sshSession);
-            String collectionId = project.getProjectProperties().getCdmCollectionId();
-            var remotePath = Paths.get(cdmEnvConfig.getSshDownloadBasePath(), collectionId, remoteSubPath).toString();
-            scpClient.download(remotePath, localDestination);
+            downloadBlock.accept(scpClient);
         } catch (IOException e) {
-            throw new MigrationException("Failed to download desc.all file", e);
+            throw new MigrationException("Failed to establish ssh session", e);
         }
+    }
+
+    private CdmEnvironment getCdmEnvironment() {
+        var cdmEnvId = project.getProjectProperties().getCdmEnvironmentId();
+        return chompbConfig.getCdmEnvironments().get(cdmEnvId);
+    }
+
+    public Path getSshCollectionPath() {
+        var cdmEnvConfig = getCdmEnvironment();
+        String collectionId = project.getProjectProperties().getCdmCollectionId();
+        return Paths.get(cdmEnvConfig.getSshDownloadBasePath(), collectionId);
+    }
+
+    /**
+     * @param project
+     * @return Path where the exported source files are stored
+     */
+    public static Path getExportedSourceFilesPath(MigrationProject project) {
+        return project.getExportPath().resolve(EXPORTED_SOURCE_FILES_DIR);
     }
 
     public void setProject(MigrationProject project) {
