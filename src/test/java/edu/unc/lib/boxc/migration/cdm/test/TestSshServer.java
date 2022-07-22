@@ -27,8 +27,8 @@ import java.io.IOException;
  * @author bbpennel
  */
 public class TestSshServer {
+    public static final String PASSWORD = "supersecret";
     private SshServer sshServer;
-    private String password;
 
     public TestSshServer() throws IOException {
         sshServer = SshServer.setUpDefaultServer();
@@ -37,7 +37,7 @@ public class TestSshServer {
         sshServer.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
         sshServer.setCommandFactory(new ScpCommandFactory());
         sshServer.setPasswordAuthenticator((username, password, serverSession) -> {
-            return username != null && password.equals(password);
+            return username != null && PASSWORD.equals(password);
         });
     }
 
@@ -47,9 +47,5 @@ public class TestSshServer {
 
     public void stopServer() throws IOException {
         sshServer.stop();
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 }

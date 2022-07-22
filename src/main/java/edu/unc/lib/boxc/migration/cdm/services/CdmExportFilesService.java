@@ -22,6 +22,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.sshd.scp.common.ScpException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -88,8 +89,10 @@ public class CdmExportFilesService {
                         try {
                             scpClient.download(filePath, destPath);
                         }  catch (IOException e) {
-                            log.warn("Failed to download file {} to {}", filePath, destPath, e);
+                            log.warn("Failed to download file {} to {}: {}", filePath, destPath, e.getMessage());
                             failedToDownload.set(true);
+                            // Write the original mapping, with no source path set
+                            SourceFileService.writeMapping(updatedPrinter, origMapping);
                             continue;
                         }
                         // Update mapping to include downloaded file
@@ -138,9 +141,6 @@ public class CdmExportFilesService {
 
     private void validateProjectState() {
         MigrationProjectProperties props = project.getProjectProperties();
-        if (props.getIndexedDate() == null) {
-            throw new InvalidProjectStateException("Exported data must be indexed");
-        }
         if (props.getSourceFilesUpdatedDate() == null) {
             throw new InvalidProjectStateException("Source files must be mapped");
         }

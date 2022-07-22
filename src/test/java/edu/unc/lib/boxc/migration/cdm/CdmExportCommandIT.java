@@ -44,7 +44,6 @@ import static org.junit.Assert.assertTrue;
 public class CdmExportCommandIT extends AbstractCommandIT {
 
     private final static String COLLECTION_ID = "gilmer";
-    private final static String PASSWORD = "supersecret";
 
     private TestSshServer testSshServer;
 
@@ -54,7 +53,6 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     public void setUp() throws Exception {
         fieldService = new CdmFieldService();
         testSshServer = new TestSshServer();
-        testSshServer.setPassword(PASSWORD);
         testSshServer.startServer();
         setupChompbConfig();
     }
@@ -69,7 +67,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 "-w", projPath.toString(),
                 "--env-config", chompbConfigPath,
                 "export",
-                "-p", PASSWORD};
+                "-p", TestSshServer.PASSWORD};
         return ArrayUtils.addAll(defaultArgs, extras);
     }
 

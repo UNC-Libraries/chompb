@@ -65,7 +65,7 @@ public class StatusCommandIT extends AbstractCommandIT {
         assertOutputContains("Status for project " + PROJECT_ID);
         assertOutputMatches(".*Initialized: +[0-9\\-T:]+.*");
         assertOutputMatches(".*User: +theuser.*");
-        assertOutputMatches(".*CDM Collection ID: +" + COLLECTION_ID + ".*");
+        assertOutputMatches(".*CDM Collection ID: +" + defaultCollectionId + ".*");
 
         assertOutputContains("CDM Collection Fields");
         assertOutputMatches(".*Mapping File Valid: +Yes.*");
@@ -88,7 +88,7 @@ public class StatusCommandIT extends AbstractCommandIT {
         assertOutputContains("Status for project " + PROJECT_ID);
         assertOutputMatches(".*Initialized: +[0-9\\-T:]+.*");
         assertOutputMatches(".*User: +theuser.*");
-        assertOutputMatches(".*CDM Collection ID: +" + COLLECTION_ID + ".*");
+        assertOutputMatches(".*CDM Collection ID: +" + defaultCollectionId + ".*");
 
         assertOutputContains("CDM Collection Fields");
         assertOutputMatches(".*Mapping File Valid: +No.*");

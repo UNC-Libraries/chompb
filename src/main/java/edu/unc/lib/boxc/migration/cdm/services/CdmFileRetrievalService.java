@@ -20,6 +20,7 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.scp.client.ScpClient;
 import org.apache.sshd.scp.client.ScpClientCreator;
@@ -119,6 +120,9 @@ public class CdmFileRetrievalService {
             var scpClient = scpClientCreator.createScpClient(sshSession);
             downloadBlock.accept(scpClient);
         } catch (IOException e) {
+            if (e instanceof SshException && e.getMessage().contains("No more authentication methods available")) {
+                throw new MigrationException("Authentication to server failed, check username or password");
+            }
             throw new MigrationException("Failed to establish ssh session", e);
         }
     }
