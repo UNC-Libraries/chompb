@@ -22,7 +22,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.sshd.scp.common.ScpException;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -33,6 +33,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -60,6 +61,10 @@ public class CdmExportFilesService {
         var originalPath = sourceFileService.getMappingPath();
         var updatedPath = sourceFileService.getTempMappingPath();
         Connection conn = null;
+
+        // Count the total number of unmapped sources in order to present progress
+        int totalUnmapped = calculateTotalUnmapped(originalPath);
+
         // Simultaneously read from the existing mapping and write to a new temporary mapping
         try (
             var originalParser = SourceFileService.openMappingsParser(originalPath);
@@ -74,6 +79,7 @@ public class CdmExportFilesService {
                 try {
                     var exportSourceFilesPath = initializeExportSourceFilesDir();
 
+                    int currentUnmapped = 0;
                     for (CSVRecord originalRecord : originalParser) {
                         var origMapping = SourceFileService.recordToMapping(originalRecord);
                         // skip over already populated mappings
@@ -82,6 +88,7 @@ public class CdmExportFilesService {
                             continue;
                         }
 
+                        currentUnmapped++;
                         // Figure out name of associated file and download it
                         var filename = retrieveSourceFileName(dbConn, origMapping);
                         var filePath = imageDir.resolve(filename).toString();
@@ -99,6 +106,9 @@ public class CdmExportFilesService {
                         origMapping.setSourcePath(destPath.toString());
                         origMapping.setMatchingValue(filename);
                         SourceFileService.writeMapping(updatedPrinter, origMapping);
+
+                        outputLogger.info("Downloaded source file {} for object {} ({} / {})",
+                                filename, origMapping.getCdmId(), currentUnmapped, totalUnmapped);
                     }
                 } catch (IOException | SQLException e) {
                     throw new MigrationException("Encountered an error while downloading source files", e);
@@ -116,6 +126,18 @@ public class CdmExportFilesService {
         Files.delete(swapPath);
 
         return failedToDownload.get() ? "One or more source files failed to download, check the logs" : null;
+    }
+
+    private int calculateTotalUnmapped(Path originalPath) throws IOException {
+        int total = 0;
+        try (var originalParser = SourceFileService.openMappingsParser(originalPath)) {
+            for (CSVRecord originalRecord : originalParser) {
+                if (StringUtils.isBlank(originalRecord.get(2))) {
+                    total++;
+                }
+            }
+        }
+        return total;
     }
 
     private static final String FILENAME_QUERY =
