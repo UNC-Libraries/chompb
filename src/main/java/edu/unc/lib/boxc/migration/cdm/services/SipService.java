@@ -229,11 +229,7 @@ public class SipService {
                     String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
 
                     SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-                    PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
-                    var childDescPath = getDescriptionPath(cdmId, true);
-                    if (childDescPath != null) {
-                        copyDescriptionToSip(filePid, childDescPath);
-                    }
+                    PID filePid = addFileObject(cdmId, cdmId, cdmCreated, sourceMapping);
 
                     childPids.add(filePid);
                 }
@@ -298,7 +294,8 @@ public class SipService {
 
         protected List<PID> addChildObjects() throws IOException {
             SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-            return Collections.singletonList(addFileObject(cdmId, cdmCreated, sourceMapping));
+            return Collections.singletonList(addFileObject(cdmId, cdmId + "/original_file",
+                    cdmCreated, sourceMapping));
         }
 
         protected void copyDescriptionToSip(PID pid, Path descPath) throws IOException {
@@ -341,7 +338,7 @@ public class SipService {
             return sourceMapping;
         }
 
-        protected PID addFileObject(String cdmId, String cdmCreated, SourceFileMapping sourceMapping)
+        protected PID addFileObject(String cdmId, String descCdmId, String cdmCreated, SourceFileMapping sourceMapping)
                 throws IOException {
             // Create FileObject
             PID fileObjPid = pidMinter.mintContentPid();
@@ -368,6 +365,11 @@ public class SipService {
                     String mimetype = accessFileService.getMimetype(accessMapping.getSourcePath());
                     accessResc.addLiteral(CdrDeposit.mimetype, mimetype);
                 }
+            }
+
+            var childDescPath = getDescriptionPath(descCdmId, true);
+            if (childDescPath != null) {
+                copyDescriptionToSip(fileObjPid, childDescPath);
             }
 
             // add redirect mapping for this file
