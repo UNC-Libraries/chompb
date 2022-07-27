@@ -37,7 +37,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class AbstractCommandIT extends AbstractOutputTest {
     private static final Logger log = getLogger(AbstractCommandIT.class);
-    protected final static String COLLECTION_ID = "my_coll";
+    protected String defaultCollectionId = "my_coll";
     protected final static String PROJECT_ID = "my_proj";
     protected final static String USERNAME = "theuser";
     private final String initialUser = System.getProperty("user.name");
@@ -65,7 +65,7 @@ public class AbstractCommandIT extends AbstractOutputTest {
     }
 
     protected void initProject() throws IOException {
-        project = MigrationProjectFactory.createMigrationProject(baseDir, PROJECT_ID, COLLECTION_ID, USERNAME,
+        project = MigrationProjectFactory.createMigrationProject(baseDir, PROJECT_ID, defaultCollectionId, USERNAME,
                 CdmEnvironmentHelper.DEFAULT_ENV_ID);
     }
 

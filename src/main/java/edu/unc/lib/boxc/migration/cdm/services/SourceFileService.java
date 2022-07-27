@@ -95,8 +95,9 @@ public class SourceFileService {
 
         Path mappingPath = getMappingPath();
         boolean needsMerge = false;
+        // If performing an update, start by writing to a new temp mapping file
         if (options.getUpdate() && Files.exists(mappingPath)) {
-            mappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
+            mappingPath = getTempMappingPath();
             // Cleanup temp path if it already exists
             Files.deleteIfExists(mappingPath);
             needsMerge = true;
@@ -104,13 +105,8 @@ public class SourceFileService {
 
         // Iterate through exported objects in this collection to match against
         Connection conn = null;
-        try (
-            // Write to system.out if doing a dry run, otherwise write to mappings file
-            BufferedWriter writer = (options.getDryRun() && !needsMerge) ?
-                    new BufferedWriter(new OutputStreamWriter(System.out)) :
-                    Files.newBufferedWriter(mappingPath);
-            CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(SourceFilesInfo.CSV_HEADERS));
-        ) {
+        // Write to system.out if doing a dry run, otherwise write to mappings file
+        try (var csvPrinter = openMappingsPrinter((options.getDryRun() && !needsMerge) ? null : mappingPath)) {
             Path basePath = options.getBasePath();
             // Query for all values of the export field to be used for matching
             conn = indexService.openDbConnection();
@@ -262,6 +258,11 @@ public class SourceFileService {
         return project.getSourceFilesMappingPath();
     }
 
+    protected Path getTempMappingPath() {
+        var mappingPath = getMappingPath();
+        return mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
+    }
+
     private void assertProjectStateValid() {
         if (project.getProjectProperties().getIndexedDate() == null) {
             throw new InvalidProjectStateException("Project must be indexed prior to generating source mappings");
@@ -284,25 +285,13 @@ public class SourceFileService {
 
         // Iterate through the existing mappings, merging in the updated mappings when appropriate
         try (
-            Reader reader = Files.newBufferedReader(originalPath);
-            CSVParser originalParser = new CSVParser(reader, CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .withHeader(SourceFilesInfo.CSV_HEADERS)
-                    .withTrim());
+            var originalParser = openMappingsParser(originalPath);
             // Write to system.out if doing a dry run, otherwise write to mappings file
-            BufferedWriter writer = options.getDryRun() ?
-                    new BufferedWriter(new OutputStreamWriter(System.out)) :
-                    Files.newBufferedWriter(mergedPath);
-            CSVPrinter mergedPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                    .withHeader(SourceFilesInfo.CSV_HEADERS));
+            var mergedPrinter = openMappingsPrinter(options.getDryRun() ? null : mergedPath);
         ) {
             Set<String> origIds = new HashSet<>();
             for (CSVRecord originalRecord : originalParser) {
-                SourceFileMapping origMapping = new SourceFileMapping();
-                origMapping.setCdmId(originalRecord.get(0));
-                origMapping.setMatchingValue(originalRecord.get(1));
-                origMapping.setSourcePath(originalRecord.get(2));
-                origMapping.setPotentialMatches(originalRecord.get(3));
+                var origMapping = recordToMapping(originalRecord);
 
                 SourceFileMapping updateMapping = updateInfo.getMappingByCdmId(origMapping.getCdmId());
                 if (updateMapping == null) {
@@ -355,7 +344,7 @@ public class SourceFileService {
         Files.delete(updatesPath);
     }
 
-    private void writeMapping(CSVPrinter csvPrinter, SourceFileMapping mapping) throws IOException {
+    public static void writeMapping(CSVPrinter csvPrinter, SourceFileMapping mapping) throws IOException {
         csvPrinter.printRecord(mapping.getCdmId(), mapping.getMatchingValue(),
                 mapping.getSourcePath(), mapping.getPotentialMatchesString());
     }
@@ -373,25 +362,48 @@ public class SourceFileService {
      * @throws IOException
      */
     public static SourceFilesInfo loadMappings(Path mappingPath) throws IOException {
-        try (
-            Reader reader = Files.newBufferedReader(mappingPath);
-            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .withHeader(SourceFilesInfo.CSV_HEADERS)
-                    .withTrim());
-        ) {
+        try (var csvParser = openMappingsParser(mappingPath)) {
             SourceFilesInfo info = new SourceFilesInfo();
             List<SourceFileMapping> mappings = info.getMappings();
             for (CSVRecord csvRecord : csvParser) {
-                SourceFileMapping mapping = new SourceFileMapping();
-                mapping.setCdmId(csvRecord.get(0));
-                mapping.setMatchingValue(csvRecord.get(1));
-                mapping.setSourcePath(csvRecord.get(2));
-                mapping.setPotentialMatches(csvRecord.get(3));
-                mappings.add(mapping);
+                mappings.add(recordToMapping(csvRecord));
             }
             return info;
         }
+    }
+
+    public static SourceFileMapping recordToMapping(CSVRecord csvRecord) {
+        SourceFileMapping mapping = new SourceFileMapping();
+        mapping.setCdmId(csvRecord.get(0));
+        mapping.setMatchingValue(csvRecord.get(1));
+        mapping.setSourcePath(csvRecord.get(2));
+        mapping.setPotentialMatches(csvRecord.get(3));
+        return mapping;
+    }
+
+    /**
+     * @param mappingPath Path of the CSV to read from
+     * @return CSVParser for reading from the csv file
+     * @throws IOException
+     */
+    public static CSVParser openMappingsParser(Path mappingPath) throws IOException {
+        Reader reader = Files.newBufferedReader(mappingPath);
+        return new CSVParser(reader, CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withHeader(SourceFilesInfo.CSV_HEADERS)
+                .withTrim());
+    }
+
+    /**
+     * @param mappingPath Path CSV will output to. If null, then will output to System.out
+     * @return CSVPrinter for writing to specified destination
+     * @throws IOException
+     */
+    public static CSVPrinter openMappingsPrinter(Path mappingPath) throws IOException {
+        BufferedWriter writer = mappingPath == null ?
+                new BufferedWriter(new OutputStreamWriter(System.out)) :
+                Files.newBufferedWriter(mappingPath);
+        return new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(SourceFilesInfo.CSV_HEADERS));
     }
 
     public void setProject(MigrationProject project) {

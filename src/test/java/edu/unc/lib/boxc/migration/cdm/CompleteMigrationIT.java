@@ -62,7 +62,6 @@ import static org.junit.Assert.assertEquals;
  */
 public class CompleteMigrationIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "mini_gilmer";
-    private final static String CDM_PASSWORD = "supersecret";
     private final static String GROUPS = "my:admin:group";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
     private final static int REDIS_PORT = 46380;
@@ -93,7 +92,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         redisServer.start();
 
         testSshServer = new TestSshServer();
-        testSshServer.setPassword(CDM_PASSWORD);
         testSshServer.startServer();
 
         setupChompbConfig();
@@ -138,7 +136,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 "-w", projPath.toString(),
                 "--env-config", chompbConfigPath,
                 "export",
-                "-p", CDM_PASSWORD };
+                "-p", TestSshServer.PASSWORD };
         executeExpectSuccess(argsExport);
 
         String[] argsIndex = new String[] {
