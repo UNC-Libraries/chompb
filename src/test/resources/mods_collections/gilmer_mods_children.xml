@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mods:modsCollection xmlns:mods="http://www.loc.gov/mods/v3">
+    <mods:mods>
+        <mods:titleInfo><mods:title>Redoubt C Scan File</mods:title></mods:titleInfo>
+        <mods:identifier type="local" displayLabel="CONTENTdm number">25/original_file</mods:identifier>
+    </mods:mods>
+    <mods:mods>
+        <mods:titleInfo><mods:title>Fort DeRussy Map Scan</mods:title></mods:titleInfo>
+        <mods:abstract>Some kind of fort</mods:abstract>
+        <mods:identifier type="local" displayLabel="CONTENTdm number">27/original_file</mods:identifier>
+    </mods:mods>
+</mods:modsCollection>

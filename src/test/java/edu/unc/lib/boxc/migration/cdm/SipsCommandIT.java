@@ -17,8 +17,10 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
+import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
+import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -32,6 +34,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -189,6 +192,54 @@ public class SipsCommandIT extends AbstractCommandIT {
         assertOutputContains("    Path: " + sip.getSipPath());
         assertOutputContains("    New collection: " + sip.getNewCollectionLabel()
                 + " (" + sip.getNewCollectionId() + ")");
+    }
+
+    @Test
+    public void generateWithChildDescriptionsTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml", "gilmer_mods_children.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "sips", "generate" };
+        executeExpectSuccess(args);
+
+        MigrationSip sip = extractSipFromOutput();
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        assertChildFileModsPopulated(dirManager, workResc1, "25/original_file");
+
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        var work2ChildPid = retrieveOnlyWorkChildPid(workResc2);
+        assertFalse("No mods should be mapped for child", Files.exists(dirManager.getModsPath(work2ChildPid)));
+
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        assertChildFileModsPopulated(dirManager, workResc3, "27/original_file");
+    }
+
+    private void assertChildFileModsPopulated(DepositDirectoryManager dirManager, Resource workResc,
+                                              String expectedCdmId) throws Exception {
+        var workChildPid = retrieveOnlyWorkChildPid(workResc);
+        testHelper.assertModsPresentWithCdmId(dirManager, workChildPid, expectedCdmId);
+    }
+
+    private PID retrieveOnlyWorkChildPid(Resource workResc) {
+        var workBag = workResc.getModel().getBag(workResc);
+        var workChildren = workBag.iterator().toList();
+        assertEquals(1, workChildren.size());
+        return PIDs.get(workChildren.get(0).toString());
     }
 
     private MigrationSip extractSipFromOutput() {

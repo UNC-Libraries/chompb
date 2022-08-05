@@ -230,10 +230,7 @@ public class SipService {
 
                     SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
                     PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
-                    var childDescPath = getDescriptionPath(cdmId, true);
-                    if (childDescPath != null) {
-                        copyDescriptionToSip(filePid, childDescPath);
-                    }
+                    addChildDescription(cdmId, filePid);
 
                     childPids.add(filePid);
                 }
@@ -298,7 +295,10 @@ public class SipService {
 
         protected List<PID> addChildObjects() throws IOException {
             SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-            return Collections.singletonList(addFileObject(cdmId, cdmCreated, sourceMapping));
+            var fileObjectPid = addFileObject(cdmId, cdmCreated, sourceMapping);
+            // in a single file object, the cdm id refers to the new work, so add suffix to reference the child file
+            addChildDescription(cdmId + "/original_file", fileObjectPid);
+            return Collections.singletonList(fileObjectPid);
         }
 
         protected void copyDescriptionToSip(PID pid, Path descPath) throws IOException {
@@ -374,6 +374,19 @@ public class SipService {
             redirectMappingService.addRow(cdmId, workPid.getId(), fileObjPid.getId());
 
             return fileObjPid;
+        }
+
+        /**
+         * Copy description file into place for child object, if it exists
+         * @param descCdmId CDM id of the child object used for associating the description
+         * @param fileObjPid pid of the file object
+         * @throws IOException
+         */
+        protected void addChildDescription(String descCdmId, PID fileObjPid) throws IOException {
+            var childDescPath = getDescriptionPath(descCdmId, true);
+            if (childDescPath != null) {
+                copyDescriptionToSip(fileObjPid, childDescPath);
+            }
         }
     }
 
