@@ -229,7 +229,8 @@ public class SipService {
                     String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
 
                     SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-                    PID filePid = addFileObject(cdmId, cdmId, cdmCreated, sourceMapping);
+                    PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
+                    addChildDescription(cdmId, filePid);
 
                     childPids.add(filePid);
                 }
@@ -294,8 +295,10 @@ public class SipService {
 
         protected List<PID> addChildObjects() throws IOException {
             SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-            return Collections.singletonList(addFileObject(cdmId, cdmId + "/original_file",
-                    cdmCreated, sourceMapping));
+            var fileObjectPid = addFileObject(cdmId, cdmCreated, sourceMapping);
+            // in a single file object, the cdm id refers to the new work, so add suffix to reference the child file
+            addChildDescription(cdmId + "/original_file", fileObjectPid);
+            return Collections.singletonList(fileObjectPid);
         }
 
         protected void copyDescriptionToSip(PID pid, Path descPath) throws IOException {
@@ -338,7 +341,7 @@ public class SipService {
             return sourceMapping;
         }
 
-        protected PID addFileObject(String cdmId, String descCdmId, String cdmCreated, SourceFileMapping sourceMapping)
+        protected PID addFileObject(String cdmId, String cdmCreated, SourceFileMapping sourceMapping)
                 throws IOException {
             // Create FileObject
             PID fileObjPid = pidMinter.mintContentPid();
@@ -367,15 +370,23 @@ public class SipService {
                 }
             }
 
-            var childDescPath = getDescriptionPath(descCdmId, true);
-            if (childDescPath != null) {
-                copyDescriptionToSip(fileObjPid, childDescPath);
-            }
-
             // add redirect mapping for this file
             redirectMappingService.addRow(cdmId, workPid.getId(), fileObjPid.getId());
 
             return fileObjPid;
+        }
+
+        /**
+         * Copy description file into place for child object, if it exists
+         * @param descCdmId CDM id of the child object used for associating the description
+         * @param fileObjPid pid of the file object
+         * @throws IOException
+         */
+        protected void addChildDescription(String descCdmId, PID fileObjPid) throws IOException {
+            var childDescPath = getDescriptionPath(descCdmId, true);
+            if (childDescPath != null) {
+                copyDescriptionToSip(fileObjPid, childDescPath);
+            }
         }
     }
 
