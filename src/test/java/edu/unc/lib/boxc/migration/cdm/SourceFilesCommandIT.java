@@ -249,8 +249,32 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Potential Matches: +0.*");
     }
 
+    @Test
+    public void statusUnmappedDoesNotContainGroupObjectsTest() throws Exception {
+        indexGroupExportSamples();
+        addSourceFile("276_182_E.tif");
+        addSourceFile("276_203_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "status"};
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Unmapped Objects: +0.*");
+    }
+
     private void indexExportSamples() throws Exception {
         testHelper.indexExportData("mini_gilmer");
+    }
+
+    private void indexGroupExportSamples() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
     }
 
     private Path addSourceFile(String relPath) throws IOException {
