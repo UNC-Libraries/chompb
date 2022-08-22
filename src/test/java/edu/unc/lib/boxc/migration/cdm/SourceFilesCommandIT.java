@@ -263,10 +263,41 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
         String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
-                "source_files", "status"};
+                "group_mapping", "generate",
+                "-n", "groupa"};
         executeExpectSuccess(args2);
 
-        assertOutputMatches(".*Unmapped Objects: +0.*");
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "sync" };
+        executeExpectSuccess(args3);
+
+        String[] args4 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "status"};
+        executeExpectSuccess(args4);
+
+        assertOutputMatches(".*Unmapped Objects: +3.*");
+    }
+
+    @Test
+    public void statusUnmappedDoesNotContainCompoundObjectsTest() throws Exception {
+        indexCompoundExportSamples();
+        addSourceFile("276_182_E.tif");
+        addSourceFile("276_203_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args4 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "status"};
+        executeExpectSuccess(args4);
+
+        assertOutputMatches(".*Unmapped Objects: +5.*");
     }
 
     private void indexExportSamples() throws Exception {
@@ -275,6 +306,10 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
     private void indexGroupExportSamples() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
+    }
+
+    private void indexCompoundExportSamples() throws Exception {
+        testHelper.indexExportData("mini_keepsakes");
     }
 
     private Path addSourceFile(String relPath) throws IOException {
