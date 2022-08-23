@@ -39,7 +39,7 @@ public class AccessFilesStatusService extends SourceFilesStatusService {
     @Override
     public void report(Verbosity verbosity) {
         outputLogger.info("Access file mappings status for project {}", project.getProjectName());
-        int totalObjects = getQueryService().countIndexedObjects();
+        int totalObjects = getQueryService().countNoncompoundIndexedObjects();
         reportStats(totalObjects, verbosity);
     }
 

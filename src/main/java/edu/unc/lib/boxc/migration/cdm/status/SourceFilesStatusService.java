@@ -46,7 +46,7 @@ public class SourceFilesStatusService extends AbstractStatusService {
      */
     public void report(Verbosity verbosity) {
         outputLogger.info("Source file mappings status for project {}", project.getProjectName());
-        int totalObjects = getQueryService().countIndexedObjects();
+        int totalObjects = getQueryService().countNoncompoundIndexedObjects();
         reportStats(totalObjects, verbosity);
     }
 

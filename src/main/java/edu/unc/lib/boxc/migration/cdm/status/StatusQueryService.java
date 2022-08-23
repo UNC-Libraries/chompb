@@ -48,6 +48,7 @@ public class StatusQueryService {
         this.indexService.setProject(project);
     }
 
+    // count all objects, including grouped/compound objects
     private Integer indexedObjectsCountCache;
     protected int countIndexedObjects() {
         if (indexedObjectsCountCache != null) {
@@ -57,12 +58,30 @@ public class StatusQueryService {
         indexService.setProject(project);
         try (Connection conn = indexService.openDbConnection()) {
             Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME);
+            indexedObjectsCountCache = rs.getInt(1);
+            return indexedObjectsCountCache;
+        } catch (SQLException e) {
+            throw new MigrationException("Failed to determine number of objects", e);
+        }
+    }
+
+    // Count non-compound objects, exclude grouped/compound objects
+    private Integer indexedNoncompoundObjectsCountCache;
+    protected int countNoncompoundIndexedObjects() {
+        if (indexedNoncompoundObjectsCountCache != null) {
+            return indexedNoncompoundObjectsCountCache;
+        }
+        CdmIndexService indexService = new CdmIndexService();
+        indexService.setProject(project);
+        try (Connection conn = indexService.openDbConnection()) {
+            Statement stmt = conn.createStatement();
             // Query for all non-compound objects. If the entry type is null, the object is a individual cdm object
             ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME
                     + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
                     + " or " + ENTRY_TYPE_FIELD + " is null");
-            indexedObjectsCountCache = rs.getInt(1);
-            return indexedObjectsCountCache;
+            indexedNoncompoundObjectsCountCache = rs.getInt(1);
+            return indexedNoncompoundObjectsCountCache;
         } catch (SQLException e) {
             throw new MigrationException("Failed to determine number of objects", e);
         }
