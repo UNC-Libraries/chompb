@@ -21,6 +21,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -35,7 +36,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     @Before
     public void setup() throws Exception {
         initProjectAndHelper();
-        basePath = tmpFolder.newFolder().toPath();
+        basePath = testHelper.getSourceFilesBasePath();
+        Files.createDirectories(basePath);
     }
 
     @Test
@@ -283,12 +285,11 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     @Test
     public void statusUnmappedDoesNotContainCompoundObjectsTest() throws Exception {
         indexCompoundExportSamples();
-        addSourceFile("276_182_E.tif");
-        addSourceFile("276_203_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "generate",
+                "-n", "filena",
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
@@ -297,7 +298,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "source_files", "status"};
         executeExpectSuccess(args4);
 
-        assertOutputMatches(".*Unmapped Objects: +5.*");
+        assertOutputMatches(".*Unmapped Objects: +0.*");
     }
 
     private void indexExportSamples() throws Exception {
@@ -309,14 +310,15 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     private void indexCompoundExportSamples() throws Exception {
-        testHelper.indexExportData("mini_keepsakes");
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"),"mini_keepsakes");
+        addSourceFile("nccg_ck_09.tif");
+        addSourceFile("nccg_ck_1042-22_v1.tif");
+        addSourceFile("nccg_ck_1042-22_v2.tif");
+        addSourceFile("nccg_ck_549-4_v1.tif");
+        addSourceFile("nccg_ck_549-4_v2.tif");
     }
 
     private Path addSourceFile(String relPath) throws IOException {
-        Path srcPath = basePath.resolve(relPath);
-        // Create parent directories in case they don't exist
-        Files.createDirectories(srcPath.getParent());
-        Files.createFile(srcPath);
-        return srcPath;
+        return testHelper.addSourceFile(relPath);
     }
 }

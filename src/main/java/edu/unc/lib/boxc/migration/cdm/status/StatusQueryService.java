@@ -76,7 +76,7 @@ public class StatusQueryService {
         indexService.setProject(project);
         try (Connection conn = indexService.openDbConnection()) {
             Statement stmt = conn.createStatement();
-            // Query for all non-compound objects. If the entry type is null, the object is a individual cdm object
+            // Query for all file objects. If the entry type is null, the object is a individual cdm object
             ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME
                     + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
                     + " or " + ENTRY_TYPE_FIELD + " is null");
