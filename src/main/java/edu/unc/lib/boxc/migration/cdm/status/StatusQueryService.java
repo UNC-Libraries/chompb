@@ -66,11 +66,11 @@ public class StatusQueryService {
         }
     }
 
-    // Count non-compound objects, exclude grouped/compound objects
-    private Integer indexedNoncompoundObjectsCountCache;
-    protected int countNoncompoundIndexedObjects() {
-        if (indexedNoncompoundObjectsCountCache != null) {
-            return indexedNoncompoundObjectsCountCache;
+    // Count only file objects, exclude grouped/compound objects
+    private Integer indexedFileObjectsCountCache;
+    protected int countIndexedFileObjects() {
+        if (indexedFileObjectsCountCache != null) {
+            return indexedFileObjectsCountCache;
         }
         CdmIndexService indexService = new CdmIndexService();
         indexService.setProject(project);
@@ -80,8 +80,8 @@ public class StatusQueryService {
             ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME
                     + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
                     + " or " + ENTRY_TYPE_FIELD + " is null");
-            indexedNoncompoundObjectsCountCache = rs.getInt(1);
-            return indexedNoncompoundObjectsCountCache;
+            indexedFileObjectsCountCache = rs.getInt(1);
+            return indexedFileObjectsCountCache;
         } catch (SQLException e) {
             throw new MigrationException("Failed to determine number of objects", e);
         }
