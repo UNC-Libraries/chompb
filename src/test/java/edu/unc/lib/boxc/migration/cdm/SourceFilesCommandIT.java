@@ -21,6 +21,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -35,7 +36,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     @Before
     public void setup() throws Exception {
         initProjectAndHelper();
-        basePath = tmpFolder.newFolder().toPath();
+        basePath = testHelper.getSourceFilesBasePath();
+        Files.createDirectories(basePath);
     }
 
     @Test
@@ -249,15 +251,74 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Potential Matches: +0.*");
     }
 
+    @Test
+    public void statusUnmappedDoesNotContainGroupObjectsTest() throws Exception {
+        indexGroupExportSamples();
+        addSourceFile("276_182_E.tif");
+        addSourceFile("276_203_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "generate",
+                "-n", "groupa"};
+        executeExpectSuccess(args2);
+
+        String[] args3 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "sync" };
+        executeExpectSuccess(args3);
+
+        String[] args4 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "status"};
+        executeExpectSuccess(args4);
+
+        assertOutputMatches(".*Unmapped Objects: +3.*");
+    }
+
+    @Test
+    public void statusUnmappedDoesNotContainCompoundObjectsTest() throws Exception {
+        indexCompoundExportSamples();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-n", "filena",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args4 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "status"};
+        executeExpectSuccess(args4);
+
+        assertOutputMatches(".*Unmapped Objects: +0.*");
+    }
+
     private void indexExportSamples() throws Exception {
         testHelper.indexExportData("mini_gilmer");
     }
 
+    private void indexGroupExportSamples() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+    }
+
+    private void indexCompoundExportSamples() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"),"mini_keepsakes");
+        addSourceFile("nccg_ck_09.tif");
+        addSourceFile("nccg_ck_1042-22_v1.tif");
+        addSourceFile("nccg_ck_1042-22_v2.tif");
+        addSourceFile("nccg_ck_549-4_v1.tif");
+        addSourceFile("nccg_ck_549-4_v2.tif");
+    }
+
     private Path addSourceFile(String relPath) throws IOException {
-        Path srcPath = basePath.resolve(relPath);
-        // Create parent directories in case they don't exist
-        Files.createDirectories(srcPath.getParent());
-        Files.createFile(srcPath);
-        return srcPath;
+        return testHelper.addSourceFile(relPath);
     }
 }

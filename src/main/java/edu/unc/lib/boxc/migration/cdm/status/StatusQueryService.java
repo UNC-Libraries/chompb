@@ -30,6 +30,9 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
+
 /**
  * Helper service for performing queries against the index for status services
  *
@@ -45,6 +48,7 @@ public class StatusQueryService {
         this.indexService.setProject(project);
     }
 
+    // count all objects, including grouped/compound objects
     private Integer indexedObjectsCountCache;
     protected int countIndexedObjects() {
         if (indexedObjectsCountCache != null) {
@@ -57,6 +61,27 @@ public class StatusQueryService {
             ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME);
             indexedObjectsCountCache = rs.getInt(1);
             return indexedObjectsCountCache;
+        } catch (SQLException e) {
+            throw new MigrationException("Failed to determine number of objects", e);
+        }
+    }
+
+    // Count only file objects, exclude grouped/compound objects
+    private Integer indexedFileObjectsCountCache;
+    protected int countIndexedFileObjects() {
+        if (indexedFileObjectsCountCache != null) {
+            return indexedFileObjectsCountCache;
+        }
+        CdmIndexService indexService = new CdmIndexService();
+        indexService.setProject(project);
+        try (Connection conn = indexService.openDbConnection()) {
+            Statement stmt = conn.createStatement();
+            // Query for all file objects. If the entry type is null, the object is a individual cdm object
+            ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME
+                    + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
+                    + " or " + ENTRY_TYPE_FIELD + " is null");
+            indexedFileObjectsCountCache = rs.getInt(1);
+            return indexedFileObjectsCountCache;
         } catch (SQLException e) {
             throw new MigrationException("Failed to determine number of objects", e);
         }
