@@ -301,6 +301,18 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Unmapped Objects: +0.*");
     }
 
+    @Test
+    public void generateBlankSucceedsTest() throws Exception {
+        indexExportSamples();
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-B"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+    }
+
     private void indexExportSamples() throws Exception {
         testHelper.indexExportData("mini_gilmer");
     }
