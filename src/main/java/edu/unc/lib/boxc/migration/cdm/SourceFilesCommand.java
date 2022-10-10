@@ -144,8 +144,12 @@ public class SourceFilesCommand {
     }
 
     private void validateOptions(SourceFileMappingOptions options) {
+        // If populating a blank mapping then other arguments not needed.
+        if (options.isPopulateBlank()) {
+            return;
+        }
         if (options.getBasePath() == null) {
-            throw new IllegalArgumentException("Must provide a base path");
+            throw new IllegalArgumentException("Must provide a base path or provide the --blank flag");
         }
         if (StringUtils.isBlank(options.getExportField())) {
             throw new IllegalArgumentException("Must provide an export field");

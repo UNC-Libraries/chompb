@@ -540,6 +540,53 @@ public class SourceFileServiceTest {
         assertMappedDatePresent();
     }
 
+    @Test
+    public void generateBlankTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        SourceFileMappingOptions options = new SourceFileMappingOptions();
+        options.setPopulateBlank(true);
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "", null);
+        assertMappingPresent(info, "26", "", null);
+        assertMappingPresent(info, "27", "", null);
+
+        assertMappedDatePresent();
+    }
+
+    @Test
+    public void generateRespectsForceFlagTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        SourceFileMappingOptions options = new SourceFileMappingOptions();
+        options.setPopulateBlank(true);
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "", null);
+        assertMappingPresent(info, "26", "", null);
+        assertMappingPresent(info, "27", "", null);
+        assertEquals(3, info.getMappings().size());
+
+        try {
+            service.generateMapping(options);
+            fail();
+        } catch (MigrationException e) {
+            assertTrue(e.getMessage().contains("Cannot create mapping, a file already exists"));
+        }
+
+        options.setForce(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "25", "", null);
+        assertMappingPresent(info2, "26", "", null);
+        assertMappingPresent(info2, "27", "", null);
+        assertEquals(3, info2.getMappings().size());
+    }
+
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
             Path... potentialPaths) {
         List<SourceFileMapping> mappings = info.getMappings();

@@ -51,6 +51,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -91,7 +92,7 @@ public class SourceFileService {
         // Gather listing of all potential source file paths to match against
         Map<String, List<String>> candidatePaths = gatherCandidatePaths(options);
 
-        Pattern fieldMatchingPattern = Pattern.compile(options.getFieldMatchingPattern());
+        Pattern fieldMatchingPattern = buildFieldMatchingPattern(options);
 
         Path mappingPath = getMappingPath();
         boolean needsMerge = false;
@@ -122,6 +123,10 @@ public class SourceFileService {
                 String cdmId = rs.getString(1);
                 String dbFilename = rs.getString(2);
 
+                if (options.isPopulateBlank()) {
+                    csvPrinter.printRecord(cdmId, null, null, null);
+                    continue;
+                }
                 if (StringUtils.isBlank(dbFilename)) {
                     log.debug("No matching field for object {}", cdmId);
                     csvPrinter.printRecord(cdmId, null, null, null);
@@ -177,7 +182,18 @@ public class SourceFileService {
         }
     }
 
+    private Pattern buildFieldMatchingPattern(SourceFileMappingOptions options) {
+        if (options.isPopulateBlank()) {
+            return null;
+        }
+        return Pattern.compile(options.getFieldMatchingPattern());
+    }
+
     private Map<String, List<String>> gatherCandidatePaths(SourceFileMappingOptions options) throws IOException {
+        if (options.isPopulateBlank()) {
+            return Collections.emptyMap();
+        }
+
         Path basePath = options.getBasePath();
         if (!Files.isDirectory(basePath)) {
             throw new IllegalArgumentException("Base path must be a directory");

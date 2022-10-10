@@ -94,6 +94,11 @@ public class SourceFileMappingOptions {
             description = "Overwrite mapping file if one already exists")
     private boolean force;
 
+    @Option(names = { "-B", "--blank"},
+            description = "Populate a blank source mapping file. Entries will be added for each object as per normal,"
+                    + " but without attempting to map them to any files")
+    private boolean populateBlank;
+
     public Path getBasePath() {
         return basePath;
     }
@@ -164,5 +169,13 @@ public class SourceFileMappingOptions {
 
     public void setForce(boolean force) {
         this.force = force;
+    }
+
+    public boolean isPopulateBlank() {
+        return populateBlank;
+    }
+
+    public void setPopulateBlank(boolean populateBlank) {
+        this.populateBlank = populateBlank;
     }
 }
