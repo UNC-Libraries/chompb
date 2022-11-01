@@ -18,38 +18,28 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationSipEntry;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
-import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.services.sips.CdmToDestMapper;
+import edu.unc.lib.boxc.migration.cdm.services.sips.SipPremisLogger;
+import edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator;
+import edu.unc.lib.boxc.migration.cdm.services.sips.WorkGeneratorFactory;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
-import edu.unc.lib.boxc.model.api.DatastreamType;
-import edu.unc.lib.boxc.model.api.SoftwareAgentConstants.SoftwareAgent;
 import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
-import edu.unc.lib.boxc.model.api.rdf.Cdr;
-import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
-import edu.unc.lib.boxc.model.api.rdf.Premis;
-import edu.unc.lib.boxc.model.fcrepo.ids.AgentPids;
-import edu.unc.lib.boxc.operations.api.events.PremisLogger;
 import edu.unc.lib.boxc.operations.api.events.PremisLoggerFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -64,13 +54,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
-import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -92,13 +79,39 @@ public class SipService {
     private DescriptionsService descriptionsService;
     private RedirectMappingService redirectMappingService;
     private PremisLoggerFactory premisLoggerFactory;
+    private SipPremisLogger sipPremisLogger;
     private MigrationProject project;
     private PIDMinter pidMinter;
+    private CdmToDestMapper cdmToDestMapper = new CdmToDestMapper();
+    private WorkGeneratorFactory workGeneratorFactory;
 
-    private Map<String, DestinationSipEntry> cdmId2DestMap;
     private List<DestinationSipEntry> destEntries = new ArrayList<>();
 
     public SipService() {
+    }
+
+    private void initDependencies(SipGenerationOptions options, Connection conn) throws IOException {
+        redirectMappingService = new RedirectMappingService(project);
+        redirectMappingService.init();
+        sipPremisLogger = new SipPremisLogger();
+        sipPremisLogger.setPremisLoggerFactory(premisLoggerFactory);
+        initializeDestinations(options);
+
+        workGeneratorFactory = new WorkGeneratorFactory();
+        workGeneratorFactory.setOptions(options);
+        workGeneratorFactory.setSourceFilesInfo(sourceFileService.loadMappings());
+        workGeneratorFactory.setCdmToDestMapper(cdmToDestMapper);
+        workGeneratorFactory.setSipPremisLogger(sipPremisLogger);
+        workGeneratorFactory.setDescriptionsService(descriptionsService);
+        workGeneratorFactory.setAccessFileService(accessFileService);
+        workGeneratorFactory.setRedirectMappingService(redirectMappingService);
+        workGeneratorFactory.setPidMinter(pidMinter);
+        try {
+            workGeneratorFactory.setAccessFilesInfo(accessFileService.loadMappings());
+        } catch (NoSuchFileException e) {
+            log.debug("No access mappings file, no access files will be added to the SIP");
+        }
+        workGeneratorFactory.setConn(conn);
     }
 
     /**
@@ -107,22 +120,11 @@ public class SipService {
      */
     public List<MigrationSip> generateSips(SipGenerationOptions options) {
         validateProjectState();
-        initializeDestinations(options);
-        redirectMappingService = new RedirectMappingService(project);
 
         Connection conn = null;
         try {
-            redirectMappingService.init();
-            WorkGeneratorFactory workGeneratorFactory = new WorkGeneratorFactory();
-            workGeneratorFactory.options = options;
-            workGeneratorFactory.sourceFilesInfo = sourceFileService.loadMappings();
-            try {
-                workGeneratorFactory.accessFilesInfo = accessFileService.loadMappings();
-            } catch (NoSuchFileException e) {
-                log.debug("No access mappings file, no access files will be added to the SIP");
-            }
             conn = indexService.openDbConnection();
-            workGeneratorFactory.conn = conn;
+            initDependencies(options, conn);
 
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
@@ -172,234 +174,6 @@ public class SipService {
         }
     }
 
-    /**
-     * Factory which produces WorkGenerator objects
-     * @author bbpennel
-     */
-    private class WorkGeneratorFactory {
-        private SourceFilesInfo sourceFilesInfo;
-        private SourceFilesInfo accessFilesInfo;
-        private Connection conn;
-        private SipGenerationOptions options;
-
-        public WorkGenerator create(String cdmId, String cdmCreated, String entryType) {
-            WorkGenerator gen;
-            if (CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT.equals(entryType)
-                    || CdmIndexService.ENTRY_TYPE_GROUPED_WORK.equals(entryType)) {
-                gen = new MultiFileWorkGenerator();
-            } else {
-                gen = new WorkGenerator();
-            }
-            gen.accessFilesInfo = accessFilesInfo;
-            gen.sourceFilesInfo = sourceFilesInfo;
-            gen.conn = conn;
-            gen.options = options;
-            gen.destEntry = getDestinationEntry(cdmId);
-            gen.cdmId = cdmId;
-            gen.cdmCreated = cdmCreated;
-            return gen;
-        }
-    }
-
-    /**
-     * WorkGenerator for works containing multiple files
-     * @author bbpennel
-     */
-    private class MultiFileWorkGenerator extends WorkGenerator {
-        @Override
-        protected void generateWork() throws IOException {
-            super.generateWork();
-            // Add redirect mapping for compound object, but not group object
-            if (!cdmId.startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
-                redirectMappingService.addRow(cdmId, workPid.getId(), null);
-            }
-        }
-
-        @Override
-        protected List<PID> addChildObjects() throws IOException {
-            try {
-                Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
-                        + " from " + CdmIndexService.TB_NAME
-                        + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + cdmId + "'");
-
-                List<PID> childPids = new ArrayList<>();
-                while (rs.next()) {
-                    String cdmId = rs.getString(1);
-                    String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
-
-                    SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-                    PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
-                    addChildDescription(cdmId, filePid);
-
-                    childPids.add(filePid);
-                }
-                return childPids;
-            } catch (SQLException e) {
-                throw new MigrationException(e);
-            }
-        }
-    }
-
-    /**
-     * Base generator for works which are constructed for standalone CDM objects
-     * @author bbpennel
-     */
-    private class WorkGenerator {
-        protected SourceFilesInfo sourceFilesInfo;
-        protected SourceFilesInfo accessFilesInfo;
-        protected Connection conn;
-        protected SipGenerationOptions options;
-        protected Model model;
-        protected DestinationSipEntry destEntry;
-
-        protected String cdmId;
-        protected String cdmCreated;
-
-        protected PID workPid;
-        protected Bag workBag;
-        protected List<PID> fileObjPids;
-
-        public void generate() throws IOException, SQLException {
-            workPid = pidMinter.mintContentPid();
-            workBag = null;
-
-            Bag destBag = destEntry.getDestinationBag();
-            model = destBag.getModel();
-
-            generateWork();
-
-            destBag.add(workBag);
-
-            // Generate migration PREMIS event
-            addPremisEvent(destEntry, workPid, options);
-            for (PID fileObjPid : fileObjPids) {
-                addPremisEvent(destEntry, fileObjPid, options);
-            }
-        }
-
-        protected void generateWork() throws IOException {
-            Path expDescPath = getDescriptionPath(cdmId, false);
-
-
-            log.info("Transforming CDM object {} to box-c work {}", cdmId, workPid.getId());
-            workBag = model.createBag(workPid.getRepositoryPath());
-            workBag.addProperty(RDF.type, Cdr.Work);
-            workBag.addLiteral(CdrDeposit.createTime, cdmCreated);
-
-            // Copy description to SIP
-            copyDescriptionToSip(workPid, expDescPath);
-
-            fileObjPids = addChildObjects();
-        }
-
-        protected List<PID> addChildObjects() throws IOException {
-            SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-            var fileObjectPid = addFileObject(cdmId, cdmCreated, sourceMapping);
-            // in a single file object, the cdm id refers to the new work, so add suffix to reference the child file
-            addChildDescription(cdmId + "/original_file", fileObjectPid);
-            return Collections.singletonList(fileObjectPid);
-        }
-
-        protected void copyDescriptionToSip(PID pid, Path descPath) throws IOException {
-            if (Files.notExists(descPath)) {
-                return;
-            }
-            // Copy description to SIP
-            Path sipDescPath = destEntry.getDepositDirManager().getModsPath(pid);
-            Files.copy(descPath, sipDescPath);
-        }
-
-        protected Path getDescriptionPath(String cdmId, boolean allowMissing) {
-            Path expDescPath = descriptionsService.getExpandedDescriptionFilePath(cdmId);
-            if (Files.notExists(expDescPath)) {
-                if (allowMissing) {
-                    return null;
-                }
-                String message = "Cannot transform object " + cdmId + ", it does not have a MODS description";
-                if (options.isForce()) {
-                    outputLogger.info(message);
-                    throw new SkipObjectException();
-                } else {
-                    throw new InvalidProjectStateException(message);
-                }
-            }
-            return expDescPath;
-        }
-
-        protected SourceFileMapping getSourceFileMapping(String cdmId) {
-            SourceFileMapping sourceMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
-            if (sourceMapping == null || sourceMapping.getSourcePath() == null) {
-                String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
-                if (options.isForce()) {
-                    outputLogger.info(message);
-                    throw new SkipObjectException();
-                } else {
-                    throw new InvalidProjectStateException(message);
-                }
-            }
-            return sourceMapping;
-        }
-
-        protected PID addFileObject(String cdmId, String cdmCreated, SourceFileMapping sourceMapping)
-                throws IOException {
-            // Create FileObject
-            PID fileObjPid = pidMinter.mintContentPid();
-            Resource fileObjResc = model.getResource(fileObjPid.getRepositoryPath());
-            fileObjResc.addProperty(RDF.type, Cdr.FileObject);
-            fileObjResc.addLiteral(CdrDeposit.createTime, cdmCreated);
-
-            workBag.add(fileObjResc);
-
-            // Link source file
-            Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
-            Path sourcePath = sourceMapping.getSourcePath();
-            origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
-            origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
-
-            // Link access file
-            if (accessFilesInfo != null) {
-                SourceFileMapping accessMapping = accessFilesInfo.getMappingByCdmId(cdmId);
-                if (accessMapping != null && accessMapping.getSourcePath() != null) {
-                    Resource accessResc = DepositModelHelpers.addDatastream(
-                            fileObjResc, DatastreamType.ACCESS_SURROGATE);
-                    accessResc.addLiteral(CdrDeposit.stagingLocation,
-                            accessMapping.getSourcePath().toUri().toString());
-                    String mimetype = accessFileService.getMimetype(accessMapping.getSourcePath());
-                    accessResc.addLiteral(CdrDeposit.mimetype, mimetype);
-                }
-            }
-
-            // add redirect mapping for this file
-            redirectMappingService.addRow(cdmId, workPid.getId(), fileObjPid.getId());
-
-            return fileObjPid;
-        }
-
-        /**
-         * Copy description file into place for child object, if it exists
-         * @param descCdmId CDM id of the child object used for associating the description
-         * @param fileObjPid pid of the file object
-         * @throws IOException
-         */
-        protected void addChildDescription(String descCdmId, PID fileObjPid) throws IOException {
-            var childDescPath = getDescriptionPath(descCdmId, true);
-            if (childDescPath != null) {
-                copyDescriptionToSip(fileObjPid, childDescPath);
-            }
-        }
-    }
-
-    private void addPremisEvent(DestinationSipEntry destEntry, PID pid, SipGenerationOptions options) {
-        Path premisPath = destEntry.getDepositDirManager().getPremisPath(pid);
-        PremisLogger premisLogger = premisLoggerFactory.createPremisLogger(pid, premisPath.toFile());
-        premisLogger.buildEvent(Premis.Ingestion)
-                .addEventDetail("Object migrated as a part of the CONTENTdm to Box-c 5 migration")
-                .addSoftwareAgent(AgentPids.forSoftware(SoftwareAgent.cdmToBxcMigrationUtil))
-                .addAuthorizingAgent(AgentPids.forPerson(options.getUsername()))
-                .writeAndClose();
-    }
-
     private void exportDepositModel(DestinationSipEntry entry) throws IOException {
         Model model = entry.getDepositModelManager().getReadModel(entry.getDepositPid());
         Path modelExportPath = entry.getDepositDirManager().getDepositDir().resolve(MODEL_EXPORT_NAME);
@@ -424,15 +198,6 @@ public class SipService {
         }
     }
 
-    private DestinationSipEntry getDestinationEntry(String cdmId) {
-        DestinationSipEntry entry = cdmId2DestMap.get(cdmId);
-        if (entry == null) {
-            return cdmId2DestMap.get(DestinationsInfo.DEFAULT_ID);
-        } else {
-            return entry;
-        }
-    }
-
     private void initializeDestinations(SipGenerationOptions options) {
         try {
             DestinationsValidator validator = new DestinationsValidator();
@@ -447,7 +212,6 @@ public class SipService {
             // Cleanup previously generated SIPs
             FileUtils.deleteDirectory(project.getSipsPath().toFile());
 
-            cdmId2DestMap = new HashMap<>();
             Map<String, DestinationSipEntry> destMap = new HashMap<>();
             for (DestinationMapping mapping : destInfo.getMappings()) {
                 String key = !StringUtils.isBlank(mapping.getCollectionId()) ?
@@ -471,13 +235,13 @@ public class SipService {
                                 throw new MigrationException("Failed to copy description", e);
                             }
                         }
-                        addPremisEvent(entry, entry.getNewCollectionPid(), options);
+                        sipPremisLogger.addPremisEvent(entry, entry.getNewCollectionPid(), options);
                     }
                     destEntries.add(entry);
                     return entry;
                 });
 
-                cdmId2DestMap.put(mapping.getId(), destEntry);
+                cdmToDestMapper.put(mapping, destEntry);
             }
         } catch (IOException e) {
             throw new MigrationException("Failed to load destination mappings", e);
