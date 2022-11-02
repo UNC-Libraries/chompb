@@ -15,7 +15,6 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -24,12 +23,10 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
 
 import java.io.Reader;
 import java.nio.file.Files;
@@ -42,7 +39,6 @@ import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
@@ -87,8 +83,8 @@ public class PostMigrationReportServiceTest {
     public void addSingleItemTest() throws Exception {
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
-        service.addRow("25", BOXC_ID_1, null, true);
-        service.addRow("25", BOXC_ID_1, BOXC_ID_2, true);
+        service.addWorkRow("25", BOXC_ID_1, 1, true);
+        service.addFileRow("25", BOXC_ID_1, BOXC_ID_2, true);
         service.closeCsv();
 
         var rows = parseReport();
@@ -99,7 +95,8 @@ public class PostMigrationReportServiceTest {
                 "Redoubt C",
                 "",
                 "",
-                ""));
+                "",
+                "1"));
         assertContainsRow(rows, Arrays.asList("25/original_file",
                 "http://localhost/cdm/singleitem/collection/proj/id/25",
                 "File",
@@ -107,15 +104,16 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "http://localhost/bxc/record/" + BOXC_ID_1,
-                "Redoubt C"));
+                "Redoubt C",
+                ""));
     }
 
     @Test
     public void addSingleItemWithFileDescTest() throws Exception {
         testHelper.populateDescriptions("gilmer_mods1.xml", "gilmer_mods_children.xml");
 
-        service.addRow("25", BOXC_ID_1, null, true);
-        service.addRow("25", BOXC_ID_1, BOXC_ID_2, true);
+        service.addWorkRow("25", BOXC_ID_1, 1, true);
+        service.addFileRow("25", BOXC_ID_1, BOXC_ID_2, true);
         service.closeCsv();
 
         var rows = parseReport();
@@ -126,7 +124,8 @@ public class PostMigrationReportServiceTest {
                 "Redoubt C",
                 "",
                 "",
-                ""));
+                "",
+                "1"));
         assertContainsRow(rows, Arrays.asList("25/original_file",
                 "http://localhost/cdm/singleitem/collection/proj/id/25",
                 "File",
@@ -134,16 +133,17 @@ public class PostMigrationReportServiceTest {
                 "Redoubt C Scan File",
                 "",
                 "http://localhost/bxc/record/" + BOXC_ID_1,
-                "Redoubt C"));
+                "Redoubt C",
+                ""));
     }
 
     @Test
     public void addGroupedTest() throws Exception {
         testHelper.populateDescriptions("grouped_mods.xml");
 
-        service.addRow("grp:groupa:group1", BOXC_ID_1, null, false);
-        service.addRow("26", BOXC_ID_1, BOXC_ID_2, false);
-        service.addRow("27", BOXC_ID_1, BOXC_ID_3, false);
+        service.addWorkRow("grp:groupa:group1", BOXC_ID_1, 2, false);
+        service.addFileRow("26", BOXC_ID_1, BOXC_ID_2, false);
+        service.addFileRow("27", BOXC_ID_1, BOXC_ID_3, false);
         service.closeCsv();
 
         var rows = parseReport();
@@ -154,7 +154,8 @@ public class PostMigrationReportServiceTest {
                 "Folder Group 1",
                 "",
                 "",
-                ""));
+                "",
+                "2"));
         assertContainsRow(rows, Arrays.asList("26",
                 "http://localhost/cdm/singleitem/collection/proj/id/26",
                 "File",
@@ -162,7 +163,8 @@ public class PostMigrationReportServiceTest {
                 "Plan of Battery McIntosh",
                 "",
                 "http://localhost/bxc/record/" + BOXC_ID_1,
-                "Folder Group 1"));
+                "Folder Group 1",
+                ""));
         assertContainsRow(rows, Arrays.asList("27",
                 "http://localhost/cdm/singleitem/collection/proj/id/27",
                 "File",
@@ -170,7 +172,8 @@ public class PostMigrationReportServiceTest {
                 "Fort DeRussy on Red River, Louisiana",
                 "",
                 "http://localhost/bxc/record/" + BOXC_ID_1,
-                "Folder Group 1"));
+                "Folder Group 1",
+                ""));
     }
 
     @Test
@@ -179,9 +182,9 @@ public class PostMigrationReportServiceTest {
         descriptionsService.generateDocuments(true);
         descriptionsService.expandDescriptions();
 
-        service.addRow("605", BOXC_ID_1, null, false);
-        service.addRow("602", BOXC_ID_1, BOXC_ID_2, false);
-        service.addRow("603", BOXC_ID_1, BOXC_ID_3, false);
+        service.addWorkRow("605", BOXC_ID_1, 2, false);
+        service.addFileRow("602", BOXC_ID_1, BOXC_ID_2, false);
+        service.addFileRow("603", BOXC_ID_1, BOXC_ID_3, false);
         service.closeCsv();
 
         var rows = parseReport();
@@ -192,7 +195,8 @@ public class PostMigrationReportServiceTest {
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
                 "",
                 "",
-                ""));
+                "",
+                "2"));
         assertContainsRow(rows, Arrays.asList("602",
                 "http://localhost/cdm/singleitem/collection/proj/id/602",
                 "File",
@@ -200,7 +204,8 @@ public class PostMigrationReportServiceTest {
                 "World War II ration book",
                 "",
                 "http://localhost/bxc/record/" + BOXC_ID_1,
-                "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)"));
+                "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
+                ""));
         assertContainsRow(rows, Arrays.asList("603",
                 "http://localhost/cdm/singleitem/collection/proj/id/603",
                 "File",
@@ -208,7 +213,8 @@ public class PostMigrationReportServiceTest {
                 "World War II ration book (instructions)",
                 "",
                 "http://localhost/bxc/record/" + BOXC_ID_1,
-                "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)"));
+                "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
+                ""));
     }
 
     private List<List<String>> parseReport() throws Exception {

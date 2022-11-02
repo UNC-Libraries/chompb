@@ -25,7 +25,6 @@ import edu.unc.lib.boxc.model.api.ResourceType;
 import edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.lang3.StringUtils;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.slf4j.Logger;
@@ -48,7 +47,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class PostMigrationReportService {
     private static final Logger log = getLogger(PostMigrationReportService.class);
     public static final String[] CSV_HEADERS = new String[] {
-            "cdm_id", "cdm_url", "boxc_obj_type", "boxc_url", "boxc_title", "verified", "boxc_parent_work_url", "boxc_parent_work_title" };
+            "cdm_id", "cdm_url", "boxc_obj_type", "boxc_url", "boxc_title", "verified",
+            "boxc_parent_work_url", "boxc_parent_work_title", "children_count" };
 
     private MigrationProject project;
     private ChompbConfig chompbConfig;
@@ -89,27 +89,29 @@ public class PostMigrationReportService {
         }
     }
 
-    public void addRow(String cdmObjectId, String boxcWorkId, String boxcFileId, boolean isSingleItem)
-            throws IOException{
-        boolean isWorkObject = boxcFileId == null;
-        String cdmUrl = buildCdmUrl(cdmObjectId, isWorkObject, isSingleItem);
-        String cdmId = buildCdmId(cdmObjectId, isWorkObject, isSingleItem);
+    public void addWorkRow(String cdmObjectId, String boxcWorkId, int childCount, boolean isSingleItem)
+            throws IOException {
+        String cdmUrl = buildCdmUrl(cdmObjectId, true, isSingleItem);
+        String cdmId = buildCdmId(cdmObjectId, true, isSingleItem);
         String boxcTitle = extractTitle(cdmId);
-        String parentTitle, boxcUrl, parentUrl, objType;
-        // file id is null, so the object is a work
-        if (isWorkObject) {
-            boxcUrl = this.bxcBaseUrl + boxcWorkId;
-            parentUrl = null;
-            parentTitle = null;
-            objType = ResourceType.Work.name();
-            lastParentTitle = boxcTitle;
-        } else {
-            boxcUrl = this.bxcBaseUrl + boxcFileId;
-            parentUrl = this.bxcBaseUrl + boxcWorkId;
-            parentTitle = lastParentTitle;
-            objType = ResourceType.File.name();
-        }
-        csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle);
+        String boxcUrl = this.bxcBaseUrl + boxcWorkId;
+        String parentUrl = null;
+        String parentTitle = null;
+        String objType = ResourceType.Work.name();
+        lastParentTitle = boxcTitle;
+        csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle, childCount);
+    }
+
+    public void addFileRow(String cdmObjectId, String boxcWorkId, String boxcFileId, boolean isSingleItem)
+            throws IOException {
+        String cdmUrl = buildCdmUrl(cdmObjectId, false, isSingleItem);
+        String cdmId = buildCdmId(cdmObjectId, false, isSingleItem);
+        String boxcTitle = extractTitle(cdmId);
+        String boxcUrl = this.bxcBaseUrl + boxcFileId;
+        String parentUrl = this.bxcBaseUrl + boxcWorkId;
+        String parentTitle = lastParentTitle;
+        String objType = ResourceType.File.name();
+        csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle, null);
     }
 
     private String buildCdmId(String cdmObjectId, boolean isWorkObject, boolean isSingleItem) {
