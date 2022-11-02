@@ -242,7 +242,7 @@ public class MigrationProjectProperties {
         return bxcEnvironmentId;
     }
 
-    public void setBxcEnvironmentId(String dcrEnvironmentId) {
+    public void setBxcEnvironmentId(String bxcEnvironmentId) {
         this.bxcEnvironmentId = bxcEnvironmentId;
     }
 }

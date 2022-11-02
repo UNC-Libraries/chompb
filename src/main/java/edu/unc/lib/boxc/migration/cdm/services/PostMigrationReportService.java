@@ -15,8 +15,10 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import edu.unc.lib.boxc.common.util.URIUtil;
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import edu.unc.lib.boxc.model.api.ResourceType;
@@ -53,22 +55,19 @@ public class PostMigrationReportService {
     private DescriptionsService descriptionsService;
     private CSVPrinter csvPrinter;
     private SAXBuilder saxBuilder;
-    private String cdmBaseUrl;
     private String singleBaseUrl;
     private String compoundBaseUrl;
     private String bxcBaseUrl;
     private String lastParentTitle;
 
     public void init() {
-        this.project = project;
         var cdmEnv = chompbConfig.getCdmEnvironments().get(project.getProjectProperties().getCdmEnvironmentId());
-        var baseWithoutPort = cdmEnv.getHttpBaseUrl().replaceFirst(":\\d+/", "/");
-        this.cdmBaseUrl = baseWithoutPort + "cdm/";
+        var baseWithoutPort = cdmEnv.getHttpBaseUrl().replaceFirst(":\\d+", "");
         var collId = project.getProjectProperties().getCdmCollectionId();
-        this.singleBaseUrl = cdmBaseUrl + "singleitem/collection/" + collId + "/id/";
-        this.compoundBaseUrl = cdmBaseUrl + "compoundobject/collection/" + collId + "/id/";
+        this.singleBaseUrl = URIUtil.join(baseWithoutPort, "cdm/singleitem/collection", collId, "id") + "/";
+        this.compoundBaseUrl = URIUtil.join(baseWithoutPort, "cdm/compoundobject/collection", collId, "id") + "/";
         var bxcEnv = chompbConfig.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId());
-        this.bxcBaseUrl = bxcEnv.getHttpBaseUrl() + "record/";
+        this.bxcBaseUrl = URIUtil.join(bxcEnv.getHttpBaseUrl(), "record") + "/";
         this.saxBuilder = SecureXMLFactory.createSAXBuilder();
 
         try {
@@ -90,30 +89,27 @@ public class PostMigrationReportService {
         }
     }
 
-    public void addRow(String cdmObjectId, String boxcWorkId, String boxcFileId, boolean isSingleItem) {
+    public void addRow(String cdmObjectId, String boxcWorkId, String boxcFileId, boolean isSingleItem)
+            throws IOException{
         boolean isWorkObject = boxcFileId == null;
         String cdmUrl = buildCdmUrl(cdmObjectId, isWorkObject, isSingleItem);
         String cdmId = buildCdmId(cdmObjectId, isWorkObject, isSingleItem);
-        String boxcTitle = extractTitle(cdmObjectId);
+        String boxcTitle = extractTitle(cdmId);
         String parentTitle, boxcUrl, parentUrl, objType;
         // file id is null, so the object is a work
         if (isWorkObject) {
             boxcUrl = this.bxcBaseUrl + boxcWorkId;
             parentUrl = null;
             parentTitle = null;
-            objType = ResourceType.File.name();
+            objType = ResourceType.Work.name();
             lastParentTitle = boxcTitle;
         } else {
             boxcUrl = this.bxcBaseUrl + boxcFileId;
             parentUrl = this.bxcBaseUrl + boxcWorkId;
             parentTitle = lastParentTitle;
-            objType = ResourceType.Work.name();
+            objType = ResourceType.File.name();
         }
-        try {
-            csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle);
-        } catch (IOException e) {
-            throw new MigrationException("Error adding row to redirect mapping CSV", e);
-        }
+        csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle);
     }
 
     private String buildCdmId(String cdmObjectId, boolean isWorkObject, boolean isSingleItem) {
@@ -124,8 +120,8 @@ public class PostMigrationReportService {
     }
 
     private String buildCdmUrl(String cdmObjectId, boolean isWorkObject, boolean isSingleItem) {
-        // no cdm id, so this is a grouped object and therefore does not have a cdm id
-        if (StringUtils.isBlank(cdmObjectId)) {
+        // grouped object and therefore does not have a cdm id
+        if (cdmObjectId.startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
             return null;
         }
         // Is a not a work object, or is the Work part of a single item object
@@ -137,9 +133,6 @@ public class PostMigrationReportService {
     }
 
     private String extractTitle(String cdmId) {
-        if (StringUtils.isBlank(cdmId)) {
-            return null;
-        }
         var descPath = descriptionsService.getExpandedDescriptionFilePath(cdmId);
         if (Files.notExists(descPath)) {
             return null;
