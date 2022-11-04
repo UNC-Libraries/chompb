@@ -51,8 +51,13 @@ public class InitializeProjectCommand implements Callable<Integer> {
     @Option(names = { "-e", "--cdm-env" },
             description = "CDM environment used for retrieving data. Env-config must be set. "
                     + "Default: ${DEFAULT-VALUE}",
-            defaultValue = "${env:CDM_ENV}")
+            defaultValue = "${env:CDM_ENV:-test}")
     private String cdmEnvId;
+    @Option(names = { "-E", "--bxc-env" },
+            description = "Box-c environment use as the migration destination. Env-config must be set. "
+                    + "Default: ${DEFAULT-VALUE}",
+            defaultValue = "${env:BXC_ENV:-test}")
+    private String bxcEnvId;
     @Option(names = { "-c", "--cdm-coll-id" },
             description = "Identifier of the CDM collection to migrate. Use if the name of the project directory"
                     + " does not match the CDM Collection ID.")
@@ -87,6 +92,11 @@ public class InitializeProjectCommand implements Callable<Integer> {
                         cdmEnvId, String.join(", ", config.getCdmEnvironments().keySet()));
                 return 1;
             }
+            if (!config.getBxcEnvironments().containsKey(bxcEnvId)) {
+                outputLogger.info("Unknown bxc-env value {}, configured values are: {}",
+                        bxcEnvId, String.join(", ", config.getBxcEnvironments().keySet()));
+                return 1;
+            }
         } catch (IllegalArgumentException | IOException e) {
             outputLogger.info("Unable to read application configuration: {}", e.getMessage());
             log.error("Unable to read application configuration", e);
@@ -116,7 +126,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
         MigrationProject project = null;
         try {
             project = MigrationProjectFactory.createMigrationProject(
-                    currentPath, projectName, cdmCollectionId, username, cdmEnvId);
+                    currentPath, projectName, cdmCollectionId, username, cdmEnvId, bxcEnvId);
 
             // Persist field info to the project
             fieldService.persistFieldsToProject(project, fieldInfo);

@@ -37,6 +37,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
@@ -91,8 +92,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-p", COLLECTION_ID,
-                "-e", "test" };
+                "-p", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(baseDir.resolve(COLLECTION_ID));
@@ -112,8 +112,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-w", projDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-c", COLLECTION_ID,
-                "-e", "test"};
+                "-c", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projDir);
@@ -131,8 +130,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-p", "unknowncoll",
-                "-e", "test" };
+                "-p", "unknowncoll" };
         executeExpectFailure(initArgs);
 
         assertOutputContains("No collection with ID 'unknowncoll' found on server");
@@ -148,8 +146,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
                 "-w", projDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-c", COLLECTION_ID,
-                "-e", "test" };
+                "-c", COLLECTION_ID };
         executeExpectSuccess(initArgs);
 
         // Run it a second time, should cause a failure
@@ -182,12 +179,26 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void initUnknownBxcEnvTest() throws Exception {
+        String[] initArgs = new String[] {
+                "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
+                "init",
+                "-E", "what",
+                "-p", COLLECTION_ID };
+        executeExpectFailure(initArgs);
+
+        assertOutputContains("Unknown bxc-env value");
+
+        assertProjectDirectoryNotCreate();
+    }
+
+    @Test
     public void initNoEnvMappingPathTest() throws Exception {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
                 "init",
-                "-p", COLLECTION_ID,
-                "-e", "test" };
+                "-p", COLLECTION_ID };
         executeExpectFailure(initArgs);
 
         assertOutputContains("Must provide an env-config option");
@@ -209,6 +220,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         assertNotNull("Created date not set", properties.getCreatedDate());
         assertNull(properties.getHookId());
         assertNull(properties.getCollectionNumber());
+        assertEquals(CdmEnvironmentHelper.DEFAULT_ENV_ID, properties.getCdmEnvironmentId());
+        assertEquals(BxcEnvironmentHelper.DEFAULT_ENV_ID, properties.getBxcEnvironmentId());
     }
 
     private void assertCdmFieldsPresent(MigrationProject project) throws IOException {
