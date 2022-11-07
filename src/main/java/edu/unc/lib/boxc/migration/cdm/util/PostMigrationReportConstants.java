@@ -17,6 +17,7 @@ package edu.unc.lib.boxc.migration.cdm.util;
 
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import org.apache.commons.csv.CSVFormat;
+import org.springframework.http.HttpStatus;
 
 /**
  * Constants related to the post migration report
@@ -27,6 +28,7 @@ public class PostMigrationReportConstants {
     public static final String BXC_URL_HEADER = "boxc_url";
     public static final String VERIFIED_HEADER = "verified";
     public static final int VERIFIED_INDEX = 5;
+    public static final String VERIFIED_OK = HttpStatus.OK.name();
     public static final String[] CSV_HEADERS = new String[] {
             "cdm_id", "cdm_url", "boxc_obj_type", "boxc_url", "boxc_title", VERIFIED_HEADER,
             "boxc_parent_work_url", "boxc_parent_work_title", "children_count" };

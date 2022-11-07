@@ -71,16 +71,23 @@ public class PostMigrationReportService {
         this.bxcBaseUrl = URIUtil.join(bxcEnv.getHttpBaseUrl(), "record") + "/";
         this.saxBuilder = SecureXMLFactory.createSAXBuilder();
 
-        try {
-            BufferedWriter writer = Files.newBufferedWriter(project.getPostMigrationReportPath());
-            csvPrinter = new CSVPrinter(writer, PostMigrationReportConstants.CSV_OUTPUT_FORMAT);
-        } catch (IOException e) {
-            throw new MigrationException("Error creating redirect mapping CSV", e);
-        }
+        csvPrinter = openCsvPrinter();
 
         var mapBuilder = new ConcurrentLinkedHashMap.Builder<String, String>();
         mapBuilder.maximumWeightedCapacity(CACHE_SIZE);
         parentTitleCache = mapBuilder.build();
+    }
+
+    /**
+     * @return newly opened printer for the report
+     */
+    public CSVPrinter openCsvPrinter() {
+        try {
+            BufferedWriter writer = Files.newBufferedWriter(project.getPostMigrationReportPath());
+            return new CSVPrinter(writer, PostMigrationReportConstants.CSV_OUTPUT_FORMAT);
+        } catch (IOException e) {
+            throw new MigrationException("Error creating redirect mapping CSV", e);
+        }
     }
 
     /**
@@ -110,8 +117,7 @@ public class PostMigrationReportService {
         String parentUrl = null;
         String parentTitle = null;
         String objType = ResourceType.Work.name();
-        csvPrinter.printRecord(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle,
-                null, parentUrl, parentTitle, childCount);
+        addRow(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle, childCount);
     }
 
     /**
@@ -132,8 +138,13 @@ public class PostMigrationReportService {
         String parentUrl = this.bxcBaseUrl + boxcWorkId;
         String parentTitle = getParentTitle(parentCdmId);
         String objType = ResourceType.File.name();
-        csvPrinter.printRecord(fileCdmId, cdmUrl, objType, boxcUrl, boxcTitle,
-                null, parentUrl, parentTitle, null);
+        addRow(fileCdmId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle, null);
+    }
+
+    protected void addRow(String cdmId, String cdmUrl, String objType, String boxcUrl, String boxcTitle,
+                        String verified, String parentUrl, String parentTitle, Integer childCount) throws IOException {
+        csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle,
+                verified, parentUrl, parentTitle, childCount);
     }
 
     private String buildCdmUrl(String cdmObjectId, boolean isWorkObject, boolean isSingleItem) {

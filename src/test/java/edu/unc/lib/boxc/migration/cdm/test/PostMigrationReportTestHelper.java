@@ -70,7 +70,7 @@ public class PostMigrationReportTestHelper {
                                          String bxcUrl, String bxcTitle, String verified, String parentUrl,
                                          String parentTitle, String childCount) {
         var found = rows.stream().filter(r -> r.get(0).equals(cdmId)).findFirst().orElse(null);
-        assertNotNull("Did not find row for CDM id" + cdmId, found);
+        assertNotNull("Did not find row for CDM id " + cdmId + ", rows were:\n" + rows, found);
         assertEquals(Arrays.asList(cdmId, cdmUrl, objType, bxcUrl, bxcTitle, verified, parentUrl,
                 parentTitle, childCount), found);
     }

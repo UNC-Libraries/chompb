@@ -52,10 +52,8 @@ public class PostMigrationReportServiceTest {
         initMocks(this);
         tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), "proj", null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
-        project.getProjectProperties().setBxcEnvironmentId(BxcEnvironmentHelper.DEFAULT_ENV_ID);
-        ProjectPropertiesSerialization.write(project);
-
+                tmpFolder.getRoot().toPath(), "proj", null, "user",
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         descriptionsService = testHelper.getDescriptionsService();
 
