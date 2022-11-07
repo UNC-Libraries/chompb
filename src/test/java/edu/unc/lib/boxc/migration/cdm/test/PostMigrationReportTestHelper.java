@@ -16,8 +16,7 @@
 package edu.unc.lib.boxc.migration.cdm.test;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
-import org.apache.commons.csv.CSVFormat;
+import edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
@@ -43,10 +42,7 @@ public class PostMigrationReportTestHelper {
     public static List<List<String>> parseReport(MigrationProject project) throws Exception {
         try (
                 Reader reader = Files.newBufferedReader(project.getPostMigrationReportPath());
-                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                        .withFirstRecordAsHeader()
-                        .withHeader(PostMigrationReportService.CSV_HEADERS)
-                        .withTrim());
+                CSVParser csvParser = new CSVParser(reader, PostMigrationReportConstants.CSV_PARSER_FORMAT);
         ) {
             var rows = new ArrayList<List<String>>();
             for (CSVRecord csvRecord : csvParser) {

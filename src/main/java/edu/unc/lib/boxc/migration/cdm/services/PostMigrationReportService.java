@@ -22,9 +22,9 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
+import edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants;
 import edu.unc.lib.boxc.model.api.ResourceType;
 import edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil;
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
@@ -46,9 +46,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class PostMigrationReportService {
     private static final Logger log = getLogger(PostMigrationReportService.class);
-    public static final String[] CSV_HEADERS = new String[] {
-            "cdm_id", "cdm_url", "boxc_obj_type", "boxc_url", "boxc_title", "verified",
-            "boxc_parent_work_url", "boxc_parent_work_title", "children_count" };
 
     private MigrationProject project;
     private ChompbConfig chompbConfig;
@@ -76,7 +73,7 @@ public class PostMigrationReportService {
 
         try {
             BufferedWriter writer = Files.newBufferedWriter(project.getPostMigrationReportPath());
-            csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(CSV_HEADERS));
+            csvPrinter = new CSVPrinter(writer, PostMigrationReportConstants.CSV_OUTPUT_FORMAT);
         } catch (IOException e) {
             throw new MigrationException("Error creating redirect mapping CSV", e);
         }
