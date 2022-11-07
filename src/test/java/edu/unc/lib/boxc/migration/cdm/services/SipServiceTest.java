@@ -22,7 +22,9 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
+import edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
@@ -51,16 +53,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
+import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyString;
 
 /**
  * @author bbpennel
@@ -81,7 +86,8 @@ public class SipServiceTest {
     @Before
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME,
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
 
         testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
         service = testHelper.createSipsService();
@@ -676,6 +682,35 @@ public class SipServiceTest {
             assertEquals(rows.get(1).get("boxc_object_id"), rows.get(2).get("boxc_object_id"));
             assertEquals(4, rows.size());
         }
+        var pmRows = PostMigrationReportTestHelper.parseReport(project);
+        assertContainsRow(pmRows, "grp:groupa:group1",
+                "",
+                "Work",
+                "Folder Group 1",
+                "",
+                "",
+                "2");
+        assertContainsRow(pmRows, "25",
+                "http://localhost/cdm/singleitem/collection/proj/id/25",
+                "File",
+                "",
+                "",
+                "Folder Group 1",
+                "");
+        assertContainsRow(pmRows, "26",
+                "http://localhost/cdm/singleitem/collection/proj/id/26",
+                "File",
+                "Plan of Battery McIntosh",
+                "",
+                "Folder Group 1",
+                "");
+        assertContainsRow(pmRows, "27",
+                "http://localhost/cdm/singleitem/collection/proj/id/27",
+                "Work",
+                "Fort DeRussy on Red River, Louisiana",
+                "",
+                "",
+                "1");
     }
 
     @Test

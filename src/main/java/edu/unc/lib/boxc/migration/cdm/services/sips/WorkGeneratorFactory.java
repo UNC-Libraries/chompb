@@ -20,6 +20,7 @@ import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
+import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 
@@ -40,6 +41,7 @@ public class WorkGeneratorFactory {
     private SipPremisLogger sipPremisLogger;
     private DescriptionsService descriptionsService;
     private RedirectMappingService redirectMappingService;
+    private PostMigrationReportService postMigrationReportService;
     private PIDMinter pidMinter;
 
     public WorkGenerator create(String cdmId, String cdmCreated, String entryType) {
@@ -62,6 +64,7 @@ public class WorkGeneratorFactory {
         gen.sipPremisLogger = sipPremisLogger;
         gen.pidMinter = pidMinter;
         gen.redirectMappingService = redirectMappingService;
+        gen.postMigrationReportService = postMigrationReportService;
         return gen;
     }
 
@@ -103,5 +106,9 @@ public class WorkGeneratorFactory {
 
     public void setRedirectMappingService(RedirectMappingService redirectMappingService) {
         this.redirectMappingService = redirectMappingService;
+    }
+
+    public void setPostMigrationReportService(PostMigrationReportService postMigrationReportService) {
+        this.postMigrationReportService = postMigrationReportService;
     }
 }

@@ -15,6 +15,7 @@
  */
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import edu.unc.lib.boxc.common.util.URIUtil;
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -39,8 +41,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Service for producing and managing the post migration report for verifying objects were successfully migrated.
  *
  * The report contains the original CDM URL, new Box-c info, and whether the destination object has been verified.
- *
- * This class is stateful and not thread safe.
  *
  * @author bbpennel
  */
@@ -58,8 +58,12 @@ public class PostMigrationReportService {
     private String singleBaseUrl;
     private String compoundBaseUrl;
     private String bxcBaseUrl;
-    private String lastParentTitle;
+    private static final int CACHE_SIZE = 16;
+    private Map<String, String> parentTitleCache;
 
+    /**
+     * Initialize the service
+     */
     public void init() {
         var cdmEnv = chompbConfig.getCdmEnvironments().get(project.getProjectProperties().getCdmEnvironmentId());
         var baseWithoutPort = cdmEnv.getHttpBaseUrl().replaceFirst(":\\d+", "");
@@ -76,6 +80,10 @@ public class PostMigrationReportService {
         } catch (IOException e) {
             throw new MigrationException("Error creating redirect mapping CSV", e);
         }
+
+        var mapBuilder = new ConcurrentLinkedHashMap.Builder<String, String>();
+        mapBuilder.maximumWeightedCapacity(CACHE_SIZE);
+        parentTitleCache = mapBuilder.build();
     }
 
     /**
@@ -89,36 +97,46 @@ public class PostMigrationReportService {
         }
     }
 
+    /**
+     * Add a report entry for a work object
+     * @param cdmObjectId cdm id of the work
+     * @param boxcWorkId boxc uuid of the work
+     * @param childCount number of children for the work
+     * @param isSingleItem whether this work is a CDM single item type
+     * @throws IOException
+     */
     public void addWorkRow(String cdmObjectId, String boxcWorkId, int childCount, boolean isSingleItem)
             throws IOException {
         String cdmUrl = buildCdmUrl(cdmObjectId, true, isSingleItem);
-        String cdmId = buildCdmId(cdmObjectId, true, isSingleItem);
-        String boxcTitle = extractTitle(cdmId);
+        String boxcTitle = getParentTitle(cdmObjectId);
         String boxcUrl = this.bxcBaseUrl + boxcWorkId;
         String parentUrl = null;
         String parentTitle = null;
         String objType = ResourceType.Work.name();
-        lastParentTitle = boxcTitle;
-        csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle, childCount);
+        csvPrinter.printRecord(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle,
+                null, parentUrl, parentTitle, childCount);
     }
 
-    public void addFileRow(String cdmObjectId, String boxcWorkId, String boxcFileId, boolean isSingleItem)
+    /**
+     * Add a report entry for a file object
+     * @param fileCdmId cdm id of the file
+     * @param parentCdmId  cdm id of the parent object
+     * @param boxcWorkId bxc uuid of the work containing this file
+     * @param boxcFileId bxc uuid of the file object
+     * @param isSingleItem whether the work containing this file is a CDM single item
+     * @throws IOException
+     */
+    public void addFileRow(String fileCdmId, String parentCdmId, String boxcWorkId, String boxcFileId,
+                           boolean isSingleItem)
             throws IOException {
-        String cdmUrl = buildCdmUrl(cdmObjectId, false, isSingleItem);
-        String cdmId = buildCdmId(cdmObjectId, false, isSingleItem);
-        String boxcTitle = extractTitle(cdmId);
+        String cdmUrl = buildCdmUrl(fileCdmId, false, isSingleItem);
+        String boxcTitle = extractTitle(fileCdmId);
         String boxcUrl = this.bxcBaseUrl + boxcFileId;
         String parentUrl = this.bxcBaseUrl + boxcWorkId;
-        String parentTitle = lastParentTitle;
+        String parentTitle = getParentTitle(parentCdmId);
         String objType = ResourceType.File.name();
-        csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle, null);
-    }
-
-    private String buildCdmId(String cdmObjectId, boolean isWorkObject, boolean isSingleItem) {
-        if (!isSingleItem) {
-            return cdmObjectId;
-        }
-        return isWorkObject ? cdmObjectId : cdmObjectId + "/original_file";
+        csvPrinter.printRecord(fileCdmId, cdmUrl, objType, boxcUrl, boxcTitle,
+                null, parentUrl, parentTitle, null);
     }
 
     private String buildCdmUrl(String cdmObjectId, boolean isWorkObject, boolean isSingleItem) {
@@ -128,10 +146,19 @@ public class PostMigrationReportService {
         }
         // Is a not a work object, or is the Work part of a single item object
         if (!isWorkObject || isSingleItem) {
-            return this.singleBaseUrl + cdmObjectId;
+            return this.singleBaseUrl + cdmObjectId.replace("/original_file", "");
         }
         // Is a compound object
         return this.compoundBaseUrl + cdmObjectId;
+    }
+
+    private String getParentTitle(String cdmId) {
+        if (parentTitleCache.containsKey(cdmId)) {
+            return parentTitleCache.get(cdmId);
+        }
+        String title = extractTitle(cdmId);
+        parentTitleCache.put(cdmId, title);
+        return title;
     }
 
     private String extractTitle(String cdmId) {

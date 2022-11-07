@@ -77,33 +77,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
         System.setProperty("REDIS_HOST", "localhost");
         System.setProperty("REDIS_PORT", Integer.toString(REDIS_PORT));
         redisServer.start();
-        sipService = new SipService();
-        sipService.setProject(project);
-
-        pidMinter = new RepositoryPIDMinter();
-        premisLoggerFactory = new PremisLoggerFactoryImpl();
-        premisLoggerFactory.setPidMinter(pidMinter);
-        indexService = new CdmIndexService();
-        indexService.setProject(project);
-        sourceFileService = new SourceFileService();
-        sourceFileService.setIndexService(indexService);
-        sourceFileService.setProject(project);
-        accessFileService = new AccessFileService();
-        accessFileService.setIndexService(indexService);
-        accessFileService.setProject(project);
-        descriptionsService = new DescriptionsService();
-        descriptionsService.setProject(project);
-        destinationsService = new DestinationsService();
-        destinationsService.setProject(project);
-
-        sipService = new SipService();
-        sipService.setIndexService(indexService);
-        sipService.setAccessFileService(accessFileService);
-        sipService.setSourceFileService(sourceFileService);
-        sipService.setPidMinter(pidMinter);
-        sipService.setDescriptionsService(descriptionsService);
-        sipService.setPremisLoggerFactory(premisLoggerFactory);
-        sipService.setProject(project);
+        sipService = testHelper.createSipsService();
     }
 
     public void initDepositStatusFactory() {

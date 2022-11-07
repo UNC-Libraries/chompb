@@ -79,8 +79,10 @@ public class SipService {
     private DescriptionsService descriptionsService;
     private RedirectMappingService redirectMappingService;
     private PremisLoggerFactory premisLoggerFactory;
+    private PostMigrationReportService postMigrationReportService;
     private SipPremisLogger sipPremisLogger;
     private MigrationProject project;
+    private ChompbConfigService.ChompbConfig chompbConfig;
     private PIDMinter pidMinter;
     private CdmToDestMapper cdmToDestMapper = new CdmToDestMapper();
     private WorkGeneratorFactory workGeneratorFactory;
@@ -96,6 +98,11 @@ public class SipService {
         sipPremisLogger = new SipPremisLogger();
         sipPremisLogger.setPremisLoggerFactory(premisLoggerFactory);
         initializeDestinations(options);
+        postMigrationReportService = new PostMigrationReportService();
+        postMigrationReportService.setDescriptionsService(descriptionsService);
+        postMigrationReportService.setProject(project);
+        postMigrationReportService.setChompbConfig(chompbConfig);
+        postMigrationReportService.init();
 
         workGeneratorFactory = new WorkGeneratorFactory();
         workGeneratorFactory.setOptions(options);
@@ -106,6 +113,7 @@ public class SipService {
         workGeneratorFactory.setAccessFileService(accessFileService);
         workGeneratorFactory.setRedirectMappingService(redirectMappingService);
         workGeneratorFactory.setPidMinter(pidMinter);
+        workGeneratorFactory.setPostMigrationReportService(postMigrationReportService);
         try {
             workGeneratorFactory.setAccessFilesInfo(accessFileService.loadMappings());
         } catch (NoSuchFileException e) {
@@ -170,7 +178,12 @@ public class SipService {
         } finally {
             CdmIndexService.closeDbConnection(conn);
             destEntries.stream().forEach(DestinationSipEntry::close);
-            redirectMappingService.closeCsv();
+            try {
+                redirectMappingService.closeCsv();
+                postMigrationReportService.closeCsv();
+            } catch (Exception e) {
+
+            }
         }
     }
 
@@ -302,6 +315,10 @@ public class SipService {
 
     public void setProject(MigrationProject project) {
         this.project = project;
+    }
+
+    public void setChompbConfig(ChompbConfigService.ChompbConfig chompbConfig) {
+        this.chompbConfig = chompbConfig;
     }
 
     public static class SkipObjectException extends RuntimeException {

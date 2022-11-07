@@ -54,12 +54,14 @@ public class MultiFileWorkGenerator extends WorkGenerator {
 
             List<PID> childPids = new ArrayList<>();
             while (rs.next()) {
-                String cdmId = rs.getString(1);
+                String fileCdmId = rs.getString(1);
                 String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
 
-                SourceFilesInfo.SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-                PID filePid = addFileObject(cdmId, cdmCreated, sourceMapping);
-                addChildDescription(cdmId, filePid);
+                SourceFilesInfo.SourceFileMapping sourceMapping = getSourceFileMapping(fileCdmId);
+                PID filePid = addFileObject(fileCdmId, cdmCreated, sourceMapping);
+                addChildDescription(fileCdmId, filePid);
+                postMigrationReportService.addFileRow(fileCdmId, cdmId, workPid.getId(),
+                        filePid.getId(), isSingleItem());
 
                 childPids.add(filePid);
             }
@@ -67,5 +69,9 @@ public class MultiFileWorkGenerator extends WorkGenerator {
         } catch (SQLException e) {
             throw new MigrationException(e);
         }
+    }
+
+    protected boolean isSingleItem() {
+        return false;
     }
 }

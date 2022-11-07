@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
@@ -98,11 +99,15 @@ public class SipServiceHelper {
     private CdmIndexService indexService;
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
+    private ChompbConfigService.ChompbConfig chompbConfig;
 
     public SipServiceHelper(MigrationProject project, Path filesBasePath) throws IOException {
         this.sourceFilesBasePath = new File(filesBasePath.toFile(), "source").toPath();
         this.accessFilesBasePath = new File(filesBasePath.toFile(), "access").toPath();
         this.project = project;
+        chompbConfig = new ChompbConfigService.ChompbConfig();
+        chompbConfig.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
+        chompbConfig.setBxcEnvironments(BxcEnvironmentHelper.getTestMapping());
         pidMinter = new RepositoryPIDMinter();
         premisLoggerFactory = new PremisLoggerFactoryImpl();
         premisLoggerFactory.setPidMinter(pidMinter);
@@ -133,6 +138,7 @@ public class SipServiceHelper {
         service.setDescriptionsService(descriptionsService);
         service.setPremisLoggerFactory(premisLoggerFactory);
         service.setProject(project);
+        service.setChompbConfig(chompbConfig);
         return service;
     }
 
@@ -465,4 +471,7 @@ public class SipServiceHelper {
         return premisLoggerFactory;
     }
 
+    public ChompbConfigService.ChompbConfig getChompbConfig() {
+        return chompbConfig;
+    }
 }

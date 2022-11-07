@@ -26,6 +26,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,6 +48,13 @@ public class SipsCommandIT extends AbstractCommandIT {
     @Before
     public void setup() throws Exception {
         initProjectAndHelper();
+        setupChompbConfig();
+        System.setProperty("ENV_CONFIG", chompbConfigPath);
+    }
+
+    @After
+    public void cleanup() {
+        System.clearProperty("ENV_CONFIG");
     }
 
     @Test

@@ -22,6 +22,7 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
+import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.model.api.DatastreamType;
@@ -65,6 +66,7 @@ public class WorkGenerator {
     protected SipPremisLogger sipPremisLogger;
     protected DescriptionsService descriptionsService;
     protected AccessFileService accessFileService;
+    protected PostMigrationReportService postMigrationReportService;
 
     protected String cdmId;
     protected String cdmCreated;
@@ -94,7 +96,6 @@ public class WorkGenerator {
     protected void generateWork() throws IOException {
         Path expDescPath = getDescriptionPath(cdmId, false);
 
-
         log.info("Transforming CDM object {} to box-c work {}", cdmId, workPid.getId());
         workBag = model.createBag(workPid.getRepositoryPath());
         workBag.addProperty(RDF.type, Cdr.Work);
@@ -104,6 +105,7 @@ public class WorkGenerator {
         copyDescriptionToSip(workPid, expDescPath);
 
         fileObjPids = addChildObjects();
+        postMigrationReportService.addWorkRow(cdmId, workPid.getId(), fileObjPids.size(), isSingleItem());
     }
 
     protected List<PID> addChildObjects() throws IOException {
@@ -111,6 +113,8 @@ public class WorkGenerator {
         var fileObjectPid = addFileObject(cdmId, cdmCreated, sourceMapping);
         // in a single file object, the cdm id refers to the new work, so add suffix to reference the child file
         addChildDescription(cdmId + "/original_file", fileObjectPid);
+        postMigrationReportService.addFileRow(cdmId + "/original_file", cdmId, workPid.getId(),
+                fileObjectPid.getId(), isSingleItem());
         return Collections.singletonList(fileObjectPid);
     }
 
@@ -200,5 +204,12 @@ public class WorkGenerator {
         if (childDescPath != null) {
             copyDescriptionToSip(fileObjPid, childDescPath);
         }
+    }
+
+    /**
+     * @return true if the object being transformed is a single item CDM object
+     */
+    protected boolean isSingleItem() {
+        return true;
     }
 }

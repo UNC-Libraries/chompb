@@ -150,5 +150,6 @@ public class SipsCommand {
         sipService.setDescriptionsService(descriptionsService);
         sipService.setPremisLoggerFactory(premisLoggerFactory);
         sipService.setProject(project);
+        sipService.setChompbConfig(parentCommand.getChompbConfig());
     }
 }
