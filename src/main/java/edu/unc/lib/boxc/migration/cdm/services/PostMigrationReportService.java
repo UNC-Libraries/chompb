@@ -152,7 +152,7 @@ public class PostMigrationReportService {
         if (cdmObjectId.startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
             return null;
         }
-        // Is a not a work object, or is the Work part of a single item object
+        // Is not a work object, or the Work is part of a single item object
         if (!isWorkObject || isSingleItem) {
             return this.singleBaseUrl + cdmObjectId.replace("/original_file", "");
         }
@@ -160,6 +160,7 @@ public class PostMigrationReportService {
         return this.compoundBaseUrl + cdmObjectId;
     }
 
+    // Get the title of the parent object, using a cache to prevent needing to read its MODS for every child
     private String getParentTitle(String cdmId) {
         if (parentTitleCache.containsKey(cdmId)) {
             return parentTitleCache.get(cdmId);
@@ -169,6 +170,7 @@ public class PostMigrationReportService {
         return title;
     }
 
+    // Get the mods:title of the object with the provided cdm id by extracting it from the associated MODS document
     private String extractTitle(String cdmId) {
         var descPath = descriptionsService.getExpandedDescriptionFilePath(cdmId);
         if (Files.notExists(descPath)) {

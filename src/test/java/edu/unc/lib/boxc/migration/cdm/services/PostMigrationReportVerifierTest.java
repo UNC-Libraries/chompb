@@ -85,7 +85,7 @@ public class PostMigrationReportVerifierTest {
     @Test
     public void reportVerifySuccessTest() throws Exception {
         mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.OK,
-                BOXC_URL_2, HttpStatus.OK));
+                BOXC_URL_2, HttpStatus.FORBIDDEN));
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
@@ -105,7 +105,7 @@ public class PostMigrationReportVerifierTest {
                 "Work",
                 BOXC_URL_1,
                 "Redoubt C",
-                PostMigrationReportConstants.VERIFIED_OK,
+                HttpStatus.OK.name(),
                 "",
                 "",
                 "1");
@@ -114,7 +114,7 @@ public class PostMigrationReportVerifierTest {
                 "File",
                 BOXC_URL_2,
                 "A file",
-                PostMigrationReportConstants.VERIFIED_OK,
+                HttpStatus.OK.name(),
                 BOXC_URL_1,
                 "Redoubt C",
                 "");
@@ -122,7 +122,7 @@ public class PostMigrationReportVerifierTest {
 
     @Test
     public void reportVerifyErrorsTest() throws Exception {
-        mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.FORBIDDEN,
+        mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.NOT_FOUND,
                 BOXC_URL_2, HttpStatus.NOT_FOUND));
 
         reportGenerator.init();
@@ -143,7 +143,7 @@ public class PostMigrationReportVerifierTest {
                 "Work",
                 BOXC_URL_1,
                 "Redoubt C",
-                HttpStatus.FORBIDDEN.name(),
+                HttpStatus.NOT_FOUND.name(),
                 "",
                 "",
                 "1");
@@ -164,7 +164,7 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                PostMigrationReportConstants.VERIFIED_OK, "", "", 1);
+                HttpStatus.OK.name(), "", "", 1);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
                 null, BOXC_URL_1, "Redoubt C", null);
         reportGenerator.closeCsv();
@@ -180,7 +180,7 @@ public class PostMigrationReportVerifierTest {
                 "Work",
                 BOXC_URL_1,
                 "Redoubt C",
-                PostMigrationReportConstants.VERIFIED_OK,
+                HttpStatus.OK.name(),
                 "",
                 "",
                 "1");
@@ -189,7 +189,7 @@ public class PostMigrationReportVerifierTest {
                 "File",
                 BOXC_URL_2,
                 "A file",
-                PostMigrationReportConstants.VERIFIED_OK,
+                HttpStatus.OK.name(),
                 BOXC_URL_1,
                 "Redoubt C",
                 "");
