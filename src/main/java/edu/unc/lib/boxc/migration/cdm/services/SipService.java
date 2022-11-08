@@ -178,12 +178,8 @@ public class SipService {
         } finally {
             CdmIndexService.closeDbConnection(conn);
             destEntries.stream().forEach(DestinationSipEntry::close);
-            try {
-                redirectMappingService.closeCsv();
-                postMigrationReportService.closeCsv();
-            } catch (Exception e) {
-
-            }
+            redirectMappingService.closeCsv();
+            postMigrationReportService.closeCsv();
         }
     }
 

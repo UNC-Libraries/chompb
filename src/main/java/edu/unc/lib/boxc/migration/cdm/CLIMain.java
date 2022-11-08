@@ -50,7 +50,8 @@ import java.util.concurrent.Callable;
         StatusCommand.class,
         GroupMappingCommand.class,
         IndexRedirectCommand.class,
-        ProjectPropertiesCommand.class
+        ProjectPropertiesCommand.class,
+        VerifyPostMigrationCommand.class
     })
 public class CLIMain implements Callable<Integer> {
     @Option(names = { "-w", "--work-dir" },

@@ -16,14 +16,12 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.util.DisplayProgressUtil;
 import edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.springframework.http.HttpStatus;
@@ -46,9 +44,10 @@ public class PostMigrationReportVerifier {
     private CloseableHttpClient httpClient;
     private boolean showProgress;
 
-    public void verify() throws IOException {
+    public VerificationOutcome verify() throws IOException {
         validateReport();
 
+        var outcome = new VerificationOutcome();
         var totalRecords = countNumberOfRecords();
         // Read the report so that we can write out a new version of it with the 'verified' field filled in
         var updatedPath = makeTempReportPath();
@@ -66,8 +65,9 @@ public class PostMigrationReportVerifier {
                 // 'verified' field is empty, so request the boxc resource and record the outcome
                 if (!PostMigrationReportConstants.VERIFIED_OK.equals(verified)) {
                     var boxcUrl = originalRecord.get(PostMigrationReportConstants.BXC_URL_HEADER);
-                    String outcome = requestHttpResult(boxcUrl);
-                    rowValues.set(PostMigrationReportConstants.VERIFIED_INDEX, outcome);
+                    var result = requestHttpResult(boxcUrl);
+                    outcome.recordResult(requestHttpResult(boxcUrl));
+                    rowValues.set(PostMigrationReportConstants.VERIFIED_INDEX, result);
                 }
                 // Write the row out into the new version of the report
                 csvPrinter.printRecord(rowValues);
@@ -78,6 +78,8 @@ public class PostMigrationReportVerifier {
         }
         // swap the updated report for the old version, delete old version
         Files.move(updatedPath, project.getPostMigrationReportPath(), StandardCopyOption.REPLACE_EXISTING);
+        outcome.totalRecords = totalRecords;
+        return outcome;
     }
 
     // Update progress display, if showing
@@ -135,5 +137,22 @@ public class PostMigrationReportVerifier {
 
     public void setShowProgress(boolean showProgress) {
         this.showProgress = showProgress;
+    }
+
+    public static class VerificationOutcome {
+        public long errorCount = 0;
+        public long verifiedCount = 0;
+        public long totalRecords = 0;
+
+        protected void recordResult(String result) {
+            if (!result.equals(PostMigrationReportConstants.VERIFIED_OK)) {
+                errorCount++;
+            }
+            verifiedCount++;
+        }
+
+        public boolean hasErrors() {
+            return errorCount > 0;
+        }
     }
 }
