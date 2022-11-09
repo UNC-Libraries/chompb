@@ -16,6 +16,8 @@
 package edu.unc.lib.boxc.migration.cdm.model;
 
 /**
+ * Configuration information for a Box-c environment
+ *
  * @author bbpennel
  */
 public class BxcEnvironment {

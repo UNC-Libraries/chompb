@@ -54,7 +54,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
             defaultValue = "${env:CDM_ENV:-test}")
     private String cdmEnvId;
     @Option(names = { "-E", "--bxc-env" },
-            description = "Box-c environment use as the migration destination. Env-config must be set. "
+            description = "Box-c environment used as the migration destination. Env-config must be set. "
                     + "Default: ${DEFAULT-VALUE}",
             defaultValue = "${env:BXC_ENV:-test}")
     private String bxcEnvId;

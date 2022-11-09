@@ -16,7 +16,6 @@
 package edu.unc.lib.boxc.migration.cdm.util;
 
 import org.apache.commons.csv.CSVFormat;
-import org.springframework.http.HttpStatus;
 
 /**
  * Constants related to the post migration report

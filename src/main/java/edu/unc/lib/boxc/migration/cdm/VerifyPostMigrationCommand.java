@@ -58,7 +58,7 @@ public class VerifyPostMigrationCommand implements Callable<Integer> {
             init();
             var outcome = verifier.verify();
             outputLogger.info("");
-            outputLogger.info("Completed verification in {}", (System.nanoTime() - start) / 1e9);
+            outputLogger.info("Completed verification in {}s", (System.nanoTime() - start) / 1e9);
             outputLogger.info("Checked {} out of {} objects in the report",
                     outcome.verifiedCount, outcome.totalRecords);
             if (outcome.hasErrors()) {

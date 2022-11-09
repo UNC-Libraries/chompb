@@ -25,12 +25,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author bbpennel
@@ -46,7 +43,7 @@ public class PostMigrationReportTestHelper {
         ) {
             var rows = new ArrayList<List<String>>();
             for (CSVRecord csvRecord : csvParser) {
-                rows.add(StreamSupport.stream(csvRecord.spliterator(), false).collect(Collectors.toList()));
+                rows.add(csvRecord.toList());
             }
             return rows;
         }
