@@ -17,6 +17,7 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.junit.After;
 import org.junit.Before;
@@ -39,7 +40,7 @@ import static org.junit.Assert.assertTrue;
 public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
+    public WireMockRule wireMockRule = new WireMockRule(options().port(BxcEnvironmentHelper.TEST_HTTP_PORT));
 
     @Before
     public void setup() throws Exception {

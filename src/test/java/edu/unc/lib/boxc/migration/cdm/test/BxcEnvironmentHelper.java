@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class BxcEnvironmentHelper {
     public static final String DEFAULT_ENV_ID = "test";
-    public static final int TEST_HTTP_PORT = 46888;
+    public static final int TEST_HTTP_PORT = 46887;
     public static final String TEST_BASE_URL = "http://localhost:" + TEST_HTTP_PORT + "/bxc/";
 
     /**
