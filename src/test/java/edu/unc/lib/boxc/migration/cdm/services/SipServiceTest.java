@@ -204,8 +204,8 @@ public class SipServiceTest {
         Resource collResc = depBagChildren.iterator().next().asResource();
         assertTrue(collResc.hasProperty(RDF.type, Cdr.Collection));
         assertTrue(collResc.hasProperty(CdrDeposit.label, "001234"));
-        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, PUBLIC_PRINC));
-        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, AUTHENTICATED_PRINC));
+        assertTrue(collResc.hasProperty(CdrAcl.none, PUBLIC_PRINC));
+        assertTrue(collResc.hasProperty(CdrAcl.none, AUTHENTICATED_PRINC));
         testHelper.assertMigrationEventPresent(dirManager, sip.getNewCollectionPid());
         Bag collBag = model.getBag(collResc);
         List<RDFNode> collChildren = collBag.iterator().toList();
@@ -251,8 +251,8 @@ public class SipServiceTest {
         Resource collResc = depBagChildren.iterator().next().asResource();
         assertTrue(collResc.hasProperty(RDF.type, Cdr.Collection));
         assertTrue(collResc.hasProperty(CdrDeposit.label, newCollId));
-        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, PUBLIC_PRINC));
-        assertTrue(collResc.hasProperty(CdrAcl.canViewOriginals, AUTHENTICATED_PRINC));
+        assertTrue(collResc.hasProperty(CdrAcl.none, PUBLIC_PRINC));
+        assertTrue(collResc.hasProperty(CdrAcl.none, AUTHENTICATED_PRINC));
         testHelper.assertMigrationEventPresent(dirManager, sip.getNewCollectionPid());
         // Check that desc file was copied over
         Path path = dirManager.getModsPath(sip.getNewCollectionPid());

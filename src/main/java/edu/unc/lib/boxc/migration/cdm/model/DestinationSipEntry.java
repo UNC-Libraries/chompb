@@ -74,8 +74,8 @@ public class DestinationSipEntry {
             newCollBag.addProperty(RDF.type, Cdr.Collection);
             newCollBag.addLiteral(CdrDeposit.label, newCollectionId);
             // New collections should be created as publicly accessible
-            newCollBag.addProperty(CdrAcl.canViewOriginals, PUBLIC_PRINC);
-            newCollBag.addProperty(CdrAcl.canViewOriginals, AUTHENTICATED_PRINC);
+            newCollBag.addProperty(CdrAcl.none, PUBLIC_PRINC);
+            newCollBag.addProperty(CdrAcl.none, AUTHENTICATED_PRINC);
         }
         commitModel();
     }
