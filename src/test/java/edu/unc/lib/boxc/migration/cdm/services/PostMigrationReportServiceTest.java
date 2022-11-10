@@ -34,9 +34,13 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author bbpennel
  */
 public class PostMigrationReportServiceTest {
+    private static final String BOXC_BASE_URL = "http://localhost:46887/bxc/record/";
     private static final String BOXC_ID_1 = "bb3b83d7-2962-4604-a7d0-9afcb4ec99b1";
     private static final String BOXC_ID_2 = "91c08272-260f-40f1-bb7c-78854d504368";
     private static final String BOXC_ID_3 = "f9d7262c-3cfb-4d27-8ecc-b9df9ac2f950";
+    private static final String BOXC_URL_1 = BOXC_BASE_URL + BOXC_ID_1;
+    private static final String BOXC_URL_2 = BOXC_BASE_URL + BOXC_ID_2;
+    private static final String BOXC_URL_3 = BOXC_BASE_URL + BOXC_ID_3;
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -74,7 +78,7 @@ public class PostMigrationReportServiceTest {
         assertContainsRow(rows, "25",
                 "http://localhost/cdm/singleitem/collection/proj/id/25",
                 "Work",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Redoubt C",
                 "",
                 "",
@@ -83,10 +87,10 @@ public class PostMigrationReportServiceTest {
         assertContainsRow(rows, "25/original_file",
                 "http://localhost/cdm/singleitem/collection/proj/id/25",
                 "File",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_2,
+                BOXC_URL_2,
                 "",
                 "",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Redoubt C",
                 "");
     }
@@ -103,7 +107,7 @@ public class PostMigrationReportServiceTest {
         assertContainsRow(rows, "25",
                 "http://localhost/cdm/singleitem/collection/proj/id/25",
                 "Work",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Redoubt C",
                 "",
                 "",
@@ -112,10 +116,10 @@ public class PostMigrationReportServiceTest {
         assertContainsRow(rows, "25/original_file",
                 "http://localhost/cdm/singleitem/collection/proj/id/25",
                 "File",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_2,
+                BOXC_URL_2,
                 "Redoubt C Scan File",
                 "",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Redoubt C",
                 "");
     }
@@ -133,7 +137,7 @@ public class PostMigrationReportServiceTest {
         assertContainsRow(rows, "grp:groupa:group1",
                 "",
                 "Work",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Folder Group 1",
                 "",
                 "",
@@ -142,19 +146,19 @@ public class PostMigrationReportServiceTest {
         assertContainsRow(rows, "26",
                 "http://localhost/cdm/singleitem/collection/proj/id/26",
                 "File",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_2,
+                BOXC_URL_2,
                 "Plan of Battery McIntosh",
                 "",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Folder Group 1",
                 "");
         assertContainsRow(rows, "27",
                 "http://localhost/cdm/singleitem/collection/proj/id/27",
                 "File",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_3,
+                BOXC_URL_3,
                 "Fort DeRussy on Red River, Louisiana",
                 "",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Folder Group 1",
                 "");
     }
@@ -174,7 +178,7 @@ public class PostMigrationReportServiceTest {
         assertContainsRow(rows, "605",
                 "http://localhost/cdm/compoundobject/collection/proj/id/605",
                 "Work",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
                 "",
                 "",
@@ -183,19 +187,19 @@ public class PostMigrationReportServiceTest {
         assertContainsRow(rows, "602",
                 "http://localhost/cdm/singleitem/collection/proj/id/602",
                 "File",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_2,
+                BOXC_URL_2,
                 "World War II ration book",
                 "",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
                 "");
         assertContainsRow(rows, "603",
                 "http://localhost/cdm/singleitem/collection/proj/id/603",
                 "File",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_3,
+                BOXC_URL_3,
                 "World War II ration book (instructions)",
                 "",
-                "http://localhost:46887/bxc/record/" + BOXC_ID_1,
+                BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
                 "");
     }
