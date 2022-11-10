@@ -42,6 +42,7 @@ public class MigrationProjectProperties {
     private String hookId;
     private String collectionNumber;
     private String cdmEnvironmentId;
+    private String bxcEnvironmentId;
 
     public MigrationProjectProperties() {
         sipsSubmitted = new HashSet<>();
@@ -232,5 +233,16 @@ public class MigrationProjectProperties {
 
     public void setCdmEnvironmentId(String cdmEnvironmentId) {
         this.cdmEnvironmentId = cdmEnvironmentId;
+    }
+
+    /**
+     * @return Key indicating which Box-c environment this migration is targeting
+     */
+    public String getBxcEnvironmentId() {
+        return bxcEnvironmentId;
+    }
+
+    public void setBxcEnvironmentId(String bxcEnvironmentId) {
+        this.bxcEnvironmentId = bxcEnvironmentId;
     }
 }

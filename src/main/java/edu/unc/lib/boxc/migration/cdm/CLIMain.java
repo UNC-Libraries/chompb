@@ -19,6 +19,7 @@ import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.util.BannerUtility;
 import edu.unc.lib.boxc.migration.cdm.util.CLIConstants;
+import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -49,7 +50,8 @@ import java.util.concurrent.Callable;
         StatusCommand.class,
         GroupMappingCommand.class,
         IndexRedirectCommand.class,
-        ProjectPropertiesCommand.class
+        ProjectPropertiesCommand.class,
+        VerifyPostMigrationCommand.class
     })
 public class CLIMain implements Callable<Integer> {
     @Option(names = { "-w", "--work-dir" },
@@ -69,7 +71,7 @@ public class CLIMain implements Callable<Integer> {
 
     @Option(names = { "--env-config" },
             description = "Path to the chompb environment configuration file. Default: ${DEFAULT-VALUE}",
-            defaultValue = "${env:ENV_CONFIG}")
+            defaultValue = "${env:ENV_CONFIG:-${sys:ENV_CONFIG:-}}")
     private Path envConfigPath;
 
     private ChompbConfigService.ChompbConfig chompbConfig;
@@ -100,7 +102,7 @@ public class CLIMain implements Callable<Integer> {
      */
     public ChompbConfigService.ChompbConfig getChompbConfig() throws IOException {
         if (chompbConfig == null) {
-            if (envConfigPath == null) {
+            if (StringUtils.isBlank(envConfigPath.toString())) {
                 throw new IllegalArgumentException("Must provide an env-config option");
             }
             var configService = new ChompbConfigService();

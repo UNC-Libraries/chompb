@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.After;
@@ -66,7 +67,7 @@ public class AbstractCommandIT extends AbstractOutputTest {
 
     protected void initProject() throws IOException {
         project = MigrationProjectFactory.createMigrationProject(baseDir, PROJECT_ID, defaultCollectionId, USERNAME,
-                CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
     }
 
     protected void initProjectAndHelper() throws IOException {
@@ -78,6 +79,7 @@ public class AbstractCommandIT extends AbstractOutputTest {
         var configPath = tmpFolder.getRoot().toPath().resolve("config.json");
         var config = new ChompbConfigService.ChompbConfig();
         config.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
+        config.setBxcEnvironments(BxcEnvironmentHelper.getTestMapping());
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(Files.newOutputStream(configPath), config);
         chompbConfigPath = configPath.toString();

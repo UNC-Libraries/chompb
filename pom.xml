@@ -20,6 +20,7 @@
         <log4j-to-slf4j.version>2.17.1</log4j-to-slf4j.version>
         <build-tools.path></build-tools.path>
         <mysql.version>8.0.28</mysql.version>
+        <csv.version>1.9.0</csv.version>
     </properties>
 
     <build>
@@ -122,6 +123,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
+            <version>${csv.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>

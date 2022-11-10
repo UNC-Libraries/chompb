@@ -17,6 +17,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
+import edu.unc.lib.boxc.migration.cdm.model.BxcEnvironment;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,6 +47,7 @@ public class ChompbConfigService {
 
     public static class ChompbConfig {
         private Map<String, CdmEnvironment> cdmEnvironments;
+        private Map<String, BxcEnvironment> bxcEnvironments;
 
         public Map<String, CdmEnvironment> getCdmEnvironments() {
             return cdmEnvironments;
@@ -53,6 +55,14 @@ public class ChompbConfigService {
 
         public void setCdmEnvironments(Map<String, CdmEnvironment> cdmEnvironments) {
             this.cdmEnvironments = cdmEnvironments;
+        }
+
+        public Map<String, BxcEnvironment> getBxcEnvironments() {
+            return bxcEnvironments;
+        }
+
+        public void setBxcEnvironments(Map<String, BxcEnvironment> bxcEnvironments) {
+            this.bxcEnvironments = bxcEnvironments;
         }
     }
 }

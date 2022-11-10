@@ -36,18 +36,26 @@ public class MigrationProjectFactory {
     private MigrationProjectFactory() {
     }
 
+    public static MigrationProject createMigrationProject(Path path, String name,
+                                                          String collectionId, String user, String cdmEnvId)
+            throws IOException {
+        return createMigrationProject(path, name, collectionId, user, cdmEnvId, null);
+    }
+
     /**
      * Create a new MigrationProject, initializing a new directory and basic structure
-     * @param path
-     * @param name
-     * @param collectionId
-     * @param user
-     * @param cdmEnvId
+     * @param path base path the project will be written to
+     * @param name name of the project
+     * @param collectionId id of the cdm collection
+     * @param user user performing the migration
+     * @param cdmEnvId identifier for cdm environment the data is migrating from
+     * @param bxcEnvId identifier for boxc environment the migration is targeting
      * @return
      * @throws IOException
      */
     public static MigrationProject createMigrationProject(Path path, String name,
-                                                          String collectionId, String user, String cdmEnvId)
+                                                          String collectionId, String user,
+                                                          String cdmEnvId, String bxcEnvId)
             throws IOException {
         Assert.notNull(path, "Project path not set");
         Assert.notNull(user, "Username not set");
@@ -82,6 +90,7 @@ public class MigrationProjectFactory {
         properties.setName(projectName);
         properties.setCdmCollectionId(collectionId == null ? projectName : collectionId);
         properties.setCdmEnvironmentId(cdmEnvId);
+        properties.setBxcEnvironmentId(bxcEnvId);
         project.setProjectProperties(properties);
         ProjectPropertiesSerialization.write(propertiesPath, properties);
 
