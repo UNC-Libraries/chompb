@@ -23,6 +23,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
@@ -34,6 +35,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class DestinationsCommandIT extends AbstractCommandIT {
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
+    private final static String CUSTOM_DEST_ID = "8dd13ef6-1011-4acc-9f2f-ac1cdf03d800";
 
     @Before
     public void setup() throws Exception {
@@ -232,6 +234,84 @@ public class DestinationsCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void addSingleCdmIdCustomDestination() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "generate",
+                "-dd", DEST_UUID,
+                "-dc", "00123" };
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "add",
+                "-id", "25",
+                "-dd", CUSTOM_DEST_ID};
+        executeExpectSuccess(args2);
+
+        assertCustomIdMappingAdded("25", 2);
+    }
+    @Test
+    public void addMultipleCdmIdCustomDestination() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "generate",
+                "-dd", DEST_UUID,
+                "-dc", "00123" };
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "add",
+                "-id", "25,26,27",
+                "-dd", CUSTOM_DEST_ID};
+        executeExpectSuccess(args2);
+
+        assertCustomIdMappingAdded("25", 4);
+        assertCustomIdMappingAdded("26", 4);
+        assertCustomIdMappingAdded("27", 4);
+    }
+
+    @Test
+    public void addCdmIdBeforeDestinationMappingExists() throws Exception {
+        setIndexedDate();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "add",
+                "-id", "25",
+                "-dd", CUSTOM_DEST_ID};
+        executeExpectFailure(args);
+
+        assertOutputContains("FAIL: Destination mapping at path " + project.getDestinationMappingsPath()
+                + " does not exist");
+    }
+
+    @Test
+    public void addBlankCdmIdCustomDestinationMapping() throws Exception {
+        setIndexedDate();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "generate",
+                "-dd", DEST_UUID,
+                "-dc", "00123" };
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "add",
+                "-id",
+                "-dd", CUSTOM_DEST_ID};
+        executeExpectFailure(args2);
+        assertOutputContains("Must provide a CDM ID");
+    }
+
+    @Test
     public void statusValidVerboseTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
 
@@ -260,13 +340,25 @@ public class DestinationsCommandIT extends AbstractCommandIT {
     }
 
     private void assertDefaultMapping(String expectedDest, String expectedColl) throws Exception {
-        DestinationsInfo info = DestinationsService.loadMappings(project);
-        List<DestinationMapping> mappings = info.getMappings();
+        var mappings = getMappings();
         assertEquals(1, mappings.size());
         DestinationMapping mapping = mappings.get(0);
         assertEquals(DestinationsInfo.DEFAULT_ID, mapping.getId());
         assertEquals(expectedDest, mapping.getDestination());
         assertEquals(expectedColl, mapping.getCollectionId());
+    }
+
+    private List<DestinationMapping> getMappings() throws IOException {
+        DestinationsInfo info = DestinationsService.loadMappings(project);
+        return info.getMappings();
+    }
+
+    private void assertCustomIdMappingAdded(String id, int count) throws IOException {
+        var mappings = getMappings();
+        assertEquals(count, mappings.size());
+        DestinationMapping mapping = mappings.get(0);
+        assertEquals(id, mapping.getId());
+        assertEquals(CUSTOM_DEST_ID, mapping.getDestination());
     }
 
     private void setIndexedDate() throws Exception {

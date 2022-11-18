@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.GenerateDestinationMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
@@ -53,7 +53,7 @@ public class DestinationsCommand {
 
     @Command(name = "generate",
             description = "Generate the destination mapping file for this project")
-    public int generate(@Mixin GenerateDestinationMappingOptions options) throws Exception {
+    public int generate(@Mixin DestinationMappingOptions options) throws Exception {
         long start = System.nanoTime();
 
         try {
@@ -126,7 +126,13 @@ public class DestinationsCommand {
         }
     }
 
-    private void validateOptions(GenerateDestinationMappingOptions options) {
+    @Command(name = "add",
+            description = "Add custom destination for individual CDM ID or list of IDs")
+    public int add() {
+        return 0;
+    }
+
+    private void validateOptions(DestinationMappingOptions options) {
         // For now, the only kind of mapping is a default, so fail if not set
         if (StringUtils.isBlank(options.getDefaultDestination())) {
             throw new IllegalArgumentException("Must provide a default destination");

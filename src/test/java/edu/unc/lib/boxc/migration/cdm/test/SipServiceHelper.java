@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +37,6 @@ import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
-import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingIndexService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -53,7 +51,7 @@ import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
-import edu.unc.lib.boxc.migration.cdm.options.GenerateDestinationMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
@@ -297,7 +295,7 @@ public class SipServiceHelper {
     }
 
     public void generateDefaultDestinationsMapping(String defDest, String defColl) throws Exception {
-        GenerateDestinationMappingOptions options = new GenerateDestinationMappingOptions();
+        DestinationMappingOptions options = new DestinationMappingOptions();
         options.setDefaultDestination(defDest);
         options.setDefaultCollection(defColl);
         destinationsService.generateMapping(options);

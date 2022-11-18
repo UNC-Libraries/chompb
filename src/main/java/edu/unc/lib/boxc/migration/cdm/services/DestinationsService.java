@@ -38,7 +38,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.GenerateDestinationMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 
@@ -55,7 +55,7 @@ public class DestinationsService {
      * Generate a destination mapping file for the project using the provided options
      * @param options
      */
-    public void generateMapping(GenerateDestinationMappingOptions options) throws IOException {
+    public void generateMapping(DestinationMappingOptions options) throws IOException {
         assertProjectStateValid();
         DestinationsValidator.assertValidDestination(options.getDefaultDestination());
         ensureMappingState(options.isForce());

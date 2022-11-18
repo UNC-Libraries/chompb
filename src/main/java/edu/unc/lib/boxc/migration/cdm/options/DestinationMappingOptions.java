@@ -18,10 +18,15 @@ package edu.unc.lib.boxc.migration.cdm.options;
 import picocli.CommandLine.Option;
 
 /**
- * Destination mapping generation options
+ * Destination mapping options
  * @author bbpennel
  */
-public class GenerateDestinationMappingOptions {
+public class DestinationMappingOptions {
+    @Option(names = {"-id", "--cdm-id"},
+            description = {
+                    "CDM ID(s) going to a specific box-c deposit destination in this migration project.",
+                    "Must be a CDM ID or a comma-delimited list of CDM IDs"})
+    private String cdmId;
 
     @Option(names = {"-dd", "--default-dest"},
             description = {
@@ -36,7 +41,7 @@ public class GenerateDestinationMappingOptions {
                     "The default will be used during SIP generation for objects if they do not have explicit mappings.",
                     "If this is populated, a new collection will be created and used "
                             + "as the destination for objects mapped to the default destination.",
-                    "Can be any value that uniquely identifies objects that belong in this destiantion.",})
+                    "Can be any value that uniquely identifies objects that belong in this destination.",})
     private String defaultCollection;
 
     @Option(names = { "-f", "--force"},
@@ -66,4 +71,8 @@ public class GenerateDestinationMappingOptions {
     public void setForce(boolean force) {
         this.force = force;
     }
+
+    public String getCdmId() { return cdmId; }
+
+    public void setCdmId(String cdmId) { this.cdmId = cdmId; }
 }
