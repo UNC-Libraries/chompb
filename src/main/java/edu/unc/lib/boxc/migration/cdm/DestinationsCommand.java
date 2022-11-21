@@ -19,6 +19,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -129,6 +130,12 @@ public class DestinationsCommand {
     @Command(name = "add",
             description = "Add custom destination for individual CDM ID or list of IDs")
     public int add(@Mixin DestinationMappingOptions options) throws Exception {
+        var destinationMappingExists = Files.exists(project.getDestinationMappingsPath());
+        if (!destinationMappingExists) {
+          outputLogger.info("FAIL: Destination mapping at path " + project.getDestinationMappingsPath()
+                  + " does not exist");
+          return 1;
+        }
         try {
             validateOptions(options);
             initialize();
