@@ -23,6 +23,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.List;
 
@@ -133,6 +134,24 @@ public class DestinationsService {
                 mappings.add(mapping);
             }
             return info;
+        }
+    }
+
+    public void addMappings(DestinationMappingOptions options) throws Exception {
+        assertProjectStateValid();
+        DestinationsValidator.assertValidDestination(options.getDefaultDestination());
+
+        Path destinationMappingsPath = project.getDestinationMappingsPath();
+
+        try (
+                BufferedWriter writer = Files.newBufferedWriter(destinationMappingsPath, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().build());
+        ) {
+            if (options.getDefaultDestination() != null) {
+                csvPrinter.printRecord(options.getCdmId(),
+                        options.getDefaultDestination(),
+                        options.getDefaultCollection());
+            }
         }
     }
 

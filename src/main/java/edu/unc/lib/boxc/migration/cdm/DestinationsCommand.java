@@ -128,8 +128,16 @@ public class DestinationsCommand {
 
     @Command(name = "add",
             description = "Add custom destination for individual CDM ID or list of IDs")
-    public int add() {
-        return 0;
+    public int add(@Mixin DestinationMappingOptions options) throws Exception {
+        try {
+            validateOptions(options);
+            initialize();
+            destService.addMappings(options);
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Cannot add mappings: {}", e.getMessage());
+            return 1;
+        }
     }
 
     private void validateOptions(DestinationMappingOptions options) {
@@ -139,6 +147,9 @@ public class DestinationsCommand {
         }
         if (options.getDefaultCollection() != null && StringUtils.isBlank(options.getDefaultCollection())) {
             throw new IllegalArgumentException("Default collection must not be blank");
+        }
+        if (options.getCdmId() != null && StringUtils.isBlank(options.getCdmId())) {
+            throw new IllegalArgumentException("CDM ID must not be blank");
         }
     }
 

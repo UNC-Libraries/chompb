@@ -305,10 +305,10 @@ public class DestinationsCommandIT extends AbstractCommandIT {
         String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "destinations", "add",
-                "-id",
-                "-dd", CUSTOM_DEST_ID};
+                "-dd", CUSTOM_DEST_ID,
+                "-id"};
         executeExpectFailure(args2);
-        assertOutputContains("Must provide a CDM ID");
+        assertOutputContains("CDM ID must not be blank");
     }
 
     @Test
@@ -356,7 +356,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
     private void assertCustomIdMappingAdded(String id, int count) throws IOException {
         var mappings = getMappings();
         assertEquals(count, mappings.size());
-        DestinationMapping mapping = mappings.get(0);
+        DestinationMapping mapping = mappings.get(count - 1);
         assertEquals(id, mapping.getId());
         assertEquals(CUSTOM_DEST_ID, mapping.getDestination());
     }
