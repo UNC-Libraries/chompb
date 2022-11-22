@@ -130,6 +130,7 @@ public class DestinationsCommand {
     @Command(name = "add",
             description = "Add custom destination for individual CDM ID or list of IDs")
     public int add(@Mixin DestinationMappingOptions options) throws Exception {
+        initialize();
         var destinationMappingExists = Files.exists(project.getDestinationMappingsPath());
         if (!destinationMappingExists) {
           outputLogger.info("FAIL: Destination mapping at path " + project.getDestinationMappingsPath()
@@ -138,7 +139,6 @@ public class DestinationsCommand {
         }
         try {
             validateOptions(options);
-            initialize();
             destService.addMappings(options);
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {

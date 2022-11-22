@@ -251,7 +251,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
                 "-dd", CUSTOM_DEST_ID};
         executeExpectSuccess(args2);
 
-        assertCustomIdMappingAdded("25", 2);
+        assertCustomIdMappingAdded(getMappings(), "25", 1);
     }
     @Test
     public void addMultipleCdmIdCustomDestination() throws Exception {
@@ -271,9 +271,11 @@ public class DestinationsCommandIT extends AbstractCommandIT {
                 "-dd", CUSTOM_DEST_ID};
         executeExpectSuccess(args2);
 
-        assertCustomIdMappingAdded("25", 4);
-        assertCustomIdMappingAdded("26", 4);
-        assertCustomIdMappingAdded("27", 4);
+        var mappings = getMappings();
+        assertMappingCount(mappings, 4);
+        assertCustomIdMappingAdded(mappings, "25", 1);
+        assertCustomIdMappingAdded(mappings, "26", 2);
+        assertCustomIdMappingAdded(mappings, "27", 3);
     }
 
     @Test
@@ -306,7 +308,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "destinations", "add",
                 "-dd", CUSTOM_DEST_ID,
-                "-id"};
+                "-id", ""};
         executeExpectFailure(args2);
         assertOutputContains("CDM ID must not be blank");
     }
@@ -341,7 +343,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
 
     private void assertDefaultMapping(String expectedDest, String expectedColl) throws Exception {
         var mappings = getMappings();
-        assertEquals(1, mappings.size());
+        assertMappingCount(mappings, 1);
         DestinationMapping mapping = mappings.get(0);
         assertEquals(DestinationsInfo.DEFAULT_ID, mapping.getId());
         assertEquals(expectedDest, mapping.getDestination());
@@ -353,12 +355,14 @@ public class DestinationsCommandIT extends AbstractCommandIT {
         return info.getMappings();
     }
 
-    private void assertCustomIdMappingAdded(String id, int count) throws IOException {
-        var mappings = getMappings();
-        assertEquals(count, mappings.size());
-        DestinationMapping mapping = mappings.get(count - 1);
+    private void assertCustomIdMappingAdded(List<DestinationMapping> mappings, String id, int index) {
+        DestinationMapping mapping = mappings.get(index);
         assertEquals(id, mapping.getId());
         assertEquals(CUSTOM_DEST_ID, mapping.getDestination());
+    }
+
+    private void assertMappingCount(List<DestinationMapping> mappings, int count) {
+        assertEquals(count, mappings.size());
     }
 
     private void setIndexedDate() throws Exception {

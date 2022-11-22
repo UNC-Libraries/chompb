@@ -137,6 +137,11 @@ public class DestinationsService {
         }
     }
 
+    /**
+     * Adds custom CDM ID mapping(s) to destination mappings file
+     * @param options
+     * @throws Exception
+     */
     public void addMappings(DestinationMappingOptions options) throws Exception {
         assertProjectStateValid();
         DestinationsValidator.assertValidDestination(options.getDefaultDestination());
@@ -148,9 +153,13 @@ public class DestinationsService {
                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().build());
         ) {
             if (options.getDefaultDestination() != null) {
-                csvPrinter.printRecord(options.getCdmId(),
-                        options.getDefaultDestination(),
-                        options.getDefaultCollection());
+                // value passed in for cdm ID might be a comma-delimited list, so split it first and loop through
+                var cdmIds = options.getCdmId().split(",");
+                for (String cdmId : cdmIds) {
+                    csvPrinter.printRecord(cdmId,
+                            options.getDefaultDestination(),
+                            options.getDefaultCollection());
+                }
             }
         }
     }
