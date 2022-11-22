@@ -133,7 +133,8 @@ public class DestinationsCommand {
         initialize();
         var destinationMappingExists = Files.exists(project.getDestinationMappingsPath());
         if (!destinationMappingExists) {
-          outputLogger.info("FAIL: Destination mapping at path {} does not exist", project.getDestinationMappingsPath());
+          outputLogger.info("FAIL: Destination mapping at path {} does not exist",
+                  project.getDestinationMappingsPath());
           return 1;
         }
         try {
