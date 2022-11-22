@@ -149,7 +149,9 @@ public class DestinationsService {
         Path destinationMappingsPath = project.getDestinationMappingsPath();
 
         try (
-                BufferedWriter writer = Files.newBufferedWriter(destinationMappingsPath, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+                BufferedWriter writer = Files.newBufferedWriter(destinationMappingsPath,
+                                                                StandardOpenOption.APPEND,
+                                                                StandardOpenOption.CREATE);
                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().build());
         ) {
             if (options.getDefaultDestination() != null) {

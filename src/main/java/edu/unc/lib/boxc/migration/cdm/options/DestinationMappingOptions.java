@@ -72,7 +72,11 @@ public class DestinationMappingOptions {
         this.force = force;
     }
 
-    public String getCdmId() { return cdmId; }
+    public String getCdmId() {
+        return cdmId;
+    }
 
-    public void setCdmId(String cdmId) { this.cdmId = cdmId; }
+    public void setCdmId(String cdmId) {
+        this.cdmId = cdmId;
+    }
 }
