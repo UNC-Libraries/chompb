@@ -19,6 +19,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -27,7 +28,7 @@ import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.GenerateDestinationMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
@@ -53,7 +54,7 @@ public class DestinationsCommand {
 
     @Command(name = "generate",
             description = "Generate the destination mapping file for this project")
-    public int generate(@Mixin GenerateDestinationMappingOptions options) throws Exception {
+    public int generate(@Mixin DestinationMappingOptions options) throws Exception {
         long start = System.nanoTime();
 
         try {
@@ -126,13 +127,36 @@ public class DestinationsCommand {
         }
     }
 
-    private void validateOptions(GenerateDestinationMappingOptions options) {
+    @Command(name = "add",
+            description = "Add custom destination for individual CDM ID or list of IDs")
+    public int add(@Mixin DestinationMappingOptions options) throws Exception {
+        initialize();
+        var destinationMappingExists = Files.exists(project.getDestinationMappingsPath());
+        if (!destinationMappingExists) {
+          outputLogger.info("FAIL: Destination mapping at path {} does not exist",
+                  project.getDestinationMappingsPath());
+          return 1;
+        }
+        try {
+            validateOptions(options);
+            destService.addMappings(options);
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Cannot add mappings: {}", e.getMessage());
+            return 1;
+        }
+    }
+
+    private void validateOptions(DestinationMappingOptions options) {
         // For now, the only kind of mapping is a default, so fail if not set
         if (StringUtils.isBlank(options.getDefaultDestination())) {
             throw new IllegalArgumentException("Must provide a default destination");
         }
         if (options.getDefaultCollection() != null && StringUtils.isBlank(options.getDefaultCollection())) {
             throw new IllegalArgumentException("Default collection must not be blank");
+        }
+        if (options.getCdmId() != null && StringUtils.isBlank(options.getCdmId())) {
+            throw new IllegalArgumentException("CDM ID must not be blank");
         }
     }
 

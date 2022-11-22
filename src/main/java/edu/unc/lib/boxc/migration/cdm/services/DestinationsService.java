@@ -23,6 +23,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.List;
 
@@ -38,7 +39,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.GenerateDestinationMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 
@@ -55,7 +56,7 @@ public class DestinationsService {
      * Generate a destination mapping file for the project using the provided options
      * @param options
      */
-    public void generateMapping(GenerateDestinationMappingOptions options) throws IOException {
+    public void generateMapping(DestinationMappingOptions options) throws IOException {
         assertProjectStateValid();
         DestinationsValidator.assertValidDestination(options.getDefaultDestination());
         ensureMappingState(options.isForce());
@@ -133,6 +134,35 @@ public class DestinationsService {
                 mappings.add(mapping);
             }
             return info;
+        }
+    }
+
+    /**
+     * Adds custom CDM ID mapping(s) to destination mappings file
+     * @param options
+     * @throws Exception
+     */
+    public void addMappings(DestinationMappingOptions options) throws Exception {
+        assertProjectStateValid();
+        DestinationsValidator.assertValidDestination(options.getDefaultDestination());
+
+        Path destinationMappingsPath = project.getDestinationMappingsPath();
+
+        try (
+                BufferedWriter writer = Files.newBufferedWriter(destinationMappingsPath,
+                                                                StandardOpenOption.APPEND,
+                                                                StandardOpenOption.CREATE);
+                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().build());
+        ) {
+            if (options.getDefaultDestination() != null) {
+                // value passed in for cdm ID might be a comma-delimited list, so split it first and loop through
+                var cdmIds = options.getCdmId().split(",");
+                for (String cdmId : cdmIds) {
+                    csvPrinter.printRecord(cdmId,
+                            options.getDefaultDestination(),
+                            options.getDefaultCollection());
+                }
+            }
         }
     }
 
