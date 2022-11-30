@@ -72,17 +72,6 @@
                 </dependencies>
             </plugin>
             <plugin>
-                <groupId>com.mycila</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <dependencies>
-                    <dependency>
-                        <groupId>edu.unc.lib.cdr</groupId>
-                        <artifactId>common-utils</artifactId>
-                        <version>${cdr.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
