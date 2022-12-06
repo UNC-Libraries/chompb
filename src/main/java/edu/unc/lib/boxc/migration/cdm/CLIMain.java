@@ -2,7 +2,6 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationTypeReportService;
 import edu.unc.lib.boxc.migration.cdm.util.BannerUtility;
 import edu.unc.lib.boxc.migration.cdm.util.CLIConstants;
 import org.apache.commons.lang3.StringUtils;
