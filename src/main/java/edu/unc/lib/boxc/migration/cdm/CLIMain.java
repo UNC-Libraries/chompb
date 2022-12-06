@@ -2,6 +2,7 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
+import edu.unc.lib.boxc.migration.cdm.services.MigrationTypeReportService;
 import edu.unc.lib.boxc.migration.cdm.util.BannerUtility;
 import edu.unc.lib.boxc.migration.cdm.util.CLIConstants;
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +37,8 @@ import java.util.concurrent.Callable;
         GroupMappingCommand.class,
         IndexRedirectCommand.class,
         ProjectPropertiesCommand.class,
-        VerifyPostMigrationCommand.class
+        VerifyPostMigrationCommand.class,
+        MigrationTypeReportCommand.class
     })
 public class CLIMain implements Callable<Integer> {
     @Option(names = { "-w", "--work-dir" },
