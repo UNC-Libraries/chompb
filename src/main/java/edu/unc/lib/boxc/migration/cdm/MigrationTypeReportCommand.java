@@ -3,6 +3,7 @@ package edu.unc.lib.boxc.migration.cdm;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationTypeReportService;
+import org.slf4j.Logger;
 import picocli.CommandLine;
 
 import java.nio.file.NoSuchFileException;
@@ -10,6 +11,7 @@ import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author krwong
@@ -17,6 +19,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 @CommandLine.Command(name = "report_migration_types",
         description = "Counts new migrated works and files")
 public class MigrationTypeReportCommand implements Callable<Integer> {
+    private static final Logger log = getLogger(MigrationTypeReportCommand.class);
     @CommandLine.ParentCommand
     private CLIMain parentCommand;
     private MigrationTypeReportService typeReportService;
@@ -42,6 +45,7 @@ public class MigrationTypeReportCommand implements Callable<Integer> {
             outputLogger.info("Cannot generate migration types report. Post migration report not found: {}",
                     e.getMessage());
         } catch (Exception e) {
+            log.error("Encountered an error while counting new objects", e);
             outputLogger.info("Encountered an error while counting new objects: {}", e.getMessage());
         }
         return 1;
