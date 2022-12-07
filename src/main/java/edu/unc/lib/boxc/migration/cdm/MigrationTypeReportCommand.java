@@ -5,6 +5,8 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationTypeReportService;
 import picocli.CommandLine;
 
+import java.io.FileNotFoundException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
@@ -34,13 +36,14 @@ public class MigrationTypeReportCommand implements Callable<Integer> {
         try {
             long start = System.nanoTime();
             init();
-            String numWorks = String.valueOf(typeReportService.countWorks());
-            String numFiles = String.valueOf(typeReportService.countFiles());
-            outputLogger.info("Number of Works: {}", numWorks);
-            outputLogger.info("Number of Files: {}", numFiles);
+            outputLogger.info("Number of Works: {}", typeReportService.countWorks());
+            outputLogger.info("Number of Files: {}", typeReportService.countFiles());
             return 0;
+        } catch (NoSuchFileException e) {
+            outputLogger.info("Cannot generate migration types report. Post migration report not found: {}",
+                    e.getMessage());
         } catch (Exception e) {
-            outputLogger.info("Encountered an error while counting new objects", e);
+            outputLogger.info("Encountered an error while counting new objects: {}", e.getMessage());
         }
         return 1;
     }
