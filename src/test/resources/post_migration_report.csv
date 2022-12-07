@@ -1,0 +1,3 @@
+cdm_id,cdm_url,boxc_obj_type,boxc_url,boxc_title,verified,boxc_parent_work_url,boxc_parent_work_title,children_count
+25,cdm_url_1,Work,boxc_url_1,Redoubt C,null,"","",1
+26,cdm_url_2,File,boxc_url_2,A file,null,boxc_url_1,Redoubt C, null
