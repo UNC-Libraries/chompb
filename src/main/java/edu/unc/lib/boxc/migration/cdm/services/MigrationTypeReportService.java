@@ -2,6 +2,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants;
+import edu.unc.lib.boxc.model.api.ResourceType;
 import org.apache.commons.csv.CSVParser;
 import org.slf4j.Logger;
 
@@ -24,11 +25,13 @@ public class MigrationTypeReportService {
      * @return count new works
      */
     public long countWorks() throws IOException {
-        var csvParser = openCsvParser();
-        long numWorks = csvParser.stream()
-                .map(row -> row.get("boxc_obj_type"))
-                .filter(f -> f.toLowerCase().contains("work"))
-                .count();
+        long numWorks;
+        try (var csvParser = openCsvParser()) {
+            numWorks = csvParser.stream()
+                    .map(row -> row.get("boxc_obj_type"))
+                    .filter(f -> f.toLowerCase().contains("work") || f.contains(ResourceType.Work.name()))
+                    .count();
+        }
         return numWorks;
     }
 
@@ -36,11 +39,13 @@ public class MigrationTypeReportService {
      * @return count new files
      */
     public long countFiles() throws IOException {
-        var csvParser = openCsvParser();
-        long numFiles = csvParser.stream()
-                .map(row -> row.get("boxc_obj_type"))
-                .filter(f -> f.toLowerCase().contains("file"))
-                .count();
+        long numFiles;
+        try (var csvParser = openCsvParser()) {
+            numFiles = csvParser.stream()
+                    .map(row -> row.get("boxc_obj_type"))
+                    .filter(f -> f.toLowerCase().contains("file") || f.contains(ResourceType.File.name()))
+                    .count();
+        }
         return numFiles;
     }
 
