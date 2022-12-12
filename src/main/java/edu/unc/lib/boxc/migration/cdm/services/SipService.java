@@ -17,6 +17,7 @@ import edu.unc.lib.boxc.migration.cdm.services.sips.CdmToDestMapper;
 import edu.unc.lib.boxc.migration.cdm.services.sips.SipPremisLogger;
 import edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator;
 import edu.unc.lib.boxc.migration.cdm.services.sips.WorkGeneratorFactory;
+import edu.unc.lib.boxc.migration.cdm.util.DisplayProgressUtil;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import edu.unc.lib.boxc.model.api.ids.PID;
@@ -124,6 +125,12 @@ public class SipService {
                         + "," + CdmIndexService.ENTRY_TYPE_FIELD
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
+            var count = stmt.executeQuery("select COUNT(*) from " + CdmIndexService.TB_NAME
+                    + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
+            long currentNumber = 0;
+            var total = count.getInt(1);
+            DisplayProgressUtil.displayProgress(currentNumber, total);
+
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
@@ -146,6 +153,9 @@ public class SipService {
                 sips.add(sip);
                 // Serialize the SIP info out to file
                 SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
+                // update progress bar
+                currentNumber++;
+                DisplayProgressUtil.displayProgress(currentNumber, total);
                 // Cleanup the TDB directory not that it has been exported
                 try {
                     FileUtils.deleteDirectory(entry.getTdbPath().toFile());
