@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -127,8 +128,10 @@ public class SipService {
                     + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
             var count = stmt.executeQuery("select COUNT(*) from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
+            // set up work generator progress bar
             long currentNumber = 0;
             var total = count.getInt(1);
+            System.out.println("Work Generation Progress:");
             DisplayProgressUtil.displayProgress(currentNumber, total);
 
             while (rs.next()) {
@@ -137,6 +140,9 @@ public class SipService {
                 String entryType = rs.getString(3);
 
                 WorkGenerator workGen = workGeneratorFactory.create(cdmId, cdmCreated, entryType);
+                // update progress bar
+                currentNumber++;
+                DisplayProgressUtil.displayProgress(currentNumber, total);
                 try {
                     workGen.generate();
                 } catch (SkipObjectException e) {
@@ -144,18 +150,23 @@ public class SipService {
                 }
             }
 
-            // Finalize all of the SIPs by closing and exporting their models
+            // Finalize all the SIPs by closing and exporting their models
             List<MigrationSip> sips = new ArrayList<>();
+            // set up sips progress bar
+            long currentCount = 0;
+            var destinationTotal = destEntries.size();
+            System.out.println("Writing SIPs:");
+            DisplayProgressUtil.displayProgress(currentCount, destinationTotal);
             for (DestinationSipEntry entry : destEntries) {
                 entry.commitModel();
                 exportDepositModel(entry);
                 MigrationSip sip = new MigrationSip(entry);
                 sips.add(sip);
+                // update progress bar
+                currentCount++;
+                DisplayProgressUtil.displayProgress(currentCount, destinationTotal);
                 // Serialize the SIP info out to file
                 SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
-                // update progress bar
-                currentNumber++;
-                DisplayProgressUtil.displayProgress(currentNumber, total);
                 // Cleanup the TDB directory not that it has been exported
                 try {
                     FileUtils.deleteDirectory(entry.getTdbPath().toFile());
