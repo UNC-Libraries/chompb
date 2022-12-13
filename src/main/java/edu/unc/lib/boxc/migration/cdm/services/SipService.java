@@ -17,6 +17,7 @@ import edu.unc.lib.boxc.migration.cdm.services.sips.CdmToDestMapper;
 import edu.unc.lib.boxc.migration.cdm.services.sips.SipPremisLogger;
 import edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator;
 import edu.unc.lib.boxc.migration.cdm.services.sips.WorkGeneratorFactory;
+import edu.unc.lib.boxc.migration.cdm.util.DisplayProgressUtil;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import edu.unc.lib.boxc.model.api.ids.PID;
@@ -120,6 +121,13 @@ public class SipService {
             initDependencies(options, conn);
 
             Statement stmt = conn.createStatement();
+
+            // set up work generator progress bar
+            long workCount = 0;
+            var total = calculateTotalWorks(stmt);
+            System.out.println("Work Generation Progress:");
+            DisplayProgressUtil.displayProgress(workCount, total);
+
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
                         + "," + CdmIndexService.ENTRY_TYPE_FIELD
                     + " from " + CdmIndexService.TB_NAME
@@ -130,20 +138,33 @@ public class SipService {
                 String entryType = rs.getString(3);
 
                 WorkGenerator workGen = workGeneratorFactory.create(cdmId, cdmCreated, entryType);
+                // update progress bar
+                workCount++;
+                DisplayProgressUtil.displayProgress(workCount, total);
                 try {
                     workGen.generate();
                 } catch (SkipObjectException e) {
                     // Skipping
                 }
             }
+            DisplayProgressUtil.finishProgress();
 
-            // Finalize all of the SIPs by closing and exporting their models
+            // set up sips progress bar
+            long destinationCount = 0;
+            var destinationTotal = destEntries.size();
+            System.out.println("Writing SIPs:");
+            DisplayProgressUtil.displayProgress(destinationCount, destinationTotal);
+
+            // Finalize all the SIPs by closing and exporting their models
             List<MigrationSip> sips = new ArrayList<>();
             for (DestinationSipEntry entry : destEntries) {
                 entry.commitModel();
                 exportDepositModel(entry);
                 MigrationSip sip = new MigrationSip(entry);
                 sips.add(sip);
+                // update progress bar
+                destinationCount++;
+                DisplayProgressUtil.displayProgress(destinationCount, destinationTotal);
                 // Serialize the SIP info out to file
                 SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
                 // Cleanup the TDB directory not that it has been exported
@@ -153,6 +174,7 @@ public class SipService {
                     log.warn("Failed to cleanup TDB directory", e);
                 }
             }
+            DisplayProgressUtil.finishProgress();
             redirectMappingService.addCollectionRow(sips);
             project.getProjectProperties().setSipsGeneratedDate(Instant.now());
             ProjectPropertiesSerialization.write(project);
@@ -268,6 +290,16 @@ public class SipService {
         } catch (IOException e) {
             throw new MigrationException("Failed to list SIPs", e);
         }
+    }
+
+    /**
+     * @return Count of works for progress bar
+     * @throws SQLException
+     */
+    private long calculateTotalWorks(Statement statement) throws SQLException {
+        var count = statement.executeQuery("select COUNT(*) from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
+        return count.getInt(1);
     }
 
     public void setIndexService(CdmIndexService indexService) {
