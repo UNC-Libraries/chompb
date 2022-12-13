@@ -124,7 +124,7 @@ public class SipService {
 
             // set up work generator progress bar
             long workCount = 0;
-            var total = calculateTotalWorks();
+            var total = calculateTotalWorks(stmt);
             System.out.println("Work Generation Progress:");
             DisplayProgressUtil.displayProgress(workCount, total);
 
@@ -296,13 +296,9 @@ public class SipService {
      * @return Count of works for progress bar
      * @throws SQLException
      */
-    private long calculateTotalWorks() throws SQLException {
-        Connection conn = indexService.openDbConnection();
-        Statement stmt = conn.createStatement();
-
-        var count = stmt.executeQuery("select COUNT(*) from " + CdmIndexService.TB_NAME
+    private long calculateTotalWorks(Statement statement) throws SQLException {
+        var count = statement.executeQuery("select COUNT(*) from " + CdmIndexService.TB_NAME
                 + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
-        CdmIndexService.closeDbConnection(conn);
         return count.getInt(1);
     }
 
