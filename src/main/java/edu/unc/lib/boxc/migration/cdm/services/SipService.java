@@ -122,18 +122,19 @@ public class SipService {
             initDependencies(options, conn);
 
             Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
-                        + "," + CdmIndexService.ENTRY_TYPE_FIELD
-                    + " from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
+
+            // set up work generator progress bar
             var count = stmt.executeQuery("select COUNT(*) from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
-            // set up work generator progress bar
             long currentNumber = 0;
             var total = count.getInt(1);
             System.out.println("Work Generation Progress:");
             DisplayProgressUtil.displayProgress(currentNumber, total);
 
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
+                        + "," + CdmIndexService.ENTRY_TYPE_FIELD
+                    + " from " + CdmIndexService.TB_NAME
+                    + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 String cdmCreated = rs.getString(2) + "T00:00:00.000Z";
@@ -149,14 +150,16 @@ public class SipService {
                     // Skipping
                 }
             }
+            DisplayProgressUtil.finishProgress();
 
-            // Finalize all the SIPs by closing and exporting their models
-            List<MigrationSip> sips = new ArrayList<>();
             // set up sips progress bar
             long currentCount = 0;
             var destinationTotal = destEntries.size();
             System.out.println("Writing SIPs:");
             DisplayProgressUtil.displayProgress(currentCount, destinationTotal);
+            
+            // Finalize all the SIPs by closing and exporting their models
+            List<MigrationSip> sips = new ArrayList<>();
             for (DestinationSipEntry entry : destEntries) {
                 entry.commitModel();
                 exportDepositModel(entry);
@@ -174,6 +177,7 @@ public class SipService {
                     log.warn("Failed to cleanup TDB directory", e);
                 }
             }
+            DisplayProgressUtil.finishProgress();
             redirectMappingService.addCollectionRow(sips);
             project.getProjectProperties().setSipsGeneratedDate(Instant.now());
             ProjectPropertiesSerialization.write(project);
