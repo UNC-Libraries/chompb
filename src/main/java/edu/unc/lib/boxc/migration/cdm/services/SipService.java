@@ -1,6 +1,5 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -157,7 +156,7 @@ public class SipService {
             var destinationTotal = destEntries.size();
             System.out.println("Writing SIPs:");
             DisplayProgressUtil.displayProgress(currentCount, destinationTotal);
-            
+
             // Finalize all the SIPs by closing and exporting their models
             List<MigrationSip> sips = new ArrayList<>();
             for (DestinationSipEntry entry : destEntries) {
