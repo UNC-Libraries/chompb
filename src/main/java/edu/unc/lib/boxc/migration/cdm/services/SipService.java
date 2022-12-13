@@ -123,12 +123,10 @@ public class SipService {
             Statement stmt = conn.createStatement();
 
             // set up work generator progress bar
-            var count = stmt.executeQuery("select COUNT(*) from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
-            long currentNumber = 0;
-            var total = count.getInt(1);
+            long workCount = 0;
+            var total = calculateTotalWorks();
             System.out.println("Work Generation Progress:");
-            DisplayProgressUtil.displayProgress(currentNumber, total);
+            DisplayProgressUtil.displayProgress(workCount, total);
 
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
                         + "," + CdmIndexService.ENTRY_TYPE_FIELD
@@ -141,8 +139,8 @@ public class SipService {
 
                 WorkGenerator workGen = workGeneratorFactory.create(cdmId, cdmCreated, entryType);
                 // update progress bar
-                currentNumber++;
-                DisplayProgressUtil.displayProgress(currentNumber, total);
+                workCount++;
+                DisplayProgressUtil.displayProgress(workCount, total);
                 try {
                     workGen.generate();
                 } catch (SkipObjectException e) {
@@ -152,10 +150,10 @@ public class SipService {
             DisplayProgressUtil.finishProgress();
 
             // set up sips progress bar
-            long currentCount = 0;
+            long destinationCount = 0;
             var destinationTotal = destEntries.size();
             System.out.println("Writing SIPs:");
-            DisplayProgressUtil.displayProgress(currentCount, destinationTotal);
+            DisplayProgressUtil.displayProgress(destinationCount, destinationTotal);
 
             // Finalize all the SIPs by closing and exporting their models
             List<MigrationSip> sips = new ArrayList<>();
@@ -165,8 +163,8 @@ public class SipService {
                 MigrationSip sip = new MigrationSip(entry);
                 sips.add(sip);
                 // update progress bar
-                currentCount++;
-                DisplayProgressUtil.displayProgress(currentCount, destinationTotal);
+                destinationCount++;
+                DisplayProgressUtil.displayProgress(destinationCount, destinationTotal);
                 // Serialize the SIP info out to file
                 SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
                 // Cleanup the TDB directory not that it has been exported
@@ -292,6 +290,20 @@ public class SipService {
         } catch (IOException e) {
             throw new MigrationException("Failed to list SIPs", e);
         }
+    }
+
+    /**
+     * @return Count of works for progress bar
+     * @throws SQLException
+     */
+    private long calculateTotalWorks() throws SQLException {
+        Connection conn = indexService.openDbConnection();
+        Statement stmt = conn.createStatement();
+
+        var count = stmt.executeQuery("select COUNT(*) from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
+        CdmIndexService.closeDbConnection(conn);
+        return count.getInt(1);
     }
 
     public void setIndexService(CdmIndexService indexService) {
