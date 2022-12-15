@@ -191,6 +191,16 @@ public class DescriptionsServiceTest {
         assertDatePresent();
     }
 
+    @Test
+    public void expandDescriptionsDryRun() throws Exception {
+        Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
+                project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
+        Set<String> idsWithMods = service.expandDescriptions(true);
+
+        assertEquals(3, idsWithMods.size());
+        assertDateNotPresent();
+    }
+
     private void assertModsPopulated(String expectedTitle, String expectedId) throws Exception {
         Path path = service.getExpandedDescriptionFilePath(expectedId);
         Document modsDoc = SecureXMLFactory.createSAXBuilder().build(path.toFile());
