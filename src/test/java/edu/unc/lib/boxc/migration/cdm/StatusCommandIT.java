@@ -364,7 +364,21 @@ public class StatusCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void reportDescriptionNotExpanded() {
+    public void reportDescriptionNotExpanded() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        String newCollId = "00123test";
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
+        Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
+                project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
 
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "status" };
+        executeExpectSuccess(args);
+
+        assertOutputContains("Descriptions");
+        assertOutputMatches(".*MODS Files: +1\n.*");
+        assertOutputMatches(".*Last Expanded: +Not completed.*");
+        assertOutputMatches(".*Object MODS Records: +3 \\(100.0%\\).*");
     }
 }
