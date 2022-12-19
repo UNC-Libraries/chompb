@@ -29,7 +29,7 @@ public class StatusCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void reportUninitalized() throws Exception {
+    public void reportUninitialized() throws Exception {
         String[] args = new String[] {
                 "-w", baseDir.toString(),
                 "status" };
@@ -39,7 +39,7 @@ public class StatusCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void reportInitalized() throws Exception {
+    public void reportInitialized() throws Exception {
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
 
         String[] args = new String[] {
@@ -361,5 +361,24 @@ public class StatusCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Submission Information Packages\n +Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Number of SIPs: +1\n.*");
         assertOutputMatches(".*SIPs Submitted: +0\n.*");
+    }
+
+    @Test
+    public void reportDescriptionNotExpanded() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        String newCollId = "00123test";
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, newCollId);
+        Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
+                project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "status" };
+        executeExpectSuccess(args);
+
+        assertOutputContains("Descriptions");
+        assertOutputMatches(".*MODS Files: +1\n.*");
+        assertOutputMatches(".*Last Expanded: +Not completed.*");
+        assertOutputMatches(".*Object MODS Records: +3 \\(100.0%\\).*");
     }
 }

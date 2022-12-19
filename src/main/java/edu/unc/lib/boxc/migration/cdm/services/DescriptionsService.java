@@ -97,7 +97,8 @@ public class DescriptionsService {
                 expandModsCollectionFile(path, idsWithMods, dryRun);
             }
         }
-        if (!idsWithMods.isEmpty()) {
+        // date should only be set if it's not a dry run
+        if (!idsWithMods.isEmpty() && !dryRun) {
             project.getProjectProperties().setDescriptionsExpandedDate(Instant.now());
             ProjectPropertiesSerialization.write(project);
         }
