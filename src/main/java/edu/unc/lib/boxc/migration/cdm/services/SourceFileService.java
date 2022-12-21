@@ -103,15 +103,12 @@ public class SourceFileService {
             // Generate source file mapping entry for each returned object
             while (rs.next()) {
                 String cdmId = rs.getString(1);
-                String dbFilename = "";
-                if (!options.isPopulateBlank()) {
-                    dbFilename = rs.getString(2);
-                }
-
                 if (options.isPopulateBlank()) {
                     csvPrinter.printRecord(cdmId, null, null, null);
                     continue;
                 }
+
+                String dbFilename = rs.getString(2);
                 if (StringUtils.isBlank(dbFilename)) {
                     log.debug("No matching field for object {}", cdmId);
                     csvPrinter.printRecord(cdmId, null, null, null);
