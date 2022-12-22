@@ -98,20 +98,17 @@ public class SourceFileService {
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
-            // Query for all non-compound objects. If the entry type is null, the object is a individual cdm object
-            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", " + options.getExportField()
-                    + " from " + CdmIndexService.TB_NAME
-                    + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
-                        + " or " + ENTRY_TYPE_FIELD + " is null");
+
+            ResultSet rs = stmt.executeQuery(buildQuery(options));
             // Generate source file mapping entry for each returned object
             while (rs.next()) {
                 String cdmId = rs.getString(1);
-                String dbFilename = rs.getString(2);
-
                 if (options.isPopulateBlank()) {
                     csvPrinter.printRecord(cdmId, null, null, null);
                     continue;
                 }
+
+                String dbFilename = rs.getString(2);
                 if (StringUtils.isBlank(dbFilename)) {
                     log.debug("No matching field for object {}", cdmId);
                     csvPrinter.printRecord(cdmId, null, null, null);
@@ -165,6 +162,20 @@ public class SourceFileService {
         if (!options.getDryRun()) {
             setUpdatedDate(Instant.now());
         }
+    }
+
+    // Query for all non-compound objects. If the entry type is null, the object is an individual cdm object
+    private String buildQuery(SourceFileMappingOptions options) {
+        var selectStatement = "";
+        if (options.isPopulateBlank()) {
+            selectStatement = "select " + CdmFieldInfo.CDM_ID;
+        } else {
+            selectStatement = "select " + CdmFieldInfo.CDM_ID + ", " + options.getExportField();
+        }
+        return selectStatement
+                + " from " + CdmIndexService.TB_NAME
+                + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
+                + " or " + ENTRY_TYPE_FIELD + " is null";
     }
 
     private Pattern buildFieldMatchingPattern(SourceFileMappingOptions options) {
