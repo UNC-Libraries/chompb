@@ -2,17 +2,17 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel
@@ -22,10 +22,10 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
 
     private Path basePath;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
-        basePath = tmpFolder.newFolder().toPath();
+        basePath = tmpFolder;
     }
 
     @Test
@@ -144,13 +144,13 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
 
     private void assertUpdatedDatePresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
-        assertNotNull("Updated timestamp must be set", props.getAccessFilesUpdatedDate());
-        assertNull("Source mapping timestamp must not be set", props.getSourceFilesUpdatedDate());
+        assertNotNull(props.getAccessFilesUpdatedDate(), "Updated timestamp must be set");
+        assertNull(props.getSourceFilesUpdatedDate(), "Source mapping timestamp must not be set");
     }
 
     private void assertUpdatedDateNotPresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
-        assertNull("Updated timestamp must not be set", props.getAccessFilesUpdatedDate());
-        assertNull("Source mapping timestamp must not be set", props.getSourceFilesUpdatedDate());
+        assertNull(props.getAccessFilesUpdatedDate(), "Updated timestamp must not be set");
+        assertNull(props.getSourceFilesUpdatedDate(), "Source mapping timestamp must not be set");
     }
 }

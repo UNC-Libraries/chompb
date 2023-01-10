@@ -11,17 +11,17 @@ import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel
@@ -34,7 +34,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     private CdmFieldService fieldService;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         fieldService = new CdmFieldService();
         testSshServer = new TestSshServer();
@@ -42,7 +42,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         setupChompbConfig();
     }
 
-    @After
+    @AfterEach
     public void cleanup() throws Exception {
         testSshServer.stopServer();
     }
@@ -65,7 +65,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
 
-        assertTrue("Export folder not created", Files.exists(project.getExportPath()));
+        assertTrue(Files.exists(project.getExportPath()), "Export folder not created");
         assertDescAllFilePresent(project, "/descriptions/gilmer/index/description/desc.all");
     }
 
@@ -78,7 +78,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
-        assertFalse("Description folder should not be created", Files.exists(project.getExportPath()));
+        assertFalse(Files.exists(project.getExportPath()), "Description folder should not be created");
         assertOutputContains("Must provided a CDM username");
     }
 
@@ -92,7 +92,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         executeExpectFailure(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
-        assertFalse("Description folder should not be created", Files.exists(project.getExportPath()));
+        assertFalse(Files.exists(project.getExportPath()), "Description folder should not be created");
         assertOutputContains("Must provided a CDM password");
     }
 
@@ -105,7 +105,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
 
-        assertFalse("Export file should not be created", Files.exists(CdmFileRetrievalService.getDescAllPath(project)));
+        assertFalse(Files.exists(CdmFileRetrievalService.getDescAllPath(project)), "Export file should not be created");
         assertOutputContains("Failed to download desc.all file");
     }
 
@@ -145,7 +145,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
 
-        assertTrue("Export folder not created", Files.exists(project.getExportPath()));
+        assertTrue(Files.exists(project.getExportPath()), "Export folder not created");
         assertDescAllFilePresent(project, "/descriptions/mini_keepsakes/index/description/desc.all");
 
         assertCpdFilePresent(project, "617.cpd", "/descriptions/mini_keepsakes/image/617.cpd");

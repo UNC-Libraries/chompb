@@ -9,10 +9,9 @@ import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -20,12 +19,13 @@ import org.mockito.stubbing.Answer;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -35,8 +35,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
  */
 public class CdmExportServiceTest {
     private static final String PROJECT_NAME = "proj";
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private CdmFieldService fieldService;
@@ -48,12 +48,11 @@ public class CdmExportServiceTest {
     private String descAllResourcePath = "/descriptions/gilmer/index/description/desc.all";
     private String descAllPath = "src/test/resources" + descAllResourcePath;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initMocks(this);
-        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder.getRoot(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         fieldService = new CdmFieldService();
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);
@@ -91,7 +90,7 @@ public class CdmExportServiceTest {
 
         service.exportAll(makeExportOptions());
 
-        assertTrue("Export folder not created", Files.exists(project.getExportPath()));
+        assertTrue(Files.exists(project.getExportPath()), "Export folder not created");
         assertExportedFileContentsMatch(descAllResourcePath);
     }
 

@@ -5,10 +5,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.permanentRedirect;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.Reader;
 import java.nio.file.Files;
@@ -25,12 +25,12 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.http.HttpStatus;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 
@@ -40,11 +40,15 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 public class FieldUrlAssessmentServiceTest {
     private static final String PROJECT_NAME = "gilmer";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+//    @Rule
+//    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+    @RegisterExtension
+    static WireMockExtension wireMockRule = WireMockExtension.newInstance()
+            .options(wireMockConfig().dynamicPort().dynamicHttpsPort())
+            .build();
 
     private MigrationProject project;
     private FieldUrlAssessmentService service;
@@ -52,14 +56,13 @@ public class FieldUrlAssessmentServiceTest {
     private CdmIndexService indexService;
     private String cdmBaseUrl;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
-        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder.getRoot(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
-        var testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        var testHelper = new SipServiceHelper(project, tmpFolder);
         testHelper.indexExportData("gilmer");
 
         fieldService = new CdmFieldService();
@@ -71,7 +74,7 @@ public class FieldUrlAssessmentServiceTest {
         service.setCdmFieldService(fieldService);
         service.setIndexService(indexService);
 
-        cdmBaseUrl = "http://localhost:" + wireMockRule.port();
+        cdmBaseUrl = "http://localhost:" + wireMockRule.getPort();
         fieldService.setCdmBaseUri(cdmBaseUrl);
         addUrlsToDb();
     }

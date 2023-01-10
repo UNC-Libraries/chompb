@@ -11,18 +11,18 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel
@@ -30,14 +30,14 @@ import static org.junit.Assert.assertTrue;
 public class SipsCommandIT extends AbstractCommandIT {
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
         setupChompbConfig();
         System.setProperty("ENV_CONFIG", chompbConfigPath);
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         System.clearProperty("ENV_CONFIG");
     }
@@ -215,7 +215,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         var work2ChildPid = retrieveOnlyWorkChildPid(workResc2);
-        assertFalse("No mods should be mapped for child", Files.exists(dirManager.getModsPath(work2ChildPid)));
+        assertFalse(Files.exists(dirManager.getModsPath(work2ChildPid)), "No mods should be mapped for child");
 
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");

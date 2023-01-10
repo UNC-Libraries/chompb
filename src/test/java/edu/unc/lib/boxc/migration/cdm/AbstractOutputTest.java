@@ -1,7 +1,8 @@
 package edu.unc.lib.boxc.migration.cdm;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.awaitility.Awaitility.await;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -13,33 +14,31 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.awaitility.core.ConditionTimeoutException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 
 /**
  * @author bbpennel
  */
 public class AbstractOutputTest {
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
     protected Path baseDir;
 
     protected final PrintStream originalOut = System.out;
     protected final ByteArrayOutputStream out = new ByteArrayOutputStream();
     protected String output;
 
-    @After
+    @AfterEach
     public void resetOut() {
         System.setOut(originalOut);
     }
 
-    @Before
+    @BeforeEach
     public void setupOutput() throws Exception {
-        tmpFolder.create();
-        baseDir = tmpFolder.getRoot().toPath();
+        baseDir = tmpFolder.getRoot();
 
         out.reset();
         System.setOut(new PrintStream(out));
@@ -52,13 +51,13 @@ public class AbstractOutputTest {
     }
 
     protected void assertOutputDoesNotContain(String expected) {
-        assertFalse("Expected output not to contain:\n" + expected
-                + "\nBut was:\n" + getOutput(), getOutput().contains(expected));
+        assertFalse(getOutput().contains(expected), "Expected output not to contain:\n" + expected
+                        + "\nBut was:\n" + getOutput());
     }
 
     protected void assertOutputContains(String expected) {
-        assertTrue("Expected output to contain:\n" + expected
-                + "\nBut was:\n" + getOutput(), getOutput().contains(expected));
+        assertTrue(getOutput().contains(expected), "Expected output to contain:\n" + expected
+                        + "\nBut was:\n" + getOutput());
     }
 
     /**
@@ -66,8 +65,8 @@ public class AbstractOutputTest {
      */
     protected void assertOutputMatches(String expected) {
         Matcher matcher = Pattern.compile(expected, Pattern.DOTALL).matcher(getOutput());
-        assertTrue("Expected output to match:\n" + expected
-                + "\nBut was:\n" + getOutput(), matcher.matches());
+        assertTrue(matcher.matches(), "Expected output to match:\n" + expected
+                        + "\nBut was:\n" + getOutput());
     }
 
     /**
@@ -93,8 +92,8 @@ public class AbstractOutputTest {
      */
     protected void assertOutputNotMatches(String expected) {
         Matcher matcher = Pattern.compile(expected, Pattern.DOTALL).matcher(getOutput());
-        assertFalse("Expected output not to match:\n" + expected
-                + "\nBut was:\n" + getOutput(), matcher.matches());
+        assertFalse(matcher.matches(), "Expected output not to match:\n" + expected
+                        + "\nBut was:\n" + getOutput());
     }
 
     protected String getOutput() {

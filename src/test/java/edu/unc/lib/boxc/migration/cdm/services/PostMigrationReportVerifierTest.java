@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -11,19 +12,20 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -37,8 +39,8 @@ public class PostMigrationReportVerifierTest {
     private static final String BOXC_URL_2 = "http://example.com/bxc/91c08272-260f-40f1-bb7c-78854d504368";
     private static final String CDM_URL_1 = "http://localhost/cdm/singleitem/collection/proj/id/25";
     private static final String CDM_URL_2 = "http://localhost/cdm/singleitem/collection/proj/id/26";
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
     @Mock
     private CloseableHttpClient httpClient;
     private SipServiceHelper testHelper;
@@ -46,14 +48,13 @@ public class PostMigrationReportVerifierTest {
     private PostMigrationReportService reportGenerator;
     private PostMigrationReportVerifier verifier;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initMocks(this);
-        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), "proj", null, "user",
+                tmpFolder.getRoot(), "proj", null, "user",
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        testHelper = new SipServiceHelper(project, tmpFolder);
         reportGenerator = new PostMigrationReportService();
         reportGenerator.setProject(project);
         reportGenerator.setChompbConfig(testHelper.getChompbConfig());
@@ -62,9 +63,11 @@ public class PostMigrationReportVerifierTest {
         verifier.setHttpClient(httpClient);
     }
 
-    @Test(expected = InvalidProjectStateException.class)
+    @Test
     public void noReportTest() throws Exception {
-        verifier.verify();
+        Assertions.assertThrows(InvalidProjectStateException.class, () -> {
+            verifier.verify();
+        });
     }
 
     @Test

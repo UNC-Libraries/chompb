@@ -8,15 +8,15 @@ import edu.unc.lib.boxc.migration.cdm.services.FieldAssessmentTemplateService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel, snluong
@@ -26,14 +26,14 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
     private CdmFieldService fieldService;
     private FieldAssessmentTemplateService templateService;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         fieldService = new CdmFieldService();
         templateService = new FieldAssessmentTemplateService();
         templateService.setCdmFieldService(fieldService);
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         System.setOut(originalOut);
     }
@@ -93,7 +93,6 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
 
     @Test
     public void generateFieldsUrlReportTest() throws Exception {
-        tmpFolder.create();
         initProjectAndHelper();
         testHelper.indexExportData("mini_gilmer");
 

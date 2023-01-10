@@ -9,10 +9,9 @@ import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -26,9 +25,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author snluong
@@ -37,8 +36,8 @@ public class RedirectMappingIndexServiceTest {
     private static final String PROJECT_NAME = "proj";
     private static final String DEST_UUID = "7a33f5e6-f0ca-461c-8df0-c76c62198b17";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private RedirectMappingIndexService indexService;
@@ -46,13 +45,12 @@ public class RedirectMappingIndexServiceTest {
     private SipServiceHelper testHelper;
     private RedirectMappingHelper redirectMappingHelper;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
-        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user",
+                tmpFolder.getRoot(), PROJECT_NAME, null, "user",
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        testHelper = new SipServiceHelper(project, tmpFolder);
         redirectMappingHelper = new RedirectMappingHelper(project);
         redirectMappingHelper.createRedirectMappingsTableInDb();
         Path sqliteDbPropertiesPath = redirectMappingHelper.createDbConnectionPropertiesFile(tmpFolder, "sqlite");
@@ -69,8 +67,8 @@ public class RedirectMappingIndexServiceTest {
             indexService.indexMapping();
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue("Unexpected message: " + e.getMessage(),
-                    e.getMessage().contains("Must submit the collection prior to indexing"));
+            assertTrue(e.getMessage().contains("Must submit the collection prior to indexing"),
+                    "Unexpected message: " + e.getMessage());
         }
     }
 
@@ -104,7 +102,7 @@ public class RedirectMappingIndexServiceTest {
             Statement stmt = conn.createStatement();
             ResultSet count = stmt.executeQuery("select count(*) from redirect_mappings");
             count.next();
-            assertEquals("Incorrect number of rows in database", 4, count.getInt(1));
+            assertEquals(4, count.getInt(1), "Incorrect number of rows in database");
 
             ResultSet rs = stmt.executeQuery("select cdm_collection_id, cdm_object_id, " +
                     "boxc_object_id, boxc_file_id from redirect_mappings");
@@ -137,7 +135,7 @@ public class RedirectMappingIndexServiceTest {
             Statement stmt = conn.createStatement();
             ResultSet count = stmt.executeQuery("select count(*) from redirect_mappings");
             count.next();
-            assertEquals("Incorrect number of rows in database", 8, count.getInt(1));
+            assertEquals(8, count.getInt(1), "Incorrect number of rows in database");
 
             ResultSet rs = stmt.executeQuery("select cdm_object_id from redirect_mappings where " +
                     "cdm_object_id is not null and boxc_object_id is not null and boxc_file_id is null");
@@ -145,7 +143,7 @@ public class RedirectMappingIndexServiceTest {
                 cdmObjectIds.add(rs.getString("cdm_object_id"));
             }
 
-            assertEquals("compound objects aren't represented correctly", expectedIds, cdmObjectIds);
+            assertEquals(expectedIds, cdmObjectIds, "compound objects aren't represented correctly");
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }

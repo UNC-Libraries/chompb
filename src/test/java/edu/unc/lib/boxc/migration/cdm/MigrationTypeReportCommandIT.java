@@ -1,13 +1,13 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.services.MigrationTypeReportService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author krwong
@@ -15,7 +15,7 @@ import static org.junit.Assert.assertFalse;
 public class MigrationTypeReportCommandIT extends AbstractCommandIT {
     private MigrationTypeReportService typeReportService;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         typeReportService = new MigrationTypeReportService();
     }

@@ -1,8 +1,8 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,10 +22,10 @@ import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
@@ -39,8 +40,8 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 public class CdmFieldServiceTest {
     private static final String CDM_BASE_URL = "http://example.com:88/";
     private static final String PROJECT_NAME = "proj";
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private CdmFieldService service;
@@ -51,12 +52,11 @@ public class CdmFieldServiceTest {
     @Mock
     private HttpEntity respEntity;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initMocks(this);
-        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder.getRoot(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         service = new CdmFieldService();
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);
@@ -109,8 +109,8 @@ public class CdmFieldServiceTest {
             service.retrieveFieldsForCollection(PROJECT_NAME);
             fail();
         } catch (MigrationException e) {
-            assertTrue("Unexpected message: " + e.getMessage(),
-                    e.getMessage().contains("No collection with ID '" + PROJECT_NAME));
+            assertTrue(e.getMessage().contains("No collection with ID '" + PROJECT_NAME),
+                    "Unexpected message: " + e.getMessage());
         }
     }
 
@@ -127,18 +127,20 @@ public class CdmFieldServiceTest {
         }
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void retrieveCdmFieldsConnectionFailureTest() throws Exception {
-        when(httpClient.execute(any(HttpGet.class))).thenThrow(new IOException("Fail"));
+        Assertions.assertThrows(IOException.class, () -> {
+            when(httpClient.execute(any(HttpGet.class))).thenThrow(new IOException("Fail"));
 
-        service.retrieveFieldsForCollection(PROJECT_NAME);
+            service.retrieveFieldsForCollection(PROJECT_NAME);
+        });
     }
 
     @Test
     public void persistEmptyFieldsTest() throws Exception {
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
         service.persistFieldsToProject(project, fieldInfo);
-        assertTrue("Fields file must not be empty", Files.size(project.getFieldsPath()) > 0);
+        assertTrue(Files.size(project.getFieldsPath()) > 0, "Fields file must not be empty");
         String contents = FileUtils.readFileToString(project.getFieldsPath().toFile(), StandardCharsets.UTF_8);
         assertEquals(String.join(",", CdmFieldService.EXPORT_CSV_HEADERS), contents.trim());
     }
@@ -172,7 +174,7 @@ public class CdmFieldServiceTest {
         fieldsOriginal.add(field2);
 
         service.persistFieldsToProject(project, fieldInfoOriginal);
-        assertTrue("Fields file must not be empty", Files.size(project.getFieldsPath()) > 0);
+        assertTrue(Files.size(project.getFieldsPath()) > 0, "Fields file must not be empty");
 
         CdmFieldInfo fieldInfoLoaded = service.loadFieldsFromProject(project);
         List<CdmFieldEntry> fieldsLoaded = fieldInfoLoaded.getFields();
@@ -240,8 +242,8 @@ public class CdmFieldServiceTest {
             service.validateFieldsFile(project);
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue("Unexpected error message " + e.getMessage(),
-                    e.getMessage().contains("Duplicate cdm_nick value 'field1' at line 3"));
+            assertTrue(e.getMessage().contains("Duplicate cdm_nick value 'field1' at line 3"),
+                    "Unexpected error message " + e.getMessage());
         }
     }
 
@@ -278,8 +280,8 @@ public class CdmFieldServiceTest {
             service.validateFieldsFile(project);
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue("Unexpected error message " + e.getMessage(),
-                    e.getMessage().contains("Duplicate export_as value 'field1' at line 3"));
+            assertTrue(e.getMessage().contains("Duplicate export_as value 'field1' at line 3"),
+                    "Unexpected error message " + e.getMessage());
         }
     }
 
@@ -296,9 +298,15 @@ public class CdmFieldServiceTest {
         }
     }
 
-    @Test(expected = NoSuchFileException.class)
+//    @Test(expected = NoSuchFileException.class)
+//    public void loadMissingFieldsFileTest() throws Exception {
+//        service.loadFieldsFromProject(project);
+//    }
+    @Test
     public void loadMissingFieldsFileTest() throws Exception {
-        service.loadFieldsFromProject(project);
+        Assertions.assertThrows(NoSuchFileException.class, () -> {
+            service.loadFieldsFromProject(project);
+        });
     }
 
     @Test
@@ -334,7 +342,7 @@ public class CdmFieldServiceTest {
             boolean expectedSkip, String expectedCdmRequired, String expectedCdmSearchable, String expectedCdmHidden,
             String expectedCdmVocab, String expectedCdmDcMapping, List<CdmFieldEntry> fields) {
         Optional<CdmFieldEntry> matchOpt = fields.stream().filter(f -> nick.equals(f.getNickName())).findFirst();
-        assertTrue("Field " + nick + " not present", matchOpt.isPresent());
+        assertTrue(matchOpt.isPresent(), "Field " + nick + " not present");
         CdmFieldEntry entry = matchOpt.get();
         assertEquals(expectedDesc, entry.getDescription());
         assertEquals(expectedExport, entry.getExportAs());

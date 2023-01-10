@@ -14,9 +14,9 @@ import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.fcrepo.ids.RepositoryPIDMinter;
 import edu.unc.lib.boxc.operations.impl.events.PremisLoggerFactoryImpl;
 import edu.unc.lib.boxc.persist.api.PackagingType;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.embedded.RedisServer;
@@ -29,8 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 import static java.nio.file.StandardOpenOption.APPEND;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel
@@ -55,7 +55,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
         redisServer = new RedisServer(REDIS_PORT);
@@ -76,7 +76,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
         depositStatusFactory.setJedisPool(jedisPool);
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         System.clearProperty("REDIS_HOST");
         System.clearProperty("REDIS_PORT");

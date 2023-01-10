@@ -5,15 +5,15 @@ import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author bbpennel
@@ -22,7 +22,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
     private final static String CUSTOM_DEST_ID = "8dd13ef6-1011-4acc-9f2f-ac1cdf03d800";
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
     }
@@ -160,7 +160,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
         assertOutputContains("FAIL: Destination mapping at path " + project.getDestinationMappingsPath()
                 + " is invalid");
         assertOutputContains("- Destination at line 3 has been previously mapped with a new collection");
-        assertEquals("Must only be two errors: " + output, 2, output.split("    - ").length);
+        assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
     }
 
     @Test

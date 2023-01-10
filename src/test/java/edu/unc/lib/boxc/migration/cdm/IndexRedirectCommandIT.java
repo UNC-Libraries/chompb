@@ -3,8 +3,8 @@ package edu.unc.lib.boxc.migration.cdm;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.test.RedirectMappingHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,7 +18,7 @@ public class IndexRedirectCommandIT  extends AbstractCommandIT {
     private RedirectMappingHelper redirectMappingHelper;
     private Path propertiesPath;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
 

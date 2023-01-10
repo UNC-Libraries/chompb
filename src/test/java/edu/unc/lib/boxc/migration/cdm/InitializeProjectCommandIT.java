@@ -5,12 +5,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,12 +25,10 @@ import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.IOUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
@@ -38,6 +36,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author bbpennel
@@ -45,25 +44,29 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 public class InitializeProjectCommandIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "my_coll";
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
+//    @Rule
+//    public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
+    @RegisterExtension
+    static WireMockExtension wireMockRule = WireMockExtension.newInstance()
+            .options(wireMockConfig().port(CdmEnvironmentHelper.TEST_HTTP_PORT))
+            .build();
 
     private CdmFieldService fieldService;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         fieldService = new CdmFieldService();
 
         String validRespBody = IOUtils.toString(this.getClass().getResourceAsStream("/cdm_fields_resp.json"),
                 StandardCharsets.UTF_8);
 
-        stubFor(get(urlMatching("/.*")).atPriority(5)
+        wireMockRule.stubFor(get(urlMatching("/.*")).atPriority(5)
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "text/html")
                         .withBody("Error looking up collection /collid<br>")));
 
-        stubFor(get(urlEqualTo("/" + CdmFieldService.getFieldInfoUrl(COLLECTION_ID)))
+        wireMockRule.stubFor(get(urlEqualTo("/" + CdmFieldService.getFieldInfoUrl(COLLECTION_ID)))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "text/json")
                         .withBody(validRespBody)));
@@ -84,7 +87,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         MigrationProjectProperties properties = project.getProjectProperties();
         assertPropertiesSet(properties, COLLECTION_ID, COLLECTION_ID);
 
-        assertTrue("Description folder not created", Files.exists(project.getDescriptionsPath()));
+        assertTrue(Files.exists(project.getDescriptionsPath()), "Description folder not created");
 
         assertCdmFieldsPresent(project);
     }
@@ -104,7 +107,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         MigrationProjectProperties properties = project.getProjectProperties();
         assertPropertiesSet(properties, "aproject", COLLECTION_ID);
 
-        assertTrue("Description folder not created", Files.exists(project.getDescriptionsPath()));
+        assertTrue(Files.exists(project.getDescriptionsPath()), "Description folder not created");
 
         assertCdmFieldsPresent(project);
     }
@@ -143,7 +146,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         MigrationProjectProperties properties = project.getProjectProperties();
         assertPropertiesSet(properties, "aproject", COLLECTION_ID);
 
-        assertTrue("Description folder not created", Files.exists(project.getDescriptionsPath()));
+        assertTrue(Files.exists(project.getDescriptionsPath()), "Description folder not created");
 
         assertCdmFieldsPresent(project);
     }
@@ -193,8 +196,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
 
     private void assertProjectDirectoryNotCreate() throws IOException {
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(baseDir)) {
-            assertFalse("Project directory should not have been created, so base dir should be empty",
-                    dirStream.iterator().hasNext());
+            assertFalse(dirStream.iterator().hasNext(),
+                    "Project directory should not have been created, so base dir should be empty");
         }
     }
 
@@ -202,7 +205,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         assertEquals(USERNAME, properties.getCreator());
         assertEquals("Project name did not match expected value", expName, properties.getName());
         assertEquals("CDM Collection ID did not match expected value", expCollId, properties.getCdmCollectionId());
-        assertNotNull("Created date not set", properties.getCreatedDate());
+        assertNotNull(properties.getCreatedDate(), "Created date not set");
         assertNull(properties.getHookId());
         assertNull(properties.getCollectionNumber());
         assertEquals(CdmEnvironmentHelper.DEFAULT_ENV_ID, properties.getCdmEnvironmentId());
@@ -222,7 +225,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     private void assertHasFieldWithValue(String nick, String expectedExport, String expectedDesc,
             boolean expectedSkip, List<CdmFieldEntry> fields) {
         Optional<CdmFieldEntry> matchOpt = fields.stream().filter(f -> nick.equals(f.getNickName())).findFirst();
-        assertTrue("Field " + nick + " not present", matchOpt.isPresent());
+        assertTrue(matchOpt.isPresent(), "Field " + nick + " not present");
         CdmFieldEntry entry = matchOpt.get();
         assertEquals(expectedDesc, entry.getDescription());
         assertEquals(expectedExport, entry.getExportAs());

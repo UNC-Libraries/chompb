@@ -6,8 +6,8 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -23,7 +23,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 public class StatusCommandIT extends AbstractCommandIT {
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
     }

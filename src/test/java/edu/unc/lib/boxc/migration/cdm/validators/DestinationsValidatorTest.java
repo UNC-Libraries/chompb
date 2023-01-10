@@ -1,18 +1,19 @@
 package edu.unc.lib.boxc.migration.cdm.validators;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
@@ -26,17 +27,17 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 public class DestinationsValidatorTest {
     private static final String PROJECT_NAME = "proj";
     private static final String USERNAME = "migr_user";
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private DestinationsValidator validator;
     private DestinationsService destService;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
         validator = new DestinationsValidator();
         validator.setProject(project);
@@ -44,9 +45,11 @@ public class DestinationsValidatorTest {
         destService.setProject(project);
     }
 
-    @Test(expected = MigrationException.class)
+    @Test
     public void noMappingFileTest() throws Exception {
-        validator.validateMappings(false);
+        Assertions.assertThrows(MigrationException.class, () -> {
+            validator.validateMappings(false);
+        });
     }
 
     @Test
@@ -242,13 +245,13 @@ public class DestinationsValidatorTest {
     }
 
     private void assertHasError(List<String> errors, String expected) {
-        assertTrue("Expected error:\n" + expected + "\nBut the returned errors were:\n" + String.join("\n", errors),
-                errors.contains(expected));
+        assertTrue(errors.contains(expected),
+                "Expected error:\n" + expected + "\nBut the returned errors were:\n" + String.join("\n", errors));
     }
 
     private void assertHasErrorMatching(List<String> errors, String expectedP) {
-        assertTrue("Expected error:\n" + expectedP + "\nBut the returned errors were:\n" + String.join("\n", errors),
-                errors.stream().anyMatch(e -> e.matches(expectedP)));
+        assertTrue(errors.stream().anyMatch(e -> e.matches(expectedP)),
+                "Expected error:\n" + expectedP + "\nBut the returned errors were:\n" + String.join("\n", errors));
     }
 
     private String mappingBody(String... rows) {
@@ -262,7 +265,7 @@ public class DestinationsValidatorTest {
     }
 
     private void assertNumberErrors(List<String> errors, int expected) {
-        assertEquals("Incorrect number of errors:\n" + String.join("\n", errors),
-                expected, errors.size());
+        assertEquals(expected, errors.size(),
+                "Incorrect number of errors:\n" + String.join("\n", errors));
     }
 }

@@ -4,12 +4,13 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import static org.junit.Assert.assertEquals;
+import java.nio.file.Path;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author krwong
@@ -25,21 +26,20 @@ public class MigrationTypeReportServiceTest {
     private static final String CDM_URL_1 = "http://localhost/cdm/singleitem/collection/proj/id/25";
     private static final String CDM_URL_2 = "http://localhost/cdm/singleitem/collection/proj/id/26";
     private static final String CDM_URL_3 = "http://localhost/cdm/singleitem/collection/proj/id/27";
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private SipServiceHelper testHelper;
     private MigrationProject project;
     private PostMigrationReportService reportGenerator;
     private MigrationTypeReportService service;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
-        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), "proj", null, "user",
+                tmpFolder.getRoot(), "proj", null, "user",
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        testHelper = new SipServiceHelper(project, tmpFolder);
         reportGenerator = new PostMigrationReportService();
         reportGenerator.setProject(project);
         reportGenerator.setChompbConfig(testHelper.getChompbConfig());

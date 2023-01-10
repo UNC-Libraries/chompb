@@ -5,39 +5,38 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author bbpennel
  */
 public class ExportStateServiceTest {
     private static final String PROJECT_NAME = "proj";
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private ExportStateService exportStateService;
     private MigrationProject project;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
-        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder.getRoot(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);
@@ -118,7 +117,7 @@ public class ExportStateServiceTest {
         ExportState state = exportStateService.readState();
         assertFalse(state.isResuming());
         assertEquals(ProgressState.DOWNLOADING_CPD, state.getProgressState());
-        assertTrue("CPD export path must still exist", Files.isDirectory(cpdPath));
+        assertTrue(Files.isDirectory(cpdPath), "CPD export path must still exist");
     }
 
     @Test
@@ -135,7 +134,7 @@ public class ExportStateServiceTest {
         ExportState state = exportStateService.getState();
         assertFalse(state.isResuming());
         assertEquals(ProgressState.STARTING, state.getProgressState());
-        assertFalse("CPD export path must not exist", Files.isDirectory(cpdPath));
+        assertFalse(Files.isDirectory(cpdPath), "CPD export path must not exist");
     }
 
     @Test

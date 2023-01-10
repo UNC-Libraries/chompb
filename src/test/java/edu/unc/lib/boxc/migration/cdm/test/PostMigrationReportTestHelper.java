@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author bbpennel
@@ -38,7 +38,7 @@ public class PostMigrationReportTestHelper {
     public static void assertContainsRow(List<List<String>> rows, String cdmId, String cdmUrl, String objType,
                                          String bxcTitle, String verified, String parentTitle, String childCount) {
         var found = rows.stream().filter(r -> r.get(0).equals(cdmId)).findFirst().orElse(null);
-        assertNotNull("Did not find row for CDM id" + cdmId, found);
+        assertNotNull(found, "Did not find row for CDM id" + cdmId);
         assertEquals(cdmUrl, found.get(1));
         assertEquals(objType, found.get(2));
         assertEquals(bxcTitle, found.get(4));
@@ -52,7 +52,7 @@ public class PostMigrationReportTestHelper {
                                          String bxcUrl, String bxcTitle, String verified, String parentUrl,
                                          String parentTitle, String childCount) {
         var found = rows.stream().filter(r -> r.get(0).equals(cdmId)).findFirst().orElse(null);
-        assertNotNull("Did not find row for CDM id " + cdmId + ", rows were:\n" + rows, found);
+        assertNotNull(found, "Did not find row for CDM id " + cdmId + ", rows were:\n" + rows);
         assertEquals(Arrays.asList(cdmId, cdmUrl, objType, bxcUrl, bxcTitle, verified, parentUrl,
                 parentTitle, childCount), found);
     }

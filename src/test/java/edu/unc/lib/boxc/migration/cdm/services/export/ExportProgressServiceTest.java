@@ -4,8 +4,8 @@ import edu.unc.lib.boxc.migration.cdm.AbstractOutputTest;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
 
@@ -19,10 +19,10 @@ public class ExportProgressServiceTest extends AbstractOutputTest {
     private ExportStateService exportStateService;
     private ExportProgressService exportProgressService;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder.getRoot(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);
         exportProgressService = new ExportProgressService();

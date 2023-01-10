@@ -4,11 +4,11 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
@@ -26,22 +26,21 @@ public class PostMigrationReportServiceTest {
     private static final String BOXC_URL_1 = BOXC_BASE_URL + BOXC_ID_1;
     private static final String BOXC_URL_2 = BOXC_BASE_URL + BOXC_ID_2;
     private static final String BOXC_URL_3 = BOXC_BASE_URL + BOXC_ID_3;
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private SipServiceHelper testHelper;
     private DescriptionsService descriptionsService;
     private PostMigrationReportService service;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initMocks(this);
-        tmpFolder.create();
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), "proj", null, "user",
+                tmpFolder.getRoot(), "proj", null, "user",
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        testHelper = new SipServiceHelper(project, tmpFolder);
         descriptionsService = testHelper.getDescriptionsService();
 
         service = new PostMigrationReportService();

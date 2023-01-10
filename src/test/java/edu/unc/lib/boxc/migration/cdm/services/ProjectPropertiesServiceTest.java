@@ -3,23 +3,23 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import static edu.unc.lib.boxc.migration.cdm.services.ProjectPropertiesService.HOOK_ID;
 import static edu.unc.lib.boxc.migration.cdm.services.ProjectPropertiesService.COLLECTION_NUMBER;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * @author krwong
@@ -27,16 +27,16 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 public class ProjectPropertiesServiceTest {
     private static final String PROJECT_NAME = "gilmer";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private ProjectPropertiesService service;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder.getRoot(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         service = new ProjectPropertiesService();
         service.setProject(project);
     }
