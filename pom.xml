@@ -14,13 +14,14 @@
     <description>Utilities for migrating content from CDM to Box-c</description>
     <properties>
         <picocli.version>4.6.1</picocli.version>
-        <wiremock.version>2.27.2</wiremock.version>
+        <wiremock.version>2.35.0</wiremock.version>
         <sqlite-jdbc.version>3.36.0.1</sqlite-jdbc.version>
         <poi.version>5.1.0</poi.version>
         <log4j-to-slf4j.version>2.17.1</log4j-to-slf4j.version>
         <build-tools.path></build-tools.path>
         <mysql.version>8.0.28</mysql.version>
         <csv.version>1.9.0</csv.version>
+        <junit.jupiter.version>5.9.0</junit.jupiter.version>
     </properties>
 
     <build>
@@ -180,8 +181,28 @@
         </dependency>
         <!-- Testing -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.junit.vintage</groupId>-->
+<!--            <artifactId>junit-vintage-engine</artifactId>-->
+<!--            <version>${junit.jupiter.version}</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
