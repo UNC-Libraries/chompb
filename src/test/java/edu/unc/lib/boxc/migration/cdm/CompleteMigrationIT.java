@@ -1,7 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.DepositField;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
@@ -21,7 +20,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.embedded.RedisServer;
@@ -38,25 +36,19 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test which runs a single collection through a full set of migration steps
  * @author bbpennel
  */
+@WireMockTest(httpPort = CdmEnvironmentHelper.TEST_HTTP_PORT)
 public class CompleteMigrationIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "mini_gilmer";
     private final static String GROUPS = "my:admin:group";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
     private final static int REDIS_PORT = 46380;
 
-//    @Rule
-//    public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
-    @RegisterExtension
-    static WireMockExtension wireMockRule = WireMockExtension.newInstance()
-            .options(wireMockConfig().port(CdmEnvironmentHelper.TEST_HTTP_PORT))
-            .build();
     private TestSshServer testSshServer;
     private Path filesBasePath;
 

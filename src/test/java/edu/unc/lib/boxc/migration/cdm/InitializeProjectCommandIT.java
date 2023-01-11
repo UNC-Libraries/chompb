@@ -5,7 +5,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -28,7 +27,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
@@ -36,20 +35,13 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author bbpennel
  */
+@WireMockTest(httpPort = CdmEnvironmentHelper.TEST_HTTP_PORT)
 public class InitializeProjectCommandIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "my_coll";
-
-//    @Rule
-//    public WireMockRule wireMockRule = new WireMockRule(options().port(CdmEnvironmentHelper.TEST_HTTP_PORT));
-    @RegisterExtension
-    static WireMockExtension wireMockRule = WireMockExtension.newInstance()
-            .options(wireMockConfig().port(CdmEnvironmentHelper.TEST_HTTP_PORT))
-            .build();
 
     private CdmFieldService fieldService;
 
@@ -60,13 +52,13 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         String validRespBody = IOUtils.toString(this.getClass().getResourceAsStream("/cdm_fields_resp.json"),
                 StandardCharsets.UTF_8);
 
-        wireMockRule.stubFor(get(urlMatching("/.*")).atPriority(5)
+        stubFor(get(urlMatching("/.*")).atPriority(5)
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "text/html")
                         .withBody("Error looking up collection /collid<br>")));
 
-        wireMockRule.stubFor(get(urlEqualTo("/" + CdmFieldService.getFieldInfoUrl(COLLECTION_ID)))
+        stubFor(get(urlEqualTo("/" + CdmFieldService.getFieldInfoUrl(COLLECTION_ID)))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "text/json")
                         .withBody(validRespBody)));
@@ -203,8 +195,8 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
 
     private void assertPropertiesSet(MigrationProjectProperties properties, String expName, String expCollId) {
         assertEquals(USERNAME, properties.getCreator());
-        assertEquals("Project name did not match expected value", expName, properties.getName());
-        assertEquals("CDM Collection ID did not match expected value", expCollId, properties.getCdmCollectionId());
+        assertEquals(expName, properties.getName(), "Project name did not match expected value");
+        assertEquals(expCollId, properties.getCdmCollectionId(), "CDM Collection ID did not match expected value");
         assertNotNull(properties.getCreatedDate(), "Created date not set");
         assertNull(properties.getHookId());
         assertNull(properties.getCollectionNumber());

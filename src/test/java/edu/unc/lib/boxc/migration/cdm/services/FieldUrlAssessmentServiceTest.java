@@ -5,10 +5,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.permanentRedirect;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.Reader;
 import java.nio.file.Files;
@@ -27,28 +25,22 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 
 /**
  * @author krwong, snluong
  */
+@WireMockTest
 public class FieldUrlAssessmentServiceTest {
     private static final String PROJECT_NAME = "gilmer";
 
     @TempDir
     public Path tmpFolder;
-
-//    @Rule
-//    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
-    @RegisterExtension
-    static WireMockExtension wireMockRule = WireMockExtension.newInstance()
-            .options(wireMockConfig().dynamicPort().dynamicHttpsPort())
-            .build();
 
     private MigrationProject project;
     private FieldUrlAssessmentService service;
@@ -57,7 +49,7 @@ public class FieldUrlAssessmentServiceTest {
     private String cdmBaseUrl;
 
     @BeforeEach
-    public void setup() throws Exception {
+    public void setup(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
@@ -74,7 +66,7 @@ public class FieldUrlAssessmentServiceTest {
         service.setCdmFieldService(fieldService);
         service.setIndexService(indexService);
 
-        cdmBaseUrl = "http://localhost:" + wireMockRule.getPort();
+        cdmBaseUrl = "http://localhost:" + wmRuntimeInfo.getHttpPort();
         fieldService.setCdmBaseUri(cdmBaseUrl);
         addUrlsToDb();
     }
