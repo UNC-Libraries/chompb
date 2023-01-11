@@ -36,7 +36,7 @@ public class FieldAssessmentTemplateServiceTest {
     @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         fieldService = new CdmFieldService();
 
         service = new FieldAssessmentTemplateService();

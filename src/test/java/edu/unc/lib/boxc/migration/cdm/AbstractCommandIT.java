@@ -60,7 +60,7 @@ public class AbstractCommandIT extends AbstractOutputTest {
     }
 
     protected void setupChompbConfig() throws IOException {
-        var configPath = tmpFolder.getRoot().resolve("config.json");
+        var configPath = tmpFolder.resolve("config.json");
         var config = new ChompbConfigService.ChompbConfig();
         config.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
         config.setBxcEnvironments(BxcEnvironmentHelper.getTestMapping());

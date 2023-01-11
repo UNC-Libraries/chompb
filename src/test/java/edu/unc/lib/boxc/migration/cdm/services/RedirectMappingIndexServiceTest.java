@@ -48,7 +48,7 @@ public class RedirectMappingIndexServiceTest {
     @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot(), PROJECT_NAME, null, "user",
+                tmpFolder, PROJECT_NAME, null, "user",
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         testHelper = new SipServiceHelper(project, tmpFolder);
         redirectMappingHelper = new RedirectMappingHelper(project);
@@ -107,14 +107,14 @@ public class RedirectMappingIndexServiceTest {
             ResultSet rs = stmt.executeQuery("select cdm_collection_id, cdm_object_id, " +
                     "boxc_object_id, boxc_file_id from redirect_mappings");
             rs.next();
-            assertEquals("cdm_collection_id value isn't accurate", row1.get(0),
-                    rs.getString("cdm_collection_id"));
-            assertEquals("cdm_object_id value isn't accurate", row1.get(1),
-                    rs.getString("cdm_object_id"));
-            assertEquals("boxc_object_id value isn't accurate", row1.get(2),
-                    rs.getString("boxc_object_id"));
-            assertEquals("boxc_file_id value isn't accurate", row1.get(3),
-                    rs.getString("boxc_file_id"));
+            assertEquals(row1.get(0), rs.getString("cdm_collection_id"),
+                    "cdm_collection_id value isn't accurate");
+            assertEquals(row1.get(1), rs.getString("cdm_object_id"),
+                    "cdm_object_id value isn't accurate");
+            assertEquals(row1.get(2), rs.getString("boxc_object_id"),
+                    "boxc_object_id value isn't accurate");
+            assertEquals(row1.get(3), rs.getString("boxc_file_id"),
+                    "boxc_file_id value isn't accurate");
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
@@ -155,9 +155,8 @@ public class RedirectMappingIndexServiceTest {
         indexService.setRedirectDbConnectionPath(mysqlPath);
         indexService.init();
 
-        assertEquals("generated connection string is incorrect",
-                "jdbc:mysql://root:password@localhost:3306/chomping_block",
-                indexService.generateConnectionString());
+        assertEquals("jdbc:mysql://root:password@localhost:3306/chomping_block",
+                indexService.generateConnectionString(), "generated connection string is incorrect");
     }
 
     private void generateCompoundObjectProject() throws Exception {

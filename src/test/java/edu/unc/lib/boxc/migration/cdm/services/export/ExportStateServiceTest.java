@@ -36,7 +36,7 @@ public class ExportStateServiceTest {
     @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);

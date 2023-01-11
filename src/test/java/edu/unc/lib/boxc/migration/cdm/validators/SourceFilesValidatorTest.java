@@ -42,7 +42,7 @@ public class SourceFilesValidatorTest {
 
         validator = new SourceFilesValidator();
         validator.setProject(project);
-        testHelper = new SipServiceHelper(project, tmpFolder.getRoot());
+        testHelper = new SipServiceHelper(project, tmpFolder);
     }
 
     @Test

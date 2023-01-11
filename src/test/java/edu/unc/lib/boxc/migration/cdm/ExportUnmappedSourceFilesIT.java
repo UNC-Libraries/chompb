@@ -74,7 +74,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         var updatedContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);
-        assertEquals("Mapping contents must be unchanged", originalContents, updatedContents);
+        assertEquals(originalContents, updatedContents, "Mapping contents must be unchanged");
     }
 
     @Test
@@ -150,6 +150,6 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         assertOutputContains("Authentication to server failed");
 
         var updatedContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);
-        assertEquals("Mapping contents must be unchanged", originalContents, updatedContents);
+        assertEquals(originalContents, updatedContents, "Mapping contents must be unchanged");
     }
 }

@@ -38,7 +38,7 @@ public class AbstractOutputTest {
 
     @BeforeEach
     public void setupOutput() throws Exception {
-        baseDir = tmpFolder.getRoot();
+        baseDir = tmpFolder;
 
         out.reset();
         System.setOut(new PrintStream(out));

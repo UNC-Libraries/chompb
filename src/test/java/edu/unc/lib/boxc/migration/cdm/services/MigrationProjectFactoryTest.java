@@ -36,7 +36,7 @@ public class MigrationProjectFactoryTest {
 
     @BeforeEach
     public void setup() throws Exception {
-        projectsBase = tmpFolder.getRoot();
+        projectsBase = tmpFolder;
     }
 
     @Test
@@ -213,8 +213,8 @@ public class MigrationProjectFactoryTest {
 
     private void assertPropertiesSet(MigrationProjectProperties properties, String expName, String expCollId) {
         assertEquals(USERNAME, properties.getCreator());
-        assertEquals("Project name did not match expected value", expName, properties.getName());
-        assertEquals("CDM Collection ID did not match expected value", expCollId, properties.getCdmCollectionId());
+        assertEquals(expName, properties.getName(), "Project name did not match expected value");
+        assertEquals(expCollId, properties.getCdmCollectionId(), "CDM Collection ID did not match expected value");
         assertNotNull(properties.getCreatedDate(), "Created date not set");
         assertEquals("test", properties.getCdmEnvironmentId());
     }

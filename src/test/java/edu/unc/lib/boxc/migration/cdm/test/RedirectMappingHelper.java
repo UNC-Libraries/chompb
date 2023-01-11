@@ -66,7 +66,7 @@ public class RedirectMappingHelper {
     }
 
     public Path createDbConnectionPropertiesFile(Path tempFolder, String dbType) throws IOException {
-        File propertiesFile = new File(String.valueOf(tempFolder.getRoot()), "redirect_db_connection.properties");
+        File propertiesFile = new File(String.valueOf(tempFolder), "redirect_db_connection.properties");
         OutputStream output = new FileOutputStream(propertiesFile);
 
         Properties prop = new Properties();

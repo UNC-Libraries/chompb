@@ -56,7 +56,7 @@ public class CdmFieldServiceTest {
     public void setup() throws Exception {
         initMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         service = new CdmFieldService();
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);

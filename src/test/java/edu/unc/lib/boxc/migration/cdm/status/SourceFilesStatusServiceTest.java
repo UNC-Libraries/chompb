@@ -1,6 +1,5 @@
 package edu.unc.lib.boxc.migration.cdm.status;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -28,7 +27,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
     private static final String USERNAME = "migr_user";
 
     @TempDir
-    public File tmpFolder;
+    public Path tmpFolder;
 
     private MigrationProject project;
     private SipServiceHelper testHelper;
@@ -37,9 +36,9 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
     @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
-        testHelper = new SipServiceHelper(project, tmpFolder.toPath());
+        testHelper = new SipServiceHelper(project, tmpFolder);
         statusService = new SourceFilesStatusService();
         statusService.setProject(project);
     }
