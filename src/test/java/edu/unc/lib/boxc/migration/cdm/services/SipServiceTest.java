@@ -27,10 +27,9 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.jdom2.Document;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.BufferedWriter;
 import java.io.Reader;
@@ -45,11 +44,11 @@ import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_P
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static java.nio.file.StandardOpenOption.APPEND;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.anyString;
 
 /**
@@ -61,20 +60,20 @@ public class SipServiceTest {
     private static final String DEST_UUID = "bfe93126-849a-43a5-b9d9-391e18ffacc6";
     private static final String DEST_UUID2 = "8ae56bbc-400e-496d-af4b-3c585e20dba1";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private SipService service;
     private SipServiceHelper testHelper;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME,
+                tmpFolder, PROJECT_NAME, null, USERNAME,
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
 
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        testHelper = new SipServiceHelper(project, tmpFolder);
         service = testHelper.createSipsService();
     }
 
@@ -84,8 +83,8 @@ public class SipServiceTest {
             service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue("Unexpected message: " + e.getMessage(),
-                    e.getMessage().contains("Exported data must be indexed"));
+            assertTrue(e.getMessage().contains("Exported data must be indexed"),
+                    "Unexpected message: " + e.getMessage());
         }
     }
 
@@ -99,8 +98,8 @@ public class SipServiceTest {
             service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue("Unexpected message: " + e.getMessage(),
-                    e.getMessage().contains("Destinations must be mapped"));
+            assertTrue(e.getMessage().contains("Destinations must be mapped"),
+                    "Unexpected message: " + e.getMessage());
         }
     }
 
@@ -114,8 +113,8 @@ public class SipServiceTest {
             service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue("Unexpected message: " + e.getMessage(),
-                    e.getMessage().contains("Descriptions must be created"));
+            assertTrue(e.getMessage().contains("Descriptions must be created"),
+                    "Unexpected message: " + e.getMessage());
         }
     }
 
@@ -129,8 +128,8 @@ public class SipServiceTest {
             service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue("Unexpected message: " + e.getMessage(),
-                    e.getMessage().contains("Source files must be mapped"));
+            assertTrue(e.getMessage().contains("Source files must be mapped"),
+                    "Unexpected message: " + e.getMessage());
         }
     }
 
@@ -297,8 +296,8 @@ public class SipServiceTest {
             service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue("Unexpected message: " + e.getMessage(),
-                    e.getMessage().contains("no source file has been mapped"));
+            assertTrue(e.getMessage().contains("no source file has been mapped"),
+                    "Unexpected message: " + e.getMessage());
         }
     }
 
@@ -347,8 +346,8 @@ public class SipServiceTest {
             service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue("Unexpected message: " + e.getMessage(),
-                    e.getMessage().contains("does not have a MODS description"));
+            assertTrue(e.getMessage().contains("does not have a MODS description"),
+                    "Unexpected message: " + e.getMessage());
         }
     }
 

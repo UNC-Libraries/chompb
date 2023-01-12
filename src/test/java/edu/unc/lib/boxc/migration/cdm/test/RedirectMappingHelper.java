@@ -5,7 +5,6 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import org.apache.commons.io.FileUtils;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -66,8 +65,8 @@ public class RedirectMappingHelper {
         return options;
     }
 
-    public Path createDbConnectionPropertiesFile(TemporaryFolder tempFolder, String dbType) throws IOException {
-        File propertiesFile = new File(tempFolder.getRoot(), "redirect_db_connection.properties");
+    public Path createDbConnectionPropertiesFile(Path tempFolder, String dbType) throws IOException {
+        File propertiesFile = new File(String.valueOf(tempFolder), "redirect_db_connection.properties");
         OutputStream output = new FileOutputStream(propertiesFile);
 
         Properties prop = new Properties();

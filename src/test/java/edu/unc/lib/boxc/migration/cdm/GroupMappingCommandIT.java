@@ -2,8 +2,8 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.sql.Connection;
@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel
  */
 public class GroupMappingCommandIT extends AbstractCommandIT {
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
     }
@@ -166,8 +166,8 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
             childIds.add(rs.getString(1));
         }
         List<String> expected = Arrays.asList(expectedFileCdmIds);
-        assertTrue("Expected parent ids set for file objects " + expected
-                + " but only was " + childIds, childIds.containsAll(expected));
+        assertTrue(childIds.containsAll(expected), "Expected parent ids set for file objects " + expected
+                        + " but only was " + childIds);
         assertEquals(expected.size(), childIds.size());
     }
 

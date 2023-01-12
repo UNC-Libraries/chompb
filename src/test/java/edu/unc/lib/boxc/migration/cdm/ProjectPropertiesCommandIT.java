@@ -1,9 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
@@ -17,7 +15,7 @@ public class ProjectPropertiesCommandIT extends AbstractCommandIT {
 
     private ProjectPropertiesService propertiesService;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProject();
         propertiesService = new ProjectPropertiesService();

@@ -1,13 +1,12 @@
 package edu.unc.lib.boxc.migration.cdm;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
 import java.nio.file.Files;
@@ -16,18 +15,16 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel
  */
+@WireMockTest(httpPort = BxcEnvironmentHelper.TEST_HTTP_PORT)
 public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().port(BxcEnvironmentHelper.TEST_HTTP_PORT));
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
         setupChompbConfig();
@@ -38,7 +35,7 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         System.clearProperty("ENV_CONFIG");
     }

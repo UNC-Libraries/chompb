@@ -7,15 +7,15 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
 import java.io.IOException;
 import java.nio.file.Files;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -34,20 +34,19 @@ public class AbstractCommandIT extends AbstractOutputTest {
     protected MigrationProject project;
     protected String chompbConfigPath;
 
-    @After
+    @AfterEach
     public void resetProps() {
         System.setProperty("user.name", initialUser);
     }
 
-    @Before
+    @BeforeEach
     public void baseSetUp() throws Exception {
         System.setProperty("user.name", USERNAME);
         migrationCommand = new CommandLine(new CLIMain());
-        tmpFolder.create();
     }
 
     protected void initTestHelper() throws IOException {
-        testHelper = new SipServiceHelper(project, tmpFolder.newFolder().toPath());
+        testHelper = new SipServiceHelper(project, tmpFolder);
     }
 
     protected void initProject() throws IOException {
@@ -61,7 +60,7 @@ public class AbstractCommandIT extends AbstractOutputTest {
     }
 
     protected void setupChompbConfig() throws IOException {
-        var configPath = tmpFolder.getRoot().toPath().resolve("config.json");
+        var configPath = tmpFolder.resolve("config.json");
         var config = new ChompbConfigService.ChompbConfig();
         config.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
         config.setBxcEnvironments(BxcEnvironmentHelper.getTestMapping());

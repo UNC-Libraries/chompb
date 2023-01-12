@@ -2,10 +2,11 @@ package edu.unc.lib.boxc.migration.cdm.validators;
 
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -16,10 +17,9 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
@@ -30,16 +30,16 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 public class DescriptionsValidatorTest {
     private static final String PROJECT_NAME = "proj";
     private static final String USERNAME = "migr_user";
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
     private MigrationProject project;
     private DescriptionsValidator validator;
     private static XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
         validator = new DescriptionsValidator();
         validator.setProject(project);
@@ -139,12 +139,12 @@ public class DescriptionsValidatorTest {
 
     private void assertHasErrorMatching(List<String> errors, String expectedP) {
         Pattern pattern = Pattern.compile(expectedP, Pattern.DOTALL);
-        assertTrue("Expected error:\n" + expectedP + "\nBut the returned errors were:\n" + String.join("\n", errors),
-                errors.stream().anyMatch(e -> pattern.matcher(e).matches()));
+        assertTrue(errors.stream().anyMatch(e -> pattern.matcher(e).matches()),
+                "Expected error:\n" + expectedP + "\nBut the returned errors were:\n" + String.join("\n", errors));
     }
 
     private void assertErrorCount(List<String> errors, int expected) {
-        assertEquals("Unexpected number of errors:\n" + String.join("\n", errors) + "\n",
-                expected, errors.size());
+        assertEquals(expected, errors.size(),
+                "Unexpected number of errors:\n" + String.join("\n", errors) + "\n");
     }
 }

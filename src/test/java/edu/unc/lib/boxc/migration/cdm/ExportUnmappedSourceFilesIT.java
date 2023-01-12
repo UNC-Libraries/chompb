@@ -7,18 +7,18 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author bbpennel
@@ -27,7 +27,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
     private TestSshServer testSshServer;
     private Path basePath;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         defaultCollectionId = "mini_gilmer";
         testSshServer = new TestSshServer();
@@ -35,10 +35,10 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         setupChompbConfig();
         initProjectAndHelper();
         testHelper.indexExportData("mini_gilmer");
-        basePath = tmpFolder.newFolder().toPath();
+        basePath = tmpFolder;
     }
 
-    @After
+    @AfterEach
     public void cleanup() throws Exception {
         testSshServer.stopServer();
     }
@@ -57,8 +57,8 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         String[] args = exportArgs();
         executeExpectFailure(args);
 
-        assertFalse("Export dir should not be created",
-                Files.exists(CdmFileRetrievalService.getExportedSourceFilesPath(project)));
+        assertFalse(Files.exists(CdmFileRetrievalService.getExportedSourceFilesPath(project)),
+                "Export dir should not be created");
         assertOutputContains("Source files must be mapped");
     }
 
@@ -74,7 +74,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         var updatedContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);
-        assertEquals("Mapping contents must be unchanged", originalContents, updatedContents);
+        assertEquals(originalContents, updatedContents, "Mapping contents must be unchanged");
     }
 
     @Test
@@ -128,7 +128,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         var exportedSourceFilesPath = CdmFileRetrievalService.getExportedSourceFilesPath(project);
         var mappingInfo = sourceFileService.loadMappings();
         var mapping1 = mappingInfo.getMappingByCdmId("25");
-        assertNull("Mapping for resource with missing file must be null", mapping1.getSourcePath());
+        assertNull(mapping1.getSourcePath(), "Mapping for resource with missing file must be null");
         var mapping2 = mappingInfo.getMappingByCdmId("26");
         assertEquals(localSourcePaths.get(0), mapping2.getSourcePath());
         var mapping3 = mappingInfo.getMappingByCdmId("27");
@@ -150,6 +150,6 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         assertOutputContains("Authentication to server failed");
 
         var updatedContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);
-        assertEquals("Mapping contents must be unchanged", originalContents, updatedContents);
+        assertEquals(originalContents, updatedContents, "Mapping contents must be unchanged");
     }
 }

@@ -1,10 +1,10 @@
 package edu.unc.lib.boxc.migration.cdm.test;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -348,16 +348,16 @@ public class SipServiceHelper {
                 .map(Statement::getSubject)
                 .filter(eResc -> eResc.hasProperty(RDF.type, Premis.Ingestion))
                 .collect(Collectors.toList());
-        assertEquals("Only one event should be present", 1, eventRescs.size());
+        assertEquals(1, eventRescs.size(), "Only one event should be present");
         Resource migrationEventResc = eventRescs.get(0);
-        assertTrue("Missing migration event note",
-                migrationEventResc.hasProperty(Premis.note, "Object migrated as a part of the CONTENTdm to Box-c 5 migration"));
+        assertTrue(migrationEventResc.hasProperty(Premis.note, "Object migrated as a part of the CONTENTdm to Box-c 5 migration"),
+                "Missing migration event note");
         Resource agentResc = migrationEventResc.getProperty(Premis.hasEventRelatedAgentExecutor).getResource();
-        assertNotNull("Migration agent not set", agentResc);
+        assertNotNull(agentResc, "Migration agent not set");
         assertEquals(AgentPids.forSoftware(SoftwareAgent.cdmToBxcMigrationUtil).getRepositoryPath(),
                 agentResc.getURI());
         Resource authResc = migrationEventResc.getProperty(Premis.hasEventRelatedAgentAuthorizor).getResource();
-        assertNotNull("Migration authorizer not set", authResc);
+        assertNotNull(authResc, "Migration authorizer not set");
     }
 
     public void assertModsPresentWithCdmId(DepositDirectoryManager dirManager, PID pid, String cdmId)
@@ -369,7 +369,7 @@ public class SipServiceHelper {
             .filter(e -> "local".equals(e.getAttributeValue("type"))
                     && DescriptionsService.CDM_NUMBER_LABEL.equals(e.getAttributeValue("displayLabel")))
             .findFirst().orElseGet(null);
-        assertNotNull("Did not find a CDM identifier field", cdmIdEl);
+        assertNotNull(cdmIdEl, "Did not find a CDM identifier field");
         assertEquals(cdmId, cdmIdEl.getText());
     }
 
@@ -380,7 +380,7 @@ public class SipServiceHelper {
     public MigrationSip extractSipFromOutput(String output) {
         MigrationSip sip = new MigrationSip();
         Matcher idMatcher = DEPOSIT_ID_PATTERN.matcher(output);
-        assertTrue("No id found, output was: " + output, idMatcher.matches());
+        assertTrue(idMatcher.matches(), "No id found, output was: " + output);
         String depositId = idMatcher.group(1);
 
         Matcher pathMatcher = SIP_PATH_PATTERN.matcher(output);

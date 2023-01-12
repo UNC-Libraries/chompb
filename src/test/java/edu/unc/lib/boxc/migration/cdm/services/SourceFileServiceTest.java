@@ -1,11 +1,11 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,10 +16,9 @@ import java.util.List;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -36,8 +35,8 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 public class SourceFileServiceTest {
     private static final String PROJECT_NAME = "proj";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private CdmIndexService indexService;
@@ -47,13 +46,14 @@ public class SourceFileServiceTest {
 
     private Path basePath;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
-        basePath = tmpFolder.newFolder().toPath();
+        basePath = tmpFolder.resolve("testFolder");
+        Files.createDirectory(basePath);
         testHelper = new SipServiceHelper(project, basePath);
 
         service = testHelper.getSourceFileService();
@@ -581,8 +581,8 @@ public class SourceFileServiceTest {
         assertEquals(matchingVal, mapping.getMatchingValue());
         if (potentialPaths.length > 0) {
             for (Path potentialPath : potentialPaths) {
-                assertTrue("Mapping did not contain expected potential path: " + potentialPath,
-                        mapping.getPotentialMatches().contains(potentialPath.toString()));
+                assertTrue(mapping.getPotentialMatches().contains(potentialPath.toString()),
+                        "Mapping did not contain expected potential path: " + potentialPath);
             }
         }
     }
@@ -597,8 +597,8 @@ public class SourceFileServiceTest {
     }
 
     private void assertExceptionContains(String expected, Exception e) {
-        assertTrue("Expected message exception to contain '" + expected + "', but was: " + e.getMessage(),
-                e.getMessage().contains(expected));
+        assertTrue(e.getMessage().contains(expected),
+                "Expected message exception to contain '" + expected + "', but was: " + e.getMessage());
     }
 
     private void setIndexedDate() throws Exception {

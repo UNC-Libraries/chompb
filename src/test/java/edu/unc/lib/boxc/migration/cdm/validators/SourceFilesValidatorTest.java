@@ -1,7 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.validators;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,16 +11,16 @@ import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * @author bbpennel
@@ -28,27 +28,28 @@ import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 public class SourceFilesValidatorTest {
     private static final String PROJECT_NAME = "proj";
     private static final String USERNAME = "migr_user";
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private SourceFilesValidator validator;
     private SipServiceHelper testHelper;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.newFolder().toPath(), PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
         validator = new SourceFilesValidator();
         validator.setProject(project);
-        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
+        testHelper = new SipServiceHelper(project, tmpFolder);
     }
 
-
-    @Test(expected = MigrationException.class)
+    @Test
     public void noMappingFileTest() throws Exception {
-        validator.validateMappings(false);
+        Assertions.assertThrows(MigrationException.class, () -> {
+            validator.validateMappings(false);
+        });
     }
 
     @Test
@@ -199,8 +200,8 @@ public class SourceFilesValidatorTest {
     }
 
     private void assertHasError(List<String> errors, String expected) {
-        assertTrue("Expected error:\n" + expected + "\nBut the returned errors were:\n" + String.join("\n", errors),
-                errors.contains(expected));
+        assertTrue(errors.contains(expected),
+                "Expected error:\n" + expected + "\nBut the returned errors were:\n" + String.join("\n", errors));
     }
 
     private String mappingBody(String... rows) {
@@ -214,7 +215,7 @@ public class SourceFilesValidatorTest {
     }
 
     private void assertNumberErrors(List<String> errors, int expected) {
-        assertEquals("Incorrect number of errors:\n" + String.join("\n", errors),
-                expected, errors.size());
+        assertEquals(expected, errors.size(),
+                "Incorrect number of errors:\n" + String.join("\n", errors));
     }
 }

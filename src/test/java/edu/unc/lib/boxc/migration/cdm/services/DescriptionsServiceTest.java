@@ -1,12 +1,12 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -22,10 +22,9 @@ import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.XMLOutputter;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -39,8 +38,8 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 public class DescriptionsServiceTest {
     private static final String PROJECT_NAME = "proj";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
     private final static XMLOutputter xmlOutputter = new XMLOutputter();
 
     private MigrationProject project;
@@ -48,9 +47,9 @@ public class DescriptionsServiceTest {
 
     private Path basePath;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
-        basePath = tmpFolder.newFolder().toPath();
+        basePath = tmpFolder;
         project = MigrationProjectFactory.createMigrationProject(basePath, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getDescriptionsPath());
         service = new DescriptionsService();
@@ -139,7 +138,7 @@ public class DescriptionsServiceTest {
             service.expandDescriptions();
             fail();
         } catch (MigrationException e) {
-            assertTrue("Unexpected message: " + e.getMessage(), e.getMessage().contains("Unexpected close tag"));
+            assertTrue(e.getMessage().contains("Unexpected close tag"), "Unexpected message: " + e.getMessage());
         }
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
         assertDateNotPresent();
@@ -165,7 +164,7 @@ public class DescriptionsServiceTest {
             service.expandDescriptions();
             fail();
         } catch (MigrationException e) {
-            assertTrue("Unexpected message: " + e.getMessage(), e.getMessage().contains("Unexpected EOF"));
+            assertTrue(e.getMessage().contains("Unexpected EOF"), "Unexpected message: " + e.getMessage());
         }
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
         assertDateNotPresent();
@@ -213,7 +212,7 @@ public class DescriptionsServiceTest {
             .filter(e -> "local".equals(e.getAttributeValue("type")))
             .filter(e -> "CONTENTdm number".equals(e.getAttributeValue("displayLabel")))
             .findFirst();
-        assertTrue("Expected to find CDM number identifier field", idEl.isPresent());
+        assertTrue(idEl.isPresent(), "Expected to find CDM number identifier field");
         assertEquals(expectedId, idEl.get().getText());
     }
 
@@ -226,7 +225,7 @@ public class DescriptionsServiceTest {
                 }
             }
         }
-        assertEquals("Unexpected number of expanded MODS files", expected, fileCount);
+        assertEquals(expected, fileCount, "Unexpected number of expanded MODS files");
     }
 
     private void assertDatePresent() throws Exception {

@@ -1,16 +1,16 @@
 package edu.unc.lib.boxc.migration.cdm;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel
@@ -18,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 public class SourceFilesCommandIT extends AbstractCommandIT {
     private Path basePath;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
         basePath = testHelper.getSourceFilesBasePath();
@@ -182,7 +182,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 + " is invalid");
         assertOutputContains("- No path mapped at line 3");
         assertOutputContains("- No path mapped at line 4");
-        assertEquals("Must only be two errors: " + output, 3, output.split("    - ").length);
+        assertEquals(3, output.split("    - ").length, "Must only be two errors: " + output);
     }
 
     @Test

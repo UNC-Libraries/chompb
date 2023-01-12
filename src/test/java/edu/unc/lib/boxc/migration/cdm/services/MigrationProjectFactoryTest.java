@@ -1,10 +1,10 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -12,10 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
@@ -30,15 +29,14 @@ public class MigrationProjectFactoryTest {
     private static final String PROJ_NAME = "myproject";
     private static final String COLL_ID = "coll_12345";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
     private Path projectsBase;
     private String testEnv = CdmEnvironmentHelper.DEFAULT_ENV_ID;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
-        tmpFolder.create();
-        projectsBase = tmpFolder.getRoot().toPath();
+        projectsBase = tmpFolder;
     }
 
     @Test
@@ -178,7 +176,7 @@ public class MigrationProjectFactoryTest {
         }
         assertTrue(Files.exists(projectPath));
         try(DirectoryStream<Path> dirStream = Files.newDirectoryStream(projectPath)) {
-            assertFalse("Existing directory should remain empty", dirStream.iterator().hasNext());
+            assertFalse(dirStream.iterator().hasNext(), "Existing directory should remain empty");
         }
     }
 
@@ -196,15 +194,15 @@ public class MigrationProjectFactoryTest {
         assertReturnedPropertiesPopulated(projectLoaded, PROJ_NAME, COLL_ID);
         assertPropertiesFilePopulated(projectLoaded, PROJ_NAME, COLL_ID);
 
-        assertEquals("Expect created and loaded projects to have same timestamp",
-                projectCreated.getProjectProperties().getCreatedDate(),
-                projectLoaded.getProjectProperties().getCreatedDate());
+        assertEquals(projectCreated.getProjectProperties().getCreatedDate(),
+                projectLoaded.getProjectProperties().getCreatedDate(),
+                "Expect created and loaded projects to have same timestamp");
     }
 
     private void assertPropertiesFilePopulated(MigrationProject project, String expName, String expCollId)
             throws IOException {
         Path propertiesPath = project.getProjectPropertiesPath();
-        assertTrue("Properties object must exist", Files.exists(propertiesPath));
+        assertTrue(Files.exists(propertiesPath), "Properties object must exist");
         MigrationProjectProperties properties = ProjectPropertiesSerialization.read(propertiesPath);
         assertPropertiesSet(properties, expName, expCollId);
     }
@@ -215,9 +213,9 @@ public class MigrationProjectFactoryTest {
 
     private void assertPropertiesSet(MigrationProjectProperties properties, String expName, String expCollId) {
         assertEquals(USERNAME, properties.getCreator());
-        assertEquals("Project name did not match expected value", expName, properties.getName());
-        assertEquals("CDM Collection ID did not match expected value", expCollId, properties.getCdmCollectionId());
-        assertNotNull("Created date not set", properties.getCreatedDate());
+        assertEquals(expName, properties.getName(), "Project name did not match expected value");
+        assertEquals(expCollId, properties.getCdmCollectionId(), "CDM Collection ID did not match expected value");
+        assertNotNull(properties.getCreatedDate(), "Created date not set");
         assertEquals("test", properties.getCdmEnvironmentId());
     }
 }

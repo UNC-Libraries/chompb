@@ -12,13 +12,13 @@ import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -28,11 +28,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author bbpennel
@@ -40,8 +40,8 @@ import static org.junit.Assert.fail;
 public class GroupMappingServiceTest {
     private static final String PROJECT_NAME = "proj";
 
-    @Rule
-    public final TemporaryFolder tmpFolder = new TemporaryFolder();
+    @TempDir
+    public Path tmpFolder;
 
     private MigrationProject project;
     private CdmIndexService indexService;
@@ -49,10 +49,10 @@ public class GroupMappingServiceTest {
     private GroupMappingService service;
     private SipServiceHelper testHelper;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder.getRoot().toPath(), PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
         fieldService = new CdmFieldService();
@@ -64,7 +64,7 @@ public class GroupMappingServiceTest {
         service.setProject(project);
         service.setFieldService(fieldService);
 
-        testHelper = new SipServiceHelper(project, tmpFolder.getRoot().toPath());
+        testHelper = new SipServiceHelper(project, tmpFolder);
     }
 
     @Test
@@ -354,8 +354,8 @@ public class GroupMappingServiceTest {
             childIds.add(rs.getString(1));
         }
         List<String> expected = Arrays.asList(expectedFileCdmIds);
-        assertTrue("Expected work " + workId + " to contain children " + expected
-                + " but it contained " + childIds, childIds.containsAll(expected));
+        assertTrue(childIds.containsAll(expected), "Expected work " + workId + " to contain children " + expected
+                        + " but it contained " + childIds);
         assertEquals(expected.size(), childIds.size());
     }
 
@@ -379,8 +379,8 @@ public class GroupMappingServiceTest {
             parentIds.add(rs.getString(1));
         }
         var expected = Arrays.stream(expectedParents).map(this::asGroupKey).collect(Collectors.toList());
-        assertTrue("Expected parent ids " + expected + " but found " + parentIds, parentIds.containsAll(expected));
-        assertEquals("Expected parent ids " + expected + " but found " + parentIds, expected.size(), parentIds.size());
+        assertTrue(parentIds.containsAll(expected), "Expected parent ids " + expected + " but found " + parentIds);
+        assertEquals(expected.size(), parentIds.size(), "Expected parent ids " + expected + " but found " + parentIds);
     }
 
     /**
@@ -403,8 +403,8 @@ public class GroupMappingServiceTest {
     }
 
     private void assertExceptionContains(String expected, Exception e) {
-        assertTrue("Expected message exception to contain '" + expected + "', but was: " + e.getMessage(),
-                e.getMessage().contains(expected));
+        assertTrue(e.getMessage().contains(expected),
+                "Expected message exception to contain '" + expected + "', but was: " + e.getMessage());
     }
 
     private void assertMappingPresent(GroupMappingInfo info, String id, String expectedMatchedVal) {
@@ -418,10 +418,10 @@ public class GroupMappingServiceTest {
         Map<String, List<String>> groupedMappings = groupedInfo.getGroupedMappings();
         List<String> objIds = groupedMappings.get(asGroupKey(groupKey));
         List<String> expectedIds = Arrays.asList(cdmIds);
-        assertTrue("Expected group " + groupKey + " to contain " + expectedIds + " but contained " + objIds,
-                objIds.containsAll(expectedIds));
-        assertEquals("Expected group " + groupKey + " to contain " + expectedIds + " but contained " + objIds,
-                expectedIds.size(), objIds.size());
+        assertTrue(objIds.containsAll(expectedIds),
+                "Expected group " + groupKey + " to contain " + expectedIds + " but contained " + objIds);
+        assertEquals(expectedIds.size(), objIds.size(),
+                "Expected group " + groupKey + " to contain " + expectedIds + " but contained " + objIds);
     }
 
     private void assertMappedDatePresent() throws Exception {

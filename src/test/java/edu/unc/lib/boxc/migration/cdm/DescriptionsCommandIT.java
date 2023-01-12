@@ -7,8 +7,8 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -21,9 +21,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel
@@ -32,7 +32,7 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
     private final static Pattern GENERATED_PATH_PATTERN = Pattern.compile(
             ".*Description file generated at: ([^\\s]+).*", Pattern.DOTALL);
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
     }
@@ -276,8 +276,8 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
     }
 
     private void assertHasModsRecord(List<Element> modsEls, String cdmId) {
-        assertTrue("No mods record with cdm id " + cdmId,
-                modsEls.stream().anyMatch(modsEl -> cdmId.equals(modsEl.getChildText("identifier", MODS_V3_NS))));
+        assertTrue(modsEls.stream().anyMatch(modsEl -> cdmId.equals(modsEl.getChildText("identifier", MODS_V3_NS))),
+                "No mods record with cdm id " + cdmId);
     }
 
     private void indexExportSamples() throws Exception {
@@ -297,7 +297,7 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
                 }
             }
         }
-        assertEquals("Unexpected number of expanded MODS files", expected, fileCount);
+        assertEquals(expected, fileCount, "Unexpected number of expanded MODS files");
     }
 
     private void setIndexedDate() throws Exception {

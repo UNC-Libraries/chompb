@@ -4,7 +4,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -12,11 +12,11 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel
@@ -75,7 +75,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
                 "-f"};
         executeExpectSuccess(argsForce);
         assertTrue(Files.exists(project.getIndexPath()));
-        assertNotEquals("Index should have changed size", indexSize, Files.size(project.getIndexPath()));
+        assertNotEquals(indexSize, Files.size(project.getIndexPath()), "Index should have changed size");
         assertDateIndexedPresent();
     }
 
@@ -94,7 +94,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         executeExpectFailure(args);
         assertOutputContains("Failed to parse desc.all file");
         assertDateIndexedNotPresent();
-        assertTrue("Index file should be cleaned up", Files.notExists(project.getIndexPath()));
+        assertTrue(Files.notExists(project.getIndexPath()), "Index file should be cleaned up");
     }
 
     private void setExportedDate() throws Exception {
