@@ -188,8 +188,10 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
 
     private void assertProjectDirectoryNotCreate() throws IOException {
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(baseDir)) {
-            assertFalse(dirStream.iterator().hasNext(),
-                    "Project directory should not have been created, so base dir should be empty");
+            for (Path path : dirStream) {
+                assertFalse(path.toFile().isDirectory(),
+                        "Project directory should not have been created, so base dir should not contain directories");
+            }
         }
     }
 

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,7 +54,11 @@ public class SourceFileServiceTest {
                 tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
-        basePath = tmpFolder;
+        File testFolder = new File(String.valueOf(tmpFolder), "testFolder");
+        if (!testFolder.exists()){
+            testFolder.mkdirs();
+        }
+        basePath = testFolder.toPath();
         testHelper = new SipServiceHelper(project, basePath);
 
         service = testHelper.getSourceFileService();
