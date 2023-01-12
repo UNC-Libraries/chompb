@@ -298,10 +298,6 @@ public class CdmFieldServiceTest {
         }
     }
 
-//    @Test(expected = NoSuchFileException.class)
-//    public void loadMissingFieldsFileTest() throws Exception {
-//        service.loadFieldsFromProject(project);
-//    }
     @Test
     public void loadMissingFieldsFileTest() throws Exception {
         Assertions.assertThrows(NoSuchFileException.class, () -> {
