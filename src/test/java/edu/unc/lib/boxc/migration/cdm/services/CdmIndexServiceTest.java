@@ -329,6 +329,64 @@ public class CdmIndexServiceTest {
         }
     }
 
+    @Test
+    public void buildDocumentNormalTest() throws Exception {
+        var body = "<subjec>Maps</subjec>\n" +
+                   "<titla>Test\n\nTitle</titla>\n" +
+                   "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("Maps", rootEl.getChildText("subjec"));
+        assertEquals("Test\n\nTitle", rootEl.getChildText("titla"));
+        assertEquals("0", rootEl.getChildText("dmrecord"));
+    }
+
+    @Test
+    public void buildDocumentGreaterLessThanInContentTest() throws Exception {
+        var body = "<subjec>Maps></subjec>\n" +
+                   "<titla>Test < Title</titla>\n" +
+                   "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("Maps>", rootEl.getChildText("subjec"));
+        assertEquals("Test < Title", rootEl.getChildText("titla"));
+    }
+
+    @Test
+    public void buildDocumentAmpersandInContentTest() throws Exception {
+        var body = "<subjec>M&ps</subjec>\n" +
+                   "<titla>Test & Title</titla>\n" +
+                   "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("M&ps", rootEl.getChildText("subjec"));
+        assertEquals("Test & Title", rootEl.getChildText("titla"));
+    }
+
+    @Test
+    public void buildDocumentUnmatchedClosingTagTest() throws Exception {
+        var body = "<subjec>Maps</subjec>\n" +
+                "<titla>Test Weird Closing Title</transc>\n" +
+                "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("Maps", rootEl.getChildText("subjec"));
+        assertEquals("Test Weird Closing Title", rootEl.getChildText("titla"));
+        assertEquals("0", rootEl.getChildText("dmrecord"));
+    }
+
+    @Test
+    public void buildDocumentInvalidUnicodeTest() throws Exception {
+        var body = "<subjec>Maps</subjec>\n" +
+                   "<titla>Test " + Character.toString(0xb) + " Title</titla>\n" +
+                   "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("Maps", rootEl.getChildText("subjec"));
+        assertEquals("Test  Title", rootEl.getChildText("titla"));
+        assertEquals("0", rootEl.getChildText("dmrecord"));
+    }
+
     private void assertDateIndexedPresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
         assertNotNull(props.getIndexedDate());
