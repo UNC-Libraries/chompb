@@ -47,7 +47,6 @@ public class CdmIndexService {
     public static final String ENTRY_TYPE_COMPOUND_OBJECT = "cpd_object";
     public static final String ENTRY_TYPE_COMPOUND_CHILD = "cpd_child";
     public static final List<String> MIGRATION_FIELDS = Arrays.asList(PARENT_ID_FIELD, ENTRY_TYPE_FIELD);
-    private static final Pattern TAG_MATCHER = Pattern.compile("<([^>]+)>(([^<]|<(?!/))*)</([^>]+)>");
     private static final Pattern CONTROL_PATTERN = Pattern.compile("[\\p{Cntrl}&&[^\r\n\t]]");
 
     private MigrationProject project;
@@ -109,14 +108,63 @@ public class CdmIndexService {
         ProjectPropertiesSerialization.write(project);
     }
 
+    private enum DescState {
+        OUTSIDE, OPENING, CONTENT, START_CLOSE, CLOSING;
+    }
+
     protected Document buildDocument(String body) {
         // Trim out control characters, aside from newlines, carriage returns and tabs
         body = CONTROL_PATTERN.matcher(body).replaceAll("");
-        var matcher = TAG_MATCHER.matcher(body);
         var rootEl = new Element("record");
         var doc = new Document().setRootElement(rootEl);
-        while (matcher.find()) {
-            rootEl.addContent(new Element(matcher.group(1)).setText(matcher.group(2)));
+        var state = DescState.OUTSIDE;
+        var elementName = new StringBuilder();
+        var content = new StringBuilder();
+        // Extract elements from body using a state machine since a regex caused stackoverflow errors.
+        // Reconstituting the document using jdom components to handle XML escaping, which CDM does not do.
+        for (int i = 0; i < body.length(); i++) {
+            char c = body.charAt(i);
+            switch(state) {
+            case OUTSIDE:
+                if (c == '<') {
+                    state = DescState.OPENING;
+                }
+                break;
+            case OPENING:
+                if (c == '>') {
+                    state = DescState.CONTENT;
+                } else {
+                    elementName.append(c);
+                }
+                break;
+            case CONTENT:
+                if (c == '<') {
+                    state = DescState.START_CLOSE;
+                } else {
+                    content.append(c);
+                }
+                break;
+            case START_CLOSE:
+                if (c == '/') {
+                    state = DescState.CLOSING;
+                } else if (c == '<') {
+                    // Handling extra < right before closing tag
+                    content.append(c);
+                } else {
+                    // It was a stray <, revert to content mode
+                    state = DescState.CONTENT;
+                    content.append('<').append(c);
+                }
+                break;
+            case CLOSING:
+                if (c == '>') {
+                    state = DescState.OUTSIDE;
+                    rootEl.addContent(new Element(elementName.toString()).setText(content.toString()));
+                    elementName = new StringBuilder();
+                    content = new StringBuilder();
+                }
+                break;
+            }
         }
         return doc;
     }
