@@ -14,6 +14,7 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.slf4j.Logger;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -53,6 +54,7 @@ public class CdmIndexService {
     private CdmFieldService fieldService;
 
     private String recordInsertSqlTemplate;
+    private List<String> indexingWarnings = new ArrayList<>();
 
     /**
      * Indexes all exported CDM records for this project
@@ -231,6 +233,10 @@ public class CdmIndexService {
                         childStmt.executeUpdate();
                     }
                 }
+            } catch (FileNotFoundException e) {
+                var msg = "CPD file referenced by object " + cpdId + " in desc.all was not found, skipping: " + cpdPath;
+                indexingWarnings.add(msg);
+                log.warn(msg);
             } catch (JDOMException | IOException e) {
                 throw new MigrationException("Failed to parse CPD file " + cpdPath, e);
             } catch (SQLException e) {
@@ -370,6 +376,12 @@ public class CdmIndexService {
         } catch (IOException e) {
             log.error("Failed to delete index", e);
         }
+    }
 
+    /**
+     * @return Warning messages generated while indexing
+     */
+    public List<String> getIndexingWarnings() {
+        return indexingWarnings;
     }
 }

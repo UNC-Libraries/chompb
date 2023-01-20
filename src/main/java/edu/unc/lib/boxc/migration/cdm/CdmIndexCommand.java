@@ -45,6 +45,10 @@ public class CdmIndexCommand implements Callable<Integer> {
 
             indexService.createDatabase(force);
             indexService.indexAll();
+            // Display any warning messages to user
+            if (!indexService.getIndexingWarnings().isEmpty()) {
+                indexService.getIndexingWarnings().forEach(msg -> outputLogger.info(msg));
+            }
             outputLogger.info("Indexed project {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;

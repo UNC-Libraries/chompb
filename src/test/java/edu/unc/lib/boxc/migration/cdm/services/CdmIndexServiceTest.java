@@ -297,6 +297,77 @@ public class CdmIndexServiceTest {
     }
 
     @Test
+    public void indexExportWithMissingCompoundObjectTest() throws Exception {
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
+        Files.createDirectories(CdmFileRetrievalService.getExportedCpdsPath(project));
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/image/620.cpd"),
+                CdmFileRetrievalService.getExportedCpdsPath(project).resolve("620.cpd"));
+        Files.copy(Paths.get("src/test/resources/keepsakes_fields.csv"), project.getFieldsPath());
+        setExportedDate();
+
+        service.createDatabase(false);
+        service.indexAll();
+
+        assertDateIndexedPresent();
+        assertRowCount(7);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> allFields = fieldInfo.listAllExportFields();
+        allFields.addAll(CdmIndexService.MIGRATION_FIELDS);
+
+        Connection conn = service.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", allFields)
+                    + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
+            rs.next();
+            assertEquals(216, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("Playmakers, circa 1974", rs.getString("title"));
+
+            rs.next();
+            assertEquals(602, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("World War II ration book", rs.getString("title"));
+            // Without the CPD file, there is no way to know that 602 and 603 are children, so they become standalone
+            assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(603, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("World War II ration book (instructions)", rs.getString("title"));
+            assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(604, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("World War II ration book, 1943", rs.getString("title"));
+            assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(605, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)", rs.getString("title"));
+            assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(606, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (open, next to box)", rs.getString("title"));
+            assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(607, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("Tiffany's pillbox commemorating UNC's bicentennial", rs.getString("title"));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+        var warnings = service.getIndexingWarnings();
+        assertEquals(1, warnings.size());
+        assertTrue(warnings.get(0).contains("not found"));
+        assertTrue(warnings.get(0).contains("object 604"));
+        assertTrue(warnings.get(0).contains("617.cpd"));
+    }
+
+    @Test
     public void indexExportReservedWordFieldTest() throws Exception {
         Files.copy(Paths.get("src/test/resources/descriptions/03883/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project));
@@ -440,7 +511,7 @@ public class CdmIndexServiceTest {
                 "<dmrecord>7</dmrecord>";
         var rootEl = service.buildDocument(body).getRootElement();
         assertEquals("record", rootEl.getName());
-        assertEquals(1843, rootEl.getChildText("full").length());
+        assertEquals(1844, rootEl.getChildText("full").length());
         assertEquals("Fencing with Fidel", rootEl.getChildText("title"));
         assertEquals("7", rootEl.getChildText("dmrecord"));
     }
