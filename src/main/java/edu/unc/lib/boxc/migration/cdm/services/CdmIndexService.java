@@ -14,9 +14,8 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.slf4j.Logger;
 
-import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.sql.Connection;
@@ -30,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -48,11 +48,13 @@ public class CdmIndexService {
     public static final String ENTRY_TYPE_COMPOUND_OBJECT = "cpd_object";
     public static final String ENTRY_TYPE_COMPOUND_CHILD = "cpd_child";
     public static final List<String> MIGRATION_FIELDS = Arrays.asList(PARENT_ID_FIELD, ENTRY_TYPE_FIELD);
+    private static final Pattern CONTROL_PATTERN = Pattern.compile("[\\p{Cntrl}&&[^\r\n\t]]");
 
     private MigrationProject project;
     private CdmFieldService fieldService;
 
     private String recordInsertSqlTemplate;
+    private List<String> indexingWarnings = new ArrayList<>();
 
     /**
      * Indexes all exported CDM records for this project
@@ -70,35 +72,31 @@ public class CdmIndexService {
 
         var cpdToIdMap = new HashMap<String, String>();
 
-        SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
         var descAllPath = CdmFileRetrievalService.getDescAllPath(project);
         try (
                 var conn = openDbConnection();
                 var lineStream = Files.lines(descAllPath);
         ) {
             // Compile the lines belonging to a record, wrap in record tags
-            var recordBuilder = new StringBuilder("<record>");
+            var recordBuilder = new StringBuilder();
             var incompleteRecord = false;
             for (var line: (Iterable<String>) lineStream::iterator) {
-                // Ampersands are not escaped in CDM's pseudo-XML, which causes problems when building XML
-                recordBuilder.append(line.replaceAll("&", "&amp;"));
+                recordBuilder.append(line);
                 incompleteRecord = true;
                 // reached the end of a record
                 if (line.contains(CLOSE_CDM_ID_TAG)) {
-                    recordBuilder.append("</record>");
-                    Document doc = builder.build(new ByteArrayInputStream(
-                            recordBuilder.toString().getBytes(StandardCharsets.UTF_8)));
+                    Document doc = buildDocument(recordBuilder.toString());
                     // Store details about where info about compound children can be found
                     recordIfCompoundObject(doc, cpdToIdMap);
                     indexDocument(doc, conn, fieldInfo);
                     // reset the record builder for the next record
-                    recordBuilder = new StringBuilder("<record>");
+                    recordBuilder = new StringBuilder();
                     incompleteRecord = false;
                 }
             }
             if (incompleteRecord) {
                 throw new MigrationException("Failed to parse desc.all file, incomplete record with body:\n" +
-                        recordBuilder.toString());
+                        recordBuilder);
             }
             // Assign type information to objects, based on compound object status
             assignObjectTypeDetails(conn, cpdToIdMap);
@@ -106,12 +104,71 @@ public class CdmIndexService {
             throw new MigrationException("Failed to read export files", e);
         } catch (SQLException e) {
             throw new MigrationException("Failed to update database", e);
-        } catch (JDOMException e) {
-            throw new MigrationException("Failed to parse export file", e);
         }
 
         project.getProjectProperties().setIndexedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
+    }
+
+    private enum DescState {
+        OUTSIDE, OPENING, CONTENT, START_CLOSE, CLOSING;
+    }
+
+    protected Document buildDocument(String body) {
+        // Trim out control characters, aside from newlines, carriage returns and tabs
+        body = CONTROL_PATTERN.matcher(body).replaceAll("");
+        var rootEl = new Element("record");
+        var doc = new Document().setRootElement(rootEl);
+        var state = DescState.OUTSIDE;
+        var elementName = new StringBuilder();
+        var content = new StringBuilder();
+        // Extract elements from body using a state machine since a regex caused stackoverflow errors.
+        // Reconstituting the document using jdom components to handle XML escaping, which CDM does not do.
+        for (int i = 0; i < body.length(); i++) {
+            char c = body.charAt(i);
+            switch(state) {
+            case OUTSIDE:
+                if (c == '<') {
+                    state = DescState.OPENING;
+                }
+                break;
+            case OPENING:
+                if (c == '>') {
+                    state = DescState.CONTENT;
+                } else {
+                    elementName.append(c);
+                }
+                break;
+            case CONTENT:
+                if (c == '<') {
+                    state = DescState.START_CLOSE;
+                } else {
+                    content.append(c);
+                }
+                break;
+            case START_CLOSE:
+                if (c == '/') {
+                    state = DescState.CLOSING;
+                } else if (c == '<') {
+                    // Handling extra < right before closing tag
+                    content.append(c);
+                } else {
+                    // It was a stray <, revert to content mode
+                    state = DescState.CONTENT;
+                    content.append('<').append(c);
+                }
+                break;
+            case CLOSING:
+                if (c == '>') {
+                    state = DescState.OUTSIDE;
+                    rootEl.addContent(new Element(elementName.toString()).setText(content.toString()));
+                    elementName = new StringBuilder();
+                    content = new StringBuilder();
+                }
+                break;
+            }
+        }
+        return doc;
     }
 
     private void assertCollectionExported() {
@@ -176,6 +233,10 @@ public class CdmIndexService {
                         childStmt.executeUpdate();
                     }
                 }
+            } catch (FileNotFoundException e) {
+                var msg = "CPD file referenced by object " + cpdId + " in desc.all was not found, skipping: " + cpdPath;
+                indexingWarnings.add(msg);
+                log.warn(msg);
             } catch (JDOMException | IOException e) {
                 throw new MigrationException("Failed to parse CPD file " + cpdPath, e);
             } catch (SQLException e) {
@@ -315,6 +376,12 @@ public class CdmIndexService {
         } catch (IOException e) {
             log.error("Failed to delete index", e);
         }
+    }
 
+    /**
+     * @return Warning messages generated while indexing
+     */
+    public List<String> getIndexingWarnings() {
+        return indexingWarnings;
     }
 }

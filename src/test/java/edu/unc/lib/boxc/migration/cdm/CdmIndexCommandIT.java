@@ -97,6 +97,30 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         assertTrue(Files.notExists(project.getIndexPath()), "Index file should be cleaned up");
     }
 
+    @Test
+    public void indexWithWarningsTest() throws Exception {
+        initProject();
+        Files.createDirectories(project.getExportPath());
+
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
+        Files.createDirectories(CdmFileRetrievalService.getExportedCpdsPath(project));
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/image/620.cpd"),
+                CdmFileRetrievalService.getExportedCpdsPath(project).resolve("620.cpd"));
+        Files.copy(Paths.get("src/test/resources/keepsakes_fields.csv"), project.getFieldsPath());
+        setExportedDate();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "index"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getIndexPath()));
+        assertDateIndexedPresent();
+
+        assertOutputContains("CPD file referenced by object 604 in desc.all was not found");
+    }
+
     private void setExportedDate() throws Exception {
         project.getProjectProperties().setExportedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);

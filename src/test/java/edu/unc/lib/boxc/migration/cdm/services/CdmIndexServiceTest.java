@@ -8,6 +8,8 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -295,6 +297,77 @@ public class CdmIndexServiceTest {
     }
 
     @Test
+    public void indexExportWithMissingCompoundObjectTest() throws Exception {
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
+        Files.createDirectories(CdmFileRetrievalService.getExportedCpdsPath(project));
+        Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/image/620.cpd"),
+                CdmFileRetrievalService.getExportedCpdsPath(project).resolve("620.cpd"));
+        Files.copy(Paths.get("src/test/resources/keepsakes_fields.csv"), project.getFieldsPath());
+        setExportedDate();
+
+        service.createDatabase(false);
+        service.indexAll();
+
+        assertDateIndexedPresent();
+        assertRowCount(7);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> allFields = fieldInfo.listAllExportFields();
+        allFields.addAll(CdmIndexService.MIGRATION_FIELDS);
+
+        Connection conn = service.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", allFields)
+                    + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
+            rs.next();
+            assertEquals(216, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("Playmakers, circa 1974", rs.getString("title"));
+
+            rs.next();
+            assertEquals(602, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("World War II ration book", rs.getString("title"));
+            // Without the CPD file, there is no way to know that 602 and 603 are children, so they become standalone
+            assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(603, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("World War II ration book (instructions)", rs.getString("title"));
+            assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(604, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("World War II ration book, 1943", rs.getString("title"));
+            assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(605, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)", rs.getString("title"));
+            assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(606, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (open, next to box)", rs.getString("title"));
+            assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(607, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("Tiffany's pillbox commemorating UNC's bicentennial", rs.getString("title"));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+        var warnings = service.getIndexingWarnings();
+        assertEquals(1, warnings.size());
+        assertTrue(warnings.get(0).contains("not found"));
+        assertTrue(warnings.get(0).contains("object 604"));
+        assertTrue(warnings.get(0).contains("617.cpd"));
+    }
+
+    @Test
     public void indexExportReservedWordFieldTest() throws Exception {
         Files.copy(Paths.get("src/test/resources/descriptions/03883/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project));
@@ -327,6 +400,120 @@ public class CdmIndexServiceTest {
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
+    }
+
+    @Test
+    public void buildDocumentNormalTest() throws Exception {
+        var body = "<subjec>Maps</subjec>\n" +
+                   "<titla>Test\n\nTitle</titla>\n" +
+                   "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("Maps", rootEl.getChildText("subjec"));
+        assertEquals("Test\n\nTitle", rootEl.getChildText("titla"));
+        assertEquals("0", rootEl.getChildText("dmrecord"));
+    }
+
+    @Test
+    public void buildDocumentGreaterLessThanInContentTest() throws Exception {
+        var body = "<subjec>Maps></subjec>\n" +
+                   "<titla>Test < Title</titla>\n" +
+                   "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("Maps>", rootEl.getChildText("subjec"));
+        assertEquals("Test < Title", rootEl.getChildText("titla"));
+    }
+
+    @Test
+    public void buildDocumentAmpersandInContentTest() throws Exception {
+        var body = "<subjec>M&ps</subjec>\n" +
+                   "<titla>Test & Title</titla>\n" +
+                   "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("M&ps", rootEl.getChildText("subjec"));
+        assertEquals("Test & Title", rootEl.getChildText("titla"));
+    }
+
+    @Test
+    public void buildDocumentUnmatchedClosingTagTest() throws Exception {
+        var body = "<subjec>Maps</subjec>\n" +
+                "<titla>Test Weird Closing Title</transc>\n" +
+                "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("Maps", rootEl.getChildText("subjec"));
+        assertEquals("Test Weird Closing Title", rootEl.getChildText("titla"));
+        assertEquals("0", rootEl.getChildText("dmrecord"));
+    }
+
+    @Test
+    public void buildDocumentInvalidUnicodeTest() throws Exception {
+        var body = "<subjec>Maps</subjec>\n" +
+                   "<titla>Test " + Character.toString(0xb) + " Title</titla>\n" +
+                   "<dmrecord>0</dmrecord>\n";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals("Maps", rootEl.getChildText("subjec"));
+        assertEquals("Test  Title", rootEl.getChildText("titla"));
+        assertEquals("0", rootEl.getChildText("dmrecord"));
+    }
+
+    @Test
+    public void buildDocumentWithLongFieldTest() throws Exception {
+        var body = "<title>Fencing with Fidel</title>\n" +
+                "<subjec></subjec>\n" +
+                "<descri></descri>\n" +
+                "<creato></creato>\n" +
+                "<publis></publis>\n" +
+                "<contri></contri>\n" +
+                "<date></date>\n" +
+                "<type></type>\n" +
+                "<format></format>\n" +
+                "<identi></identi>\n" +
+                "<source></source>\n" +
+                "<langua></langua>\n" +
+                "<relati></relati>\n" +
+                "<covera></covera>\n" +
+                "<rights></rights>\n" +
+                "<audien></audien>\n" +
+                "<full>page 6\n" +
+                "which is the traditional diplomatic memoir, does not give the reader the flavor of life in\n" +
+                "the Foreign Service. For me, it was the more peripheral experiences and the human\n" +
+                "interaction of policy development and implementation that provided flavor.\n" +
+                "I was in the Foreign Service for 31 years. ttwas my entire adult life until I retired. I\n" +
+                "married immediately after graduation from Princeton and was in the Service that\n" +
+                "September. A1f but five of those years were spent abroad, always in Latin America.\n" +
+                "I served from Argentina to Mexico, in the Andes, \" throughout Central America and\n" +
+                "twice in the Caribbean. Although after retirement 1 continued working in the foreign\n" +
+                "affairs field at the CIA and at the Department of Labor, I have always considered the\n" +
+                "Foreign Service to be my career.\n" +
+                "This is not a retelling of my career and of the times in which it was rooted: Rather, it Is\n" +
+                "a ' selective1 memoir because it omits much of the actual work I did as an economist\n" +
+                "and executive. And I do not directly discuss the policies that stiaped U. S. relations\n" +
+                "with the countries in which I served. What I have selected for inclusion are those\n" +
+                "experiences that strike me as providing insights into the peoples and eultures of Latin\n" +
+                "America, and into the personalities of diplomats themselves, including myself,\n" +
+                "insights as perceived initially by a very callow young American who, one hopes,\n" +
+                "matured as thedecades passed. I tiave also selected many incidents in which my\n" +
+                "wife, Sue, was involved. For us, the Foreign Service definitely was a Twofer4\n" +
+                "arrangement; the Department of State got two for the price of one wttenihey hired\n" +
+                "me and I married Sue. Sue and I shared a career.\n" +
+                "All of the situations I describe in this memoir, ™ matter how strange and foreign,\n" +
+                "happened to me. IVe tried to describe them accurately. But I admit to some literary^M<</full>\n" +
+                "<fullrs></fullrs>\n" +
+                "<find>9.pdfpage</find>\n" +
+                "<dmaccess></dmaccess>\n" +
+                "<dmoclcno></dmoclcno>\n" +
+                "<dmcreated>2009-07-28</dmcreated>\n" +
+                "<dmmodified>2009-07-28</dmmodified>\n" +
+                "<dmrecord>7</dmrecord>";
+        var rootEl = service.buildDocument(body).getRootElement();
+        assertEquals("record", rootEl.getName());
+        assertEquals(1844, rootEl.getChildText("full").length());
+        assertEquals("Fencing with Fidel", rootEl.getChildText("title"));
+        assertEquals("7", rootEl.getChildText("dmrecord"));
     }
 
     private void assertDateIndexedPresent() throws Exception {
