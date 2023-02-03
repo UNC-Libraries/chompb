@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cpd>
+  <type>Monograph</type>
+  <node>
+    <nodetitle>Map of the Surveys for Atlantic and N. Carolina R-Road</nodetitle>
+    <page>
+      <pagetitle>Page 1</pagetitle>
+      <pagefile>193.jp2</pagefile>
+      <pageptr>192</pageptr>
+    </page>
+    <page>
+      <pagetitle>Page 2</pagetitle>
+      <pagefile>194.jp2</pagefile>
+      <pageptr>193</pageptr>
+    </page>
+    <page>
+      <pagetitle>Page 3</pagetitle>
+      <pagefile>195.jp2</pagefile>
+      <pageptr>194</pageptr>
+    </page>
+  </node>
+</cpd>
