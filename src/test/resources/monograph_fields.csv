@@ -1,0 +1,77 @@
+cdm_nick,export_as,description,skip_export,cdm_required,cdm_searchable,cdm_hidden,cdm_vocab,cdm_dc_mapping
+mapid,mapid,map_id,false,n,y,y,n,audiena
+collec,collec,Repository,false,n,y,n,y,source
+title,title,Title,false,y,y,n,n,title
+altern,altern,Alternative Title,false,n,y,n,n,titlea
+date,date,date_published_numeric,false,n,y,y,n,date
+displa,displa,Date Published,false,n,y,n,y,date
+conten,conten,content_date_numeric,false,n,y,y,n,date
+contea,contea,Date Depicted,false,n,y,n,n,date
+creato,creato,Creator - Individual,false,n,y,n,y,creato
+creata,creata,Creator - Organization,false,n,y,n,y,creato
+placeo,placeo,Place of Publication,false,n,y,n,y,BLANK
+publis,publis,Publisher,false,n,y,n,y,publis
+captio,captio,Caption,false,n,y,n,n,BLANK
+abstra,abstra,Abstract,false,n,n,n,n,descri
+histor,histor,Historical Note,false,n,y,n,n,describ
+biblio,biblio,Bibliographic Note,false,n,y,n,n,describ
+biblia,biblia,Reference,false,n,y,n,n,relatii
+ispart,ispart,Related Item,false,n,n,n,n,relatig
+oclc,oclc,OCLC,false,n,n,n,n,BLANK
+relate,relate,Related Maps,false,n,n,n,n,relatib
+subjec,subjec,Theme,false,n,y,y,y,BLANK
+subjea,subjea,Map Type,false,n,y,n,y,BLANK
+subjeb,subjeb,Details,false,n,y,n,y,BLANK
+subjed,subjed,Subject - Geographic,false,n,y,n,y,subjec
+subjef,subjef,Subject - Name,false,n,y,n,y,subjec
+subjeh,subjeh,Subject - Topical,false,n,y,n,y,subjec
+subjee,subjee,Subject (tgm),false,n,y,n,y,subjec
+spatia,spatia,Scope,false,n,y,y,y,covera
+placen,placen,Places Depicted,false,n,y,n,y,covera
+westbo,westbo,West Longitude,false,n,n,n,n,coveraa
+eastbo,eastbo,East Longitude,false,n,n,n,n,coveraa
+northb,northb,North Latitude,false,n,n,n,n,coveraa
+southb,southb,South Latitude,false,n,n,n,n,coveraa
+scale,scale,Scale,false,n,y,n,n,BLANK
+projec,projec,Projection,false,n,n,n,y,BLANK
+size,size,Size,false,n,n,n,n,BLANK
+mapsiz,mapsiz,map_size_height,false,n,n,y,n,formata
+mapsia,mapsia,map_size_width,false,n,n,y,n,formata
+physic,physic,Medium,false,n,y,n,y,BLANK
+format,format,Format,false,y,y,n,y,format
+langua,langua,Language,false,n,y,n,y,langua
+imagef,imagef,image_file,false,n,n,y,n,BLANK
+images,images,image_sort_order,false,n,n,y,n,BLANK
+path,path,path,false,n,n,y,n,BLANK
+rawsca,rawsca,raw_scan_filename,false,n,n,y,n,BLANK
+digita,digita,digital_scan_date_raw_file,false,n,n,y,n,BLANK
+hardwa,hardwa,hardware_raw_scan,false,n,n,y,n,BLANK
+softwa,softwa,software_raw_scan,false,n,n,y,n,BLANK
+pixela,pixela,pixel_array_height_raw_scan,false,n,n,y,n,BLANK
+pixelb,pixelb,pixel_array_width_raw_scan,false,n,n,y,n,BLANK
+bitdep,bitdep,bit_depth_raw_scan,false,n,n,y,n,BLANK
+colors,colors,color_space_raw_scan,false,n,n,y,n,BLANK
+filefo,filefo,file_format_raw_scan,false,n,n,y,n,BLANK
+creatb,creatb,creator_raw_scan,false,n,n,y,n,BLANK
+collea,collea,Collection in Repository,false,n,y,n,n,source
+digitb,digitb,Digital Collection,false,n,y,n,y,BLANK
+host,host,Institution,false,n,y,n,y,publis
+sponso,sponso,Sponsor,false,n,n,n,n,BLANK
+callnu,callnu,Call Number,false,n,y,n,n,identi
+additi,additi,Additional Copies,false,n,y,n,y,BLANK
+call,call,"Call number, additional copies",false,n,y,n,n,BLANK
+citati,citati,citation,false,n,n,y,n,BLANK
+copyri,copyri,copyright-holder,false,n,n,y,n,rights
+usager,usager,Copyright,false,y,y,n,n,rights
+cdmid,cdmid,Type,false,y,y,n,y,type
+source,source,source_image,false,n,n,y,n,BLANK
+tile,tile,Tile map url,false,n,n,n,n,BLANK
+tiled,tiled,Tiled map available,false,n,y,n,y,BLANK
+addita,addita,Additional display,false,n,y,y,y,BLANK
+verify,verify,Verify,false,n,y,n,y,BLANK
+fullrs,fullrs,Full resolution,false,n,n,y,n,BLANK
+dmoclcno,dmoclcno,OCLC number,false,n,n,y,n,BLANK
+dmcreated,dmcreated,Date created,false,y,n,y,n,BLANK
+dmmodified,dmmodified,Date modified,false,y,n,y,n,BLANK
+dmrecord,dmrecord,CONTENTdm number,false,y,y,y,n,BLANK
+find,find,CONTENTdm file name,false,y,n,y,n,BLANK

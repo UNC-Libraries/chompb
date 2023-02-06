@@ -1,3 +1,82 @@
+<mapid>MC_170_A8814_1853g</mapid>
+<collec></collec>
+<title>Page 1</title>
+<altern></altern>
+<date></date>
+<displa></displa>
+<conten></conten>
+<contea></contea>
+<creato></creato>
+<creata></creata>
+<placeo></placeo>
+<publis></publis>
+<captio></captio>
+<abstra></abstra>
+<histor></histor>
+<biblio></biblio>
+<biblia></biblia>
+<ispart></ispart>
+<oclc></oclc>
+<relate></relate>
+<subjec></subjec>
+<subjea></subjea>
+<subjeb></subjeb>
+<subjed></subjed>
+<subjef></subjef>
+<subjeh></subjeh>
+<subjee></subjee>
+<spatia></spatia>
+<placen></placen>
+<westbo></westbo>
+<eastbo></eastbo>
+<northb></northb>
+<southb></southb>
+<scale></scale>
+<projec></projec>
+<size></size>
+<mapsiz></mapsiz>
+<mapsia></mapsia>
+<physic></physic>
+<format>Maps</format>
+<langua></langua>
+<imagef></imagef>
+<images>1</images>
+<path>\\digitalarchive.lib.unc.edu\ncc\NCMaps\State Archives\</path>
+<rawsca>MC_170_A8814_1853_sh1_400dpi.tif</rawsca>
+<digita></digita>
+<hardwa></hardwa>
+<softwa></softwa>
+<pixela></pixela>
+<pixelb></pixelb>
+<bitdep></bitdep>
+<colors></colors>
+<filefo></filefo>
+<creatb></creatb>
+<collea></collea>
+<digitb></digitb>
+<host></host>
+<sponso>North Carolina Maps is made possible by the Institute of Museum and Library Services under the provisions of the Library Services and Technology Act as administered by the State Library of North Carolina.</sponso>
+<callnu></callnu>
+<additi></additi>
+<call></call>
+<citati></citati>
+<copyri></copyri>
+<usager></usager>
+<cdmid>Image</cdmid>
+<source></source>
+<tile></tile>
+<tiled></tiled>
+<addita></addita>
+<verify></verify>
+<fullrs></fullrs>
+<find>193.jp2</find>
+<dmaccess></dmaccess>
+<dmimage></dmimage>
+<dmad1></dmad1>
+<dmad2></dmad2>
+<dmoclcno></dmoclcno>
+<dmcreated>2007-12-13</dmcreated>
+<dmmodified>2008-12-16</dmmodified>
 <dmrecord>192</dmrecord>
 <mapid>MC_170_A8814_1853g</mapid>
 <collec></collec>
@@ -237,80 +316,3 @@
 <dmcreated>2020-12-10</dmcreated>
 <dmmodified>2020-12-10</dmmodified>
 <dmrecord>195</dmrecord>
-<mapid>MC_041_1850g</mapid>
-<collec>State Archives of North Carolina</collec>
-<title>A map of Gates County, [North Carolina]</title>
-<altern></altern>
-<date>1850</date>
-<displa>circa 1850</displa>
-<conten>1850</conten>
-<contea>circa 1850</contea>
-<creato></creato>
-<creata></creata>
-<placeo></placeo>
-<publis></publis>
-<captio></captio>
-<abstra>Manuscript map shows townships, churches, ferries, mineral springs, rivers, and canals.  Townships shown include Renaldson, Hall, Piney Woods, Holly, and Mintonsville.</abstra>
-<histor></histor>
-<biblio></biblio>
-<biblia></biblia>
-<ispart></ispart>
-<oclc></oclc>
-<relate></relate>
-<subjec>County Maps</subjec>
-<subjea>Manuscript</subjea>
-<subjeb>Canals;Creeks and Streams;Places of Worship;Roads;Swamps;Townships</subjeb>
-<subjed>Gates County (N.C.)--Maps.</subjed>
-<subjef></subjef>
-<subjeh></subjeh>
-<subjee></subjee>
-<spatia>United States, North Carolina, Eastern Region, Gates County</spatia>
-<placen>Gates County (N.C.)</placen>
-<westbo>-76.95</westbo>
-<eastbo>-76.45</eastbo>
-<northb>36.55</northb>
-<southb>36.283333</southb>
-<scale>Scale not given.</scale>
-<projec></projec>
-<size>36 x 53 cm.</size>
-<mapsiz></mapsiz>
-<mapsia></mapsia>
-<physic>Paper</physic>
-<format>Maps</format>
-<langua>English</langua>
-<imagef></imagef>
-<images></images>
-<path>\\digitalarchive.lib.unc.edu\ncc\NCMaps\State Archives\</path>
-<rawsca>MC_041_1850g.tif</rawsca>
-<digita></digita>
-<hardwa></hardwa>
-<softwa></softwa>
-<pixela></pixela>
-<pixelb></pixelb>
-<bitdep></bitdep>
-<colors></colors>
-<filefo></filefo>
-<creatb></creatb>
-<collea></collea>
-<digitb>North Carolina Maps</digitb>
-<host>North Carolina Department of Cultural Resources</host>
-<sponso>North Carolina Maps is made possible by the Institute of Museum and Library Services under the provisions of the Library Services and Technology Act as administered by the State Library of North Carolina.</sponso>
-<callnu>MC.041.1850g;MARS Id: 3.1.1.38.1</callnu>
-<additi></additi>
-<call></call>
-<citati></citati>
-<copyri></copyri>
-<usager>This item is presented courtesy of the State Archives of North Carolina, for research and educational purposes. Prior permission from the State Archives is required for any commercial use.</usager>
-<cdmid>Image</cdmid>
-<source></source>
-<tile></tile>
-<tiled></tiled>
-<addita></addita>
-<verify></verify>
-<fullrs>Volume8\MC_041_1850g.TIF</fullrs>
-<dmoclcno></dmoclcno>
-<find>197.jp2</find>
-<dmaccess></dmaccess>
-<dmimage></dmimage>
-<dmcreated>2007-12-14</dmcreated>
-<dmmodified>2020-12-10</dmmodified>

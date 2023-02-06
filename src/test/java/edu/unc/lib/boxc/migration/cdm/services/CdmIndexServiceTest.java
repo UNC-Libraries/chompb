@@ -368,6 +368,67 @@ public class CdmIndexServiceTest {
     }
 
     @Test
+    public void indexExportWithMonographCompoundObjectsTest() throws Exception {
+        Files.copy(Paths.get("src/test/resources/descriptions/monograph/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
+        Files.createDirectories(CdmFileRetrievalService.getExportedCpdsPath(project));
+        Files.copy(Paths.get("src/test/resources/descriptions/monograph/image/196.cpd"),
+                CdmFileRetrievalService.getExportedCpdsPath(project).resolve("196.cpd"));
+        Files.copy(Paths.get("src/test/resources/monograph_fields.csv"), project.getFieldsPath());
+        setExportedDate();
+
+        service.createDatabase(false);
+        service.indexAll();
+
+        assertDateIndexedPresent();
+        assertRowCount(4);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> allFields = fieldInfo.listAllExportFields();
+        allFields.addAll(CdmIndexService.MIGRATION_FIELDS);
+
+        Connection conn = service.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", allFields)
+                    + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
+            rs.next();
+            assertEquals(192, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2007-12-13", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2008-12-16", rs.getString(CdmFieldInfo.CDM_MODIFIED));
+            assertEquals("Page 1", rs.getString("title"));
+            assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertEquals("195", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(193, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2007-12-13", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2008-12-18", rs.getString(CdmFieldInfo.CDM_MODIFIED));
+            assertEquals("Page 2", rs.getString("title"));
+            assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertEquals("195", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(194, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2007-12-13", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2008-12-16", rs.getString(CdmFieldInfo.CDM_MODIFIED));
+            assertEquals("Page 3", rs.getString("title"));
+            assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertEquals("195", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+
+            rs.next();
+            assertEquals(195, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2020-12-10", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("2020-12-10", rs.getString(CdmFieldInfo.CDM_MODIFIED));
+            assertEquals("Map of the Surveys for Atlantic and N. Carolina R-Road", rs.getString("title"));
+            assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
+            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
     public void indexExportReservedWordFieldTest() throws Exception {
         Files.copy(Paths.get("src/test/resources/descriptions/03883/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project));
