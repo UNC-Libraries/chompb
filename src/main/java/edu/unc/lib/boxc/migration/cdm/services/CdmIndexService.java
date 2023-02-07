@@ -45,10 +45,12 @@ public class CdmIndexService {
     public static final String TB_NAME = "cdm_records";
     public static final String PARENT_ID_FIELD = "cdm2bxc_parent_id";
     public static final String ENTRY_TYPE_FIELD = "cdm2bxc_entry_type";
+    public static final String CHILD_ORDER_FIELD = "cdm2bxc_order";
     public static final String ENTRY_TYPE_GROUPED_WORK = "grouped_work";
     public static final String ENTRY_TYPE_COMPOUND_OBJECT = "cpd_object";
     public static final String ENTRY_TYPE_COMPOUND_CHILD = "cpd_child";
-    public static final List<String> MIGRATION_FIELDS = Arrays.asList(PARENT_ID_FIELD, ENTRY_TYPE_FIELD);
+    public static final List<String> MIGRATION_FIELDS = Arrays.asList(
+            PARENT_ID_FIELD, ENTRY_TYPE_FIELD, CHILD_ORDER_FIELD);
     private static final Pattern CONTROL_PATTERN = Pattern.compile("[\\p{Cntrl}&&[^\r\n\t]]");
 
     private MigrationProject project;
@@ -205,7 +207,8 @@ public class CdmIndexService {
                     + "' where " + CdmFieldInfo.CDM_ID + " = ?";
     private static final String ASSIGN_CHILD_INFO_TEMPLATE =
             "update " + TB_NAME + " set " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "', "
-                    + PARENT_ID_FIELD + " = ?"
+                    + PARENT_ID_FIELD + " = ?,"
+                    + CHILD_ORDER_FIELD + " = ?"
                     + " where " + CdmFieldInfo.CDM_ID + " = ?";
 
     /**
@@ -231,13 +234,16 @@ public class CdmIndexService {
                     childRoot = cpdRoot.getChild("node");
                 }
                 // Assign each child object to its parent compound
+                int orderId = 0;
                 for (var pageEl : childRoot.getChildren("page")) {
                     var childId = pageEl.getChildTextTrim("pageptr");
                     try (var childStmt = dbConn.prepareStatement(ASSIGN_CHILD_INFO_TEMPLATE)) {
                         childStmt.setString(1, cpdId);
-                        childStmt.setString(2, childId);
+                        childStmt.setInt(2, orderId);
+                        childStmt.setString(3, childId);
                         childStmt.executeUpdate();
                     }
+                    orderId++;
                 }
 
             } catch (FileNotFoundException e) {
@@ -298,12 +304,8 @@ public class CdmIndexService {
         StringBuilder queryBuilder = new StringBuilder("CREATE TABLE " + TB_NAME + " (\n");
         for (int i = 0; i < exportFields.size(); i++) {
             String field = exportFields.get(i);
-            queryBuilder.append('"').append(field).append("\" ");
-            if (CdmFieldInfo.CDM_ID.equals(field)) {
-                queryBuilder.append("INT PRIMARY KEY NOT NULL");
-            } else {
-                queryBuilder.append("TEXT");
-            }
+            queryBuilder.append('"').append(field).append("\" ")
+                        .append(indexFieldType(field));
             if (i < exportFields.size() - 1) {
                 queryBuilder.append(',');
             }
@@ -320,6 +322,16 @@ public class CdmIndexService {
             throw new MigrationException("Failed to create table: " + e.getMessage(), e);
         } finally {
             closeDbConnection(conn);
+        }
+    }
+
+    private String indexFieldType(String exportField) {
+        if (CdmFieldInfo.CDM_ID.equals(exportField)) {
+            return "INT PRIMARY KEY NOT NULL";
+        } else if (CHILD_ORDER_FIELD.equals(exportField)) {
+            return "INT";
+        } else {
+            return "TEXT";
         }
     }
 

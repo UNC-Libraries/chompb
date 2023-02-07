@@ -243,6 +243,7 @@ public class CdmIndexServiceTest {
             assertEquals("Playmakers, circa 1974", rs.getString("title"));
             assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertNull(rs.getString(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(602, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -251,6 +252,7 @@ public class CdmIndexServiceTest {
             assertEquals("World War II ration book", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("604", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertEquals(0, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(603, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -259,6 +261,7 @@ public class CdmIndexServiceTest {
             assertEquals("World War II ration book (instructions)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("604", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertEquals(1, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(604, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -267,6 +270,7 @@ public class CdmIndexServiceTest {
             assertEquals("World War II ration book, 1943", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertNull(rs.getString(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(605, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -275,6 +279,7 @@ public class CdmIndexServiceTest {
             assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertEquals(0, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(606, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -283,6 +288,7 @@ public class CdmIndexServiceTest {
             assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (open, next to box)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertEquals(1, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(607, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -291,6 +297,7 @@ public class CdmIndexServiceTest {
             assertEquals("Tiffany's pillbox commemorating UNC's bicentennial", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertNull(rs.getString(CdmIndexService.CHILD_ORDER_FIELD));
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
@@ -399,6 +406,7 @@ public class CdmIndexServiceTest {
             assertEquals("Page 1", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("195", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertEquals(0, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(193, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -407,6 +415,7 @@ public class CdmIndexServiceTest {
             assertEquals("Page 2", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("195", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertEquals(1, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(194, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -415,6 +424,7 @@ public class CdmIndexServiceTest {
             assertEquals("Page 3", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("195", rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertEquals(2, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(195, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -423,6 +433,7 @@ public class CdmIndexServiceTest {
             assertEquals("Map of the Surveys for Atlantic and N. Carolina R-Road", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
+            assertNull(rs.getString(CdmIndexService.CHILD_ORDER_FIELD));
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
