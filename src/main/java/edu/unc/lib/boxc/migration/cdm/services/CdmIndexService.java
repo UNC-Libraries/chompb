@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -224,8 +225,13 @@ public class CdmIndexService {
 
                 var cpdDoc = builder.build(cpdPath.toFile());
                 var cpdRoot = cpdDoc.getRootElement();
+                var childRoot = cpdRoot;
+                // Monograph objects have a slightly different structure
+                if (Objects.equals(cpdRoot.getChildTextTrim("type"), "Monograph")) {
+                    childRoot = cpdRoot.getChild("node");
+                }
                 // Assign each child object to its parent compound
-                for (var pageEl : cpdRoot.getChildren("page")) {
+                for (var pageEl : childRoot.getChildren("page")) {
                     var childId = pageEl.getChildTextTrim("pageptr");
                     try (var childStmt = dbConn.prepareStatement(ASSIGN_CHILD_INFO_TEMPLATE)) {
                         childStmt.setString(1, cpdId);
@@ -233,6 +239,7 @@ public class CdmIndexService {
                         childStmt.executeUpdate();
                     }
                 }
+
             } catch (FileNotFoundException e) {
                 var msg = "CPD file referenced by object " + cpdId + " in desc.all was not found, skipping: " + cpdPath;
                 indexingWarnings.add(msg);
