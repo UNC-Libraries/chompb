@@ -31,8 +31,9 @@ public class WorkGeneratorFactory {
 
     public WorkGenerator create(String cdmId, String cdmCreated, String entryType) {
         WorkGenerator gen;
-        if (CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT.equals(entryType)
-                || CdmIndexService.ENTRY_TYPE_GROUPED_WORK.equals(entryType)) {
+        if (CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT.equals(entryType)) {
+            gen = new OrderedWorkGenerator();
+        } else if (CdmIndexService.ENTRY_TYPE_GROUPED_WORK.equals(entryType)) {
             gen = new MultiFileWorkGenerator();
         } else {
             gen = new WorkGenerator();

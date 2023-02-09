@@ -279,7 +279,7 @@ public class CdmIndexServiceTest {
             assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
-            assertEquals(0, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
+            assertEquals(1, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(606, rs.getInt(CdmFieldInfo.CDM_ID));
@@ -288,7 +288,7 @@ public class CdmIndexServiceTest {
             assertEquals("Tiffany's pillbox commemorating UNC's bicentennial (open, next to box)", rs.getString("title"));
             assertEquals(CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD, rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
             assertEquals("607", rs.getString(CdmIndexService.PARENT_ID_FIELD));
-            assertEquals(1, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
+            assertEquals(0, rs.getInt(CdmIndexService.CHILD_ORDER_FIELD));
 
             rs.next();
             assertEquals(607, rs.getInt(CdmFieldInfo.CDM_ID));
