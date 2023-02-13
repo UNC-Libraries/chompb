@@ -2,13 +2,13 @@
 <cpd>
   <type>Document</type>
   <page>
-    <pagetitle>Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)</pagetitle>
-    <pagefile>618.jp2</pagefile>
-    <pageptr>605</pageptr>
-  </page>
-  <page>
     <pagetitle>Tiffany's pillbox commemorating UNC's bicentennial (open, next to box)</pagetitle>
     <pagefile>619.jp2</pagefile>
     <pageptr>606</pageptr>
+  </page>
+  <page>
+    <pagetitle>Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)</pagetitle>
+    <pagefile>618.jp2</pagefile>
+    <pageptr>605</pageptr>
   </page>
 </cpd>

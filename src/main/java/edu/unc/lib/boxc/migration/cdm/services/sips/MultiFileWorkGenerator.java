@@ -6,6 +6,9 @@ import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.model.api.ids.PID;
+import edu.unc.lib.boxc.model.api.rdf.Cdr;
+import edu.unc.lib.boxc.operations.api.order.MemberOrderHelper;
+import org.apache.jena.rdf.model.Resource;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -35,7 +38,8 @@ public class MultiFileWorkGenerator extends WorkGenerator {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
                     + " from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + cdmId + "'");
+                    + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + cdmId + "'"
+                    + " order by " + CdmIndexService.CHILD_ORDER_FIELD + " ASC, " + CdmFieldInfo.CDM_ID + " ASC");
 
             List<PID> childPids = new ArrayList<>();
             while (rs.next()) {

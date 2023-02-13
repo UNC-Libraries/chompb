@@ -470,11 +470,13 @@ public class SipServiceTest {
         Bag work1Bag = model.getBag(workResc1);
         testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", false,
                 stagingLocs.get(0), stagingLocs.get(1));
+        assertFalse(workResc1.hasProperty(Cdr.memberOrder), "Grouped work should not have order");
         // Assert that children of grouped work have descriptions added (only second file as a description)
         Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
         testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work1File2Resc.getURI()), "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        assertFalse(workResc3.hasProperty(Cdr.memberOrder), "Grouped work should not have order");
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -554,6 +556,7 @@ public class SipServiceTest {
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
+        assertFalse(workResc1.hasProperty(Cdr.memberOrder), "Single file work should not have order");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-17");
         Bag work2Bag = model.getBag(workResc2);
         testHelper.assertGroupedWorkPopulatedInSip(workResc2, dirManager, model, "604", false,
@@ -563,6 +566,8 @@ public class SipServiceTest {
         testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work2File1Resc.getURI()), "602");
         Resource work2File2Resc = testHelper.findChildByStagingLocation(work2Bag, stagingLocs.get(2));
         testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work2File2Resc.getURI()), "603");
+        String work2Members = PIDs.get(work2File1Resc.getURI()).getId() + "|" + PIDs.get(work2File2Resc.getURI()).getId();
+        assertTrue(workResc2.hasProperty(Cdr.memberOrder, work2Members));
 
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2014-02-17");
         Bag work3Bag = model.getBag(workResc3);
@@ -573,6 +578,10 @@ public class SipServiceTest {
         Resource work3File2Resc = testHelper.findChildByStagingLocation(work3Bag, stagingLocs.get(4));
         testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work3File2Resc.getURI()), "606");
         assertPersistedSipInfoMatches(sip);
+
+        // CPD file specifies 606 should be before 605
+        String work3Members = PIDs.get(work3File2Resc.getURI()).getId() + "|" + PIDs.get(work3File1Resc.getURI()).getId();
+        assertTrue(workResc3.hasProperty(Cdr.memberOrder, work3Members));
     }
 
     @Test
@@ -744,8 +753,8 @@ public class SipServiceTest {
             assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "602");
             assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "603");
             assertRedirectMappingRowContentNoFileId(rows.get(3), project, "604");
-            assertRedirectMappingRowContentIsCorrect(rows.get(4), project, "605");
-            assertRedirectMappingRowContentIsCorrect(rows.get(5), project, "606");
+            assertRedirectMappingRowContentIsCorrect(rows.get(4), project, "606");
+            assertRedirectMappingRowContentIsCorrect(rows.get(5), project, "605");
             assertRedirectMappingRowContentNoFileId(rows.get(6), project, "607");
             // collection row should redirect to the boxc destination ID
             assertRedirectMappingCollectionRowContentIsCorrect(rows.get(7), project, DEST_UUID);
