@@ -35,7 +35,8 @@ public class IndexFilteringServiceTest {
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = new IndexFilteringService();
-
+        service.setProject(project);
+        service.setIndexService(testHelper.getIndexService());
     }
 
     // include
@@ -69,7 +70,7 @@ public class IndexFilteringServiceTest {
         options.setIncludeValues(Arrays.asList("group1", ""));
         var result = service.calculateRemainder(options);
         assertEquals(result.get("total"), 5);
-        assertEquals(result.get("remainder"), 3);
+        assertEquals(result.get("remainder"), 4);
     }
 
     @Test
