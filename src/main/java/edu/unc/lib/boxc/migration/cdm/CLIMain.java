@@ -37,7 +37,8 @@ import java.util.concurrent.Callable;
         IndexRedirectCommand.class,
         ProjectPropertiesCommand.class,
         VerifyPostMigrationCommand.class,
-        MigrationTypeReportCommand.class
+        MigrationTypeReportCommand.class,
+        FilterIndexCommand.class
     })
 public class CLIMain implements Callable<Integer> {
     @Option(names = { "-w", "--work-dir" },
