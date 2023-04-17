@@ -4,7 +4,6 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.IndexFilteringOptions;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -60,7 +59,7 @@ public class IndexFilteringService {
     }
 
     private String buildRemainderQuery(IndexFilteringOptions options) {
-        var queryFilters = buildQueryFilters(options);
+        var queryFilters = buildQueryFilters(false, options);
         return "select count(*) from ( " +
                     "select dmrecord from " + CdmIndexService.TB_NAME + " where " +
                         " (" + ENTRY_TYPE_FIELD + " != '" + ENTRY_TYPE_COMPOUND_CHILD + "'" +
@@ -81,22 +80,56 @@ public class IndexFilteringService {
         return "select count(*) from cdm_records";
     }
 
-    private String buildQueryFilters(IndexFilteringOptions options) {
+    private String buildQueryFilters(boolean invertQuery, IndexFilteringOptions options) {
         var includeFilter = !CollectionUtils.isEmpty(options.getIncludeValues());
         var filterValues = includeFilter ? options.getIncludeValues() : options.getExcludeValues();
         var fieldName = options.getFieldName();
         var query = filterValues.stream()
                            .map(v -> fieldName + " = '" + v.replace("'", "\\'") + "'")
                            .collect(Collectors.joining(" OR "));
-        return (includeFilter ? "" : " NOT ") + '(' + query + ')';
+        // Negate the filter if we are doing an exclude filter, or if we are inverting the query and it is an include
+        var negation = (invertQuery ^ includeFilter ? "" : " NOT ");
+        return negation + '(' + query + ')';
     }
 
     /**
-     * Filter the index to a subset of the original items based on the provided filtering options
+     * Filter the index to a subset of the original items based on the provided filtering options.
+     * This is performed by deleting all entries that do not match the provided filters.
      * @param options filtering options
      */
     public void filterIndex(IndexFilteringOptions options) {
+        Connection conn = null;
+        try {
+            conn = indexService.openDbConnection();
+            Statement stmt = conn.createStatement();
+            stmt.executeUpdate(buildDeleteChildrenQuery(options));
+            stmt.executeUpdate(buildDeleteObjectsQuery(options));
+        } catch (SQLException e) {
+            throw new MigrationException("Error interacting with export index", e);
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
 
+    private String buildDeleteChildrenQuery(IndexFilteringOptions options) {
+        // delete queries need to remove the items that do NOT match the criteria selected by the user
+        var queryFilters = buildQueryFilters(true, options);
+        return "delete from " + CdmIndexService.TB_NAME + " where " +
+                ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'" +
+                " AND " + PARENT_ID_FIELD + " in (" +
+                "select dmrecord from " + CdmIndexService.TB_NAME + " where " +
+                ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_OBJECT + "'" +
+                " AND " + queryFilters +
+                " )";
+    }
+
+    private String buildDeleteObjectsQuery(IndexFilteringOptions options) {
+        // delete queries need to remove the items that do NOT match the criteria selected by the user
+        var queryFilters = buildQueryFilters(true, options);
+        return "delete from " + CdmIndexService.TB_NAME + " where " +
+                " (" + ENTRY_TYPE_FIELD + " != '" + ENTRY_TYPE_COMPOUND_CHILD + "'" +
+                " OR " + ENTRY_TYPE_FIELD + " is null)" +
+                " AND " + queryFilters;
     }
 
     public void setProject(MigrationProject project) {
