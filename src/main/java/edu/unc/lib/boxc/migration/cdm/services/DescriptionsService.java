@@ -260,12 +260,13 @@ public class DescriptionsService {
             doc.setRootElement(collEl);
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", title from "
-                    + CdmIndexService.TB_NAME
-                    + " where " + ENTRY_TYPE_FIELD + " != '" + ENTRY_TYPE_GROUPED_WORK + "'"
-                            + " or " + ENTRY_TYPE_FIELD + " is null");
+                    + CdmIndexService.TB_NAME);
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 String title = rs.getString(2);
+                if (title == null) {
+                    title = "Work for " + cdmId;
+                }
                 collEl.addContent(new Element("mods", MODS_V3_NS)
                         .addContent(new Element("titleInfo", MODS_V3_NS)
                                 .addContent(new Element("title", MODS_V3_NS)
