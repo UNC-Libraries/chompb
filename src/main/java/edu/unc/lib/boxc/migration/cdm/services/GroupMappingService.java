@@ -55,6 +55,7 @@ public class GroupMappingService {
     private MigrationProject project;
     private CdmIndexService indexService;
     private CdmFieldService fieldService;
+    private List<String> exportFields;
 
     public void generateMapping(GroupMappingOptions options) throws IOException {
         assertProjectStateValid();
@@ -289,65 +290,85 @@ public class GroupMappingService {
             throw new InvalidProjectStateException("Project has not previously generated group mappings");
         }
 
-        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-        List<String> exportFields = new ArrayList<>(fieldInfo.listAllExportFields());
-        exportFields.remove(CdmFieldInfo.CDM_ID);
-
         Connection conn = null;
         try {
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
-            // Cleanup any previously synched grouping data
-            // Clear out of date parent ids
-            stmt.executeUpdate("update " + CdmIndexService.TB_NAME
-                    + " set " + CdmIndexService.PARENT_ID_FIELD + " = null"
-                    + " where " + CdmIndexService.PARENT_ID_FIELD
-                        + " like '" + GroupMappingInfo.GROUPED_WORK_PREFIX + "%'");
-            // Clear out of date generated grouping works
-            stmt.executeUpdate("delete from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD
-                        + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'");
+            // Cleanup any previously synced grouping data
+            cleanupStaleSyncedGroups(stmt);
             if (project.getProjectProperties().getGroupMappingsSynchedDate() != null) {
-                setSynchedDate(null);
+                setSyncedDate(null);
             }
 
             // Sync the grouping data and generated works into the database
             GroupMappingInfo info = loadMappings();
             for (Entry<String, List<String>> groupEntry : info.getGroupedMappings().entrySet()) {
+                String groupId = groupEntry.getKey();
+                var childrenIds = groupEntry.getValue();
                 // Do no sync groups which only contain one child
-                if (groupEntry.getValue().size() <= 1) {
+                if (childrenIds.size() <= 1) {
                     continue;
                 }
 
-                var joinedFields = "\"" + String.join("\",\"", exportFields) + "\"";
-                // Clone the first child's data as the base data for the new work
-                String firstChild = groupEntry.getValue().get(0);
-                stmt.executeUpdate("insert into " + CdmIndexService.TB_NAME
-                        + " (" + joinedFields + ","
-                            + CdmFieldInfo.CDM_ID + "," + CdmIndexService.ENTRY_TYPE_FIELD + ")"
-                        + " select " + joinedFields
-                            + ",'" + groupEntry.getKey() + "','" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
-                        + " from " + CdmIndexService.TB_NAME
-                        + " where " + CdmFieldInfo.CDM_ID + " = " + firstChild);
-
-                // Set the parent id for the children
-                for (String childId : groupEntry.getValue()) {
-                    stmt.executeUpdate("update " + CdmIndexService.TB_NAME
-                            + " set " + CdmIndexService.PARENT_ID_FIELD + " = '" + groupEntry.getKey() + "'"
-                            + " where " + CdmFieldInfo.CDM_ID + " = '"  + childId + "'");
-                }
+                createGroupedWorkEntry(stmt, groupId, childrenIds);
+                assignChildrenToGroups(stmt, groupId, childrenIds);
             }
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
-        setSynchedDate(Instant.now());
+        setSyncedDate(Instant.now());
     }
 
-    private void setSynchedDate(Instant timestamp) throws IOException {
+    private void cleanupStaleSyncedGroups(Statement stmt) throws SQLException {
+        // Clear out of date parent ids
+        stmt.executeUpdate("update " + CdmIndexService.TB_NAME
+                + " set " + CdmIndexService.PARENT_ID_FIELD + " = null,"
+                + CdmIndexService.CHILD_ORDER_FIELD + " = null"
+                + " where " + CdmIndexService.PARENT_ID_FIELD
+                + " like '" + GroupMappingInfo.GROUPED_WORK_PREFIX + "%'");
+        // Clear out of date generated grouping works
+        stmt.executeUpdate("delete from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.ENTRY_TYPE_FIELD
+                + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'");
+    }
+
+    private void createGroupedWorkEntry(Statement stmt, String groupId, List<String> childrenIds) throws SQLException {
+        var joinedFields = "\"" + String.join("\",\"", getExportFields()) + "\"";
+        // Clone the first child's data as the base data for the new work
+        String firstChild = childrenIds.get(0);
+        stmt.executeUpdate("insert into " + CdmIndexService.TB_NAME
+                + " (" + joinedFields + ","
+                + CdmFieldInfo.CDM_ID + "," + CdmIndexService.ENTRY_TYPE_FIELD + ")"
+                + " select " + joinedFields
+                + ",'" + groupId + "','" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                + " from " + CdmIndexService.TB_NAME
+                + " where " + CdmFieldInfo.CDM_ID + " = " + firstChild);
+    }
+
+    private void assignChildrenToGroups(Statement stmt, String groupId, List<String> childrenIds) throws SQLException {
+        // Set the parent id for the children
+        for (String childId : childrenIds) {
+            stmt.executeUpdate("update " + CdmIndexService.TB_NAME
+                    + " set " + CdmIndexService.PARENT_ID_FIELD + " = '" + groupId + "'"
+                    + " where " + CdmFieldInfo.CDM_ID + " = '"  + childId + "'");
+        }
+    }
+
+    private void setSyncedDate(Instant timestamp) throws IOException {
         project.getProjectProperties().setGroupMappingsSynchedDate(timestamp);
         ProjectPropertiesSerialization.write(project);
+    }
+
+    private List<String> getExportFields() {
+        if (exportFields == null) {
+            CdmFieldInfo fieldInfo = null;
+            fieldInfo = fieldService.loadFieldsFromProject(project);
+            exportFields = new ArrayList<>(fieldInfo.listAllExportFields());
+            exportFields.remove(CdmFieldInfo.CDM_ID);
+        }
+        return exportFields;
     }
 
     public void setProject(MigrationProject project) {
