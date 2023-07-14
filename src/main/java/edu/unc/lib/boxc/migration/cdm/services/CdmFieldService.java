@@ -155,7 +155,7 @@ public class CdmFieldService {
      * @return
      * @throws IOException
      */
-    public CdmFieldInfo loadFieldsFromProject(MigrationProject project) throws IOException {
+    public CdmFieldInfo loadFieldsFromProject(MigrationProject project) {
         Path fieldsPath = project.getFieldsPath();
         try (
             Reader reader = Files.newBufferedReader(fieldsPath);
@@ -180,6 +180,8 @@ public class CdmFieldService {
                 fields.add(entry);
             }
             return fieldInfo;
+        } catch (IOException e) {
+            throw new InvalidProjectStateException("Cannot read fields file", e);
         }
     }
 
