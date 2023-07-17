@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -450,7 +451,7 @@ public class SipServiceTest {
         groupService.setIndexService(testHelper.getIndexService());
         groupService.setFieldService(testHelper.getFieldService());
         groupService.generateMapping(groupOptions);
-        groupService.syncMappings();
+        groupService.syncMappings(new GroupMappingSyncOptions());
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -496,7 +497,7 @@ public class SipServiceTest {
         groupService.setIndexService(testHelper.getIndexService());
         groupService.setFieldService(testHelper.getFieldService());
         groupService.generateMapping(groupOptions);
-        groupService.syncMappings();
+        groupService.syncMappings(new GroupMappingSyncOptions());
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -654,7 +655,7 @@ public class SipServiceTest {
         groupService.setIndexService(testHelper.getIndexService());
         groupService.setFieldService(testHelper.getFieldService());
         groupService.generateMapping(groupOptions);
-        groupService.syncMappings();
+        groupService.syncMappings(new GroupMappingSyncOptions());
 
         service.generateSips(makeOptions());
 

@@ -6,6 +6,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -64,13 +65,13 @@ public class GroupMappingCommand {
 
     @Command(name = "sync",
             description = { "Sync the group mapping file for this project into the index database." } )
-    public int sync() throws Exception {
+    public int sync(@Mixin GroupMappingSyncOptions options) throws Exception {
         long start = System.nanoTime();
 
         try {
             initialize();
 
-            groupService.syncMappings();
+            groupService.syncMappings(options);
             outputLogger.info("Group mapping synched to index for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;

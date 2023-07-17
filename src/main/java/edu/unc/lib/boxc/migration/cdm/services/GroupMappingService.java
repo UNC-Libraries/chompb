@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -283,12 +284,13 @@ public class GroupMappingService {
      * group mapping details before updating.
      * @throws IOException
      */
-    public void syncMappings() throws IOException {
+    public void syncMappings(GroupMappingSyncOptions options) throws IOException {
         assertProjectStateValid();
         if (project.getProjectProperties().getGroupMappingsUpdatedDate() == null
                 || Files.notExists(project.getGroupMappingPath())) {
             throw new InvalidProjectStateException("Project has not previously generated group mappings");
         }
+        assertSortFieldValid(options);
 
         Connection conn = null;
         try {
@@ -312,6 +314,7 @@ public class GroupMappingService {
 
                 createGroupedWorkEntry(stmt, groupId, childrenIds);
                 assignChildrenToGroups(stmt, groupId, childrenIds);
+                updateGroupedChildrenOrder(stmt, options, groupEntry.getKey(), groupEntry.getValue());
             }
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
@@ -319,6 +322,17 @@ public class GroupMappingService {
             CdmIndexService.closeDbConnection(conn);
         }
         setSyncedDate(Instant.now());
+    }
+
+    private void assertSortFieldValid(GroupMappingSyncOptions options) {
+        if (StringUtils.isBlank(options.getSortField())) {
+            throw new IllegalArgumentException("Sort field must be provided");
+        }
+        if (!getExportFields().contains(options.getSortField())) {
+            throw new IllegalArgumentException("Sort field must be a valid field for this project. Field '"
+                    + options.getSortField() + "' was provided, but valid project fields are: "
+                    + String.join(", ", getExportFields()));
+        }
     }
 
     private void cleanupStaleSyncedGroups(Statement stmt) throws SQLException {
@@ -352,6 +366,26 @@ public class GroupMappingService {
         for (String childId : childrenIds) {
             stmt.executeUpdate("update " + CdmIndexService.TB_NAME
                     + " set " + CdmIndexService.PARENT_ID_FIELD + " = '" + groupId + "'"
+                    + " where " + CdmFieldInfo.CDM_ID + " = '"  + childId + "'");
+        }
+    }
+
+    private void updateGroupedChildrenOrder(Statement stmt, GroupMappingSyncOptions options,
+                                            String groupId, List<String> childrenIds) throws SQLException {
+        // Retrieve list of children cdm_ids ordered by the sort field with the current group
+        ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + options.getSortField()
+                + " from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + groupId + "'"
+                + " order by " + options.getSortField() + " ASC");
+        var orderList = new ArrayList<String>();
+        while (rs.next()) {
+            orderList.add(rs.getString(1));
+        }
+        // Update each child to assign an order id based on its index within the group when sorted by the sort field
+        for (String childId : childrenIds) {
+            var orderId = orderList.indexOf(childId);
+            stmt.executeUpdate("update " + CdmIndexService.TB_NAME
+                    + " set " + CdmIndexService.CHILD_ORDER_FIELD + " = '" + orderId + "'"
                     + " where " + CdmFieldInfo.CDM_ID + " = '"  + childId + "'");
         }
     }
