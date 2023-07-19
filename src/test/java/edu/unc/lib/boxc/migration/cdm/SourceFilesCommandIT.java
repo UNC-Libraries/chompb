@@ -239,7 +239,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     @Test
     public void statusUnmappedDoesNotContainGroupObjectsTest() throws Exception {
         indexGroupExportSamples();
-        addSourceFile("276_182_E.tif");
+        addSourceFile("276_185_E.tif");
         addSourceFile("276_203_E.tif");
 
         String[] args = new String[] {
