@@ -72,7 +72,7 @@ public class GroupMappingCommand {
             initialize();
 
             groupService.syncMappings(options);
-            outputLogger.info("Group mapping synched to index for {} in {}s", project.getProjectName(),
+            outputLogger.info("Group mapping synced to index for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {

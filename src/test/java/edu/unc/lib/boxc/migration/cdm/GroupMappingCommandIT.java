@@ -100,7 +100,7 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Mappings Modified: +[0-9\\-T:]+.*");
-        assertOutputMatches(".*Last Synched: +Not completed.*");
+        assertOutputMatches(".*Last Synced: +Not completed.*");
 
         String[] args3 = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -117,7 +117,7 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Mappings Modified: +[0-9\\-T:]+.*");
-        assertOutputMatches(".*Last Synched: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Last Synced: +[0-9\\-T:]+.*");
 
         assertOutputMatches(".*Total Groups: +1.*");
         assertOutputMatches(".*Objects In Groups: +2.*");
@@ -134,7 +134,7 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Mappings Modified: +[0-9\\-T:]+.*");
-        assertOutputMatches(".*Last Synched: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Last Synced: +[0-9\\-T:]+.*");
 
         assertOutputNotMatches(".*Total Groups.*");
 
@@ -149,7 +149,7 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Mappings Modified: +[0-9\\-T:]+.*");
-        assertOutputMatches(".*Last Synched: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Last Synced: +[0-9\\-T:]+.*");
 
         assertOutputMatches(".*Total Groups: +1.*");
         assertOutputMatches(".*Objects In Groups: +2.*");

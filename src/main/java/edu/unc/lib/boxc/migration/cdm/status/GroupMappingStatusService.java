@@ -55,8 +55,8 @@ public class GroupMappingStatusService extends AbstractStatusService {
             }
         }
         showField("Mappings Modified", modified == null ? "Not present" : modified);
-        Instant synched = project.getProjectProperties().getGroupMappingsSynchedDate();
-        showField("Last Synched", synched == null ? "Not completed" : synched);
+        Instant synced = project.getProjectProperties().getGroupMappingsSyncedDate();
+        showField("Last Synced", synced == null ? "Not completed" : synced);
 
         if (!verbosity.isNormal()) {
             return;

@@ -280,7 +280,7 @@ public class GroupMappingService {
     }
 
     /**
-     * Syncs group mappings from the mapping file into the database. Clears out any previously synched
+     * Syncs group mappings from the mapping file into the database. Clears out any previously synced
      * group mapping details before updating.
      * @throws IOException
      */
@@ -298,7 +298,7 @@ public class GroupMappingService {
             Statement stmt = conn.createStatement();
             // Cleanup any previously synced grouping data
             cleanupStaleSyncedGroups(stmt);
-            if (project.getProjectProperties().getGroupMappingsSynchedDate() != null) {
+            if (project.getProjectProperties().getGroupMappingsSyncedDate() != null) {
                 setSyncedDate(null);
             }
 
@@ -373,7 +373,7 @@ public class GroupMappingService {
     private void updateGroupedChildrenOrder(Statement stmt, GroupMappingSyncOptions options,
                                             String groupId, List<String> childrenIds) throws SQLException {
         // Retrieve list of children cdm_ids ordered by the sort field with the current group
-        ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + options.getSortField()
+        ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID
                 + " from " + CdmIndexService.TB_NAME
                 + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + groupId + "'"
                 + " order by " + options.getSortField() + " ASC");
@@ -391,7 +391,7 @@ public class GroupMappingService {
     }
 
     private void setSyncedDate(Instant timestamp) throws IOException {
-        project.getProjectProperties().setGroupMappingsSynchedDate(timestamp);
+        project.getProjectProperties().setGroupMappingsSyncedDate(timestamp);
         ProjectPropertiesSerialization.write(project);
     }
 
