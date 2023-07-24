@@ -20,7 +20,7 @@ public class MigrationProjectProperties {
     private Instant sourceFilesUpdatedDate;
     private Instant accessFilesUpdatedDate;
     private Instant groupMappingsUpdatedDate;
-    private Instant groupMappingsSynchedDate;
+    private Instant groupMappingsSyncedDate;
     private Instant descriptionsExpandedDate;
     private Instant sipsGeneratedDate;
     private Set<String> sipsSubmitted;
@@ -144,14 +144,14 @@ public class MigrationProjectProperties {
     }
 
     /**
-     * @return timestamp the group mappings were last synched to the database
+     * @return timestamp the group mappings were last synced to the database
      */
-    public Instant getGroupMappingsSynchedDate() {
-        return groupMappingsSynchedDate;
+    public Instant getGroupMappingsSyncedDate() {
+        return groupMappingsSyncedDate;
     }
 
-    public void setGroupMappingsSynchedDate(Instant groupMappingsSynchedDate) {
-        this.groupMappingsSynchedDate = groupMappingsSynchedDate;
+    public void setGroupMappingsSyncedDate(Instant groupMappingsSyncedDate) {
+        this.groupMappingsSyncedDate = groupMappingsSyncedDate;
     }
 
     /**

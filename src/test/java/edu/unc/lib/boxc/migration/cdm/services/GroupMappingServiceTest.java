@@ -8,6 +8,7 @@ import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo.GroupMapping;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -71,13 +73,12 @@ public class GroupMappingServiceTest {
     public void generateNoIndexTest() throws Exception {
         GroupMappingOptions options = makeDefaultOptions();
 
-        try {
+        var e = assertThrows(InvalidProjectStateException.class, () -> {
             service.generateMapping(options);
             fail();
-        } catch (InvalidProjectStateException e) {
-            assertExceptionContains("Project must be indexed", e);
-            assertMappedDateNotPresent();
-        }
+        });
+        assertExceptionContains("Project must be indexed", e);
+        assertMappedDateNotPresent();
     }
 
     @Test
@@ -94,7 +95,7 @@ public class GroupMappingServiceTest {
     @Test
     public void generateDryRunTest() throws Exception {
         OutputHelper.captureOutput(() -> {
-            try {
+            assertThrows(NoSuchFileException.class, () -> {
                 indexExportSamples();
                 GroupMappingOptions options = makeDefaultOptions();
                 options.setDryRun(true);
@@ -102,9 +103,7 @@ public class GroupMappingServiceTest {
 
                 service.loadMappings();
                 fail();
-            } catch (NoSuchFileException e) {
-                // expected
-            }
+            });
         });
 
         assertMappedDateNotPresent();
@@ -116,12 +115,9 @@ public class GroupMappingServiceTest {
         GroupMappingOptions options = makeDefaultOptions();
         service.generateMapping(options);
 
-        try {
+        assertThrows(StateAlreadyExistsException.class, () -> {
             service.generateMapping(options);
-            fail();
-        } catch (StateAlreadyExistsException e) {
-            // expected
-        }
+        });
 
         // mapping state should be unchanged
         GroupMappingInfo info = service.loadMappings();
@@ -234,27 +230,50 @@ public class GroupMappingServiceTest {
 
     @Test
     public void syncNotIndexedTest() throws Exception {
-        try {
-            service.syncMappings();
-            fail();
-        } catch (InvalidProjectStateException e) {
-            assertExceptionContains("Project must be indexed", e);
-            assertMappedDateNotPresent();
-            assertSynchedDateNotPresent();
-        }
+        var e = assertThrows(InvalidProjectStateException.class, () -> {
+            service.syncMappings(makeDefaultSyncOptions());
+        });
+        assertExceptionContains("Project must be indexed", e);
+        assertMappedDateNotPresent();
+        assertSyncedDateNotPresent();
     }
 
     @Test
     public void syncNotGeneratedTest() throws Exception {
         indexExportSamples();
-        try {
-            service.syncMappings();
-            fail();
-        } catch (InvalidProjectStateException e) {
-            assertExceptionContains("Project has not previously generated group mappings", e);
-            assertMappedDateNotPresent();
-            assertSynchedDateNotPresent();
-        }
+        var e = assertThrows(InvalidProjectStateException.class, () -> {
+            service.syncMappings(makeDefaultSyncOptions());
+        });
+        assertExceptionContains("Project has not previously generated group mappings", e);
+        assertMappedDateNotPresent();
+        assertSyncedDateNotPresent();
+    }
+
+    @Test
+    public void syncNoSortFieldTest() throws Exception {
+        indexExportSamples();
+        service.generateMapping(makeDefaultOptions());
+
+        var e = assertThrows(IllegalArgumentException.class, () -> {
+            var options = makeDefaultSyncOptions();
+            options.setSortField("");
+            service.syncMappings(options);
+        });
+        assertExceptionContains("Sort field must be provided", e);
+        assertSyncedDateNotPresent();
+    }
+
+    @Test
+    public void syncInvalidSortFieldTest() throws Exception {
+        indexExportSamples();
+        service.generateMapping(makeDefaultOptions());
+        var e = assertThrows(IllegalArgumentException.class, () -> {
+            var options = makeDefaultSyncOptions();
+            options.setSortField("boxy");
+            service.syncMappings(options);
+        });
+        assertExceptionContains("Sort field must be a valid field for this project", e);
+        assertSyncedDateNotPresent();
     }
 
     @Test
@@ -263,18 +282,20 @@ public class GroupMappingServiceTest {
         GroupMappingOptions options = makeDefaultOptions();
         service.generateMapping(options);
 
-        service.syncMappings();
+        service.syncMappings(makeDefaultSyncOptions());
 
         Connection conn = null;
         try {
             GroupMappingInfo info = service.loadMappings();
             conn = indexService.openDbConnection();
-            assertWorkSynched(conn, "groupa:group1", "Redoubt C", "2005-11-23");
+            assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, "groupa:group1", "25", "26");
+            assertFileHasOrder(conn, "25", 1);
+            assertFileHasOrder(conn, "26", 0);
             // Group key with a single child should not be grouped
             assertNumberOfGroups(conn, 1);
             assertParentIdsPresent(conn, "groupa:group1", null);
-            assertSynchedDatePresent();
+            assertSyncedDatePresent();
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
@@ -287,17 +308,20 @@ public class GroupMappingServiceTest {
         options.setGroupField("digitc");
         service.generateMapping(options);
 
-        service.syncMappings();
+        service.syncMappings(makeDefaultSyncOptions());
 
         Connection conn = null;
         try {
             GroupMappingInfo info = service.loadMappings();
             conn = indexService.openDbConnection();
-            assertWorkSynched(conn, "digitc:2005-11-10", "Redoubt C", "2005-11-23");
+            assertWorkSynced(conn, "digitc:2005-11-10", "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, "digitc:2005-11-10", "25", "28", "29");
+            assertFileHasOrder(conn, "25", 0);
+            assertFileHasOrder(conn, "28", 1);
+            assertFileHasOrder(conn, "29", 2);
             assertNumberOfGroups(conn, 1);
             assertParentIdsPresent(conn, "digitc:2005-11-10", null);
-            assertSynchedDatePresent();
+            assertSyncedDatePresent();
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
@@ -306,13 +330,15 @@ public class GroupMappingServiceTest {
         options.setForce(true);
         service.generateMapping(options);
 
-        service.syncMappings();
+        service.syncMappings(makeDefaultSyncOptions());
 
         try {
             GroupMappingInfo info = service.loadMappings();
             conn = indexService.openDbConnection();
-            assertWorkSynched(conn, "groupa:group1", "Redoubt C", "2005-11-23");
+            assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, "groupa:group1", "25", "26");
+            assertFileHasOrder(conn, "25", 1);
+            assertFileHasOrder(conn, "26", 0);
             // Group key with a single child should not be grouped
             assertNumberOfGroups(conn, 1);
             assertParentIdsPresent(conn, "groupa:group1", null);
@@ -320,13 +346,13 @@ public class GroupMappingServiceTest {
             assertGroupingPresent(info, "groupa:group1", "25", "26");
             assertEquals(1, info.getGroupedMappings().size());
 
-            assertSynchedDatePresent();
+            assertSyncedDatePresent();
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
     }
 
-    private void assertWorkSynched(Connection conn, String workId, String expectedTitle, String expectedCreated)
+    private void assertWorkSynced(Connection conn, String workId, String expectedTitle, String expectedCreated)
             throws Exception {
         String groupKey = asGroupKey(workId);
         Statement stmt = conn.createStatement();
@@ -357,6 +383,19 @@ public class GroupMappingServiceTest {
         assertTrue(childIds.containsAll(expected), "Expected work " + workId + " to contain children " + expected
                         + " but it contained " + childIds);
         assertEquals(expected.size(), childIds.size());
+    }
+
+    private void assertFileHasOrder(Connection conn, String childId, int expectedChildOrder) throws Exception {
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("select " + CdmIndexService.CHILD_ORDER_FIELD
+                + " from " + CdmIndexService.TB_NAME
+                + " where " + CdmFieldInfo.CDM_ID + " = '" + childId + "'");
+        if (rs.next()) {
+            var childOrder = rs.getInt(1);
+            assertEquals(expectedChildOrder, childOrder, "Child " + childId + " did not have expected order value");
+        } else {
+            fail("No entry found for child id " + childId);
+        }
     }
 
     private void assertNumberOfGroups(Connection conn, int expected) throws Exception {
@@ -402,6 +441,12 @@ public class GroupMappingServiceTest {
         return options;
     }
 
+    private GroupMappingSyncOptions makeDefaultSyncOptions() {
+        var options = new GroupMappingSyncOptions();
+        options.setSortField("file");
+        return options;
+    }
+
     private void assertExceptionContains(String expected, Exception e) {
         assertTrue(e.getMessage().contains(expected),
                 "Expected message exception to contain '" + expected + "', but was: " + e.getMessage());
@@ -434,14 +479,14 @@ public class GroupMappingServiceTest {
         assertNull(props.getGroupMappingsUpdatedDate());
     }
 
-    private void assertSynchedDatePresent() throws Exception {
+    private void assertSyncedDatePresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
-        assertNotNull(props.getGroupMappingsSynchedDate());
+        assertNotNull(props.getGroupMappingsSyncedDate());
     }
 
-    private void assertSynchedDateNotPresent() throws Exception {
+    private void assertSyncedDateNotPresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
-        assertNull(props.getGroupMappingsSynchedDate());
+        assertNull(props.getGroupMappingsSyncedDate());
     }
 
     private void assertGroupAMappingsPresent(GroupMappingInfo info) {

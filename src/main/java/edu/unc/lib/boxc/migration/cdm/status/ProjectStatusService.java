@@ -45,8 +45,6 @@ public class ProjectStatusService extends AbstractStatusService {
             showField("Skipped", fieldInfo.getFields().stream().filter(f -> f.getSkipExport()).count());
         } catch (InvalidProjectStateException e) {
             showField("Mapping File Valid", "No (" + e.getMessage() + ")");
-        } catch (IOException e) {
-            throw new MigrationException("Failed to load fields", e);
         }
         sectionDivider();
 

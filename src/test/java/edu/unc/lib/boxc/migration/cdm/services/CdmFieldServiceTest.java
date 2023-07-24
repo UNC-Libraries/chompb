@@ -300,7 +300,7 @@ public class CdmFieldServiceTest {
 
     @Test
     public void loadMissingFieldsFileTest() throws Exception {
-        Assertions.assertThrows(NoSuchFileException.class, () -> {
+        Assertions.assertThrows(InvalidProjectStateException.class, () -> {
             service.loadFieldsFromProject(project);
         });
     }

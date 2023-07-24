@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -438,10 +439,11 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsWithGroupedWork() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
+        testHelper.indexExportData("grouped_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("grouped_mods.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif",
+                "276_241_E.tif", "276_245a_E.tif");
 
         GroupMappingOptions groupOptions = new GroupMappingOptions();
         groupOptions.setGroupField("groupa");
@@ -450,7 +452,7 @@ public class SipServiceTest {
         groupService.setIndexService(testHelper.getIndexService());
         groupService.setFieldService(testHelper.getFieldService());
         groupService.generateMapping(groupOptions);
-        groupService.syncMappings();
+        groupService.syncMappings(makeDefaultSyncOptions());
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -464,19 +466,26 @@ public class SipServiceTest {
 
         Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren = depBag.iterator().toList();
-        assertEquals(2, depBagChildren.size());
+        assertEquals(4, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
         Bag work1Bag = model.getBag(workResc1);
         testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", false,
                 stagingLocs.get(0), stagingLocs.get(1));
-        assertFalse(workResc1.hasProperty(Cdr.memberOrder), "Grouped work should not have order");
         // Assert that children of grouped work have descriptions added (only second file as a description)
+        Resource work1File1Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(0));
         Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
         testHelper.assertModsPresentWithCdmId(dirManager, PIDs.get(work1File2Resc.getURI()), "26");
-        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
-        assertFalse(workResc3.hasProperty(Cdr.memberOrder), "Grouped work should not have order");
+        // Second file should be ordered before the first file for the grouped work
+        String work1Members = PIDs.get(work1File2Resc.getURI()).getId() + "|" + PIDs.get(work1File1Resc.getURI()).getId();
+        assertTrue(workResc1.hasProperty(Cdr.memberOrder, work1Members));
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
+        assertFalse(workResc2.hasProperty(Cdr.memberOrder), "Work with group field but only one file should not have order");
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
+        assertFalse(workResc3.hasProperty(Cdr.memberOrder), "Regular work should not have order");
+        Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-10");
+        assertFalse(workResc4.hasProperty(Cdr.memberOrder), "Regular work should not have order");
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -496,7 +505,7 @@ public class SipServiceTest {
         groupService.setIndexService(testHelper.getIndexService());
         groupService.setFieldService(testHelper.getFieldService());
         groupService.generateMapping(groupOptions);
-        groupService.syncMappings();
+        groupService.syncMappings(makeDefaultSyncOptions());
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -654,7 +663,7 @@ public class SipServiceTest {
         groupService.setIndexService(testHelper.getIndexService());
         groupService.setFieldService(testHelper.getFieldService());
         groupService.generateMapping(groupOptions);
-        groupService.syncMappings();
+        groupService.syncMappings(makeDefaultSyncOptions());
 
         service.generateSips(makeOptions());
 
@@ -835,6 +844,12 @@ public class SipServiceTest {
         SipGenerationOptions options = new SipGenerationOptions();
         options.setUsername(USERNAME);
         options.setForce(force);
+        return options;
+    }
+
+    private GroupMappingSyncOptions makeDefaultSyncOptions() {
+        var options = new GroupMappingSyncOptions();
+        options.setSortField("file");
         return options;
     }
 
