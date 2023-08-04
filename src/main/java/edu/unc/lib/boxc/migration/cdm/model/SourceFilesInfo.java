@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -12,6 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @author bbpennel
  */
 public class SourceFilesInfo {
+    public static final String SEPARATOR = "|";
+    public static final String ESCAPED_SEPARATOR = "\\|";
     public static final String POTENTIAL_MATCHES_FIELD = "potential_matches";
     public static final String SOURCE_FILE_FIELD = "source_file";
     public static final String EXPORT_MATCHING_FIELD = "matching_value";
@@ -47,7 +50,7 @@ public class SourceFilesInfo {
     public static class SourceFileMapping {
         private String cdmId;
         private String matchingValue;
-        private Path sourcePath;
+        private List<Path> sourcePaths;
         private List<String> potentialMatches;
 
         public String getCdmId() {
@@ -66,15 +69,29 @@ public class SourceFilesInfo {
             this.matchingValue = matchingValue;
         }
 
-        public Path getSourcePath() {
-            return sourcePath;
+        public List<Path> getSourcePaths() {
+            return sourcePaths;
         }
 
-        public void setSourcePath(String sourcePath) {
-            if (StringUtils.isBlank(sourcePath)) {
-                this.sourcePath = null;
+        public Path getFirstSourcePath() {
+            return (sourcePaths == null) ? null : sourcePaths.get(0);
+        }
+
+        public void setSourcePaths(String sourcePaths) {
+            if (StringUtils.isBlank(sourcePaths)) {
+                this.sourcePaths = null;
             } else {
-                this.sourcePath = Paths.get(sourcePath);
+                this.sourcePaths = Arrays.stream(sourcePaths.split(ESCAPED_SEPARATOR))
+                                        .map(Paths::get)
+                                        .collect(Collectors.toList());
+            }
+        }
+
+        public String getSourcePathString() {
+            if (sourcePaths == null) {
+                return null;
+            } else {
+                return sourcePaths.stream().map(Object::toString).collect(Collectors.joining(SEPARATOR));
             }
         }
 
@@ -86,7 +103,7 @@ public class SourceFilesInfo {
             if (StringUtils.isBlank(potentialMatches)) {
                 this.potentialMatches = null;
             } else {
-                this.potentialMatches = Arrays.asList(potentialMatches.split(","));
+                this.potentialMatches = Arrays.asList(potentialMatches.split(ESCAPED_SEPARATOR));
             }
         }
 
@@ -98,7 +115,7 @@ public class SourceFilesInfo {
             if (potentialMatches == null) {
                 return null;
             } else {
-                return String.join(",", potentialMatches);
+                return String.join(SEPARATOR, potentialMatches);
             }
         }
     }

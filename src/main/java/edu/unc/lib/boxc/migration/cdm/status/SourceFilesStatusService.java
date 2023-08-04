@@ -71,7 +71,7 @@ public class SourceFilesStatusService extends AbstractStatusService {
         try {
             SourceFilesInfo info = fileService.loadMappings();
             for (SourceFileMapping mapping : info.getMappings()) {
-                if (mapping.getSourcePath() != null) {
+                if (mapping.getSourcePaths() != null) {
                     if (indexedIds.contains(mapping.getCdmId())) {
                         mappedIds.add(mapping.getCdmId());
                     } else {

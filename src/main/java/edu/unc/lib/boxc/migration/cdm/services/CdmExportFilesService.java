@@ -68,7 +68,7 @@ public class CdmExportFilesService {
                     for (CSVRecord originalRecord : originalParser) {
                         var origMapping = SourceFileService.recordToMapping(originalRecord);
                         // skip over already populated mappings
-                        if (origMapping.getSourcePath() != null) {
+                        if (origMapping.getSourcePaths() != null) {
                             SourceFileService.writeMapping(updatedPrinter, origMapping);
                             continue;
                         }
@@ -88,7 +88,7 @@ public class CdmExportFilesService {
                             continue;
                         }
                         // Update mapping to include downloaded file
-                        origMapping.setSourcePath(destPath.toString());
+                        origMapping.setSourcePaths(destPath.toString());
                         origMapping.setMatchingValue(filename);
                         SourceFileService.writeMapping(updatedPrinter, origMapping);
 

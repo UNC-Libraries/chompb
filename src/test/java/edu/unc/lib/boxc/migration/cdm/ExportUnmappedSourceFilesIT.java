@@ -95,11 +95,11 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         var exportedSourceFilesPath = CdmFileRetrievalService.getExportedSourceFilesPath(project);
         var mappingInfo = sourceFileService.loadMappings();
         var mapping1 = mappingInfo.getMappingByCdmId("25");
-        assertEquals(exportedSourceFilesPath.resolve("26.JP2"), mapping1.getSourcePath());
+        assertEquals(exportedSourceFilesPath.resolve("26.JP2"), mapping1.getFirstSourcePath());
         var mapping2 = mappingInfo.getMappingByCdmId("26");
-        assertEquals(localSourcePaths.get(0), mapping2.getSourcePath());
+        assertEquals(localSourcePaths.get(0), mapping2.getFirstSourcePath());
         var mapping3 = mappingInfo.getMappingByCdmId("27");
-        assertEquals(exportedSourceFilesPath.resolve("50.jp2"), mapping3.getSourcePath());
+        assertEquals(exportedSourceFilesPath.resolve("50.jp2"), mapping3.getFirstSourcePath());
     }
 
     @Test
@@ -128,11 +128,11 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         var exportedSourceFilesPath = CdmFileRetrievalService.getExportedSourceFilesPath(project);
         var mappingInfo = sourceFileService.loadMappings();
         var mapping1 = mappingInfo.getMappingByCdmId("25");
-        assertNull(mapping1.getSourcePath(), "Mapping for resource with missing file must be null");
+        assertNull(mapping1.getSourcePaths(), "Mapping for resource with missing file must be null");
         var mapping2 = mappingInfo.getMappingByCdmId("26");
-        assertEquals(localSourcePaths.get(0), mapping2.getSourcePath());
+        assertEquals(localSourcePaths.get(0), mapping2.getFirstSourcePath());
         var mapping3 = mappingInfo.getMappingByCdmId("27");
-        assertEquals(exportedSourceFilesPath.resolve("50.jp2"), mapping3.getSourcePath());
+        assertEquals(exportedSourceFilesPath.resolve("50.jp2"), mapping3.getFirstSourcePath());
     }
 
     @Test

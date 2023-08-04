@@ -131,7 +131,7 @@ public class WorkGenerator {
 
     protected SourceFilesInfo.SourceFileMapping getSourceFileMapping(String cdmId) {
         SourceFilesInfo.SourceFileMapping sourceMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
-        if (sourceMapping == null || sourceMapping.getSourcePath() == null) {
+        if (sourceMapping == null || sourceMapping.getSourcePaths() == null) {
             String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
             if (options.isForce()) {
                 outputLogger.info(message);
@@ -155,19 +155,19 @@ public class WorkGenerator {
 
         // Link source file
         Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
-        Path sourcePath = sourceMapping.getSourcePath();
+        Path sourcePath = sourceMapping.getFirstSourcePath();
         origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
         origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
 
         // Link access file
         if (accessFilesInfo != null) {
             SourceFilesInfo.SourceFileMapping accessMapping = accessFilesInfo.getMappingByCdmId(cdmId);
-            if (accessMapping != null && accessMapping.getSourcePath() != null) {
+            if (accessMapping != null && accessMapping.getSourcePaths() != null) {
                 Resource accessResc = DepositModelHelpers.addDatastream(
                         fileObjResc, DatastreamType.ACCESS_SURROGATE);
                 accessResc.addLiteral(CdrDeposit.stagingLocation,
-                        accessMapping.getSourcePath().toUri().toString());
-                String mimetype = accessFileService.getMimetype(accessMapping.getSourcePath());
+                        accessMapping.getFirstSourcePath().toUri().toString());
+                String mimetype = accessFileService.getMimetype(accessMapping.getFirstSourcePath());
                 accessResc.addLiteral(CdrDeposit.mimetype, mimetype);
             }
         }
