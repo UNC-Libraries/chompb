@@ -165,7 +165,7 @@ public class SourceFileService {
     }
 
     // Query for all non-compound objects. If the entry type is null, the object is an individual cdm object
-    private String buildQuery(SourceFileMappingOptions options) {
+    protected String buildQuery(SourceFileMappingOptions options) {
         var selectStatement = "";
         if (options.isPopulateBlank()) {
             selectStatement = "select " + CdmFieldInfo.CDM_ID;
@@ -310,13 +310,8 @@ public class SourceFileService {
                     // No updates, so write original
                     writeMapping(mergedPrinter, origMapping);
                 } else if (updateMapping.getSourcePath() != null) {
-                    if (options.isForce() || origMapping.getSourcePath() == null) {
-                        // overwrite entry with updated mapping source path if using force or original didn't have match
-                        writeMapping(mergedPrinter, updateMapping);
-                    } else {
-                        // retain original source path
-                        writeMapping(mergedPrinter, origMapping);
-                    }
+                    var resolvedMapping = resolveSourcePathConflict(options, origMapping, updateMapping);
+                    writeMapping(mergedPrinter, resolvedMapping);
                 } else if (updateMapping.getPotentialMatches() != null) {
                     if (origMapping.getSourcePath() != null) {
                         // Prefer existing match, write original
@@ -354,6 +349,18 @@ public class SourceFileService {
             Files.move(mergedPath, originalPath, StandardCopyOption.REPLACE_EXISTING);
         }
         Files.delete(updatesPath);
+    }
+
+    protected SourceFileMapping resolveSourcePathConflict(SourceFileMappingOptions options,
+                                                          SourceFileMapping origMapping,
+                                                          SourceFileMapping updateMapping) {
+        if (options.isForce() || origMapping.getSourcePath() == null) {
+            // overwrite entry with updated mapping source path if using force or original didn't have match
+            return updateMapping;
+        } else {
+            // retain original source path
+            return origMapping;
+        }
     }
 
     public static void writeMapping(CSVPrinter csvPrinter, SourceFileMapping mapping) throws IOException {
