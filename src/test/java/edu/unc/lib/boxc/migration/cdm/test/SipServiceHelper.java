@@ -20,8 +20,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
+import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -77,9 +79,11 @@ public class SipServiceHelper {
     private CdmFieldService fieldService;
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
+    private AggregateFileMappingService aggregateFileMappingService;
     private DescriptionsService descriptionsService;
     private DestinationsService destinationsService;
     private CdmIndexService indexService;
+    private GroupMappingService groupMappingService;
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
     private ChompbConfigService.ChompbConfig chompbConfig;
@@ -432,6 +436,25 @@ public class SipServiceHelper {
 
     public AccessFileService getAccessFileService() {
         return accessFileService;
+    }
+
+    public AggregateFileMappingService getAggregateFileMappingService() {
+        if (this.aggregateFileMappingService == null) {
+            this.aggregateFileMappingService = new AggregateFileMappingService(false);
+            this.aggregateFileMappingService.setProject(project);
+            this.aggregateFileMappingService.setIndexService(indexService);
+        }
+        return this.aggregateFileMappingService;
+    }
+
+    public GroupMappingService getGroupMappingService() {
+        if (this.groupMappingService == null) {
+            this.groupMappingService = new GroupMappingService();
+            this.groupMappingService.setFieldService(fieldService);
+            this.groupMappingService.setIndexService(indexService);
+            this.groupMappingService.setProject(project);
+        }
+        return this.groupMappingService;
     }
 
     public DescriptionsService getDescriptionsService() {

@@ -77,6 +77,10 @@ public class SourceFilesInfo {
             return (sourcePaths == null) ? null : sourcePaths.get(0);
         }
 
+        public void setSourcePaths(List<Path> sourcePaths) {
+            this.sourcePaths = sourcePaths;
+        }
+
         public void setSourcePaths(String sourcePaths) {
             if (StringUtils.isBlank(sourcePaths)) {
                 this.sourcePaths = null;
