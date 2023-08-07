@@ -143,21 +143,25 @@ public class WorkGenerator {
         return sourceMapping;
     }
 
-    protected PID addFileObject(String cdmId, String cdmCreated, SourceFilesInfo.SourceFileMapping sourceMapping)
-            throws IOException {
-        // Create FileObject
-        PID fileObjPid = pidMinter.mintContentPid();
+    protected Resource makeFileResource(PID fileObjPid, Path sourcePath) {
         Resource fileObjResc = model.getResource(fileObjPid.getRepositoryPath());
         fileObjResc.addProperty(RDF.type, Cdr.FileObject);
-        fileObjResc.addLiteral(CdrDeposit.createTime, cdmCreated);
 
         workBag.add(fileObjResc);
 
         // Link source file
         Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
-        Path sourcePath = sourceMapping.getFirstSourcePath();
         origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
         origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
+        return fileObjResc;
+    }
+
+    protected PID addFileObject(String cdmId, String cdmFileCreated, SourceFilesInfo.SourceFileMapping sourceMapping)
+            throws IOException {
+        // Create FileObject with source file
+        PID fileObjPid = pidMinter.mintContentPid();
+        Resource fileObjResc = makeFileResource(fileObjPid, sourceMapping.getFirstSourcePath());
+        fileObjResc.addLiteral(CdrDeposit.createTime, cdmFileCreated);
 
         // Link access file
         if (accessFilesInfo != null) {

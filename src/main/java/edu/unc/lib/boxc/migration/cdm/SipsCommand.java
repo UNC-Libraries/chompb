@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -43,6 +44,8 @@ public class SipsCommand {
     private DescriptionsService descriptionsService;
     private DestinationsService destinationsService;
     private CdmIndexService indexService;
+    private AggregateFileMappingService aggregateTopMappingService;
+    private AggregateFileMappingService aggregateBottomMappingService;
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
     private SipService sipService;
@@ -126,6 +129,12 @@ public class SipsCommand {
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
         destinationsService.setProject(project);
+        aggregateTopMappingService = new AggregateFileMappingService(false);
+        aggregateTopMappingService.setIndexService(indexService);
+        aggregateTopMappingService.setProject(project);
+        aggregateBottomMappingService = new AggregateFileMappingService(true);
+        aggregateBottomMappingService.setIndexService(indexService);
+        aggregateBottomMappingService.setProject(project);
 
         sipService = new SipService();
         sipService.setIndexService(indexService);
@@ -136,5 +145,7 @@ public class SipsCommand {
         sipService.setPremisLoggerFactory(premisLoggerFactory);
         sipService.setProject(project);
         sipService.setChompbConfig(parentCommand.getChompbConfig());
+        sipService.setAggregateTopMappingService(aggregateTopMappingService);
+        sipService.setAggregateBottomMappingService(aggregateBottomMappingService);
     }
 }

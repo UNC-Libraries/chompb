@@ -80,6 +80,7 @@ public class SipServiceHelper {
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
     private AggregateFileMappingService aggregateFileMappingService;
+    private AggregateFileMappingService aggregateBottomMappingService;
     private DescriptionsService descriptionsService;
     private DestinationsService destinationsService;
     private CdmIndexService indexService;
@@ -126,6 +127,8 @@ public class SipServiceHelper {
         service.setPremisLoggerFactory(premisLoggerFactory);
         service.setProject(project);
         service.setChompbConfig(chompbConfig);
+        service.setAggregateTopMappingService(getAggregateFileMappingService());
+        service.setAggregateBottomMappingService(getAggregateBottomMappingService());
         return service;
     }
 
@@ -445,6 +448,15 @@ public class SipServiceHelper {
             this.aggregateFileMappingService.setIndexService(indexService);
         }
         return this.aggregateFileMappingService;
+    }
+
+    public AggregateFileMappingService getAggregateBottomMappingService() {
+        if (this.aggregateBottomMappingService == null) {
+            this.aggregateBottomMappingService = new AggregateFileMappingService(true);
+            this.aggregateBottomMappingService.setProject(project);
+            this.aggregateBottomMappingService.setIndexService(indexService);
+        }
+        return this.aggregateBottomMappingService;
     }
 
     public GroupMappingService getGroupMappingService() {
