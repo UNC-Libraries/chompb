@@ -7,8 +7,16 @@ import picocli.CommandLine;
  * @author bbpennel
  */
 public class AggregateFileMappingOptions extends SourceFileMappingOptions {
-    @CommandLine.Option(names = { "-B", "--sort-bottom"},
+    @CommandLine.Option(names = { "--sort-bottom" },
             description = { "If specified, aggregate files mapped will be sorted after regular files in the work.",
                             "If not, then mapped files will be sorted before regular files in the work." } )
     private boolean sortBottom;
+
+    public boolean isSortBottom() {
+        return sortBottom;
+    }
+
+    public void setSortBottom(boolean sortBottom) {
+        this.sortBottom = sortBottom;
+    }
 }

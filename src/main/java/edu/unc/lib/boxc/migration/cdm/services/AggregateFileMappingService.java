@@ -2,10 +2,8 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
-import edu.unc.lib.boxc.migration.cdm.options.AggregateFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;

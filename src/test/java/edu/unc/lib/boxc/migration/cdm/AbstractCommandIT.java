@@ -14,6 +14,7 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -67,6 +68,10 @@ public class AbstractCommandIT extends AbstractOutputTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(Files.newOutputStream(configPath), config);
         chompbConfigPath = configPath.toString();
+    }
+
+    protected void executeExpectSuccess(List<String> args) {
+        executeExpectSuccess(args.toArray(new String[0]));
     }
 
     protected void executeExpectSuccess(String[] args) {
