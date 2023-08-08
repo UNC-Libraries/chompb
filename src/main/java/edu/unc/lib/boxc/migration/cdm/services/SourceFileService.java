@@ -381,8 +381,11 @@ public class SourceFileService {
      * @throws IOException
      */
     public static SourceFilesInfo loadMappings(Path mappingPath) throws IOException {
+        SourceFilesInfo info = new SourceFilesInfo();
+        if (Files.notExists(mappingPath)) {
+            return info;
+        }
         try (var csvParser = openMappingsParser(mappingPath)) {
-            SourceFilesInfo info = new SourceFilesInfo();
             List<SourceFileMapping> mappings = info.getMappings();
             for (CSVRecord csvRecord : csvParser) {
                 mappings.add(recordToMapping(csvRecord));

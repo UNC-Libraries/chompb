@@ -44,7 +44,7 @@ public class SourceFilesInfo {
      * @return mapping with matching cdm id, or null if no match
      */
     public SourceFileMapping getMappingByCdmId(String cdmId) {
-        return this.mappings.stream().filter(m -> m.getCdmId().equals(cdmId)).findFirst().orElseGet(null);
+        return this.mappings.stream().filter(m -> m.getCdmId().equals(cdmId)).findFirst().orElse(null);
     }
 
     public static class SourceFileMapping {

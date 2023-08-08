@@ -5,6 +5,7 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
+import edu.unc.lib.boxc.migration.cdm.options.AggregateFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
@@ -12,6 +13,7 @@ import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
@@ -447,10 +449,7 @@ public class SipServiceTest {
 
         GroupMappingOptions groupOptions = new GroupMappingOptions();
         groupOptions.setGroupField("groupa");
-        GroupMappingService groupService = new GroupMappingService();
-        groupService.setProject(project);
-        groupService.setIndexService(testHelper.getIndexService());
-        groupService.setFieldService(testHelper.getFieldService());
+        GroupMappingService groupService = testHelper.getGroupMappingService();
         groupService.generateMapping(groupOptions);
         groupService.syncMappings(makeDefaultSyncOptions());
 
@@ -488,6 +487,84 @@ public class SipServiceTest {
         assertFalse(workResc4.hasProperty(Cdr.memberOrder), "Regular work should not have order");
 
         assertPersistedSipInfoMatches(sip);
+    }
+
+    @Test
+    public void generateSipsWithGroupedWorkWithAggregateFiles() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("grouped_mods.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif",
+                "276_241_E.tif", "276_245a_E.tif", "group1.pdf", "group1_top.pdf", "group1_bottom.pdf", "group1_2bottom.pdf");
+
+        GroupMappingOptions groupOptions = new GroupMappingOptions();
+        groupOptions.setGroupField("groupa");
+        GroupMappingService groupService = testHelper.getGroupMappingService();
+        groupService.generateMapping(groupOptions);
+        groupService.syncMappings(makeDefaultSyncOptions());
+
+        // Adding first file at top of work
+        var aggregateTopService = testHelper.getAggregateFileMappingService();
+        var options = new AggregateFileMappingOptions();
+        options.setBasePath(testHelper.getSourceFilesBasePath());
+        options.setExportField("groupa");
+        options.setFieldMatchingPattern("(.+)");
+        options.setFilenameTemplate("$1.pdf");
+        aggregateTopService.generateMapping(options);
+        // Add second file at top
+        options.setUpdate(true);
+        options.setFilenameTemplate("$1_top.pdf");
+        aggregateTopService.generateMapping(options);
+        // Adding first file at bottom of work
+        var aggregateBottomService = testHelper.getAggregateBottomMappingService();
+        options.setFilenameTemplate("$1_bottom.pdf");
+        aggregateBottomService.generateMapping(options);
+        // Adding second file at bottom
+        options.setFilenameTemplate("$1_2bottom.pdf");
+        aggregateBottomService.generateMapping(options);
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(4, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        Bag work1Bag = model.getBag(workResc1);
+        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", false,
+                stagingLocs.get(0), stagingLocs.get(1), stagingLocs.get(5), stagingLocs.get(6), stagingLocs.get(7), stagingLocs.get(8));
+        // Aggregates at top and bottom in order added, and second file before first
+        var work1OrderList = Arrays.asList(findFileIdByStagingLocation(work1Bag, stagingLocs.get(5)),
+                findFileIdByStagingLocation(work1Bag, stagingLocs.get(6)),
+                findFileIdByStagingLocation(work1Bag, stagingLocs.get(1)),
+                findFileIdByStagingLocation(work1Bag, stagingLocs.get(0)),
+                findFileIdByStagingLocation(work1Bag, stagingLocs.get(7)),
+                findFileIdByStagingLocation(work1Bag, stagingLocs.get(8)));
+        var work1Members = String.join("|", work1OrderList);
+        assertTrue(workResc1.hasProperty(Cdr.memberOrder, work1Members));
+
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
+        assertFalse(workResc2.hasProperty(Cdr.memberOrder), "Work with group field but only one file should not have order");
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
+        assertFalse(workResc3.hasProperty(Cdr.memberOrder), "Regular work should not have order");
+        Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-10");
+        assertFalse(workResc4.hasProperty(Cdr.memberOrder), "Regular work should not have order");
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
+    private String findFileIdByStagingLocation(Bag workBag, Path stagingLoc) {
+        Resource fileResc = testHelper.findChildByStagingLocation(workBag, stagingLoc);
+        return PIDs.get(fileResc.getURI()).getId();
     }
 
     @Test

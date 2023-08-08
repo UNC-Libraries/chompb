@@ -29,13 +29,13 @@ public class OrderedWorkGenerator extends MultiFileWorkGenerator {
         mergedPids.addAll(topAggregates);
         mergedPids.addAll(childrenPids);
         mergedPids.addAll(bottomAggregates);
-        storeChildrenOrder(childrenPids);
-        return childrenPids;
+        storeChildrenOrder(mergedPids);
+        return mergedPids;
     }
 
     private List<PID> makeAggregateFileObjects(SourceFilesInfo aggregateMappings) {
-        var mapping = aggregateTopMappings.getMappingByCdmId(cdmId);
-        if (mapping.getSourcePaths() == null) {
+        var mapping = aggregateMappings.getMappingByCdmId(cdmId);
+        if (mapping == null || mapping.getSourcePaths() == null) {
             return Collections.emptyList();
         }
         // Make a file resource for each sourcePath and compile a list of the new PIDs
