@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 /**
+ * Container class for accessing mappings of files to migration objects.
+ * This may be source file mappings, but is also used for other types of file mappings using the same structure.
+ *
  * @author bbpennel
  */
 public class SourceFilesInfo {
@@ -47,6 +50,9 @@ public class SourceFilesInfo {
         return this.mappings.stream().filter(m -> m.getCdmId().equals(cdmId)).findFirst().orElse(null);
     }
 
+    /**
+     * An individual mapping from a migration object to associated files.
+     */
     public static class SourceFileMapping {
         private String cdmId;
         private String matchingValue;

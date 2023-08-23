@@ -59,7 +59,7 @@ public class AggregateFileMappingServiceTest {
     }
 
     @Test
-    public void generateNoSourceFilesTest() throws Exception {
+    public void generateNoAggregateFilesToMapTest() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         setupGroupedIndex();
         var options = makeDefaultOptions();
