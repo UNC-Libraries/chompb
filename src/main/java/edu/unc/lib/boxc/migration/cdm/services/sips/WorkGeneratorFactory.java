@@ -3,12 +3,14 @@ package edu.unc.lib.boxc.migration.cdm.services.sips;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
+import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 
+import java.io.IOException;
 import java.sql.Connection;
 
 /**
@@ -27,12 +29,16 @@ public class WorkGeneratorFactory {
     private DescriptionsService descriptionsService;
     private RedirectMappingService redirectMappingService;
     private PostMigrationReportService postMigrationReportService;
+    private AggregateFileMappingService aggregateTopMappingService;
+    private AggregateFileMappingService aggregateBottomMappingService;
     private PIDMinter pidMinter;
 
-    public WorkGenerator create(String cdmId, String cdmCreated, String entryType) {
+    public WorkGenerator create(String cdmId, String cdmCreated, String entryType) throws IOException {
         WorkGenerator gen;
         if (CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT.equals(entryType) || CdmIndexService.ENTRY_TYPE_GROUPED_WORK.equals(entryType)) {
             gen = new OrderedWorkGenerator();
+            ((OrderedWorkGenerator) gen).setAggregateBottomMappings(aggregateBottomMappingService.loadMappings());
+            ((OrderedWorkGenerator) gen).setAggregateTopMappings(aggregateTopMappingService.loadMappings());
         } else {
             gen = new WorkGenerator();
         }
@@ -94,5 +100,13 @@ public class WorkGeneratorFactory {
 
     public void setPostMigrationReportService(PostMigrationReportService postMigrationReportService) {
         this.postMigrationReportService = postMigrationReportService;
+    }
+
+    public void setAggregateTopMappingService(AggregateFileMappingService aggregateTopMappingService) {
+        this.aggregateTopMappingService = aggregateTopMappingService;
+    }
+
+    public void setAggregateBottomMappingService(AggregateFileMappingService aggregateBottomMappingService) {
+        this.aggregateBottomMappingService = aggregateBottomMappingService;
     }
 }

@@ -66,6 +66,8 @@ public class SipService {
     private RedirectMappingService redirectMappingService;
     private PremisLoggerFactory premisLoggerFactory;
     private PostMigrationReportService postMigrationReportService;
+    private AggregateFileMappingService aggregateTopMappingService;
+    private AggregateFileMappingService aggregateBottomMappingService;
     private SipPremisLogger sipPremisLogger;
     private MigrationProject project;
     private ChompbConfigService.ChompbConfig chompbConfig;
@@ -100,6 +102,8 @@ public class SipService {
         workGeneratorFactory.setRedirectMappingService(redirectMappingService);
         workGeneratorFactory.setPidMinter(pidMinter);
         workGeneratorFactory.setPostMigrationReportService(postMigrationReportService);
+        workGeneratorFactory.setAggregateTopMappingService(aggregateTopMappingService);
+        workGeneratorFactory.setAggregateBottomMappingService(aggregateBottomMappingService);
         try {
             workGeneratorFactory.setAccessFilesInfo(accessFileService.loadMappings());
         } catch (NoSuchFileException e) {
@@ -332,6 +336,14 @@ public class SipService {
 
     public void setChompbConfig(ChompbConfigService.ChompbConfig chompbConfig) {
         this.chompbConfig = chompbConfig;
+    }
+
+    public void setAggregateTopMappingService(AggregateFileMappingService aggregateTopMappingService) {
+        this.aggregateTopMappingService = aggregateTopMappingService;
+    }
+
+    public void setAggregateBottomMappingService(AggregateFileMappingService aggregateBottomMappingService) {
+        this.aggregateBottomMappingService = aggregateBottomMappingService;
     }
 
     public static class SkipObjectException extends RuntimeException {

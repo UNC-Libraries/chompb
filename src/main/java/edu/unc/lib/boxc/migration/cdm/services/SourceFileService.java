@@ -132,7 +132,7 @@ public class SourceFileService {
                             log.debug("Encountered multiple potential matches for {} from field {}", cdmId, dbFilename);
                             String joined = paths.stream()
                                     .map(s -> basePath.resolve(Paths.get(s)).toString())
-                                    .collect(Collectors.joining(","));
+                                    .collect(Collectors.joining(SourceFilesInfo.SEPARATOR));
                             csvPrinter.printRecord(cdmId, dbFilename, null, joined);
                         } else if (paths.size() == 1) {
                             log.debug("Found match for {} from field {}", cdmId, dbFilename);
@@ -165,7 +165,7 @@ public class SourceFileService {
     }
 
     // Query for all non-compound objects. If the entry type is null, the object is an individual cdm object
-    private String buildQuery(SourceFileMappingOptions options) {
+    protected String buildQuery(SourceFileMappingOptions options) {
         var selectStatement = "";
         if (options.isPopulateBlank()) {
             selectStatement = "select " + CdmFieldInfo.CDM_ID;
@@ -309,16 +309,11 @@ public class SourceFileService {
                 if (updateMapping == null) {
                     // No updates, so write original
                     writeMapping(mergedPrinter, origMapping);
-                } else if (updateMapping.getSourcePath() != null) {
-                    if (options.isForce() || origMapping.getSourcePath() == null) {
-                        // overwrite entry with updated mapping source path if using force or original didn't have match
-                        writeMapping(mergedPrinter, updateMapping);
-                    } else {
-                        // retain original source path
-                        writeMapping(mergedPrinter, origMapping);
-                    }
+                } else if (updateMapping.getSourcePaths() != null) {
+                    var resolvedMapping = resolveSourcePathConflict(options, origMapping, updateMapping);
+                    writeMapping(mergedPrinter, resolvedMapping);
                 } else if (updateMapping.getPotentialMatches() != null) {
-                    if (origMapping.getSourcePath() != null) {
+                    if (origMapping.getSourcePaths() != null) {
                         // Prefer existing match, write original
                         writeMapping(mergedPrinter, origMapping);
                     } else {
@@ -356,9 +351,21 @@ public class SourceFileService {
         Files.delete(updatesPath);
     }
 
+    protected SourceFileMapping resolveSourcePathConflict(SourceFileMappingOptions options,
+                                                          SourceFileMapping origMapping,
+                                                          SourceFileMapping updateMapping) {
+        if (options.isForce() || origMapping.getSourcePaths() == null) {
+            // overwrite entry with updated mapping source path if using force or original didn't have match
+            return updateMapping;
+        } else {
+            // retain original source path
+            return origMapping;
+        }
+    }
+
     public static void writeMapping(CSVPrinter csvPrinter, SourceFileMapping mapping) throws IOException {
         csvPrinter.printRecord(mapping.getCdmId(), mapping.getMatchingValue(),
-                mapping.getSourcePath(), mapping.getPotentialMatchesString());
+                mapping.getSourcePathString(), mapping.getPotentialMatchesString());
     }
 
     /**
@@ -374,8 +381,11 @@ public class SourceFileService {
      * @throws IOException
      */
     public static SourceFilesInfo loadMappings(Path mappingPath) throws IOException {
+        SourceFilesInfo info = new SourceFilesInfo();
+        if (Files.notExists(mappingPath)) {
+            return info;
+        }
         try (var csvParser = openMappingsParser(mappingPath)) {
-            SourceFilesInfo info = new SourceFilesInfo();
             List<SourceFileMapping> mappings = info.getMappings();
             for (CSVRecord csvRecord : csvParser) {
                 mappings.add(recordToMapping(csvRecord));
@@ -388,7 +398,7 @@ public class SourceFileService {
         SourceFileMapping mapping = new SourceFileMapping();
         mapping.setCdmId(csvRecord.get(0));
         mapping.setMatchingValue(csvRecord.get(1));
-        mapping.setSourcePath(csvRecord.get(2));
+        mapping.setSourcePaths(csvRecord.get(2));
         mapping.setPotentialMatches(csvRecord.get(3));
         return mapping;
     }

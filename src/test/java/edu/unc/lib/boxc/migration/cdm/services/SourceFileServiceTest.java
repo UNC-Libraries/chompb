@@ -577,7 +577,7 @@ public class SourceFileServiceTest {
         List<SourceFileMapping> mappings = info.getMappings();
         SourceFileMapping mapping = mappings.stream().filter(m -> m.getCdmId().equals(cdmid)).findFirst().get();
 
-        assertEquals(sourcePath, mapping.getSourcePath());
+        assertEquals(sourcePath, mapping.getFirstSourcePath());
         assertEquals(matchingVal, mapping.getMatchingValue());
         if (potentialPaths.length > 0) {
             for (Path potentialPath : potentialPaths) {
