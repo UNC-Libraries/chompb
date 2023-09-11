@@ -1,17 +1,16 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * @author bbpennel
@@ -39,6 +38,7 @@ public class PostMigrationReportVerifierTest {
     private static final String BOXC_URL_2 = "http://example.com/bxc/91c08272-260f-40f1-bb7c-78854d504368";
     private static final String CDM_URL_1 = "http://localhost/cdm/singleitem/collection/proj/id/25";
     private static final String CDM_URL_2 = "http://localhost/cdm/singleitem/collection/proj/id/26";
+    private AutoCloseable closeable;
     @TempDir
     public Path tmpFolder;
     @Mock
@@ -50,7 +50,7 @@ public class PostMigrationReportVerifierTest {
 
     @BeforeEach
     public void setup() throws Exception {
-        initMocks(this);
+        closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, "proj", null, "user",
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
@@ -61,6 +61,11 @@ public class PostMigrationReportVerifierTest {
         verifier = new PostMigrationReportVerifier();
         verifier.setProject(project);
         verifier.setHttpClient(httpClient);
+    }
+
+    @AfterEach
+    void closeService() throws Exception {
+        closeable.close();
     }
 
     @Test

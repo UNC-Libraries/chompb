@@ -5,13 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +21,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +40,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 public class CdmFieldServiceTest {
     private static final String CDM_BASE_URL = "http://example.com:88/";
     private static final String PROJECT_NAME = "proj";
+    private AutoCloseable closeable;
     @TempDir
     public Path tmpFolder;
 
@@ -54,7 +55,7 @@ public class CdmFieldServiceTest {
 
     @BeforeEach
     public void setup() throws Exception {
-        initMocks(this);
+        closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         service = new CdmFieldService();
@@ -63,6 +64,11 @@ public class CdmFieldServiceTest {
 
         when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResp);
         when(httpResp.getEntity()).thenReturn(respEntity);
+    }
+
+    @AfterEach
+    void closeService() throws Exception {
+        closeable.close();
     }
 
     @Test

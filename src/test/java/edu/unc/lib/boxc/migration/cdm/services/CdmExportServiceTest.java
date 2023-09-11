@@ -9,6 +9,7 @@ import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -28,13 +29,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * @author bbpennel
  */
 public class CdmExportServiceTest {
     private static final String PROJECT_NAME = "proj";
+    private AutoCloseable closeable;
     @TempDir
     public Path tmpFolder;
 
@@ -50,7 +52,7 @@ public class CdmExportServiceTest {
 
     @BeforeEach
     public void setup() throws Exception {
-        initMocks(this);
+        closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
         fieldService = new CdmFieldService();
@@ -75,6 +77,11 @@ public class CdmExportServiceTest {
                 return null;
             }
         }).when(cdmFileRetrievalService).downloadDescAllFile();
+    }
+
+    @AfterEach
+    void closeService() throws Exception {
+        closeable.close();
     }
 
     private CdmExportOptions makeExportOptions() {

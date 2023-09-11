@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -13,7 +14,7 @@ import java.nio.file.Paths;
 
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * @author bbpennel
@@ -26,6 +27,7 @@ public class PostMigrationReportServiceTest {
     private static final String BOXC_URL_1 = BOXC_BASE_URL + BOXC_ID_1;
     private static final String BOXC_URL_2 = BOXC_BASE_URL + BOXC_ID_2;
     private static final String BOXC_URL_3 = BOXC_BASE_URL + BOXC_ID_3;
+    private AutoCloseable closeable;
     @TempDir
     public Path tmpFolder;
 
@@ -36,7 +38,7 @@ public class PostMigrationReportServiceTest {
 
     @BeforeEach
     public void setup() throws Exception {
-        initMocks(this);
+        closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, "proj", null, "user",
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
@@ -48,6 +50,11 @@ public class PostMigrationReportServiceTest {
         service.setChompbConfig(testHelper.getChompbConfig());
         service.setDescriptionsService(testHelper.getDescriptionsService());
         service.init();
+    }
+
+    @AfterEach
+    void closeService() throws Exception {
+        closeable.close();
     }
 
     @Test
