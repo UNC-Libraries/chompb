@@ -220,6 +220,36 @@ public class IndexFilteringServiceTest {
         assertIterableEquals(Arrays.asList("602", "603", "604"), remaining);
     }
 
+    @Test
+    public void filterIndexIncludeRangeTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+
+        var options = new IndexFilteringOptions();
+        options.setFieldName("dmcreated");
+        options.setIncludeRangeStart("2005-12-01");
+        options.setIncludeRangeEnd("2005-12-31");
+        service.filterIndex(options);
+
+        var remaining = getRemainingIds();
+        assertIterableEquals(Arrays.asList("27", "28", "29"), remaining);
+        assertEquals(3, remaining.size());
+    }
+
+    @Test
+    public void filterIndexExcludeRangeTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+
+        var options = new IndexFilteringOptions();
+        options.setFieldName("dmcreated");
+        options.setExcludeRangeStart("2005-12-01");
+        options.setExcludeRangeEnd("2005-12-31");
+        service.filterIndex(options);
+
+        var remaining = getRemainingIds();
+        assertIterableEquals(Arrays.asList("25", "26"), remaining);
+        assertEquals(2, remaining.size());
+    }
+
     private List<String> getRemainingIds() throws Exception {
         Connection conn = testHelper.getIndexService().openDbConnection();
         var result = new ArrayList<String>();
