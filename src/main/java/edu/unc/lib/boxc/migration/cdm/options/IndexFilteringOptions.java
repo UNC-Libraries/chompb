@@ -25,6 +25,26 @@ public class IndexFilteringOptions {
                     "Filter the index to only records which DO NOT match the provided value(s)."})
     private List<String> excludeValues;
 
+    @CommandLine.Option(names = {"-is", "--include-range-start"},
+            description = {
+                    "Filter the index to records AFTER the provided START value."})
+    private String includeRangeStart;
+
+    @CommandLine.Option(names = {"-ie", "--include-range-end"},
+            description = {
+                    "Filter the index to records BEFORE the provided END value."})
+    private String includeRangeEnd;
+
+    @CommandLine.Option(names = {"-es", "--exclude-range-start"},
+            description = {
+                    "Filter the index to records which are BEFORE the provided START value."})
+    private String excludeRangeStart;
+
+    @CommandLine.Option(names = {"-ee", "--exclude-range-end"},
+            description = {
+                    "Filter the index to records which are AFTER the provided END value."})
+    private String excludeRangeEnd;
+
     @CommandLine.Option(names = {"-d", "--dry-run"},
             description = {
                     "If provided, only output how many items would be left if the filter were applied."})
@@ -52,6 +72,38 @@ public class IndexFilteringOptions {
 
     public void setExcludeValues(List<String> excludeValues) {
         this.excludeValues = excludeValues;
+    }
+
+    public String getIncludeRangeStart() {
+        return includeRangeStart;
+    }
+
+    public void setIncludeRangeStart(String includeRangeStart) {
+        this.includeRangeStart = includeRangeStart;
+    }
+
+    public String getIncludeRangeEnd() {
+        return includeRangeEnd;
+    }
+
+    public void setIncludeRangeEnd(String includeRangeEnd) {
+        this.includeRangeEnd = includeRangeEnd;
+    }
+
+    public String getExcludeRangeStart() {
+        return excludeRangeStart;
+    }
+
+    public void setExcludeRangeStart(String excludeRangeStart) {
+        this.excludeRangeStart = excludeRangeStart;
+    }
+
+    public String getExcludeRangeEnd() {
+        return excludeRangeEnd;
+    }
+
+    public void setExcludeRangeEnd(String excludeRangeEnd) {
+        this.excludeRangeEnd = excludeRangeEnd;
     }
 
     public boolean isDryRun() {
