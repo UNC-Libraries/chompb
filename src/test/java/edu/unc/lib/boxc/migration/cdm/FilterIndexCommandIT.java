@@ -1,17 +1,12 @@
 package edu.unc.lib.boxc.migration.cdm;
 
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -50,7 +45,7 @@ public class FilterIndexCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void filterIncludeOrExcpludeTest() throws Exception {
+    public void filterIncludeOrExcludeTest() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -58,11 +53,12 @@ public class FilterIndexCommandIT extends AbstractCommandIT {
                 "-n", "groupa"};
         executeExpectFailure(args);
 
-        assertOutputContains("Must provide either an --include or --exclude value");
+        assertOutputContains("Must provide an --include, --exclude, --include-range-start " +
+                "and --include-range-end, or --exclude-range-start and --exclude range-end value(s) (but not all)");
     }
 
     @Test
-    public void filterBothIncludeAndExcpludeTest() throws Exception {
+    public void filterBothIncludeAndExcludeTest() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -148,6 +144,78 @@ public class FilterIndexCommandIT extends AbstractCommandIT {
         assertOutputContains("Filtering index from 5 to 1 remaining entries");
         assertOutputContains("Filtering of index for my_proj completed");
         assertRemaining(1);
+    }
+
+    @Test
+    public void filterIncludeRangeTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "filter_index",
+                "-n", "dmcreated",
+                "-is", "2005-12-01",
+                "-ie", "2005-12-31"};
+        executeExpectSuccess(args);
+
+        assertOutputContains("Filtering index from 5 to 3 remaining entries");
+        assertOutputContains("Filtering of index for my_proj completed");
+        assertRemaining(3);
+    }
+
+    @Test
+    public void filterExcludeRangeTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "filter_index",
+                "-n", "dmcreated",
+                "-es", "2005-12-01",
+                "-ee", "2005-12-31"};
+        executeExpectSuccess(args);
+
+        assertOutputContains("Filtering index from 5 to 2 remaining entries");
+        assertOutputContains("Filtering of index for my_proj completed");
+        assertRemaining(2);
+    }
+
+    @Test
+    public void filterBothIncludeExcludeRangeTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "filter_index",
+                "-n", "dmcreated",
+                "-is", "2005-12-01",
+                "-ie", "2005-12-31",
+                "-es", "2005-12-01",
+                "-ee", "2005-12-31"};
+        executeExpectFailure(args);
+
+        assertOutputContains("Cannot provide both --include-range and --exclude-range values at the same time");
+    }
+
+    @Test
+    public void filterNoIncludeStartRangeTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "filter_index",
+                "-ie", "2005-12-01",};
+        executeExpectFailure(args);
+
+        assertOutputContains("Must provide both --include-range-start and --include-range-end");
+    }
+
+    @Test
+    public void filterNoExcludeEndRangeTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "filter_index",
+                "-es", "2005-12-01"};
+        executeExpectFailure(args);
+
+        assertOutputContains("Must provide both --exclude-range-start and --exclude-range-end");
     }
 
     @Test

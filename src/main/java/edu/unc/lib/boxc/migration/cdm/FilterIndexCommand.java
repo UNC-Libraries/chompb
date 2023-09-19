@@ -82,8 +82,26 @@ public class FilterIndexCommand implements Callable<Integer> {
         if (isNotEmpty(options.getExcludeValues()) && isNotEmpty(options.getIncludeValues())) {
             throw new IllegalArgumentException("Cannot provide both --include and --exclude at the same time");
         }
-        if (isEmpty(options.getExcludeValues()) && isEmpty(options.getIncludeValues())) {
-            throw new IllegalArgumentException("Must provide either an --include or --exclude value (but not both)");
+        if (isEmpty(options.getExcludeValues()) && isEmpty(options.getIncludeValues()) &&
+                StringUtils.isBlank(options.getIncludeRangeStart()) && StringUtils.isBlank(options.getIncludeRangeEnd())
+                && StringUtils.isBlank(options.getExcludeRangeStart()) && StringUtils.isBlank(options.getExcludeRangeEnd())) {
+            throw new IllegalArgumentException("Must provide an --include, --exclude, --include-range-start and " +
+                    "--include-range-end, or --exclude-range-start and --exclude range-end value(s) (but not all)");
+        }
+        if ((!StringUtils.isBlank(options.getIncludeRangeStart()) && !StringUtils.isBlank(options.getExcludeRangeStart())) ||
+                (!StringUtils.isBlank(options.getIncludeRangeEnd()) && !StringUtils.isBlank(options.getExcludeRangeEnd())) ||
+                (!StringUtils.isBlank(options.getIncludeRangeStart()) && !StringUtils.isBlank(options.getExcludeRangeEnd())) ||
+                (!StringUtils.isBlank(options.getExcludeRangeStart()) && !StringUtils.isBlank(options.getIncludeRangeEnd()))) {
+            throw new IllegalArgumentException("Cannot provide both --include-range and" +
+                    " --exclude-range values at the same time");
+        }
+        if ((!StringUtils.isBlank(options.getIncludeRangeStart()) && StringUtils.isBlank(options.getIncludeRangeEnd())) ||
+                (StringUtils.isBlank(options.getIncludeRangeStart()) && !StringUtils.isBlank(options.getIncludeRangeEnd()))) {
+            throw new IllegalArgumentException("Must provide both --include-range-start and --include-range-end");
+        }
+        if ((!StringUtils.isBlank(options.getExcludeRangeStart()) && StringUtils.isBlank(options.getExcludeRangeEnd())) ||
+                (StringUtils.isBlank(options.getExcludeRangeStart()) && !StringUtils.isBlank(options.getExcludeRangeEnd()))) {
+            throw new IllegalArgumentException("Must provide both --exclude-range-start and --exclude-range-end");
         }
         if (StringUtils.isBlank(options.getFieldName())) {
             throw new IllegalArgumentException("Must provide a --field-name value");
