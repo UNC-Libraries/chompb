@@ -95,13 +95,13 @@ public class IndexFilteringService {
             finalQuery = negation + '(' + query + ')';
         } else if ((!StringUtils.isBlank(options.getIncludeRangeStart()) && !StringUtils.isBlank(options.getIncludeRangeEnd())) ||
                 (!StringUtils.isBlank(options.getExcludeRangeStart()) && !StringUtils.isBlank(options.getExcludeRangeEnd()))) {
-            var includeFilter = !StringUtils.isBlank(options.getIncludeRangeStart()) && !StringUtils.isBlank(options.getIncludeRangeEnd());
+            var includeFilter = !StringUtils.isBlank(options.getIncludeRangeStart());
             var startRange = includeFilter ? options.getIncludeRangeStart() : options.getExcludeRangeStart();
             var endRange = includeFilter ? options.getIncludeRangeEnd() : options.getExcludeRangeEnd();
             var query = fieldName + " BETWEEN '" + startRange + "' AND '" + endRange + "'";
             // Negate the filter if we are doing an exclude filter, or if we are inverting the query and it is an include
             var negation = (invertQuery ^ includeFilter ? "" : " NOT ");
-            finalQuery = negation + '(' + query + ')';
+            finalQuery = negation + query;
         }
         return finalQuery;
     }

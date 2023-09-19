@@ -88,10 +88,8 @@ public class FilterIndexCommand implements Callable<Integer> {
             throw new IllegalArgumentException("Must provide an --include, --exclude, --include-range-start and " +
                     "--include-range-end, or --exclude-range-start and --exclude range-end value(s) (but not all)");
         }
-        if ((!StringUtils.isBlank(options.getIncludeRangeStart()) && !StringUtils.isBlank(options.getExcludeRangeStart())) ||
-                (!StringUtils.isBlank(options.getIncludeRangeEnd()) && !StringUtils.isBlank(options.getExcludeRangeEnd())) ||
-                (!StringUtils.isBlank(options.getIncludeRangeStart()) && !StringUtils.isBlank(options.getExcludeRangeEnd())) ||
-                (!StringUtils.isBlank(options.getExcludeRangeStart()) && !StringUtils.isBlank(options.getIncludeRangeEnd()))) {
+        if ((StringUtils.isNotBlank(options.getIncludeRangeStart()) || StringUtils.isNotBlank(options.getIncludeRangeEnd())) &&
+                (StringUtils.isNotBlank(options.getExcludeRangeStart()) || StringUtils.isNotBlank(options.getExcludeRangeEnd()))) {
             throw new IllegalArgumentException("Cannot provide both --include-range and" +
                     " --exclude-range values at the same time");
         }

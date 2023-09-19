@@ -27,22 +27,22 @@ public class IndexFilteringOptions {
 
     @CommandLine.Option(names = {"-is", "--include-range-start"},
             description = {
-                    "Filter the index to records AFTER the provided START value."})
+                    "Filter the index to records AFTER the provided START value. Inclusive of start/end values."})
     private String includeRangeStart;
 
     @CommandLine.Option(names = {"-ie", "--include-range-end"},
             description = {
-                    "Filter the index to records BEFORE the provided END value."})
+                    "Filter the index to records BEFORE the provided END value. Inclusive of start/end values."})
     private String includeRangeEnd;
 
     @CommandLine.Option(names = {"-es", "--exclude-range-start"},
             description = {
-                    "Filter the index to records which are BEFORE the provided START value."})
+                    "Filter the index to records BEFORE the provided START value. Exclusive of start/end values."})
     private String excludeRangeStart;
 
     @CommandLine.Option(names = {"-ee", "--exclude-range-end"},
             description = {
-                    "Filter the index to records which are AFTER the provided END value."})
+                    "Filter the index to records which are AFTER the provided END value. Exclusive of start/end values."})
     private String excludeRangeEnd;
 
     @CommandLine.Option(names = {"-d", "--dry-run"},
