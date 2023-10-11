@@ -23,7 +23,6 @@ public class ArchivalDestinationsServiceTest {
     private SipServiceHelper testHelper;
     private MigrationProject project;
     private ArchivalDestinationsService service;
-    private IndexFilteringService indexService;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -32,7 +31,6 @@ public class ArchivalDestinationsServiceTest {
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = new ArchivalDestinationsService();
-        indexService = new IndexFilteringService();
         service.setProject(project);
         service.setIndexService(testHelper.getIndexService());
     }
