@@ -29,6 +29,11 @@ public class DestinationMappingOptions {
                     "Can be any value that uniquely identifies objects that belong in this destination.",})
     private String defaultCollection;
 
+    @Option(names = {"-n", "--field-name"},
+            description = {"Name of the field in CDM where archival collection numbers should be found.",
+                    "The default will be used during SIP generation for objects if they do not have explicit mappings.",})
+    private String fieldName;
+
     @Option(names = { "-f", "--force"},
             description = "Overwrite destination mapping if one already exists")
     private boolean force;
@@ -63,5 +68,13 @@ public class DestinationMappingOptions {
 
     public void setCdmId(String cdmId) {
         this.cdmId = cdmId;
+    }
+
+    public String getFieldName() {
+        return fieldName;
+    }
+
+    public void setFieldName(String fieldName) {
+        this.fieldName = fieldName;
     }
 }
