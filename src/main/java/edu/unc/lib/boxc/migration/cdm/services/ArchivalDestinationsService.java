@@ -3,6 +3,12 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
+import edu.unc.lib.boxc.search.api.exceptions.SolrRuntimeException;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocumentList;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -10,7 +16,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -23,6 +31,12 @@ public class ArchivalDestinationsService {
 
     private MigrationProject project;
     private CdmIndexService indexService;
+    private String solrServerUrl;
+    private HttpSolrClient solr;
+
+    public void initialize() {
+        solr = new HttpSolrClient.Builder(solrServerUrl).build();
+    }
 
     /**
      * Generates a unique list of values in the accepted field name
@@ -53,11 +67,50 @@ public class ArchivalDestinationsService {
         }
     }
 
+    /**
+     * Generates a map of archival collection numbers to boxc pids
+     * @param options destination mapping options
+     * @return A map
+     */
+    public Map<String, String> generateCollectionNumbersToPidMapping(DestinationMappingOptions options) throws Exception {
+        Map<String, String> mapCollNumToPid = new HashMap<>();
+
+        List<String> listCollectionNumbers = generateCollectionNumbersList(options);
+
+        for (String collNum : listCollectionNumbers) {
+            String collNumQuery = "collectionId:" + collNum;
+            SolrQuery query = new SolrQuery();
+            query.set("q", collNumQuery);
+            query.setFilterQueries("resourceType:Collection");
+
+            try {
+                QueryResponse response = solr.query(query);
+                SolrDocumentList results = response.getResults();
+                if (results.isEmpty()) {
+                    mapCollNumToPid.put(collNum, null);
+                } else {
+                    mapCollNumToPid.put(collNum, results.get(0).getFieldValue("pid").toString());
+                }
+            } catch (SolrServerException e) {
+                throw new SolrRuntimeException(e);
+            }
+        }
+        return mapCollNumToPid;
+    }
+
     public void setProject(MigrationProject project) {
         this.project = project;
     }
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    public void setSolrServerUrl(String solrServerUrl) {
+        this.solrServerUrl = solrServerUrl;
+    }
+
+    public void setSolr(HttpSolrClient solr) {
+        this.solr = solr;
     }
 }
