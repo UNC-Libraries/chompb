@@ -7,6 +7,7 @@ package edu.unc.lib.boxc.migration.cdm.model;
  */
 public class BxcEnvironment {
     private String httpBaseUrl;
+    private String solrServerUrl;
 
     public String getHttpBaseUrl() {
         return httpBaseUrl;
@@ -14,5 +15,13 @@ public class BxcEnvironment {
 
     public void setHttpBaseUrl(String httpBaseUrl) {
         this.httpBaseUrl = httpBaseUrl;
+    }
+
+    public String getSolrServerUrl() {
+        return solrServerUrl;
+    }
+
+    public void setSolrServerUrl(String solrServerUrl) {
+        this.solrServerUrl = solrServerUrl;
     }
 }
