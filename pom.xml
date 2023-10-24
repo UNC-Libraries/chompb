@@ -22,6 +22,7 @@
         <mysql.version>8.0.28</mysql.version>
         <csv.version>1.9.0</csv.version>
         <junit.jupiter.version>5.9.2</junit.jupiter.version>
+        <solr.solrj.version>8.10.1</solr.solrj.version>
     </properties>
 
     <build>
@@ -159,6 +160,11 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+            <version>${solr.solrj.version}</version>
         </dependency>
         <!-- Logging -->
         <dependency>
