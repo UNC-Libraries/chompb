@@ -253,6 +253,43 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Collections: +0\n.*");
     }
 
+    @Test
+    public void archivalCollNumsWithPidTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        writeCsv(mappingBody("aid:40126,bdbd99af-36a5-4bab-9785-e3a802d3737e,"));
+
+        statusService.report(Verbosity.VERBOSE);
+
+        assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Objects Mapped: +0 \\(0.0%\\).*");
+        assertOutputMatches(".*Unmapped Objects: +3 \\(100.0%\\).*");
+        assertOutputMatches(".*Unmapped Objects:.*\n +\\* 25\n.*");
+        assertOutputMatches(".*Unknown Objects: +1 .*");
+        assertOutputMatches(".*Destinations Valid: +Yes.*");
+        assertOutputMatches(".*To Default: +0 \\(0.0%\\).*");
+        assertOutputMatches(".*Destinations: +1\n.*");
+        assertOutputMatches(".*Destinations:.*\n +\\* bdbd99af-36a5-4bab-9785-e3a802d3737e.*");
+        assertOutputMatches(".*New Collections: +0\n.*");
+    }
+
+    @Test
+    public void archivalCollNumsNullPidTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        writeCsv(mappingBody("aid:40147,,40147"));
+
+        statusService.report(Verbosity.VERBOSE);
+
+        assertOutputMatches(".*Last Generated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Objects Mapped: +0 \\(0.0%\\).*");
+        assertOutputMatches(".*Unmapped Objects: +3 \\(100.0%\\).*");
+        assertOutputMatches(".*Unmapped Objects:.*\n +\\* 25\n.*");
+        assertOutputMatches(".*Unknown Objects: +0 .*");
+        assertOutputMatches(".*Destinations Valid: +No.*");
+        assertOutputMatches(".*To Default: +0 \\(0.0%\\).*");
+        assertOutputMatches(".*Destinations: +0\n.*");
+        assertOutputMatches(".*New Collections: +0\n.*");
+    }
+
     private String mappingBody(String... rows) {
         return String.join(",", DestinationsInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
