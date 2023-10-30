@@ -111,8 +111,6 @@ public class ArchivalDestinationsService {
      * @throws Exception
      */
     public void addArchivalCollectionMappings(DestinationMappingOptions options) throws Exception {
-        DestinationsValidator.assertValidDestination(options.getDefaultDestination());
-
         Path destinationMappingsPath = project.getDestinationMappingsPath();
 
         try (
@@ -121,7 +119,7 @@ public class ArchivalDestinationsService {
                         StandardOpenOption.CREATE);
                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().build());
         ) {
-            if (options.getDefaultDestination() != null) {
+            if (options.getFieldName() != null) {
                 Map<String, String> mapCollNumToPid = generateCollectionNumbersToPidMapping(options);
                 for (Map.Entry<String, String> entry : mapCollNumToPid.entrySet()) {
                     String collNum = entry.getKey();
