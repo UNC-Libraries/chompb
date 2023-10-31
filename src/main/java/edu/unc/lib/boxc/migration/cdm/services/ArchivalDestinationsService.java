@@ -1,9 +1,9 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import edu.unc.lib.boxc.search.api.exceptions.SolrRuntimeException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -15,6 +15,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -38,6 +39,7 @@ public class ArchivalDestinationsService {
 
     private MigrationProject project;
     private CdmIndexService indexService;
+    private DestinationsService destinationsService;
     private String solrServerUrl;
     private HttpSolrClient solr;
 
@@ -112,14 +114,15 @@ public class ArchivalDestinationsService {
      */
     public void addArchivalCollectionMappings(DestinationMappingOptions options) throws Exception {
         Path destinationMappingsPath = project.getDestinationMappingsPath();
+        ensureMappingState(options.isForce());
 
-        try (
-                BufferedWriter writer = Files.newBufferedWriter(destinationMappingsPath,
-                        StandardOpenOption.APPEND,
-                        StandardOpenOption.CREATE);
-                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().build());
-        ) {
-            if (options.getFieldName() != null) {
+        if (options.getFieldName() != null) {
+            try (
+                    BufferedWriter writer = Files.newBufferedWriter(destinationMappingsPath,
+                            StandardOpenOption.APPEND,
+                            StandardOpenOption.CREATE);
+                    CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().build());
+            ) {
                 Map<String, String> mapCollNumToPid = generateCollectionNumbersToPidMapping(options);
                 for (Map.Entry<String, String> entry : mapCollNumToPid.entrySet()) {
                     String collNum = entry.getKey();
@@ -140,6 +143,23 @@ public class ArchivalDestinationsService {
                     }
                 }
             }
+        } else {
+            throw new Exception("Field option is empty");
+        }
+    }
+
+    private void ensureMappingState(boolean force) {
+        if (Files.exists(project.getDestinationMappingsPath())) {
+            if (force) {
+                try {
+                    destinationsService.removeMappings();
+                } catch (IOException e) {
+                    throw new MigrationException("Failed to overwrite destinations file", e);
+                }
+            } else {
+                throw new StateAlreadyExistsException("Cannot create destinations, a file already exists."
+                        + " Use the force flag to overwrite.");
+            }
         }
     }
 
@@ -149,6 +169,10 @@ public class ArchivalDestinationsService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    public void setDestinationsService(DestinationsService destinationsService) {
+        this.destinationsService = destinationsService;
     }
 
     public void setSolrServerUrl(String solrServerUrl) {
