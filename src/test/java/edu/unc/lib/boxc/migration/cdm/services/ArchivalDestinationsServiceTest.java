@@ -112,7 +112,7 @@ public class ArchivalDestinationsServiceTest {
         assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":216", solrValues.get(0).getQuery());
         assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":604", solrValues.get(1).getQuery());
         assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":607", solrValues.get(2).getQuery());
-        assertEquals("resourceType:Collection",
+        assertEquals(ArchivalDestinationsService.RESOURCE_TYPE + ":Collection",
                 Arrays.stream(solrValues.get(0).getFilterQueries()).findFirst().get());
     }
 
@@ -135,7 +135,7 @@ public class ArchivalDestinationsServiceTest {
         assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":216", solrValues.get(0).getQuery());
         assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":604", solrValues.get(1).getQuery());
         assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":607", solrValues.get(2).getQuery());
-        assertEquals("resourceType:Collection",
+        assertEquals(ArchivalDestinationsService.RESOURCE_TYPE + ":Collection",
                 Arrays.stream(solrValues.get(0).getFilterQueries()).findFirst().get());
     }
 
@@ -253,7 +253,7 @@ public class ArchivalDestinationsServiceTest {
 
         QueryResponse testResponseA = new QueryResponse();
         SolrDocument testDocumentA = new SolrDocument();
-        testDocumentA.addField(ArchivalDestinationsService.PID, "bdbd99af-36a5-4bab-9785-e3a802d3737e");
+        testDocumentA.addField(ArchivalDestinationsService.PID_KEY, "bdbd99af-36a5-4bab-9785-e3a802d3737e");
         SolrDocumentList testListA = new SolrDocumentList();
         testListA.add(testDocumentA);
         testResponseA.setResponse(new NamedList<>(Map.of("response", testListA)));

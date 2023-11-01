@@ -44,8 +44,9 @@ public class ArchivalDestinationsService {
     private String solrServerUrl;
     private HttpSolrClient solr;
 
-    public static final String PID = SearchFieldKey.ID.getSolrField();
+    public static final String PID_KEY = SearchFieldKey.ID.getSolrField();
     public static final String COLLECTION_ID = SearchFieldKey.COLLECTION_ID.getSolrField();
+    public static final String RESOURCE_TYPE = SearchFieldKey.RESOURCE_TYPE.getSolrField();
 
     public void initialize() {
         solr = new HttpSolrClient.Builder(solrServerUrl).build();
@@ -85,7 +86,7 @@ public class ArchivalDestinationsService {
      * @param options destination mapping options
      * @return A map
      */
-    public Map<String, String> generateCollectionNumbersToPidMapping(DestinationMappingOptions options) throws Exception {
+    public Map<String, String> generateCollectionNumbersToPidMapping(DestinationMappingOptions options) {
         Map<String, String> mapCollNumToPid = new HashMap<>();
 
         List<String> listCollectionNumbers = generateCollectionNumbersList(options);
@@ -94,7 +95,7 @@ public class ArchivalDestinationsService {
             String collNumQuery =  COLLECTION_ID + ":" + collNum;
             SolrQuery query = new SolrQuery();
             query.set("q", collNumQuery);
-            query.setFilterQueries("resourceType:Collection");
+            query.setFilterQueries(RESOURCE_TYPE + ":Collection");
 
             try {
                 QueryResponse response = solr.query(query);
@@ -102,9 +103,9 @@ public class ArchivalDestinationsService {
                 if (results.isEmpty()) {
                     mapCollNumToPid.put(collNum, null);
                 } else {
-                    mapCollNumToPid.put(collNum, results.get(0).getFieldValue(PID).toString());
+                    mapCollNumToPid.put(collNum, results.get(0).getFieldValue(PID_KEY).toString());
                 }
-            } catch (SolrServerException e) {
+            } catch (SolrServerException | IOException e) {
                 throw new SolrRuntimeException(e);
             }
         }
@@ -116,7 +117,7 @@ public class ArchivalDestinationsService {
      * @param options
      * @throws Exception
      */
-    public void addArchivalCollectionMappings(DestinationMappingOptions options) throws Exception {
+    public void addArchivalCollectionMappings(DestinationMappingOptions options) throws IOException {
         Path destinationMappingsPath = project.getDestinationMappingsPath();
         ensureMappingState(options.isForce());
 
