@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
+import edu.unc.lib.boxc.search.api.SearchFieldKey;
 import edu.unc.lib.boxc.search.api.exceptions.SolrRuntimeException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -42,6 +43,9 @@ public class ArchivalDestinationsService {
     private DestinationsService destinationsService;
     private String solrServerUrl;
     private HttpSolrClient solr;
+
+    public static final String PID = SearchFieldKey.ID.getSolrField();
+    public static final String COLLECTION_ID = SearchFieldKey.COLLECTION_ID.getSolrField();
 
     public void initialize() {
         solr = new HttpSolrClient.Builder(solrServerUrl).build();
@@ -87,7 +91,7 @@ public class ArchivalDestinationsService {
         List<String> listCollectionNumbers = generateCollectionNumbersList(options);
 
         for (String collNum : listCollectionNumbers) {
-            String collNumQuery = "collectionId:" + collNum;
+            String collNumQuery =  COLLECTION_ID + ":" + collNum;
             SolrQuery query = new SolrQuery();
             query.set("q", collNumQuery);
             query.setFilterQueries("resourceType:Collection");
@@ -98,7 +102,7 @@ public class ArchivalDestinationsService {
                 if (results.isEmpty()) {
                     mapCollNumToPid.put(collNum, null);
                 } else {
-                    mapCollNumToPid.put(collNum, results.get(0).getFieldValue("pid").toString());
+                    mapCollNumToPid.put(collNum, results.get(0).getFieldValue(PID).toString());
                 }
             } catch (SolrServerException e) {
                 throw new SolrRuntimeException(e);
@@ -129,9 +133,9 @@ public class ArchivalDestinationsService {
                     String pid = entry.getValue();
 
                     // destinations.csv columns: id, destination, collection
-                    // if the boxc pid is not null, destination field = the boxc pid and "collection" field is empty
-                    // if the boxc pid is null, destination field is empty and "collection" field = <coll_num>
-                    // the user will need to fill in the "destination" value, which would be a boxc AdminUnit pid
+                    // if the boxc pid is not null, destination field = the boxc pid and collection field is empty
+                    // if the boxc pid is null, destination field is empty and collection field = <coll_num>
+                    // the user will need to fill in the destination value, which would be a boxc AdminUnit pid
                     if (pid != null) {
                         csvPrinter.printRecord(options.getFieldName() + ":" + collNum,
                                 pid,
@@ -144,7 +148,7 @@ public class ArchivalDestinationsService {
                 }
             }
         } else {
-            throw new Exception("Field option is empty");
+            throw new IllegalArgumentException("Field option is empty");
         }
     }
 

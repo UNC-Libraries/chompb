@@ -1,6 +1,5 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import edu.unc.lib.boxc.migration.cdm.AbstractOutputTest;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
@@ -40,8 +39,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockito.Mockito.when;
 
@@ -84,7 +83,7 @@ public class ArchivalDestinationsServiceTest {
     }
 
     @Test
-    public void archivalCollectionNumberTest() throws Exception {
+    public void generateCollectionNumbersListTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
 
         var options = new DestinationMappingOptions();
@@ -95,7 +94,7 @@ public class ArchivalDestinationsServiceTest {
     }
 
     @Test
-    public void collectionNumberToNullPidTest() throws Exception {
+    public void generateCollectionNumbersToPidMappingNullPidTest() throws Exception {
         solrResponseWithoutPid();
 
         Map<String, String> expected = new HashMap<>();
@@ -110,21 +109,21 @@ public class ArchivalDestinationsServiceTest {
         assertEquals(expected, result);
         var solrValues = solrQueryCaptor.getAllValues();
         assertEquals(3, solrValues.size());
-        assertEquals("collectionId:216", solrValues.get(0).getQuery());
-        assertEquals("collectionId:604", solrValues.get(1).getQuery());
-        assertEquals("collectionId:607", solrValues.get(2).getQuery());
+        assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":216", solrValues.get(0).getQuery());
+        assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":604", solrValues.get(1).getQuery());
+        assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":607", solrValues.get(2).getQuery());
         assertEquals("resourceType:Collection",
                 Arrays.stream(solrValues.get(0).getFilterQueries()).findFirst().get());
     }
 
     @Test
-    public void collectionNumberToPidTest() throws Exception {
+    public void generateCollectionNumbersToPidMappingWithPidTest() throws Exception {
         solrResponseWithPid();
 
         Map<String, String> expected = new HashMap<>();
-        expected.put("216", "40147");
+        expected.put("216", "bdbd99af-36a5-4bab-9785-e3a802d3737e");
         expected.put("604", null);
-        expected.put("607", "40147");
+        expected.put("607", "bdbd99af-36a5-4bab-9785-e3a802d3737e");
 
         var options = new DestinationMappingOptions();
         options.setFieldName("dmrecord");
@@ -133,15 +132,15 @@ public class ArchivalDestinationsServiceTest {
         assertEquals(expected, result);
         var solrValues = solrQueryCaptor.getAllValues();
         assertEquals(3, solrValues.size());
-        assertEquals("collectionId:216", solrValues.get(0).getQuery());
-        assertEquals("collectionId:604", solrValues.get(1).getQuery());
-        assertEquals("collectionId:607", solrValues.get(2).getQuery());
+        assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":216", solrValues.get(0).getQuery());
+        assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":604", solrValues.get(1).getQuery());
+        assertEquals(ArchivalDestinationsService.COLLECTION_ID + ":607", solrValues.get(2).getQuery());
         assertEquals("resourceType:Collection",
                 Arrays.stream(solrValues.get(0).getFilterQueries()).findFirst().get());
     }
 
     @Test
-    public void newDestinationsFileWithPid() throws Exception {
+    public void addArchivalCollectionMappingsWithPidTest() throws Exception {
         solrResponseWithPid();
         Path destinationMappingsPath = project.getDestinationMappingsPath();
 
@@ -159,13 +158,13 @@ public class ArchivalDestinationsServiceTest {
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals("", rows.get(0).get(1));
-            assertEquals("40147", rows.get(1).get(1));
+            assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(0));
+            assertIterableEquals(Arrays.asList("dmrecord:607", "bdbd99af-36a5-4bab-9785-e3a802d3737e", ""), rows.get(1));
         }
     }
 
     @Test
-    public void newDestinationsFileWithoutPid() throws Exception {
+    public void addArchivalCollectionMappingsWithoutPidTest() throws Exception {
         solrResponseWithoutPid();
         Path destinationMappingsPath = project.getDestinationMappingsPath();
 
@@ -182,32 +181,33 @@ public class ArchivalDestinationsServiceTest {
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals("", rows.get(0).get(1));
-            assertEquals("", rows.get(1).get(1));
+            assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(0));
+            assertIterableEquals(Arrays.asList("dmrecord:607", "", "607"), rows.get(1));
         }
     }
 
     @Test
-    public void existingDestinationsFileWithoutForceFlag() throws Exception {
+    public void addArchivalCollectionMappingsWithoutForceFlagTest() throws Exception {
         solrResponseWithPid();
         writeCsv(mappingBody("aid:40126,bdbd99af-36a5-4bab-9785-e3a802d3737e,"));
 
         var options = new DestinationMappingOptions();
         options.setFieldName("dmrecord");
 
-        try {
+        Exception exception = assertThrows(StateAlreadyExistsException.class, () -> {
             service.addArchivalCollectionMappings(options);
-            fail();
-        } catch (StateAlreadyExistsException e) {
-            assertTrue(e.getMessage().contains("Cannot create destinations, a file already exists."
-                    + " Use the force flag to overwrite."));
-        }
+        });
+        String expectedMessage = "Cannot create destinations, a file already exists. Use the force flag to overwrite.";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
     }
 
     @Test
-    public void existingDestinationsFileWithForceFlag() throws Exception {
+    public void addArchivalCollectionMappingsWithForceFlagTest() throws Exception {
         solrResponseWithPid();
-        writeCsv(mappingBody("aid:40126,bdbd99af-36a5-4bab-9785-e3a802d3737e,"));
+        Path destinationMappingsPath = project.getDestinationMappingsPath();
+        writeCsv(mappingBody("aid:40126,2720138a-a1ab-4b73-b7bc-6aabe75620c0,"));
 
         var options = new DestinationMappingOptions();
         options.setFieldName("dmrecord");
@@ -215,18 +215,30 @@ public class ArchivalDestinationsServiceTest {
 
         service.addArchivalCollectionMappings(options);
 
+        try (
+                Reader reader = Files.newBufferedReader(destinationMappingsPath);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(0));
+            assertIterableEquals(Arrays.asList("dmrecord:607", "bdbd99af-36a5-4bab-9785-e3a802d3737e", ""), rows.get(1));
+        }
     }
 
     @Test
-    public void archivalCollectionMappingsWithoutFieldOption() throws Exception {
+    public void addArchivalCollectionMappingsWithoutFieldOptionTest() throws Exception {
         var options = new DestinationMappingOptions();
 
-        try {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             service.addArchivalCollectionMappings(options);
-            fail();
-        } catch (Exception e){
-            assertTrue(e.getMessage().contains("Field option is empty"));
-        }
+        });
+        String expectedMessage = "Field option is empty";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
     }
 
     private void solrResponseWithoutPid() throws Exception {
@@ -241,7 +253,7 @@ public class ArchivalDestinationsServiceTest {
 
         QueryResponse testResponseA = new QueryResponse();
         SolrDocument testDocumentA = new SolrDocument();
-        testDocumentA.addField("pid", "40147");
+        testDocumentA.addField(ArchivalDestinationsService.PID, "bdbd99af-36a5-4bab-9785-e3a802d3737e");
         SolrDocumentList testListA = new SolrDocumentList();
         testListA.add(testDocumentA);
         testResponseA.setResponse(new NamedList<>(Map.of("response", testListA)));
