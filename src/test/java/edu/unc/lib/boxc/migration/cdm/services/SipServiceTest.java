@@ -29,10 +29,20 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.util.NamedList;
 import org.jdom2.Document;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 
 import java.io.BufferedWriter;
 import java.io.Reader;
@@ -42,6 +52,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
@@ -52,7 +63,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * @author bbpennel
@@ -62,22 +75,38 @@ public class SipServiceTest {
     private static final String USERNAME = "migr_user";
     private static final String DEST_UUID = "bfe93126-849a-43a5-b9d9-391e18ffacc6";
     private static final String DEST_UUID2 = "8ae56bbc-400e-496d-af4b-3c585e20dba1";
+    private static final String SOLR_URL = "http://example.com:88/solr";
 
     @TempDir
     public Path tmpFolder;
 
+    @Mock
+    private HttpSolrClient solrClient;
+
+    @Captor
+    private ArgumentCaptor<SolrQuery> solrQueryCaptor;
+
     private MigrationProject project;
     private SipService service;
     private SipServiceHelper testHelper;
+    private AutoCloseable closeable;
 
     @BeforeEach
     public void setup() throws Exception {
+        closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME, null, USERNAME,
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
 
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = testHelper.createSipsService();
+        testHelper.getArchivalDestinationsService().setSolr(solrClient);
+        testHelper.getArchivalDestinationsService().setSolrServerUrl(SOLR_URL);
+    }
+
+    @AfterEach
+    void closeService() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -911,6 +940,54 @@ public class SipServiceTest {
             // collection row should redirect to the boxc collection ID
             assertRedirectMappingCollectionRowContentIsCorrect(rows.get(3), project, boxcCollectionId);
         }
+    }
+
+    @Test
+    public void generateSipsWithArchivalCollection() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        solrResponseWithPid();
+        testHelper.generateArchivalCollectionDestinationMapping("groupa");
+        testHelper.populateDescriptions("grouped_mods.xml");
+        testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        String boxcCollectionId = sips.get(0).getNewCollectionId();
+        try (
+                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals(4, rows.toArray().length);
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
+            assertRedirectMappingCollectionRowContentIsCorrect(rows.get(3), project, boxcCollectionId);
+        }
+    }
+
+    private void solrResponseWithPid() throws Exception {
+        QueryResponse testResponseA = new QueryResponse();
+        SolrDocument testDocumentA = new SolrDocument();
+        testDocumentA.addField(ArchivalDestinationsService.PID_KEY, "bdbd99af-36a5-4bab-9785-e3a802d3737e");
+        SolrDocumentList testListA = new SolrDocumentList();
+        testListA.add(testDocumentA);
+        testResponseA.setResponse(new NamedList<>(Map.of("response", testListA)));
+
+        QueryResponse testResponseB = new QueryResponse();
+        testResponseB.setResponse(new NamedList<>(Map.of("response", new SolrDocumentList())));
+
+        when(solrClient.query(any())).thenAnswer(invocation -> {
+            var query = invocation.getArgument(0, SolrQuery.class);
+            var solrQ = query.get("q");
+            if (solrQ.equals(ArchivalDestinationsService.COLLECTION_ID + ":group1")) {
+                return testResponseA;
+            } else {
+                return testResponseB;
+            }
+        });
     }
 
     private  SipGenerationOptions makeOptions() {

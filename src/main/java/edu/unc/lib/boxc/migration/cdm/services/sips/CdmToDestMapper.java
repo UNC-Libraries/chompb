@@ -14,8 +14,8 @@ import java.util.Map;
 public class CdmToDestMapper {
     private Map<String, DestinationSipEntry> cdmId2DestMap = new HashMap<>();
 
-    public void put(DestinationsInfo.DestinationMapping destMapping, DestinationSipEntry destEntry) {
-        cdmId2DestMap.put(destMapping.getId(), destEntry);
+    public void put(String mappingId, DestinationSipEntry destEntry) {
+            cdmId2DestMap.put(mappingId, destEntry);
     }
 
     public DestinationSipEntry getDestinationEntry(String cdmId) {
