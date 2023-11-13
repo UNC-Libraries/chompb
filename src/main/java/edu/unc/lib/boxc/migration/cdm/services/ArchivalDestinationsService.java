@@ -2,9 +2,11 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
+import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import edu.unc.lib.boxc.search.api.SearchFieldKey;
 import edu.unc.lib.boxc.search.api.exceptions.SolrRuntimeException;
 import org.apache.commons.csv.CSVFormat;
@@ -122,6 +124,7 @@ public class ArchivalDestinationsService {
     public void addArchivalCollectionMappings(DestinationMappingOptions options) throws IOException {
         Path destinationMappingsPath = project.getDestinationMappingsPath();
         ensureMappingState(options.isForce());
+        DestinationsValidator.assertValidDestination(options.getDefaultDestination());
 
         if (options.getFieldName() != null) {
             try (
@@ -148,6 +151,11 @@ public class ArchivalDestinationsService {
                                 "",
                                 collNum);
                     }
+                }
+                if (options.getDefaultDestination() != null) {
+                    csvPrinter.printRecord(DestinationsInfo.DEFAULT_ID,
+                            options.getDefaultDestination(),
+                            options.getDefaultCollection());
                 }
             }
             project.getProjectProperties().setDestinationsGeneratedDate(Instant.now());

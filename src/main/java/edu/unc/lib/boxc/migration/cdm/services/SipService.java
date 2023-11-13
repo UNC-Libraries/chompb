@@ -85,7 +85,6 @@ public class SipService {
         redirectMappingService.init();
         sipPremisLogger = new SipPremisLogger();
         sipPremisLogger.setPremisLoggerFactory(premisLoggerFactory);
-        initializeDestinations(options);
         postMigrationReportService = new PostMigrationReportService();
         postMigrationReportService.setDescriptionsService(descriptionsService);
         postMigrationReportService.setProject(project);
@@ -110,6 +109,7 @@ public class SipService {
             log.debug("No access mappings file, no access files will be added to the SIP");
         }
         workGeneratorFactory.setConn(conn);
+        initializeDestinations(options);
     }
 
     /**
@@ -290,7 +290,7 @@ public class SipService {
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
             // skip over values from children of compound objects, since they must go to the same destination as their parent work
-            ResultSet rs = stmt.executeQuery("select " + idValue
+            ResultSet rs = stmt.executeQuery("select " + idField
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + " ("+ CdmIndexService.ENTRY_TYPE_FIELD + " != '"
                     + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'" +

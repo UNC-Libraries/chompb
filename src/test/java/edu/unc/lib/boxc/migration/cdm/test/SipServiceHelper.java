@@ -305,8 +305,10 @@ public class SipServiceHelper {
         destinationsService.generateMapping(options);
     }
 
-    public void generateArchivalCollectionDestinationMapping(String fieldName) throws Exception {
+    public void generateArchivalCollectionDestinationMapping(String defDest, String defColl, String fieldName) throws Exception {
         DestinationMappingOptions options = new DestinationMappingOptions();
+        options.setDefaultDestination(defDest);
+        options.setDefaultCollection(defColl);
         options.setFieldName(fieldName);
         archivalDestinationsService.addArchivalCollectionMappings(options);
     }

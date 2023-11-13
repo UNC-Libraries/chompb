@@ -946,38 +946,83 @@ public class SipServiceTest {
     public void generateSipsWithArchivalCollection() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         solrResponseWithPid();
-        testHelper.generateArchivalCollectionDestinationMapping("groupa");
+        testHelper.generateArchivalCollectionDestinationMapping("bdbd99af-36a5-4bab-9785-e3a802d3737e",
+                null, "groupa");
         testHelper.populateDescriptions("grouped_mods.xml");
-        testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif",
+                "276_203_E.tif", "276_241_E.tif", "276_245a_E.tif");
+
+        GroupMappingOptions groupOptions = new GroupMappingOptions();
+        groupOptions.setGroupField("groupa");
+        GroupMappingService groupService = testHelper.getGroupMappingService();
+        groupService.generateMapping(groupOptions);
+        groupService.syncMappings(makeDefaultSyncOptions());
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
-        String boxcCollectionId = sips.get(0).getNewCollectionId();
-        try (
-                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
-                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                        .withFirstRecordAsHeader()
-                        .withHeader(RedirectMappingService.CSV_HEADERS)
-                        .withTrim());
-        ) {
-            List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals(4, rows.toArray().length);
-            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
-            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
-            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
-            assertRedirectMappingCollectionRowContentIsCorrect(rows.get(3), project, boxcCollectionId);
-        }
+        assertEquals(3, sips.size());
+
+        MigrationSip sip1 = sips.get(0);
+        assertTrue(Files.exists(sip1.getSipPath()));
+        Model model = testHelper.getSipModel(sip1);
+        Bag depBag = model.getBag(sip1.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(0, depBagChildren.size());
+        assertPersistedSipInfoMatches(sip1);
+
+        MigrationSip sip2 = sips.get(1);
+        assertTrue(Files.exists(sip2.getSipPath()));
+        Model model2 = testHelper.getSipModel(sip2);
+        Bag depBag2 = model2.getBag(sip2.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren2 = depBag2.iterator().toList();
+        assertEquals(0, depBagChildren2.size());
+        assertPersistedSipInfoMatches(sip2);
+
+        MigrationSip sip3 = sips.get(2);
+        assertTrue(Files.exists(sip3.getSipPath()));
+
+        DepositDirectoryManager dirManager3 = testHelper.createDepositDirectoryManager(sip3);
+        Model model3 = testHelper.getSipModel(sip3);
+
+        Bag depBag3 = model3.getBag(sip3.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren3 = depBag3.iterator().toList();
+        assertEquals(4, depBagChildren3.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren3, "2005-11-23");
+        Bag work1Bag = model3.getBag(workResc1);
+        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager3, model3, "grp:groupa:group1", false,
+                stagingLocs.get(0), stagingLocs.get(1));
+        // Assert that children of grouped work have descriptions added (only second file as a description)
+        Resource work1File1Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(0));
+        Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
+        testHelper.assertModsPresentWithCdmId(dirManager3, PIDs.get(work1File2Resc.getURI()), "26");
+        // Second file should be ordered before the first file for the grouped work
+        String work1Members = PIDs.get(work1File2Resc.getURI()).getId() + "|" + PIDs.get(work1File1Resc.getURI()).getId();
+        assertTrue(workResc1.hasProperty(Cdr.memberOrder, work1Members));
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren3, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager3, model3, stagingLocs.get(2), null, "27");
+        assertFalse(workResc2.hasProperty(Cdr.memberOrder), "Work with group field but only one file should not have order");
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren3, "2005-12-09");
+        assertFalse(workResc3.hasProperty(Cdr.memberOrder), "Regular work should not have order");
+        Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren3, "2005-12-10");
+        assertFalse(workResc4.hasProperty(Cdr.memberOrder), "Regular work should not have order");
+
+        assertPersistedSipInfoMatches(sip3);
     }
 
     private void solrResponseWithPid() throws Exception {
         QueryResponse testResponseA = new QueryResponse();
         SolrDocument testDocumentA = new SolrDocument();
-        testDocumentA.addField(ArchivalDestinationsService.PID_KEY, "bdbd99af-36a5-4bab-9785-e3a802d3737e");
+        testDocumentA.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID);
         SolrDocumentList testListA = new SolrDocumentList();
         testListA.add(testDocumentA);
         testResponseA.setResponse(new NamedList<>(Map.of("response", testListA)));
 
         QueryResponse testResponseB = new QueryResponse();
-        testResponseB.setResponse(new NamedList<>(Map.of("response", new SolrDocumentList())));
+        SolrDocument testDocumentB = new SolrDocument();
+        testDocumentB.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID2);
+        SolrDocumentList testListB = new SolrDocumentList();
+        testListB.add(testDocumentB);
+        testResponseB.setResponse(new NamedList<>(Map.of("response", testListB)));
 
         when(solrClient.query(any())).thenAnswer(invocation -> {
             var query = invocation.getArgument(0, SolrQuery.class);

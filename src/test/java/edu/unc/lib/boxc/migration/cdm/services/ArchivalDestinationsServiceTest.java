@@ -170,6 +170,8 @@ public class ArchivalDestinationsServiceTest {
 
         var options = new DestinationMappingOptions();
         options.setFieldName("dmrecord");
+        options.setDefaultCollection("001234");
+        options.setDefaultDestination("bfe93126-849a-43a5-b9d9-391e18ffacc6");
 
         service.addArchivalCollectionMappings(options);
 
@@ -183,6 +185,7 @@ public class ArchivalDestinationsServiceTest {
             List<CSVRecord> rows = csvParser.getRecords();
             assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(0));
             assertIterableEquals(Arrays.asList("dmrecord:607", "", "607"), rows.get(1));
+            assertIterableEquals(Arrays.asList("default", "bfe93126-849a-43a5-b9d9-391e18ffacc6", "001234"), rows.get(2));
         }
     }
 
