@@ -84,7 +84,7 @@ public class CdmIndexService {
             var recordBuilder = new StringBuilder();
             var incompleteRecord = false;
             for (var line: (Iterable<String>) lineStream::iterator) {
-                recordBuilder.append(line);
+                recordBuilder.append(line).append('\n');
                 incompleteRecord = true;
                 // reached the end of a record
                 if (line.contains(CLOSE_CDM_ID_TAG)) {

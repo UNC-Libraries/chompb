@@ -1,0 +1,53 @@
+cdm_nick,export_as,description,skip_export,cdm_required,cdm_searchable,cdm_hidden,cdm_vocab,cdm_dc_mapping
+title,title,Title,false,y,y,n,n,title
+altern,altern,Alternative Title,false,n,y,n,n,title
+creato,creato,Creator,false,n,y,n,y,creato
+contri,contri,Contributor,false,n,y,n,y,contri
+date,date,Creation Date,false,n,y,y,n,date
+data,data,Date,false,n,n,n,n,date
+search,search,Search by Decade,false,n,y,y,n,coverab
+descri,descri,Description,false,n,y,n,n,descri
+transc,transc,Transcription,false,n,y,n,n,BLANK
+subjec,subjec,Subject (tgm),false,n,y,n,y,subjec
+subjea,subjea,Subject  Name,false,n,y,n,y,subjec
+subjeb,subjeb,Subject  Topical,false,n,y,n,y,subjec
+subjed,subjed,Subject  Geographic,false,n,y,n,y,subjec
+covera,covera,Geographic Location,false,n,y,n,y,coveraa
+titla,titla,Title Note,false,n,n,n,n,descri
+captio,captio,Caption,false,n,y,n,n,descri
+contra,contra,Contributor Note,false,n,n,n,n,descri
+notes,notes,Notes,false,n,n,n,n,descri
+type,type,Original Form,false,n,y,n,y,format
+resour,resour,Resource Type,false,n,y,n,y,type
+langua,langua,Language Code,false,n,n,y,y,langua
+langub,langub,Language,false,n,n,n,y,langua
+format,format,Physical Description of Original,false,n,n,y,n,formata
+medium,medium,Medium of Original,false,n,y,n,y,formatb
+collec,collec,Collection in Repository,false,n,n,n,n,source
+is,is,Is Part Of,false,n,n,n,n,relatig
+digita,digita,Digital Collection,false,n,y,n,n,BLANK
+reposi,reposi,Repository,false,n,n,n,y,publis
+host,host,Host,false,n,n,n,n,publis
+url,url,URL,false,n,n,n,n,identi
+local,local,Local Identifier,false,n,y,n,n,identi
+citati,citati,Citation,false,n,n,n,n,identi
+filena,filena,filename,false,n,n,n,n,BLANK
+path,path,path,false,n,n,n,n,BLANK
+copyri,copyri,Copyright Holder,false,n,n,n,n,rights
+usage,usage,Usage Rights,false,n,n,n,n,rights
+digitc,digitc,Digital Scan Date filename,false,n,n,y,n,BLANK
+creata,creata,Creator Raw Scan,false,n,n,y,n,BLANK
+creatb,creatb,Creator filename,false,n,n,y,n,BLANK
+proces,proces,Processor,false,n,n,y,n,BLANK
+hardwb,hardwb,Hardware filename,false,n,n,y,n,BLANK
+softwb,softwb,Software filename,false,n,n,y,n,BLANK
+pixea,pixea,Pixel Array filename,false,n,n,y,n,BLANK
+bia,bia,Bit Depth filename,false,n,n,y,n,BLANK
+coloa,coloa,Color Space filename,false,n,n,y,n,BLANK
+fila,fila,File Format filename,false,n,n,y,n,BLANK
+fullrs,fullrs,Full resolution,false,n,n,y,n,
+dmoclcno,dmoclcno,OCLC number,false,n,n,y,n,
+dmcreated,dmcreated,Date created,false,y,n,y,n,
+dmmodified,dmmodified,Date modified,false,y,n,y,n,
+dmrecord,dmrecord,CONTENTdm number,false,y,n,y,n,
+find,find,CONTENTdm file name,false,y,n,y,n,
