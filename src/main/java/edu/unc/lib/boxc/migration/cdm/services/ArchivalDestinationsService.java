@@ -75,7 +75,9 @@ public class ArchivalDestinationsService {
                     + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'" +
                     " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " is null)");
             while (rs.next()) {
-                collectionNumbers.add(rs.getString(1));
+                if (!rs.getString(1).isEmpty()) {
+                    collectionNumbers.add(rs.getString(1));
+                }
             }
             return collectionNumbers;
         } catch (SQLException e) {
@@ -96,21 +98,23 @@ public class ArchivalDestinationsService {
         List<String> listCollectionNumbers = generateCollectionNumbersList(options);
 
         for (String collNum : listCollectionNumbers) {
-            String collNumQuery =  COLLECTION_ID + ":" + collNum;
-            SolrQuery query = new SolrQuery();
-            query.set("q", collNumQuery);
-            query.setFilterQueries(RESOURCE_TYPE + ":Collection");
+            if (!collNum.isEmpty()) {
+                String collNumQuery =  COLLECTION_ID + ":" + collNum;
+                SolrQuery query = new SolrQuery();
+                query.set("q", collNumQuery);
+                query.setFilterQueries(RESOURCE_TYPE + ":Collection");
 
-            try {
-                QueryResponse response = solr.query(query);
-                SolrDocumentList results = response.getResults();
-                if (results.isEmpty()) {
-                    mapCollNumToPid.put(collNum, null);
-                } else {
-                    mapCollNumToPid.put(collNum, results.get(0).getFieldValue(PID_KEY).toString());
+                try {
+                    QueryResponse response = solr.query(query);
+                    SolrDocumentList results = response.getResults();
+                    if (results.isEmpty()) {
+                        mapCollNumToPid.put(collNum, null);
+                    } else {
+                        mapCollNumToPid.put(collNum, results.get(0).getFieldValue(PID_KEY).toString());
+                    }
+                } catch (SolrServerException | IOException e) {
+                    throw new SolrRuntimeException(e);
                 }
-            } catch (SolrServerException | IOException e) {
-                throw new SolrRuntimeException(e);
             }
         }
         return mapCollNumToPid;

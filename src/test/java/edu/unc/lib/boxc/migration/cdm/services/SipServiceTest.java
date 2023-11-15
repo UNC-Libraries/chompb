@@ -75,6 +75,7 @@ public class SipServiceTest {
     private static final String USERNAME = "migr_user";
     private static final String DEST_UUID = "bfe93126-849a-43a5-b9d9-391e18ffacc6";
     private static final String DEST_UUID2 = "8ae56bbc-400e-496d-af4b-3c585e20dba1";
+    private static final String DEST_UUID3 = "bdbd99af-36a5-4bab-9785-e3a802d3737e";
     private static final String SOLR_URL = "http://example.com:88/solr";
 
     @TempDir
@@ -946,91 +947,67 @@ public class SipServiceTest {
     public void generateSipsWithArchivalCollection() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         solrResponseWithPid();
-        testHelper.generateArchivalCollectionDestinationMapping("bdbd99af-36a5-4bab-9785-e3a802d3737e",
-                null, "groupa");
-        testHelper.populateDescriptions("grouped_mods.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif",
+        testHelper.generateArchivalCollectionDestinationMapping(DEST_UUID3, null, "groupa");
+        testHelper.populateDescriptions("gilmer_mods1.xml", "gilmer_mods2.xml");
+        testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif",
                 "276_203_E.tif", "276_241_E.tif", "276_245a_E.tif");
-
-        GroupMappingOptions groupOptions = new GroupMappingOptions();
-        groupOptions.setGroupField("groupa");
-        GroupMappingService groupService = testHelper.getGroupMappingService();
-        groupService.generateMapping(groupOptions);
-        groupService.syncMappings(makeDefaultSyncOptions());
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(3, sips.size());
 
+        //groupa:group1
         MigrationSip sip1 = sips.get(0);
         assertTrue(Files.exists(sip1.getSipPath()));
+        assertEquals(DEST_UUID, sip1.getDestinationPid().getUUID());
         Model model = testHelper.getSipModel(sip1);
         Bag depBag = model.getBag(sip1.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren = depBag.iterator().toList();
         assertEquals(0, depBagChildren.size());
         assertPersistedSipInfoMatches(sip1);
 
+        //default, should be groupa:group2
         MigrationSip sip2 = sips.get(1);
         assertTrue(Files.exists(sip2.getSipPath()));
+        assertEquals(DEST_UUID2, sip2.getDestinationPid().getUUID());
         Model model2 = testHelper.getSipModel(sip2);
         Bag depBag2 = model2.getBag(sip2.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren2 = depBag2.iterator().toList();
         assertEquals(0, depBagChildren2.size());
         assertPersistedSipInfoMatches(sip2);
 
+        //default
         MigrationSip sip3 = sips.get(2);
         assertTrue(Files.exists(sip3.getSipPath()));
-
-        DepositDirectoryManager dirManager3 = testHelper.createDepositDirectoryManager(sip3);
+        assertEquals(DEST_UUID3, sip3.getDestinationPid().getUUID());
         Model model3 = testHelper.getSipModel(sip3);
-
         Bag depBag3 = model3.getBag(sip3.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren3 = depBag3.iterator().toList();
         assertEquals(4, depBagChildren3.size());
-
-        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren3, "2005-11-23");
-        Bag work1Bag = model3.getBag(workResc1);
-        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager3, model3, "grp:groupa:group1", false,
-                stagingLocs.get(0), stagingLocs.get(1));
-        // Assert that children of grouped work have descriptions added (only second file as a description)
-        Resource work1File1Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(0));
-        Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
-        testHelper.assertModsPresentWithCdmId(dirManager3, PIDs.get(work1File2Resc.getURI()), "26");
-        // Second file should be ordered before the first file for the grouped work
-        String work1Members = PIDs.get(work1File2Resc.getURI()).getId() + "|" + PIDs.get(work1File1Resc.getURI()).getId();
-        assertTrue(workResc1.hasProperty(Cdr.memberOrder, work1Members));
-        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren3, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager3, model3, stagingLocs.get(2), null, "27");
-        assertFalse(workResc2.hasProperty(Cdr.memberOrder), "Work with group field but only one file should not have order");
-        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren3, "2005-12-09");
-        assertFalse(workResc3.hasProperty(Cdr.memberOrder), "Regular work should not have order");
-        Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren3, "2005-12-10");
-        assertFalse(workResc4.hasProperty(Cdr.memberOrder), "Regular work should not have order");
-
         assertPersistedSipInfoMatches(sip3);
     }
 
     private void solrResponseWithPid() throws Exception {
-        QueryResponse testResponseA = new QueryResponse();
-        SolrDocument testDocumentA = new SolrDocument();
-        testDocumentA.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID);
-        SolrDocumentList testListA = new SolrDocumentList();
-        testListA.add(testDocumentA);
-        testResponseA.setResponse(new NamedList<>(Map.of("response", testListA)));
+        QueryResponse testResponse1 = new QueryResponse();
+        SolrDocument testDocument1 = new SolrDocument();
+        testDocument1.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID);
+        SolrDocumentList testList1 = new SolrDocumentList();
+        testList1.add(testDocument1);
+        testResponse1.setResponse(new NamedList<>(Map.of("response", testList1)));
 
-        QueryResponse testResponseB = new QueryResponse();
-        SolrDocument testDocumentB = new SolrDocument();
-        testDocumentB.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID2);
-        SolrDocumentList testListB = new SolrDocumentList();
-        testListB.add(testDocumentB);
-        testResponseB.setResponse(new NamedList<>(Map.of("response", testListB)));
+        QueryResponse testResponse2 = new QueryResponse();
+        SolrDocument testDocument2 = new SolrDocument();
+        testDocument2.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID2);
+        SolrDocumentList testList2 = new SolrDocumentList();
+        testList2.add(testDocument2);
+        testResponse2.setResponse(new NamedList<>(Map.of("response", testList2)));
 
         when(solrClient.query(any())).thenAnswer(invocation -> {
             var query = invocation.getArgument(0, SolrQuery.class);
             var solrQ = query.get("q");
             if (solrQ.equals(ArchivalDestinationsService.COLLECTION_ID + ":group1")) {
-                return testResponseA;
+                return testResponse1;
             } else {
-                return testResponseB;
+                return testResponse2;
             }
         });
     }

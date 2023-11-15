@@ -263,9 +263,11 @@ public class SipService {
 
                 if (mapping.getId().contains(":")) {
                     for (String cdmId : listCdmIdsByArchivalCollectionId(mapping.getId())) {
+                        System.out.println("archival mapping: " + cdmId);
                         cdmToDestMapper.put(cdmId, destEntry);
                     }
                 } else {
+                    System.out.println("other mapping:" + mapping.getId());
                     cdmToDestMapper.put(mapping.getId(), destEntry);
                 }
             }
@@ -284,6 +286,9 @@ public class SipService {
         String idValue = splitId[1];
 
         List<String> cdmIds = new ArrayList<>();
+        if (idValue.isEmpty()) {
+            return cdmIds;
+        }
 
         Connection conn = null;
         try {
