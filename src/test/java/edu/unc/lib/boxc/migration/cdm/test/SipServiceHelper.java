@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,11 +17,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
+import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
@@ -31,6 +34,10 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.util.NamedList;
 import org.jdom2.Document;
 import org.jdom2.Element;
 
@@ -83,6 +90,7 @@ public class SipServiceHelper {
     private AggregateFileMappingService aggregateBottomMappingService;
     private DescriptionsService descriptionsService;
     private DestinationsService destinationsService;
+    private ArchivalDestinationsService archivalDestinationsService;
     private CdmIndexService indexService;
     private GroupMappingService groupMappingService;
     private PIDMinter pidMinter;
@@ -113,6 +121,10 @@ public class SipServiceHelper {
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
         destinationsService.setProject(project);
+        archivalDestinationsService = new ArchivalDestinationsService();
+        archivalDestinationsService.setProject(project);
+        archivalDestinationsService.setIndexService(indexService);
+        archivalDestinationsService.setDestinationsService(destinationsService);
 
         Files.createDirectories(project.getExportPath());
     }
@@ -291,6 +303,14 @@ public class SipServiceHelper {
         options.setDefaultDestination(defDest);
         options.setDefaultCollection(defColl);
         destinationsService.generateMapping(options);
+    }
+
+    public void generateArchivalCollectionDestinationMapping(String defDest, String defColl, String fieldName) throws Exception {
+        DestinationMappingOptions options = new DestinationMappingOptions();
+        options.setDefaultDestination(defDest);
+        options.setDefaultCollection(defColl);
+        options.setFieldName(fieldName);
+        archivalDestinationsService.addArchivalCollectionMappings(options);
     }
 
     public List<Path> populateSourceFiles(String... filenames) throws Exception {
@@ -475,6 +495,10 @@ public class SipServiceHelper {
 
     public DestinationsService getDestinationsService() {
         return destinationsService;
+    }
+
+    public ArchivalDestinationsService getArchivalDestinationsService() {
+        return archivalDestinationsService;
     }
 
     public CdmIndexService getIndexService() {
