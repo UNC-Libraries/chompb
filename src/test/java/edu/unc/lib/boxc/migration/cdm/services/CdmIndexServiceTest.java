@@ -375,6 +375,47 @@ public class CdmIndexServiceTest {
     }
 
     @Test
+    public void indexExportFieldContainsNewlinesTest() throws Exception {
+        Files.copy(Paths.get("src/test/resources/descriptions/plantations/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
+        Files.copy(Paths.get("src/test/resources/descriptions/plantations/cdm_fields.csv"), project.getFieldsPath());
+        setExportedDate();
+
+        service.createDatabase(false);
+        service.indexAll();
+
+        assertDateIndexedPresent();
+        assertRowCount(1);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+
+        String expectedTransc = "1st Barrel of Carolina Rice, made 1735.\n" +
+                "The following I copied from the \"South Carolina Gazette\" of \"January 24th 1735.\" (at the Charleston Library, August 1873). \n" +
+                "\"One Barrel of Ancony Rice from 16th Cattel’s plantation, \n" +
+                "\"the first that ever was made in this country, was \n" +
+                "\"ship’d off yesterday by the Mr Richard Hill, for London.\"\n" +
+                "(Shipped from Charles Town).  (Cattel’s farm near the City).\n" +
+                "(The above has been copied in \"Family Record,\" Vol. III-318. L. M.).";
+
+        Connection conn = service.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            var joinedFields = "\"" + String.join("\",\"", exportFields) + "\"";
+            ResultSet rs = stmt.executeQuery("select " + joinedFields
+                    + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
+            rs.next();
+            assertEquals(607, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("2007-04-17", rs.getString(CdmFieldInfo.CDM_CREATED));
+            assertEquals("Page 009", rs.getString("title"));
+            assertEquals(expectedTransc, rs.getString("transc"));
+            assertEquals("An excerpt from the \"South Carolina Gazette,\" 24 January 1735, describing the history of the first barrel of rice produced in Carolina.", rs.getString("descri"));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
     public void indexExportWithMonographCompoundObjectsTest() throws Exception {
         Files.copy(Paths.get("src/test/resources/descriptions/monograph/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project));
