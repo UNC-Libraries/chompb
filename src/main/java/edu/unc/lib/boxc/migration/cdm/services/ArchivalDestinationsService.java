@@ -135,7 +135,7 @@ public class ArchivalDestinationsService {
                     BufferedWriter writer = Files.newBufferedWriter(destinationMappingsPath,
                             StandardOpenOption.APPEND,
                             StandardOpenOption.CREATE);
-                    CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().build());
+                    CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().setHeader(DestinationsInfo.CSV_HEADERS).build());
             ) {
                 Map<String, String> mapCollNumToPid = generateCollectionNumbersToPidMapping(options);
                 for (Map.Entry<String, String> entry : mapCollNumToPid.entrySet()) {

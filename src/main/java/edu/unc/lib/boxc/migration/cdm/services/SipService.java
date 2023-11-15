@@ -263,11 +263,9 @@ public class SipService {
 
                 if (mapping.getId().contains(":")) {
                     for (String cdmId : listCdmIdsByArchivalCollectionId(mapping.getId())) {
-                        System.out.println("archival mapping: " + cdmId);
                         cdmToDestMapper.put(cdmId, destEntry);
                     }
                 } else {
-                    System.out.println("other mapping:" + mapping.getId());
                     cdmToDestMapper.put(mapping.getId(), destEntry);
                 }
             }
@@ -295,7 +293,7 @@ public class SipService {
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
             // skip over values from children of compound objects, since they must go to the same destination as their parent work
-            ResultSet rs = stmt.executeQuery("select " + idField
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + " ("+ CdmIndexService.ENTRY_TYPE_FIELD + " != '"
                     + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'" +

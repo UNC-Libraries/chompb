@@ -955,34 +955,34 @@ public class SipServiceTest {
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(3, sips.size());
 
-        //groupa:group1
+        // groupa:group2
         MigrationSip sip1 = sips.get(0);
         assertTrue(Files.exists(sip1.getSipPath()));
-        assertEquals(DEST_UUID, sip1.getDestinationPid().getUUID());
+        assertEquals(DEST_UUID2, sip1.getDestinationPid().getUUID());
         Model model = testHelper.getSipModel(sip1);
         Bag depBag = model.getBag(sip1.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren = depBag.iterator().toList();
-        assertEquals(0, depBagChildren.size());
+        assertEquals(1, depBagChildren.size());
         assertPersistedSipInfoMatches(sip1);
 
-        //default, should be groupa:group2
+        // groupa:group1
         MigrationSip sip2 = sips.get(1);
         assertTrue(Files.exists(sip2.getSipPath()));
-        assertEquals(DEST_UUID2, sip2.getDestinationPid().getUUID());
+        assertEquals(DEST_UUID, sip2.getDestinationPid().getUUID());
         Model model2 = testHelper.getSipModel(sip2);
         Bag depBag2 = model2.getBag(sip2.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren2 = depBag2.iterator().toList();
-        assertEquals(0, depBagChildren2.size());
+        assertEquals(2, depBagChildren2.size());
         assertPersistedSipInfoMatches(sip2);
 
-        //default
+        // default
         MigrationSip sip3 = sips.get(2);
         assertTrue(Files.exists(sip3.getSipPath()));
         assertEquals(DEST_UUID3, sip3.getDestinationPid().getUUID());
         Model model3 = testHelper.getSipModel(sip3);
         Bag depBag3 = model3.getBag(sip3.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren3 = depBag3.iterator().toList();
-        assertEquals(4, depBagChildren3.size());
+        assertEquals(2, depBagChildren3.size());
         assertPersistedSipInfoMatches(sip3);
     }
 
