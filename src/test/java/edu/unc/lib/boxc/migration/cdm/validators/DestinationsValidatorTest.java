@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -244,6 +246,38 @@ public class DestinationsValidatorTest {
         assertNumberErrors(errors, 1);
     }
 
+    @Test
+    public void archivalCollDestValidTest() throws Exception {
+        populateFieldInfo();
+        writeCsv(mappingBody("descri:40147,9ee8de0d-59ae-4c67-9686-78a79ebc93b1,",
+                "descri:40148,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
+                "descri:40149,9ee8de0d-59ae-4c67-9686-78a79ebc93b1,"));
+        List<String> errors = validator.validateMappings(true);
+        assertNumberErrors(errors, 0);
+    }
+
+    @Test
+    public void archivalCollDestInvalidFieldNameTest() throws Exception {
+        populateFieldInfo();
+        writeCsv(mappingBody("descri:40147,9ee8de0d-59ae-4c67-9686-78a79ebc93b1,",
+                "descri:40148,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
+                "test:40149,9ee8de0d-59ae-4c67-9686-78a79ebc93b1,"));
+        List<String> errors = validator.validateMappings(true);
+        assertHasError(errors, "Invalid field name 'test', does not exist in project");
+        assertNumberErrors(errors, 1);
+    }
+
+    @Test
+    public void archivalCollDestBlankFieldValueTest() throws Exception {
+        populateFieldInfo();
+        writeCsv(mappingBody("descri:40147,9ee8de0d-59ae-4c67-9686-78a79ebc93b1,",
+                "descri:,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,",
+                "descri:40149,9ee8de0d-59ae-4c67-9686-78a79ebc93b1,"));
+        List<String> errors = validator.validateMappings(true);
+        assertHasError(errors, "Field value after ':' must not be blank");
+        assertNumberErrors(errors, 1);
+    }
+
     private void assertHasError(List<String> errors, String expected) {
         assertTrue(errors.contains(expected),
                 "Expected error:\n" + expected + "\nBut the returned errors were:\n" + String.join("\n", errors));
@@ -267,5 +301,9 @@ public class DestinationsValidatorTest {
     private void assertNumberErrors(List<String> errors, int expected) {
         assertEquals(expected, errors.size(),
                 "Incorrect number of errors:\n" + String.join("\n", errors));
+    }
+
+    private void populateFieldInfo() throws Exception {
+        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
     }
 }

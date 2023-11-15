@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -86,6 +87,20 @@ public class DestinationsValidator {
                     if (previousIds.contains(id)) {
                         errors.add("Object ID assigned to multiple destinations, see line " + i);
                     } else {
+                        if (id.contains(":")) {
+                            if (id.endsWith(":")) {
+                                errors.add("Field value after ':' must not be blank");
+                            } else {
+                                String[] splitId = id.split(":");
+                                String idField = splitId[0];
+                                CdmFieldService fieldService = new CdmFieldService();
+                                List<String> exportFields = fieldService.loadFieldsFromProject(project)
+                                        .listAllExportFields();
+                                if (!exportFields.contains(idField)) {
+                                    errors.add("Invalid field name '" + idField + "', does not exist in project");
+                                }
+                            }
+                        }
                         previousIds.add(id);
                     }
                 }
