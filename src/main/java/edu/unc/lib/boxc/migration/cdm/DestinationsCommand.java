@@ -8,7 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
+import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -36,6 +40,11 @@ public class DestinationsCommand {
 
     private MigrationProject project;
     private DestinationsService destService;
+    private ArchivalDestinationsService archivalDestService;
+    private CdmIndexService indexService;
+    private CdmFieldService fieldService;
+    private String solrServerUrl;
+    private HttpSolrClient solr;
 
     @Command(name = "generate",
             description = "Generate the destination mapping file for this project")
@@ -132,6 +141,42 @@ public class DestinationsCommand {
         }
     }
 
+    @Command(name="map_archival_collections",
+            description = "Generate the destination mappings file by matching CDM field values to " +
+                    "the archival collection number in boxc")
+    public int generateArchival(@Mixin DestinationMappingOptions options) throws Exception {
+        long start = System.nanoTime();
+
+        try {
+            validateArchivalOptions(options);
+            initialize();
+            fieldService = new CdmFieldService();
+            indexService = new CdmIndexService();
+            indexService.setProject(project);
+            indexService.setFieldService(fieldService);
+
+            archivalDestService = new ArchivalDestinationsService();
+            archivalDestService.setProject(project);
+            archivalDestService.setIndexService(indexService);
+            archivalDestService.setDestinationsService(destService);
+            archivalDestService.setSolrServerUrl(solrServerUrl);
+            archivalDestService.setSolr(solr);
+            archivalDestService.initialize();
+
+            archivalDestService.addArchivalCollectionMappings(options);
+            outputLogger.info("Archival destination mapping generated for {} in {}s", project.getProjectName(),
+                    (System.nanoTime() - start) / 1e9);
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Cannot generate archival mappings: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Failed to export project", e);
+            outputLogger.info("Failed to export project: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
     private void validateOptions(DestinationMappingOptions options) {
         // For now, the only kind of mapping is a default, so fail if not set
         if (StringUtils.isBlank(options.getDefaultDestination())) {
@@ -142,6 +187,18 @@ public class DestinationsCommand {
         }
         if (options.getCdmId() != null && StringUtils.isBlank(options.getCdmId())) {
             throw new IllegalArgumentException("CDM ID must not be blank");
+        }
+    }
+
+    private void validateArchivalOptions(DestinationMappingOptions options) {
+        if (StringUtils.isBlank(options.getFieldName())) {
+            throw new IllegalArgumentException("Must provide a field name");
+        }
+        if (options.getDefaultDestination() != null && StringUtils.isBlank(options.getDefaultDestination())) {
+            throw new IllegalArgumentException("Default destination must not be blank");
+        }
+        if (options.getDefaultCollection() != null && StringUtils.isBlank(options.getDefaultCollection())) {
+            throw new IllegalArgumentException("Default collection must not be blank");
         }
     }
 
