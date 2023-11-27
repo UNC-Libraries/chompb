@@ -36,7 +36,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
         initProjectAndHelper();
         setupChompbConfig();
 
-        testHelper.getArchivalDestinationsService().setSolrServerUrl(SOLR_URL);
+        //testHelper.getArchivalDestinationsService().setSolrServerUrl(SOLR_URL);
         //testHelper.getArchivalDestinationsService().setSolr(solrClient);
     }
 

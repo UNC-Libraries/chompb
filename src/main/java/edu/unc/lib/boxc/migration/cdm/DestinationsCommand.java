@@ -43,8 +43,6 @@ public class DestinationsCommand {
     private ArchivalDestinationsService archivalDestService;
     private CdmIndexService indexService;
     private CdmFieldService fieldService;
-    private String solrServerUrl;
-    private HttpSolrClient solr;
 
     @Command(name = "generate",
             description = "Generate the destination mapping file for this project")
@@ -159,8 +157,8 @@ public class DestinationsCommand {
             archivalDestService.setProject(project);
             archivalDestService.setIndexService(indexService);
             archivalDestService.setDestinationsService(destService);
-            archivalDestService.setSolrServerUrl(solrServerUrl);
-            archivalDestService.setSolr(solr);
+            archivalDestService.setSolrServerUrl(parentCommand.getChompbConfig().getBxcEnvironments().get(0).getSolrServerUrl());
+            //archivalDestService.setSolr(solr);
             archivalDestService.initialize();
 
             archivalDestService.addArchivalCollectionMappings(options);
