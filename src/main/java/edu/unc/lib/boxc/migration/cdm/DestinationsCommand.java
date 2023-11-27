@@ -157,7 +157,7 @@ public class DestinationsCommand {
             archivalDestService.setProject(project);
             archivalDestService.setIndexService(indexService);
             archivalDestService.setDestinationsService(destService);
-            archivalDestService.setSolrServerUrl(parentCommand.getChompbConfig().getBxcEnvironments().get(0).getSolrServerUrl());
+            archivalDestService.setSolrServerUrl(parentCommand.getChompbConfig().getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId()).getSolrServerUrl());
             //archivalDestService.setSolr(solr);
             archivalDestService.initialize();
 
@@ -166,7 +166,7 @@ public class DestinationsCommand {
                     (System.nanoTime() - start) / 1e9);
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
-            outputLogger.info("Cannot generate archival mappings: {}", e.getMessage());
+            outputLogger.info("Cannot generate archival mappings: {}", e);
             return 1;
         } catch (Exception e) {
             log.error("Failed to export project", e);

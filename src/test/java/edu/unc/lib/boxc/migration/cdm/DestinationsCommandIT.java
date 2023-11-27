@@ -341,6 +341,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
 
     @Test
     public void generateArchivalDestTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
 //        {
 //            "responseHeader":{
 //            "status":0,
