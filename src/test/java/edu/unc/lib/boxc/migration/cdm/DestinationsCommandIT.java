@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
 import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +18,6 @@ import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,19 +25,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author bbpennel
  */
-@WireMockTest
+@WireMockTest(httpPort = BxcEnvironmentHelper.TEST_SOLR_PORT)
 public class DestinationsCommandIT extends AbstractCommandIT {
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
     private final static String CUSTOM_DEST_ID = "8dd13ef6-1011-4acc-9f2f-ac1cdf03d800";
-    private static final String SOLR_URL = "http:/localhost:8888/solr/test";
 
     @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
         setupChompbConfig();
-
-        //testHelper.getArchivalDestinationsService().setSolrServerUrl(SOLR_URL);
-        //testHelper.getArchivalDestinationsService().setSolr(solrClient);
     }
 
     @Test
@@ -342,51 +338,25 @@ public class DestinationsCommandIT extends AbstractCommandIT {
     @Test
     public void generateArchivalDestTest() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
-//        {
-//            "responseHeader":{
-//            "status":0,
-//                    "QTime":0,
-//                    "params":{
-//                "q":"collectionId:20309 AND resourceType:Collection",
-//                        "indent":"true",
-//                        "fl":"id",
-//                        "q.op":"OR"}},
-//            "response":{"numFound":1,"start":0,"numFoundExact":true,"docs":[
-//            {
-//                "id":"3b467997-f94a-42c8-905f-d6cf7ead522c"}]
-//        }}
-//        stubFor(get(urlEqualTo("/solr"))
-//                .willReturn(aResponse()
-//                        .withHeader("status", "0")
-//                        .withHeader("QTime", "0")
-//                        .withHeader("q", "collectionId:20309 AND resourceType:Collection")
-//                        .withHeader("indent", "true")
-//                        .withHeader("fl", "id")
-//                        .withHeader("q.op", "OR")
-//                        .withBody("\"numFound\":1,\"start\":0,\"numFoundExact\":true," +
-//                                "\"docs\":[{\"id\":\"3b467997-f94a-42c8-905f-d6cf7ead522c\"}]")));
-
         //groupa:group1
-        stubFor((get(urlEqualTo("/solr"))
-                .willReturn(okJson("{\"responseHeader\":{\"status\":0, \"QTime\":0, " +
-                        "\"params\":{\"q\":\"groupa:group1 AND resourceType:Collection\", \"indent\":\"true\", " +
-                        "\"fl\":\"id\", \"q.op\":\"OR\"}}," +
-                        "\"response\":{\"numFound\":1,\"start\":0,\"numFoundExact\":true," +
-                        "\"docs\":[{\"id\":\"8ae56bbc-400e-496d-af4b-3c585e20dba1\"}]}}"))));
-
+        stubFor(get(urlEqualTo("/solr/select?q=collectionId%3Agroup1&fq=resourceType%3ACollection&wt=javabin&version=2"))
+                .willReturn(aResponse()
+                        .withBodyFile("arc_coll_resp_group1.bin")
+                        .withHeader("Content-Type", "application/octet-stream")));
         //groupa:group2
-        stubFor((get(urlEqualTo("/solr"))
-                .willReturn(okJson("{\"responseHeader\":{\"status\":0, \"QTime\":0, " +
-                        "\"params\":{\"q\":\"groupa:group2 AND resourceType:Collection\", \"indent\":\"true\", " +
-                        "\"fl\":\"id\", \"q.op\":\"OR\"}}," +
-                        "\"response\":{\"numFound\":1,\"start\":0,\"numFoundExact\":true," +
-                        "\"docs\":[{\"id\":\"bfe93126-849a-43a5-b9d9-391e18ffacc6\"}]}}"))));
+        stubFor(get(urlEqualTo("/solr/select?q=collectionId%3Agroup2&fq=resourceType%3ACollection&wt=javabin&version=2"))
+                .willReturn(aResponse()
+                        .withBodyFile("arc_coll_resp_group2.bin")
+                        .withHeader("Content-Type", "application/octet-stream")));
+
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "--env-config", chompbConfigPath,
                 "destinations", "map_archival_collections",
-                "-n", "groupa"};
+                "-n", "groupa",
+                "-dd", DEST_UUID,
+                "-dc", "00123"};
         executeExpectSuccess(args);
 
         assertArchivalCollectionMapping(DEST_UUID, "00123");
@@ -413,14 +383,14 @@ public class DestinationsCommandIT extends AbstractCommandIT {
     private void assertArchivalCollectionMapping(String defaultDest, String defaultColl) throws Exception {
         var mappings = getMappings();
         assertMappingCount(mappings, 3);
-        DestinationMapping mapping1 = mappings.get(2);
-        assertEquals("groupa:group2", mapping1.getId());
-        DestinationMapping mapping2 = mappings.get(2);
-        assertEquals("groupa:group1", mapping2.getId());
-        DestinationMapping mapping3 = mappings.get(2);
-        assertEquals(DestinationsInfo.DEFAULT_ID, mapping3.getId());
-        assertEquals(defaultDest, mapping3.getDestination());
-        assertEquals(defaultColl, mapping3.getCollectionId());
+        DestinationMapping group2Mapping = mappings.get(0);
+        assertEquals("groupa:group2", group2Mapping.getId());
+        DestinationMapping group1Mapping = mappings.get(1);
+        assertEquals("groupa:group1", group1Mapping.getId());
+        DestinationMapping defaultMapping = mappings.get(2);
+        assertEquals(DestinationsInfo.DEFAULT_ID, defaultMapping.getId());
+        assertEquals(defaultDest, defaultMapping.getDestination());
+        assertEquals(defaultColl, defaultMapping.getCollectionId());
     }
 
     private List<DestinationMapping> getMappings() throws IOException {

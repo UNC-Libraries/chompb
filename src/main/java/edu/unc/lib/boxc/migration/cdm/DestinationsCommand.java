@@ -12,7 +12,6 @@ import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -157,8 +156,8 @@ public class DestinationsCommand {
             archivalDestService.setProject(project);
             archivalDestService.setIndexService(indexService);
             archivalDestService.setDestinationsService(destService);
-            archivalDestService.setSolrServerUrl(parentCommand.getChompbConfig().getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId()).getSolrServerUrl());
-            //archivalDestService.setSolr(solr);
+            archivalDestService.setSolrServerUrl(parentCommand.getChompbConfig().getBxcEnvironments()
+                    .get(project.getProjectProperties().getBxcEnvironmentId()).getSolrServerUrl());
             archivalDestService.initialize();
 
             archivalDestService.addArchivalCollectionMappings(options);
