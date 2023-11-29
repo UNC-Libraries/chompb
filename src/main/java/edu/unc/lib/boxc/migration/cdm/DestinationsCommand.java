@@ -48,6 +48,37 @@ public class DestinationsCommand {
     public int generate(@Mixin DestinationMappingOptions options) throws Exception {
         long start = System.nanoTime();
 
+        if (options.isArchivalCollections()) {
+            try {
+                validateArchivalOptions(options);
+                initialize();
+                fieldService = new CdmFieldService();
+                indexService = new CdmIndexService();
+                indexService.setProject(project);
+                indexService.setFieldService(fieldService);
+
+                archivalDestService = new ArchivalDestinationsService();
+                archivalDestService.setProject(project);
+                archivalDestService.setIndexService(indexService);
+                archivalDestService.setDestinationsService(destService);
+                archivalDestService.setSolrServerUrl(parentCommand.getChompbConfig().getBxcEnvironments()
+                        .get(project.getProjectProperties().getBxcEnvironmentId()).getSolrServerUrl());
+                archivalDestService.initialize();
+
+                archivalDestService.addArchivalCollectionMappings(options);
+                outputLogger.info("Archival destination mapping generated for {} in {}s", project.getProjectName(),
+                        (System.nanoTime() - start) / 1e9);
+                return 0;
+            } catch (MigrationException | IllegalArgumentException e) {
+                outputLogger.info("Cannot generate archival mappings: {}", e);
+                return 1;
+            } catch (Exception e) {
+                log.error("Failed to generate archival mappings", e);
+                outputLogger.info("Failed to generate archival mappings: {}", e.getMessage(), e);
+                return 1;
+            }
+        }
+
         try {
             validateOptions(options);
             initialize();
@@ -60,8 +91,8 @@ public class DestinationsCommand {
             outputLogger.info("Cannot generate mappings: {}", e.getMessage());
             return 1;
         } catch (Exception e) {
-            log.error("Failed to export project", e);
-            outputLogger.info("Failed to export project: {}", e.getMessage(), e);
+            log.error("Failed to generate mappings", e);
+            outputLogger.info("Failed to generate mappings: {}", e.getMessage(), e);
             return 1;
         }
     }
@@ -134,42 +165,6 @@ public class DestinationsCommand {
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("Cannot add mappings: {}", e.getMessage());
-            return 1;
-        }
-    }
-
-    @Command(name="map_archival_collections",
-            description = "Generate the destination mappings file by matching CDM field values to " +
-                    "the archival collection number in boxc")
-    public int generateArchival(@Mixin DestinationMappingOptions options) throws Exception {
-        long start = System.nanoTime();
-
-        try {
-            validateArchivalOptions(options);
-            initialize();
-            fieldService = new CdmFieldService();
-            indexService = new CdmIndexService();
-            indexService.setProject(project);
-            indexService.setFieldService(fieldService);
-
-            archivalDestService = new ArchivalDestinationsService();
-            archivalDestService.setProject(project);
-            archivalDestService.setIndexService(indexService);
-            archivalDestService.setDestinationsService(destService);
-            archivalDestService.setSolrServerUrl(parentCommand.getChompbConfig().getBxcEnvironments()
-                    .get(project.getProjectProperties().getBxcEnvironmentId()).getSolrServerUrl());
-            archivalDestService.initialize();
-
-            archivalDestService.addArchivalCollectionMappings(options);
-            outputLogger.info("Archival destination mapping generated for {} in {}s", project.getProjectName(),
-                    (System.nanoTime() - start) / 1e9);
-            return 0;
-        } catch (MigrationException | IllegalArgumentException e) {
-            outputLogger.info("Cannot generate archival mappings: {}", e);
-            return 1;
-        } catch (Exception e) {
-            log.error("Failed to export project", e);
-            outputLogger.info("Failed to export project: {}", e.getMessage(), e);
             return 1;
         }
     }

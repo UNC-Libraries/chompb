@@ -1,6 +1,5 @@
 package edu.unc.lib.boxc.migration.cdm;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
@@ -349,11 +348,11 @@ public class DestinationsCommandIT extends AbstractCommandIT {
                         .withBodyFile("arc_coll_resp_group2.bin")
                         .withHeader("Content-Type", "application/octet-stream")));
 
-
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "--env-config", chompbConfigPath,
-                "destinations", "map_archival_collections",
+                "destinations", "generate",
+                "--archival-collections",
                 "-n", "groupa",
                 "-dd", DEST_UUID,
                 "-dc", "00123"};
@@ -366,7 +365,9 @@ public class DestinationsCommandIT extends AbstractCommandIT {
     public void generateArchivalDestNoFieldNameTest() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
-                "destinations", "map_archival_collections"};
+                "--env-config", chompbConfigPath,
+                "destinations", "generate",
+                "--archival-collections"};
         executeExpectFailure(args);
         assertOutputContains("Must provide a field name");
     }
