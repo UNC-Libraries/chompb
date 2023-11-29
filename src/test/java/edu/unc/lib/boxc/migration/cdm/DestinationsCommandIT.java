@@ -352,7 +352,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "--env-config", chompbConfigPath,
                 "destinations", "generate",
-                "--archival-collections",
+                "-ac",
                 "-n", "groupa",
                 "-dd", DEST_UUID,
                 "-dc", "00123"};

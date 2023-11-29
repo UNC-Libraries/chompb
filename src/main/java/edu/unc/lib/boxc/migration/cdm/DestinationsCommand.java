@@ -49,51 +49,9 @@ public class DestinationsCommand {
         long start = System.nanoTime();
 
         if (options.isArchivalCollections()) {
-            try {
-                validateArchivalOptions(options);
-                initialize();
-                fieldService = new CdmFieldService();
-                indexService = new CdmIndexService();
-                indexService.setProject(project);
-                indexService.setFieldService(fieldService);
-
-                archivalDestService = new ArchivalDestinationsService();
-                archivalDestService.setProject(project);
-                archivalDestService.setIndexService(indexService);
-                archivalDestService.setDestinationsService(destService);
-                archivalDestService.setSolrServerUrl(parentCommand.getChompbConfig().getBxcEnvironments()
-                        .get(project.getProjectProperties().getBxcEnvironmentId()).getSolrServerUrl());
-                archivalDestService.initialize();
-
-                archivalDestService.addArchivalCollectionMappings(options);
-                outputLogger.info("Archival destination mapping generated for {} in {}s", project.getProjectName(),
-                        (System.nanoTime() - start) / 1e9);
-                return 0;
-            } catch (MigrationException | IllegalArgumentException e) {
-                outputLogger.info("Cannot generate archival mappings: {}", e);
-                return 1;
-            } catch (Exception e) {
-                log.error("Failed to generate archival mappings", e);
-                outputLogger.info("Failed to generate archival mappings: {}", e.getMessage(), e);
-                return 1;
-            }
-        }
-
-        try {
-            validateOptions(options);
-            initialize();
-
-            destService.generateMapping(options);
-            outputLogger.info("Destination mapping generated for {} in {}s", project.getProjectName(),
-                    (System.nanoTime() - start) / 1e9);
-            return 0;
-        } catch (MigrationException | IllegalArgumentException e) {
-            outputLogger.info("Cannot generate mappings: {}", e.getMessage());
-            return 1;
-        } catch (Exception e) {
-            log.error("Failed to generate mappings", e);
-            outputLogger.info("Failed to generate mappings: {}", e.getMessage(), e);
-            return 1;
+            return generateArchivalCollectionMappings(options, start);
+        } else {
+            return generateBasicMappings(options, start);
         }
     }
 
@@ -191,6 +149,56 @@ public class DestinationsCommand {
         }
         if (options.getDefaultCollection() != null && StringUtils.isBlank(options.getDefaultCollection())) {
             throw new IllegalArgumentException("Default collection must not be blank");
+        }
+    }
+
+    private int generateBasicMappings(DestinationMappingOptions options, long start) {
+        try {
+            validateOptions(options);
+            initialize();
+
+            destService.generateMapping(options);
+            outputLogger.info("Destination mapping generated for {} in {}s", project.getProjectName(),
+                    (System.nanoTime() - start) / 1e9);
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Cannot generate mappings: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Failed to generate mappings", e);
+            outputLogger.info("Failed to generate mappings: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
+    private int generateArchivalCollectionMappings(DestinationMappingOptions options, long start) {
+        try {
+            validateArchivalOptions(options);
+            initialize();
+            fieldService = new CdmFieldService();
+            indexService = new CdmIndexService();
+            indexService.setProject(project);
+            indexService.setFieldService(fieldService);
+
+            archivalDestService = new ArchivalDestinationsService();
+            archivalDestService.setProject(project);
+            archivalDestService.setIndexService(indexService);
+            archivalDestService.setDestinationsService(destService);
+            archivalDestService.setSolrServerUrl(parentCommand.getChompbConfig().getBxcEnvironments()
+                    .get(project.getProjectProperties().getBxcEnvironmentId()).getSolrServerUrl());
+            archivalDestService.initialize();
+
+            archivalDestService.addArchivalCollectionMappings(options);
+            outputLogger.info("Archival destination mapping generated for {} in {}s", project.getProjectName(),
+                    (System.nanoTime() - start) / 1e9);
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Cannot generate archival mappings: {}", e);
+            return 1;
+        } catch (Exception e) {
+            log.error("Failed to generate archival mappings", e);
+            outputLogger.info("Failed to generate archival mappings: {}", e.getMessage(), e);
+            return 1;
         }
     }
 
