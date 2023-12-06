@@ -389,7 +389,8 @@ public class DestinationsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "--env-config", chompbConfigPath,
-                "destinations", "map_archival_collections",
+                "destinations", "generate",
+                "-ac",
                 "-n", "groupa",
                 "-dd", DEST_UUID,
                 "-dc", "00123" };
@@ -420,7 +421,8 @@ public class DestinationsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "--env-config", chompbConfigPath,
-                "destinations", "map_archival_collections",
+                "destinations", "generate",
+                "-ac",
                 "-n", "groupa",
                 "-dd", DEST_UUID,
                 "-dc", "00123" };
@@ -456,7 +458,8 @@ public class DestinationsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "--env-config", chompbConfigPath,
-                "destinations", "map_archival_collections",
+                "destinations", "generate",
+                "-ac",
                 "-n", "groupa",
                 "-dd", DEST_UUID,
                 "-dc", "00123" };
