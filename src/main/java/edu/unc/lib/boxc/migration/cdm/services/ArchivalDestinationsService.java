@@ -2,8 +2,11 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
+import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import edu.unc.lib.boxc.search.api.SearchFieldKey;
 import edu.unc.lib.boxc.search.api.exceptions.SolrRuntimeException;
 import org.apache.commons.csv.CSVFormat;
@@ -24,6 +27,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,7 +75,9 @@ public class ArchivalDestinationsService {
                     + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'" +
                     " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " is null)");
             while (rs.next()) {
-                collectionNumbers.add(rs.getString(1));
+                if (!rs.getString(1).isEmpty()) {
+                    collectionNumbers.add(rs.getString(1));
+                }
             }
             return collectionNumbers;
         } catch (SQLException e) {
@@ -92,21 +98,23 @@ public class ArchivalDestinationsService {
         List<String> listCollectionNumbers = generateCollectionNumbersList(options);
 
         for (String collNum : listCollectionNumbers) {
-            String collNumQuery =  COLLECTION_ID + ":" + collNum;
-            SolrQuery query = new SolrQuery();
-            query.set("q", collNumQuery);
-            query.setFilterQueries(RESOURCE_TYPE + ":Collection");
+            if (!collNum.isEmpty()) {
+                String collNumQuery =  COLLECTION_ID + ":" + collNum;
+                SolrQuery query = new SolrQuery();
+                query.set("q", collNumQuery);
+                query.setFilterQueries(RESOURCE_TYPE + ":Collection");
 
-            try {
-                QueryResponse response = solr.query(query);
-                SolrDocumentList results = response.getResults();
-                if (results.isEmpty()) {
-                    mapCollNumToPid.put(collNum, null);
-                } else {
-                    mapCollNumToPid.put(collNum, results.get(0).getFieldValue(PID_KEY).toString());
+                try {
+                    QueryResponse response = solr.query(query);
+                    SolrDocumentList results = response.getResults();
+                    if (results.isEmpty()) {
+                        mapCollNumToPid.put(collNum, null);
+                    } else {
+                        mapCollNumToPid.put(collNum, results.get(0).getFieldValue(PID_KEY).toString());
+                    }
+                } catch (SolrServerException | IOException e) {
+                    throw new SolrRuntimeException(e);
                 }
-            } catch (SolrServerException | IOException e) {
-                throw new SolrRuntimeException(e);
             }
         }
         return mapCollNumToPid;
@@ -120,13 +128,14 @@ public class ArchivalDestinationsService {
     public void addArchivalCollectionMappings(DestinationMappingOptions options) throws IOException {
         Path destinationMappingsPath = project.getDestinationMappingsPath();
         ensureMappingState(options.isForce());
+        DestinationsValidator.assertValidDestination(options.getDefaultDestination());
 
         if (options.getFieldName() != null) {
             try (
                     BufferedWriter writer = Files.newBufferedWriter(destinationMappingsPath,
                             StandardOpenOption.APPEND,
                             StandardOpenOption.CREATE);
-                    CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().build());
+                    CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().setHeader(DestinationsInfo.CSV_HEADERS).build());
             ) {
                 Map<String, String> mapCollNumToPid = generateCollectionNumbersToPidMapping(options);
                 for (Map.Entry<String, String> entry : mapCollNumToPid.entrySet()) {
@@ -147,7 +156,14 @@ public class ArchivalDestinationsService {
                                 collNum);
                     }
                 }
+                if (options.getDefaultDestination() != null) {
+                    csvPrinter.printRecord(DestinationsInfo.DEFAULT_ID,
+                            options.getDefaultDestination(),
+                            options.getDefaultCollection());
+                }
             }
+            project.getProjectProperties().setDestinationsGeneratedDate(Instant.now());
+            ProjectPropertiesSerialization.write(project);
         } else {
             throw new IllegalArgumentException("Field option is empty");
         }

@@ -29,10 +29,20 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.util.NamedList;
 import org.jdom2.Document;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 
 import java.io.BufferedWriter;
 import java.io.Reader;
@@ -42,6 +52,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
@@ -52,7 +63,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * @author bbpennel
@@ -62,22 +75,39 @@ public class SipServiceTest {
     private static final String USERNAME = "migr_user";
     private static final String DEST_UUID = "bfe93126-849a-43a5-b9d9-391e18ffacc6";
     private static final String DEST_UUID2 = "8ae56bbc-400e-496d-af4b-3c585e20dba1";
+    private static final String DEST_UUID3 = "bdbd99af-36a5-4bab-9785-e3a802d3737e";
+    private static final String SOLR_URL = "http://example.com:88/solr";
 
     @TempDir
     public Path tmpFolder;
 
+    @Mock
+    private HttpSolrClient solrClient;
+
+    @Captor
+    private ArgumentCaptor<SolrQuery> solrQueryCaptor;
+
     private MigrationProject project;
     private SipService service;
     private SipServiceHelper testHelper;
+    private AutoCloseable closeable;
 
     @BeforeEach
     public void setup() throws Exception {
+        closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME, null, USERNAME,
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
 
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = testHelper.createSipsService();
+        testHelper.getArchivalDestinationsService().setSolr(solrClient);
+        testHelper.getArchivalDestinationsService().setSolrServerUrl(SOLR_URL);
+    }
+
+    @AfterEach
+    void closeService() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -911,6 +941,75 @@ public class SipServiceTest {
             // collection row should redirect to the boxc collection ID
             assertRedirectMappingCollectionRowContentIsCorrect(rows.get(3), project, boxcCollectionId);
         }
+    }
+
+    @Test
+    public void generateSipsWithArchivalCollection() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        solrResponseWithPid();
+        testHelper.generateArchivalCollectionDestinationMapping(DEST_UUID3, null, "groupa");
+        testHelper.populateDescriptions("gilmer_mods1.xml", "gilmer_mods2.xml");
+        testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif",
+                "276_203_E.tif", "276_241_E.tif", "276_245a_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(3, sips.size());
+
+        // groupa:group2
+        MigrationSip sip1 = sips.get(0);
+        assertTrue(Files.exists(sip1.getSipPath()));
+        assertEquals(DEST_UUID2, sip1.getDestinationPid().getUUID());
+        Model model = testHelper.getSipModel(sip1);
+        Bag depBag = model.getBag(sip1.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(1, depBagChildren.size());
+        assertPersistedSipInfoMatches(sip1);
+
+        // groupa:group1
+        MigrationSip sip2 = sips.get(1);
+        assertTrue(Files.exists(sip2.getSipPath()));
+        assertEquals(DEST_UUID, sip2.getDestinationPid().getUUID());
+        Model model2 = testHelper.getSipModel(sip2);
+        Bag depBag2 = model2.getBag(sip2.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren2 = depBag2.iterator().toList();
+        assertEquals(2, depBagChildren2.size());
+        assertPersistedSipInfoMatches(sip2);
+
+        // default
+        MigrationSip sip3 = sips.get(2);
+        assertTrue(Files.exists(sip3.getSipPath()));
+        assertEquals(DEST_UUID3, sip3.getDestinationPid().getUUID());
+        Model model3 = testHelper.getSipModel(sip3);
+        Bag depBag3 = model3.getBag(sip3.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren3 = depBag3.iterator().toList();
+        assertEquals(2, depBagChildren3.size());
+        assertPersistedSipInfoMatches(sip3);
+    }
+
+    private void solrResponseWithPid() throws Exception {
+        QueryResponse testResponse1 = new QueryResponse();
+        SolrDocument testDocument1 = new SolrDocument();
+        testDocument1.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID);
+        SolrDocumentList testList1 = new SolrDocumentList();
+        testList1.add(testDocument1);
+        testResponse1.setResponse(new NamedList<>(Map.of("response", testList1)));
+
+        QueryResponse testResponse2 = new QueryResponse();
+        SolrDocument testDocument2 = new SolrDocument();
+        testDocument2.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID2);
+        SolrDocumentList testList2 = new SolrDocumentList();
+        testList2.add(testDocument2);
+        testResponse2.setResponse(new NamedList<>(Map.of("response", testList2)));
+
+        when(solrClient.query(any())).thenAnswer(invocation -> {
+            var query = invocation.getArgument(0, SolrQuery.class);
+            var solrQ = query.get("q");
+            if (solrQ.equals(ArchivalDestinationsService.COLLECTION_ID + ":group1")) {
+                return testResponse1;
+            } else {
+                return testResponse2;
+            }
+        });
     }
 
     private  SipGenerationOptions makeOptions() {

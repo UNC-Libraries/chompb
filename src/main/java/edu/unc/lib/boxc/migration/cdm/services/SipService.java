@@ -85,7 +85,6 @@ public class SipService {
         redirectMappingService.init();
         sipPremisLogger = new SipPremisLogger();
         sipPremisLogger.setPremisLoggerFactory(premisLoggerFactory);
-        initializeDestinations(options);
         postMigrationReportService = new PostMigrationReportService();
         postMigrationReportService.setDescriptionsService(descriptionsService);
         postMigrationReportService.setProject(project);
@@ -110,6 +109,7 @@ public class SipService {
             log.debug("No access mappings file, no access files will be added to the SIP");
         }
         workGeneratorFactory.setConn(conn);
+        initializeDestinations(options);
     }
 
     /**
@@ -261,10 +261,52 @@ public class SipService {
                     return entry;
                 });
 
-                cdmToDestMapper.put(mapping, destEntry);
+                if (mapping.getId().contains(":")) {
+                    for (String cdmId : listCdmIdsByArchivalCollectionId(mapping.getId())) {
+                        cdmToDestMapper.put(cdmId, destEntry);
+                    }
+                } else {
+                    cdmToDestMapper.put(mapping.getId(), destEntry);
+                }
             }
         } catch (IOException e) {
             throw new MigrationException("Failed to load destination mappings", e);
+        }
+    }
+
+    /**
+     * @param id archival collection id
+     * @return list of CDM ids
+     */
+    private List<String> listCdmIdsByArchivalCollectionId(String id) {
+        String[] splitId = id.split(":");
+        String idField = splitId[0];
+        String idValue = splitId[1];
+
+        List<String> cdmIds = new ArrayList<>();
+        if (idValue.isEmpty()) {
+            return cdmIds;
+        }
+
+        Connection conn = null;
+        try {
+            conn = indexService.openDbConnection();
+            Statement stmt = conn.createStatement();
+            // skip over values from children of compound objects, since they must go to the same destination as their parent work
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID
+                    + " from " + CdmIndexService.TB_NAME
+                    + " where " + " ("+ CdmIndexService.ENTRY_TYPE_FIELD + " != '"
+                    + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'" +
+                    " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " is null)" +
+                    " AND " + idField + " = '" + idValue + "'");
+            while (rs.next()) {
+                cdmIds.add(rs.getString(1));
+            }
+            return cdmIds;
+        } catch (SQLException e) {
+            throw new MigrationException("Error interacting with export index", e);
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
         }
     }
 

@@ -41,11 +41,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockito.Mockito.when;
 
 public class ArchivalDestinationsServiceTest {
     private static final String PROJECT_NAME = "proj";
+    private static final String DEST_UUID = "bfe93126-849a-43a5-b9d9-391e18ffacc6";
+    private static final String DEST_UUID2 = "8ae56bbc-400e-496d-af4b-3c585e20dba1";
+    private static final String DEST_UUID3 = "bdbd99af-36a5-4bab-9785-e3a802d3737e";
     private static final String SOLR_URL = "http://example.com:88/solr";
 
     @Captor
@@ -83,7 +87,7 @@ public class ArchivalDestinationsServiceTest {
     }
 
     @Test
-    public void generateCollectionNumbersListTest() throws Exception {
+    public void generateCollectionNumbersListKeepsakesTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
 
         var options = new DestinationMappingOptions();
@@ -94,8 +98,19 @@ public class ArchivalDestinationsServiceTest {
     }
 
     @Test
-    public void generateCollectionNumbersToPidMappingNullPidTest() throws Exception {
-        solrResponseWithoutPid();
+    public void generateCollectionNumbersListGilmerTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+
+        var options = new DestinationMappingOptions();
+        options.setFieldName("groupa");
+
+        var result = service.generateCollectionNumbersList(options);
+        assertIterableEquals(Arrays.asList("group1", "group2"), result);
+    }
+
+    @Test
+    public void generateCollectionNumbersToPidMappingNullPidKeepsakesTest() throws Exception {
+        solrResponseWithoutPidKeepsakes();
 
         Map<String, String> expected = new HashMap<>();
         expected.put("216", null);
@@ -117,13 +132,13 @@ public class ArchivalDestinationsServiceTest {
     }
 
     @Test
-    public void generateCollectionNumbersToPidMappingWithPidTest() throws Exception {
-        solrResponseWithPid();
+    public void generateCollectionNumbersToPidMappingWithPidKeepsakesTest() throws Exception {
+        solrResponseWithPidKeepsakes();
 
         Map<String, String> expected = new HashMap<>();
-        expected.put("216", "bdbd99af-36a5-4bab-9785-e3a802d3737e");
+        expected.put("216", DEST_UUID);
         expected.put("604", null);
-        expected.put("607", "bdbd99af-36a5-4bab-9785-e3a802d3737e");
+        expected.put("607", DEST_UUID2);
 
         var options = new DestinationMappingOptions();
         options.setFieldName("dmrecord");
@@ -140,8 +155,24 @@ public class ArchivalDestinationsServiceTest {
     }
 
     @Test
-    public void addArchivalCollectionMappingsWithPidTest() throws Exception {
-        solrResponseWithPid();
+    public void generateCollectionNumbersToPidMappingWithPidGilmerTest() throws Exception {
+        solrResponseWithPidGilmer();
+
+        Map<String, String> expected = new HashMap<>();
+        expected.put("group1", DEST_UUID);
+        expected.put("group2", DEST_UUID2);
+
+        var options = new DestinationMappingOptions();
+        options.setFieldName("groupa");
+
+        var result = service.generateCollectionNumbersToPidMapping(options);
+        assertEquals(expected, result);
+        // not checking solrValues, because solrResponseWithPidGilmer doesn't mock solrQueryCaptor
+    }
+
+    @Test
+    public void addArchivalCollectionMappingsWithPidKeepsakesTest() throws Exception {
+        solrResponseWithPidKeepsakes();
         Path destinationMappingsPath = project.getDestinationMappingsPath();
 
         var options = new DestinationMappingOptions();
@@ -154,22 +185,49 @@ public class ArchivalDestinationsServiceTest {
                 Reader reader = Files.newBufferedReader(destinationMappingsPath);
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
-                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withHeader(DestinationsInfo.CSV_HEADERS)
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(0));
-            assertIterableEquals(Arrays.asList("dmrecord:607", "bdbd99af-36a5-4bab-9785-e3a802d3737e", ""), rows.get(1));
+            assertIterableEquals(Arrays.asList("dmrecord:216", DEST_UUID, ""), rows.get(0));
+            assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(1));
+            assertIterableEquals(Arrays.asList("dmrecord:607", DEST_UUID2, ""), rows.get(2));
         }
     }
 
     @Test
-    public void addArchivalCollectionMappingsWithoutPidTest() throws Exception {
-        solrResponseWithoutPid();
+    public void addArchivalCollectionMappingsWithPidGilmerTest() throws Exception {
+        solrResponseWithPidGilmer();
+        Path destinationMappingsPath = project.getDestinationMappingsPath();
+
+        var options = new DestinationMappingOptions();
+        options.setFieldName("groupa");
+
+        service.addArchivalCollectionMappings(options);
+        assertTrue(Files.exists(destinationMappingsPath));
+
+        try (
+                Reader reader = Files.newBufferedReader(destinationMappingsPath);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(DestinationsInfo.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertIterableEquals(Arrays.asList("groupa:group2", DEST_UUID2, ""), rows.get(0));
+            assertIterableEquals(Arrays.asList("groupa:group1", DEST_UUID, ""), rows.get(1));
+        }
+    }
+
+    @Test
+    public void addArchivalCollectionMappingsWithoutPidKeepsakesTest() throws Exception {
+        solrResponseWithoutPidKeepsakes();
         Path destinationMappingsPath = project.getDestinationMappingsPath();
 
         var options = new DestinationMappingOptions();
         options.setFieldName("dmrecord");
+        options.setDefaultCollection("001234");
+        options.setDefaultDestination(DEST_UUID3);
 
         service.addArchivalCollectionMappings(options);
 
@@ -177,18 +235,20 @@ public class ArchivalDestinationsServiceTest {
                 Reader reader = Files.newBufferedReader(destinationMappingsPath);
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
-                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withHeader(DestinationsInfo.CSV_HEADERS)
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(0));
-            assertIterableEquals(Arrays.asList("dmrecord:607", "", "607"), rows.get(1));
+            assertIterableEquals(Arrays.asList("dmrecord:216", "", "216"), rows.get(0));
+            assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(1));
+            assertIterableEquals(Arrays.asList("dmrecord:607", "", "607"), rows.get(2));
+            assertIterableEquals(Arrays.asList("default", DEST_UUID3, "001234"), rows.get(3));
         }
     }
 
     @Test
-    public void addArchivalCollectionMappingsWithoutForceFlagTest() throws Exception {
-        solrResponseWithPid();
+    public void addArchivalCollectionMappingsWithoutForceFlagKeepsakesTest() throws Exception {
+        solrResponseWithPidKeepsakes();
         writeCsv(mappingBody("aid:40126,bdbd99af-36a5-4bab-9785-e3a802d3737e,"));
 
         var options = new DestinationMappingOptions();
@@ -204,8 +264,8 @@ public class ArchivalDestinationsServiceTest {
     }
 
     @Test
-    public void addArchivalCollectionMappingsWithForceFlagTest() throws Exception {
-        solrResponseWithPid();
+    public void addArchivalCollectionMappingsWithForceFlagKeepsakesTest() throws Exception {
+        solrResponseWithPidKeepsakes();
         Path destinationMappingsPath = project.getDestinationMappingsPath();
         writeCsv(mappingBody("aid:40126,2720138a-a1ab-4b73-b7bc-6aabe75620c0,"));
 
@@ -219,12 +279,13 @@ public class ArchivalDestinationsServiceTest {
                 Reader reader = Files.newBufferedReader(destinationMappingsPath);
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
-                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withHeader(DestinationsInfo.CSV_HEADERS)
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(0));
-            assertIterableEquals(Arrays.asList("dmrecord:607", "bdbd99af-36a5-4bab-9785-e3a802d3737e", ""), rows.get(1));
+            assertIterableEquals(Arrays.asList("dmrecord:216", DEST_UUID, ""), rows.get(0));
+            assertIterableEquals(Arrays.asList("dmrecord:604", "", "604"), rows.get(1));
+            assertIterableEquals(Arrays.asList("dmrecord:607", DEST_UUID2, ""), rows.get(2));
         }
     }
 
@@ -241,28 +302,63 @@ public class ArchivalDestinationsServiceTest {
         assertTrue(actualMessage.contains(expectedMessage));
     }
 
-    private void solrResponseWithoutPid() throws Exception {
+    private void solrResponseWithoutPidKeepsakes() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
         QueryResponse testResponse = new QueryResponse();
         testResponse.setResponse(new NamedList<>(Map.of("response", new SolrDocumentList())));
         when(solrClient.query(solrQueryCaptor.capture())).thenReturn(testResponse);
     }
 
-    private void solrResponseWithPid() throws Exception {
+    private void solrResponseWithPidKeepsakes() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
 
-        QueryResponse testResponseA = new QueryResponse();
-        SolrDocument testDocumentA = new SolrDocument();
-        testDocumentA.addField(ArchivalDestinationsService.PID_KEY, "bdbd99af-36a5-4bab-9785-e3a802d3737e");
-        SolrDocumentList testListA = new SolrDocumentList();
-        testListA.add(testDocumentA);
-        testResponseA.setResponse(new NamedList<>(Map.of("response", testListA)));
+        QueryResponse testResponse1 = new QueryResponse();
+        SolrDocument testDocument1 = new SolrDocument();
+        testDocument1.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID);
+        SolrDocumentList testList1 = new SolrDocumentList();
+        testList1.add(testDocument1);
+        testResponse1.setResponse(new NamedList<>(Map.of("response", testList1)));
 
-        QueryResponse testResponseB = new QueryResponse();
-        testResponseB.setResponse(new NamedList<>(Map.of("response", new SolrDocumentList())));
+        QueryResponse testResponse2 = new QueryResponse();
+        testResponse2.setResponse(new NamedList<>(Map.of("response", new SolrDocumentList())));
 
-        when(solrClient.query(solrQueryCaptor.capture())).thenReturn(testResponseA).thenReturn(testResponseB)
-                .thenReturn(testResponseA);
+        QueryResponse testResponse3 = new QueryResponse();
+        SolrDocument testDocument3 = new SolrDocument();
+        testDocument3.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID2);
+        SolrDocumentList testList3 = new SolrDocumentList();
+        testList3.add(testDocument3);
+        testResponse3.setResponse(new NamedList<>(Map.of("response", testList3)));
+
+        when(solrClient.query(solrQueryCaptor.capture())).thenReturn(testResponse1).thenReturn(testResponse2)
+                .thenReturn(testResponse3);
+    }
+
+    private void solrResponseWithPidGilmer() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+
+        QueryResponse testResponse1 = new QueryResponse();
+        SolrDocument testDocument1 = new SolrDocument();
+        testDocument1.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID);
+        SolrDocumentList testList1 = new SolrDocumentList();
+        testList1.add(testDocument1);
+        testResponse1.setResponse(new NamedList<>(Map.of("response", testList1)));
+
+        QueryResponse testResponse2 = new QueryResponse();
+        SolrDocument testDocument2 = new SolrDocument();
+        testDocument2.addField(ArchivalDestinationsService.PID_KEY, DEST_UUID2);
+        SolrDocumentList testList2 = new SolrDocumentList();
+        testList2.add(testDocument2);
+        testResponse2.setResponse(new NamedList<>(Map.of("response", testList2)));
+
+        when(solrClient.query(any())).thenAnswer(invocation -> {
+            var query = invocation.getArgument(0, SolrQuery.class);
+            var solrQ = query.get("q");
+            if (solrQ.equals(ArchivalDestinationsService.COLLECTION_ID + ":group1")) {
+                return testResponse1;
+            } else {
+                return testResponse2;
+            }
+        });
     }
 
     private String mappingBody(String... rows) {

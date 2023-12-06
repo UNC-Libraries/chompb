@@ -34,9 +34,14 @@ public class DestinationMappingOptions {
                     "The default will be used during SIP generation for objects if they do not have explicit mappings.",})
     private String fieldName;
 
-    @Option(names = { "-f", "--force"},
+    @Option(names = {"-f", "--force"},
             description = "Overwrite destination mapping if one already exists")
     private boolean force;
+
+    @Option(names = {"-ac", "--archival-collections"},
+            description = "Generate the destination mappings file by matching CDM field values to " +
+                    "the archival collection number in boxc")
+    private boolean archivalCollections;
 
     public String getDefaultDestination() {
         return defaultDestination;
@@ -76,5 +81,13 @@ public class DestinationMappingOptions {
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
+    }
+
+    public boolean isArchivalCollections() {
+        return archivalCollections;
+    }
+
+    public void setArchivalCollections(boolean archivalCollections) {
+        this.archivalCollections = archivalCollections;
     }
 }
