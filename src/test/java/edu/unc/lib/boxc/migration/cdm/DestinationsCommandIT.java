@@ -336,17 +336,7 @@ public class DestinationsCommandIT extends AbstractCommandIT {
 
     @Test
     public void generateArchivalDestTest() throws Exception {
-        testHelper.indexExportData("grouped_gilmer");
-        //groupa:group1
-        stubFor(get(urlEqualTo("/solr/select?q=collectionId%3Agroup1&fq=resourceType%3ACollection&wt=javabin&version=2"))
-                .willReturn(aResponse()
-                        .withBodyFile("arc_coll_resp_group1.bin")
-                        .withHeader("Content-Type", "application/octet-stream")));
-        //groupa:group2
-        stubFor(get(urlEqualTo("/solr/select?q=collectionId%3Agroup2&fq=resourceType%3ACollection&wt=javabin&version=2"))
-                .willReturn(aResponse()
-                        .withBodyFile("arc_coll_resp_group2.bin")
-                        .withHeader("Content-Type", "application/octet-stream")));
+        archivalCollectionSolrResponse();
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -370,6 +360,82 @@ public class DestinationsCommandIT extends AbstractCommandIT {
                 "--archival-collections"};
         executeExpectFailure(args);
         assertOutputContains("Must provide a field name");
+    }
+
+    @Test
+    public void validateValidArchivalDestTest() throws Exception {
+        archivalCollectionSolrResponse();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
+                "destinations", "generate",
+                "-ac",
+                "-n", "groupa",
+                "-dd", DEST_UUID,
+                "-dc", "00123" };
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "validate" };
+        executeExpectSuccess(args2);
+
+        assertOutputContains("PASS: Destination mapping at path " + project.getDestinationMappingsPath() + " is valid");
+    }
+
+    @Test
+    public void validateInvalidArchivalDestTest() throws Exception {
+        archivalCollectionSolrResponse();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
+                "destinations", "generate",
+                "-ac",
+                "-n", "groupa",
+                "-dd", DEST_UUID,
+                "-dc", "00123" };
+        executeExpectSuccess(args);
+
+        // Add a duplicate destination mapping
+        FileUtils.write(project.getDestinationMappingsPath().toFile(),
+                "groupa:," + DEST_UUID + ",", StandardCharsets.UTF_8, true);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "validate" };
+        executeExpectFailure(args2);
+
+        assertOutputContains("FAIL: Destination mapping at path " + project.getDestinationMappingsPath()
+                + " is invalid");
+    }
+
+    @Test
+    public void validateInvalidFieldNameArchivalDestTest() throws Exception {
+        archivalCollectionSolrResponse();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
+                "destinations", "generate",
+                "-ac",
+                "-n", "groupa",
+                "-dd", DEST_UUID,
+                "-dc", "00123" };
+        executeExpectSuccess(args);
+
+        // Add a duplicate destination mapping
+        FileUtils.write(project.getDestinationMappingsPath().toFile(),
+                "groupa:test," + DEST_UUID + ",", StandardCharsets.UTF_8, true);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "destinations", "validate" };
+        executeExpectFailure(args2);
+
+        assertOutputContains("FAIL: Destination mapping at path " + project.getDestinationMappingsPath()
+                + " is invalid");
     }
 
     private void assertDefaultMapping(String expectedDest, String expectedColl) throws Exception {
@@ -412,5 +478,19 @@ public class DestinationsCommandIT extends AbstractCommandIT {
     private void setIndexedDate() throws Exception {
         project.getProjectProperties().setIndexedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
+    }
+
+    private void archivalCollectionSolrResponse() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        //groupa:group1
+        stubFor(get(urlEqualTo("/solr/select?q=collectionId%3Agroup1&fq=resourceType%3ACollection&wt=javabin&version=2"))
+                .willReturn(aResponse()
+                        .withBodyFile("arc_coll_resp_group1.bin")
+                        .withHeader("Content-Type", "application/octet-stream")));
+        //groupa:group2
+        stubFor(get(urlEqualTo("/solr/select?q=collectionId%3Agroup2&fq=resourceType%3ACollection&wt=javabin&version=2"))
+                .willReturn(aResponse()
+                        .withBodyFile("arc_coll_resp_group2.bin")
+                        .withHeader("Content-Type", "application/octet-stream")));
     }
 }

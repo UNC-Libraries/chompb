@@ -256,7 +256,7 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
     @Test
     public void archivalCollNumsWithPidTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        writeCsv(mappingBody("aid:40126,bdbd99af-36a5-4bab-9785-e3a802d3737e,"));
+        writeCsv(mappingBody("groupa:group1,bdbd99af-36a5-4bab-9785-e3a802d3737e,"));
 
         statusService.report(Verbosity.VERBOSE);
 

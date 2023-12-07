@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -32,6 +33,7 @@ public class DestinationsValidator {
     public static final Pattern DEST_PATTERN = Pattern.compile(RepositoryPathConstants.UUID_PATTERN);
 
     private MigrationProject project;
+    private List<String> exportFields;
 
     /**
      * Validate the destination mappings for this project.
@@ -86,6 +88,18 @@ public class DestinationsValidator {
                     if (previousIds.contains(id)) {
                         errors.add("Object ID assigned to multiple destinations, see line " + i);
                     } else {
+                        if (id.contains(":")) {
+                            if (id.endsWith(":")) {
+                                errors.add("Field value after ':' must not be blank");
+                            } else {
+                                String[] splitId = id.split(":");
+                                String idField = splitId[0];
+                                List<String> exportFields = getExportFields();
+                                if (!exportFields.contains(idField)) {
+                                    errors.add("Invalid field name '" + idField + "', does not exist in project");
+                                }
+                            }
+                        }
                         previousIds.add(id);
                     }
                 }
@@ -160,6 +174,14 @@ public class DestinationsValidator {
      */
     public static boolean isValidDestination(String destination) {
         return DEST_PATTERN.matcher(destination).matches();
+    }
+
+    private List<String> getExportFields() {
+        if (exportFields == null) {
+            CdmFieldService fieldService = new CdmFieldService();
+            exportFields = fieldService.loadFieldsFromProject(project).listAllExportFields();
+        }
+        return exportFields;
     }
 
     public void setProject(MigrationProject project) {
