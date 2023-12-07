@@ -33,6 +33,7 @@ public class DestinationsValidator {
     public static final Pattern DEST_PATTERN = Pattern.compile(RepositoryPathConstants.UUID_PATTERN);
 
     private MigrationProject project;
+    private List<String> exportFields;
 
     /**
      * Validate the destination mappings for this project.
@@ -93,9 +94,7 @@ public class DestinationsValidator {
                             } else {
                                 String[] splitId = id.split(":");
                                 String idField = splitId[0];
-                                CdmFieldService fieldService = new CdmFieldService();
-                                List<String> exportFields = fieldService.loadFieldsFromProject(project)
-                                        .listAllExportFields();
+                                List<String> exportFields = getExportFields();
                                 if (!exportFields.contains(idField)) {
                                     errors.add("Invalid field name '" + idField + "', does not exist in project");
                                 }
@@ -175,6 +174,14 @@ public class DestinationsValidator {
      */
     public static boolean isValidDestination(String destination) {
         return DEST_PATTERN.matcher(destination).matches();
+    }
+
+    private List<String> getExportFields() {
+        if (exportFields == null) {
+            CdmFieldService fieldService = new CdmFieldService();
+            exportFields = fieldService.loadFieldsFromProject(project).listAllExportFields();
+        }
+        return exportFields;
     }
 
     public void setProject(MigrationProject project) {
