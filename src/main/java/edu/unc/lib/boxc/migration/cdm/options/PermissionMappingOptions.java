@@ -5,20 +5,17 @@ import picocli.CommandLine.Option;
 public class PermissionMappingOptions {
     @Option(names = {"-id", "--cdm-id"},
             description = {
-                    "CDM ID(s) going to a specific box-c deposit destination in this migration project.",
-                    "Must be a CDM ID or a comma-delimited list of CDM IDs"})
+                    "CDM ID(s) of the item(s) being mapping"})
     private String cdmId;
 
     @Option(names = {"-e", "--everyone"},
             description = {
-                    "CDM ID(s) going to a specific box-c deposit destination in this migration project.",
-                    "Must be a CDM ID or a comma-delimited list of CDM IDs"})
+                    "The patron access role assigned to the “everyone” group."})
     private String everyone;
 
     @Option(names = {"-a", "--authenticated"},
             description = {
-                    "CDM ID(s) going to a specific box-c deposit destination in this migration project.",
-                    "Must be a CDM ID or a comma-delimited list of CDM IDs"})
+                    "The patron access role assigned to the “authenticated” group (anyone that is logged in)."})
     private String authenticated;
 
     @Option(names = {"-f", "--force"},
@@ -26,7 +23,7 @@ public class PermissionMappingOptions {
     private boolean force;
 
     @Option(names = {"-so", "--staff-only"},
-            description = "Staff only permissions, 'everyone' field and 'authenticated' field set to 'none'.")
+            description = "Staff only permissions, 'everyone' field and 'authenticated' field set to 'none'")
     private boolean staffOnly;
 
     public String getCdmId() {
