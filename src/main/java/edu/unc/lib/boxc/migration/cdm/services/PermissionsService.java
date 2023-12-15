@@ -3,7 +3,6 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
-import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
@@ -33,8 +32,6 @@ public class PermissionsService {
     private static final Logger log = getLogger(PermissionsService.class);
 
     private MigrationProject project;
-    private String everyoneField;
-    private String authenticatedField;
     private List<String> patronRoles;
 
     /**
@@ -45,44 +42,25 @@ public class PermissionsService {
         Path fieldsPath = project.getPermissionsPath();
         ensureMappingState(options.isForce());
 
-        List<String> patronRoles = getPatronRoles();
+        String everyoneField;
+        String authenticatedField;
 
-        // Everyone permission
-        if (options.isStaffOnly()) {
-            everyoneField = "none";
-        } else if (options.getEveryone() != null) {
-            if (patronRoles.contains(options.getEveryone())) {
-                everyoneField = options.getEveryone();
-            } else {
-                throw new IllegalArgumentException("Everyone value is invalid. " +
-                        "Must be one of the following patron roles: " + patronRoles);
-            }
+        // Permissions
+        if (options.isStaffOnly() || options.getEveryone() != null || options.getAuthenticated() != null) {
+            everyoneField = getAssignedRoleValue(options.isStaffOnly(), options.getEveryone());
+            authenticatedField = getAssignedRoleValue(options.isStaffOnly(), options.getAuthenticated());
         } else {
             // if no permissions/roles are specified, default to canViewOriginals
-            everyoneField = "canViewOriginals";
-        }
-
-        // Authenticated permission
-        if (options.isStaffOnly()) {
-            authenticatedField = "none";
-        } else if (options.getAuthenticated() != null) {
-            if (patronRoles.contains(options.getAuthenticated())) {
-                authenticatedField = options.getAuthenticated();
-            } else {
-                throw new IllegalArgumentException("Authenticated value is invalid. " +
-                        "Must be one of the following patron roles: " + patronRoles);
-            }
-        } else {
-            // if no permissions/roles are specified, default to canViewOriginals
-            authenticatedField = "canViewOriginals";
+            everyoneField = UserRole.canViewOriginals.getPredicate();
+            authenticatedField = UserRole.canViewOriginals.getPredicate();
         }
 
         try (
                 BufferedWriter writer = Files.newBufferedWriter(fieldsPath);
                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(PermissionsInfo.CSV_HEADERS));
         ) {
-            if (options.getCdmId() != null && options.getCdmId().matches("default")) {
-                csvPrinter.printRecord(DestinationsInfo.DEFAULT_ID,
+            if (options.getCdmId() != null && options.getCdmId().matches(PermissionsInfo.DEFAULT_ID)) {
+                csvPrinter.printRecord(PermissionsInfo.DEFAULT_ID,
                         everyoneField,
                         authenticatedField);
             }
@@ -151,6 +129,21 @@ public class PermissionsService {
             }
         }
         return patronRoles;
+    }
+
+    private String getAssignedRoleValue(boolean isStaffOnly, UserRole role) {
+        String roleValue;
+        List<String> patronRoles = getPatronRoles();
+
+        if (isStaffOnly) {
+            roleValue = UserRole.none.getPredicate();
+        } else if (role.isPatronRole()) {
+            roleValue = role.getPredicate();
+        } else {
+            throw new IllegalArgumentException("Assigned role value is invalid. " +
+                    "Must be one of the following patron roles: " + patronRoles);
+        }
+        return roleValue;
     }
 
     public void setProject(MigrationProject project) {

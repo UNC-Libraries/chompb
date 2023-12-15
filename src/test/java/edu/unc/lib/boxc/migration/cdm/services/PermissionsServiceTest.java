@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
@@ -62,8 +63,8 @@ public class PermissionsServiceTest {
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
         options.setCdmId("default");
-        options.setEveryone("canViewMetadata");
-        options.setAuthenticated("canViewMetadata");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
 
         service.generateDefaultPermissions(options);
         assertTrue(Files.exists(permissionsMappingPath));
@@ -127,14 +128,14 @@ public class PermissionsServiceTest {
     public void generateDefaultPermissionsInvalidTest() throws Exception {
         var options = new PermissionMappingOptions();
         options.setCdmId("default");
-        options.setEveryone("canViewMetadata");
-        options.setAuthenticated("test");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canManage);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             service.generateDefaultPermissions(options);
         });
 
-        String expectedMessage = "Authenticated value is invalid. Must be one of the following patron roles: " +
+        String expectedMessage = "Assigned role value is invalid. Must be one of the following patron roles: " +
                 "[none, canDiscover, canViewMetadata, canViewAccessCopies, canViewOriginals]";
         String actualMessage = exception.getMessage();
         assertTrue(actualMessage.contains(expectedMessage));
@@ -146,8 +147,8 @@ public class PermissionsServiceTest {
 
         var options = new PermissionMappingOptions();
         options.setCdmId("default");
-        options.setEveryone("canViewMetadata");
-        options.setAuthenticated("canViewMetadata");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
 
         Exception exception = assertThrows(StateAlreadyExistsException.class, () -> {
             service.generateDefaultPermissions(options);
@@ -165,8 +166,8 @@ public class PermissionsServiceTest {
 
         var options = new PermissionMappingOptions();
         options.setCdmId("default");
-        options.setEveryone("canViewMetadata");
-        options.setAuthenticated("canViewMetadata");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
         options.setForce(true);
 
         service.generateDefaultPermissions(options);

@@ -1,22 +1,20 @@
 package edu.unc.lib.boxc.migration.cdm.options;
 
+import edu.unc.lib.boxc.auth.api.UserRole;
 import picocli.CommandLine.Option;
 
 public class PermissionMappingOptions {
     @Option(names = {"-id", "--cdm-id"},
-            description = {
-                    "CDM ID(s) of the item(s) being mapping"})
+            description = "CDM ID(s) of the item(s) being mapping")
     private String cdmId;
 
     @Option(names = {"-e", "--everyone"},
-            description = {
-                    "The patron access role assigned to the “everyone” group."})
-    private String everyone;
+            description = {"The patron access role assigned to the “everyone” group."})
+    private UserRole everyone;
 
     @Option(names = {"-a", "--authenticated"},
-            description = {
-                    "The patron access role assigned to the “authenticated” group (anyone that is logged in)."})
-    private String authenticated;
+            description = {"The patron access role assigned to the “authenticated” group (anyone that is logged in)."})
+    private UserRole authenticated;
 
     @Option(names = {"-f", "--force"},
             description = "Overwrite permission mapping if one already exists")
@@ -34,19 +32,19 @@ public class PermissionMappingOptions {
         this.cdmId = cdmId;
     }
 
-    public String getEveryone() {
+    public UserRole getEveryone() {
         return everyone;
     }
 
-    public void setEveryone(String everyone) {
+    public void setEveryone(UserRole everyone) {
         this.everyone = everyone;
     }
 
-    public String getAuthenticated() {
+    public UserRole getAuthenticated() {
         return authenticated;
     }
 
-    public void setAuthenticated(String authenticated) {
+    public void setAuthenticated(UserRole authenticated) {
         this.authenticated = authenticated;
     }
 
