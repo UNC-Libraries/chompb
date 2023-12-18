@@ -5,7 +5,7 @@ import picocli.CommandLine.Option;
 
 public class PermissionMappingOptions {
     @Option(names = {"-id", "--cdm-id"},
-            description = "CDM ID(s) of the item(s) being mapping")
+            description = "CDM ID(s) of the item(s) being mapped")
     private String cdmId;
 
     @Option(names = {"-e", "--everyone"},
