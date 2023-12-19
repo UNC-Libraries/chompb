@@ -9,11 +9,11 @@ public class PermissionMappingOptions {
     private String cdmId;
 
     @Option(names = {"-e", "--everyone"},
-            description = {"The patron access role assigned to the “everyone” group."})
+            description = "The patron access role assigned to the “everyone” group.")
     private UserRole everyone;
 
     @Option(names = {"-a", "--authenticated"},
-            description = {"The patron access role assigned to the “authenticated” group (anyone that is logged in)."})
+            description = "The patron access role assigned to the “authenticated” group (anyone that is logged in).")
     private UserRole authenticated;
 
     @Option(names = {"-f", "--force"},
