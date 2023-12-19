@@ -24,6 +24,7 @@ public class MigrationProject {
     public static final String SIPS_DIRNAME = "sips";
     public static final String REDIRECT_MAPPING_FILENAME = "redirect_mappings.csv";
     public static final String POST_MIGR_REPORT_FILENAME = "post_migration_report.csv";
+    public static final String PERMISSIONS_FILENAME = "patron_permissions.csv";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -161,5 +162,12 @@ public class MigrationProject {
      */
     public Path getPostMigrationReportPath() {
         return projectPath.resolve(POST_MIGR_REPORT_FILENAME);
+    }
+
+    /**
+     * @return Path of the patron permission mappings file
+     */
+    public Path getPermissionsPath() {
+        return projectPath.resolve(PERMISSIONS_FILENAME);
     }
 }
