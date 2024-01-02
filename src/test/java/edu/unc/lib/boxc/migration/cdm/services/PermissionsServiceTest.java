@@ -82,7 +82,7 @@ public class PermissionsServiceTest {
     }
 
     @Test
-    public void generateDefaultPermissionsNoneTest() throws Exception {
+    public void generateDefaultPermissionsUnspecifiedTest() throws Exception {
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
         options.setCdmId("default");
