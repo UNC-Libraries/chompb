@@ -33,7 +33,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateDefaultPermissionsNone() throws Exception {
+    public void generateDefaultPermissionsUnspecified() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
@@ -92,10 +92,12 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
                 "-id", "default",
-                "--everyone", "canViewMetadata",
-                "--authenticated", "canViewMetadata",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals",
                 "--force"};
         executeExpectSuccess(args);
+        assertDefaultMapping("default", "canViewOriginals",
+                "canViewOriginals");
     }
 
     private void assertDefaultMapping(String defaultValue, String expectedEveryone, String expectedAuthenticated)
