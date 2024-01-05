@@ -71,6 +71,7 @@ public class SipService {
     private SipPremisLogger sipPremisLogger;
     private MigrationProject project;
     private ChompbConfigService.ChompbConfig chompbConfig;
+    private PermissionsService permissionsService;
     private PIDMinter pidMinter;
     private CdmToDestMapper cdmToDestMapper = new CdmToDestMapper();
     private WorkGeneratorFactory workGeneratorFactory;
@@ -103,6 +104,11 @@ public class SipService {
         workGeneratorFactory.setPostMigrationReportService(postMigrationReportService);
         workGeneratorFactory.setAggregateTopMappingService(aggregateTopMappingService);
         workGeneratorFactory.setAggregateBottomMappingService(aggregateBottomMappingService);
+        try {
+            workGeneratorFactory.setPermissionsInfo(permissionsService.loadMappings(project));
+        } catch (NoSuchFileException e) {
+            log.debug("No permissions mappings file, no permissions will be added to the SIP");
+        }
         try {
             workGeneratorFactory.setAccessFilesInfo(accessFileService.loadMappings());
         } catch (NoSuchFileException e) {
@@ -366,6 +372,10 @@ public class SipService {
 
     public void setPremisLoggerFactory(PremisLoggerFactory premisLoggerFactory) {
         this.premisLoggerFactory = premisLoggerFactory;
+    }
+
+    public void setPermissionsService(PermissionsService permissionsService) {
+        this.permissionsService = permissionsService;
     }
 
     public void setPidMinter(PIDMinter pidMinter) {

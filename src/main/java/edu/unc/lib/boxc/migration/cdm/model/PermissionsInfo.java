@@ -31,6 +31,21 @@ public class PermissionsInfo {
     }
 
     /**
+     * @return default mapping, or none if no match
+     */
+    public PermissionsInfo.PermissionMapping getDefaultMapping() {
+        return this.mappings.stream().filter(m -> m.getId().equals(DEFAULT_ID)).findFirst().orElse(null);
+    }
+
+    /**
+     * @param cdmId
+     * @return mapping with matching cdm id, or default mapping if no match
+     */
+    public PermissionsInfo.PermissionMapping getMappingByCdmId(String cdmId) {
+        return this.mappings.stream().filter(m -> m.getId().equals(cdmId)).findFirst().orElse(getDefaultMapping());
+    }
+
+    /**
      * An individual permission mapping
      * @author krwong
      */
