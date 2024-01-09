@@ -100,6 +100,49 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "canViewOriginals");
     }
 
+    @Test
+    public void validateValidDefaultPermissions() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-id", "default",
+                "--everyone", "canViewMetadata",
+                "--authenticated", "canViewMetadata"};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "validate" };
+        executeExpectSuccess(args2);
+
+        assertOutputContains("PASS: Permissions mapping at path " + project.getPermissionsPath() + " is valid");
+    }
+
+    @Test
+    public void validateInvalidDefaultPermissions() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-id", "default",
+                "--everyone", "canViewMetadata",
+                "--authenticated", "canViewMetadata"};
+        executeExpectSuccess(args);
+
+        // Add a duplicate default permissions mapping
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "default,none,none", StandardCharsets.UTF_8, true);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "validate" };
+        executeExpectFailure(args2);
+
+        assertOutputContains("FAIL: Permissions mapping at path " + project.getPermissionsPath()
+                + " is invalid");
+        assertOutputContains("Can only map default permissions once, encountered reassignment at line 3");
+        assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
+    }
+
     private void assertDefaultMapping(String defaultValue, String expectedEveryone, String expectedAuthenticated)
             throws IOException {
         var mappings = getMappings();
