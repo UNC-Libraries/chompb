@@ -1,7 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.validators;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
-import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
