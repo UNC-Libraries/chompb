@@ -22,11 +22,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import edu.unc.lib.boxc.auth.api.UserRole;
+import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
+import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -93,6 +96,7 @@ public class SipServiceHelper {
     private ArchivalDestinationsService archivalDestinationsService;
     private CdmIndexService indexService;
     private GroupMappingService groupMappingService;
+    private PermissionsService permissionsService;
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
     private ChompbConfigService.ChompbConfig chompbConfig;
@@ -125,6 +129,8 @@ public class SipServiceHelper {
         archivalDestinationsService.setProject(project);
         archivalDestinationsService.setIndexService(indexService);
         archivalDestinationsService.setDestinationsService(destinationsService);
+        permissionsService = new PermissionsService();
+        permissionsService.setProject(project);
 
         Files.createDirectories(project.getExportPath());
     }
@@ -141,6 +147,7 @@ public class SipServiceHelper {
         service.setChompbConfig(chompbConfig);
         service.setAggregateTopMappingService(getAggregateFileMappingService());
         service.setAggregateBottomMappingService(getAggregateBottomMappingService());
+        service.setPermissionsService(permissionsService);
         return service;
     }
 
@@ -311,6 +318,14 @@ public class SipServiceHelper {
         options.setDefaultCollection(defColl);
         options.setFieldName(fieldName);
         archivalDestinationsService.addArchivalCollectionMappings(options);
+    }
+
+    public void generatePermissionsMapping(String cdmId, UserRole everyone, UserRole authenticated) throws Exception {
+        PermissionMappingOptions options = new PermissionMappingOptions();
+        options.setCdmId(cdmId);
+        options.setEveryone(everyone);
+        options.setAuthenticated(authenticated);
+        permissionsService.generateDefaultPermissions(options);
     }
 
     public List<Path> populateSourceFiles(String... filenames) throws Exception {

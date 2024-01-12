@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services.sips;
 
+import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
@@ -32,6 +33,7 @@ public class WorkGeneratorFactory {
     private AggregateFileMappingService aggregateTopMappingService;
     private AggregateFileMappingService aggregateBottomMappingService;
     private PIDMinter pidMinter;
+    private PermissionsInfo permissionsInfo;
 
     public WorkGenerator create(String cdmId, String cdmCreated, String entryType) throws IOException {
         WorkGenerator gen;
@@ -55,6 +57,7 @@ public class WorkGeneratorFactory {
         gen.pidMinter = pidMinter;
         gen.redirectMappingService = redirectMappingService;
         gen.postMigrationReportService = postMigrationReportService;
+        gen.permissionsInfo = permissionsInfo;
         return gen;
     }
 
@@ -108,5 +111,9 @@ public class WorkGeneratorFactory {
 
     public void setAggregateBottomMappingService(AggregateFileMappingService aggregateBottomMappingService) {
         this.aggregateBottomMappingService = aggregateBottomMappingService;
+    }
+
+    public void setPermissionsInfo(PermissionsInfo permissionsInfo) {
+        this.permissionsInfo = permissionsInfo;
     }
 }

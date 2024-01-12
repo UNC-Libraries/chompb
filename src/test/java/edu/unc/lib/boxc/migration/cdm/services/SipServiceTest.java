@@ -1,10 +1,12 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
+import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.options.AggregateFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
@@ -984,6 +986,45 @@ public class SipServiceTest {
         List<RDFNode> depBagChildren3 = depBag3.iterator().toList();
         assertEquals(2, depBagChildren3.size());
         assertPersistedSipInfoMatches(sip3);
+    }
+
+    @Test
+    public void generateSipsWithDefaultPermissions() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.generatePermissionsMapping(PermissionsInfo.DEFAULT_ID, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        assertTrue(workResc1.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertTrue(workResc1.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        assertTrue(workResc2.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertTrue(workResc2.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        assertTrue(workResc3.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertTrue(workResc3.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+
+        assertPersistedSipInfoMatches(sip);
     }
 
     private void solrResponseWithPid() throws Exception {
