@@ -53,7 +53,7 @@ public class StatusQueryService {
 
     // Count only file objects, exclude grouped/compound objects
     private Integer indexedFileObjectsCountCache;
-    protected int countIndexedFileObjects() {
+    public int countIndexedFileObjects() {
         if (indexedFileObjectsCountCache != null) {
             return indexedFileObjectsCountCache;
         }
@@ -91,7 +91,7 @@ public class StatusQueryService {
     }
 
     private Set<String> objectIdSetCache;
-    protected Set<String> getObjectIdSet() {
+    public Set<String> getObjectIdSet() {
         if (objectIdSetCache != null) {
             return new HashSet<>(objectIdSetCache);
         }
