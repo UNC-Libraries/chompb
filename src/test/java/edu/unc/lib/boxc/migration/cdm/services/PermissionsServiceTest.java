@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -136,10 +137,9 @@ public class PermissionsServiceTest {
         });
 
         String expectedMessage = "Assigned role value is invalid. Must be one of the following patron roles: " +
-                "[none, canDiscover, canViewMetadata, canViewAccessCopies, canViewOriginals]";
+                "[none, canDiscover, canViewMetadata, canViewAccessCopies, canViewReducedQuality, canViewOriginals]";
         String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage),
-                "Actual message did not contain expected text. Was: " + actualMessage);
+        assertEquals(expectedMessage, actualMessage);
     }
 
     @Test
@@ -157,7 +157,7 @@ public class PermissionsServiceTest {
 
         String expectedMessage = "Cannot create permissions, a file already exists. Use the force flag to overwrite.";
         String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
+        assertEquals(expectedMessage, actualMessage);
     }
 
     @Test
