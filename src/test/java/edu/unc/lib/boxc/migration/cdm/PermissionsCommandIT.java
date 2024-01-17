@@ -64,7 +64,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "--authenticated", "canManage"};
         executeExpectFailure(args);
         assertOutputContains("Assigned role value is invalid. Must be one of the following patron roles: " +
-                "[none, canDiscover, canViewMetadata, canViewAccessCopies, canViewOriginals]");
+                "[none, canDiscover, canViewMetadata, canViewAccessCopies, canViewReducedQuality, canViewOriginals]");
     }
 
     @Test
