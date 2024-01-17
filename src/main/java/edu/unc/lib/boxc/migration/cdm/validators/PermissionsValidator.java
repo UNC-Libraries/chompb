@@ -16,20 +16,23 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Validator for permission file mappings.
+ *
+ * @author krwong
+ */
 public class PermissionsValidator {
     private MigrationProject project;
     private List<String> patronRoles;
 
     /**
      * Validate the permissions mappings for this project.
-     * @param force if true, incomplete, overlapping and duplicate mappings will be ignored
      * @return A list of errors. An empty list will be returned for a valid mapping
      */
-    public List<String> validateMappings(boolean force) {
+    public List<String> validateMappings() {
         List<String> errors = new ArrayList<>();
         Path path = project.getPermissionsPath();
-        String defaultEveryone = null;
-        String defaultAuthenticated = null;
+        Boolean hasDefault = false;
 
         try (
             Reader reader = Files.newBufferedReader(path);
@@ -51,19 +54,16 @@ public class PermissionsValidator {
 
                 // default values
                 if (PermissionsInfo.DEFAULT_ID.equals(id)) {
-                    if (defaultEveryone != null && defaultAuthenticated != null) {
+                    if (hasDefault) {
                         errors.add("Can only map default permissions once, encountered reassignment at line " + i);
                     } else {
-                        defaultEveryone = everyone;
-                        defaultAuthenticated = authenticated;
+                        hasDefault = true;
                     }
                 }
 
                 // id
                 if (StringUtils.isBlank(id)) {
-                    if (!force) {
-                        errors.add("Invalid blank id at line " + i);
-                    }
+                    errors.add("Invalid blank id at line " + i);
                 } else if (!PermissionsInfo.DEFAULT_ID.equals(id)) {
                     errors.add("ID field must be 'default' (for now).");
                 }
@@ -71,7 +71,7 @@ public class PermissionsValidator {
                 // everyone
                 if (!StringUtils.isBlank(everyone)) {
                     List<String> patronRoles = getPatronRoles();
-                    if(!patronRoles.contains(everyone)) {
+                    if (!patronRoles.contains(everyone)) {
                         errors.add("Invalid 'everyone' permission at line " + i + ", " + everyone +
                                 " is not a valid patron permission");
                     }

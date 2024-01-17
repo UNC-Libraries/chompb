@@ -8,7 +8,6 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import edu.unc.lib.boxc.migration.cdm.validators.PermissionsValidator;
 import org.slf4j.Logger;
-import picocli.CommandLine;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Command;
@@ -56,13 +55,12 @@ public class PermissionsCommand {
 
     @Command(name = "validate",
             description = "Validate the permissions mapping file for this project")
-    public int validate(@CommandLine.Option(names = { "-f", "--force"},
-            description = "Ignore incomplete, overlapping and duplicate mappings") boolean force) throws Exception {
+    public int validate() throws Exception {
         try {
             initialize();
             PermissionsValidator validator = new PermissionsValidator();
             validator.setProject(project);
-            List<String> errors = validator.validateMappings(force);
+            List<String> errors = validator.validateMappings();
             if (errors.isEmpty()) {
                 outputLogger.info("PASS: Permissions mapping at path {} is valid",
                         project.getPermissionsPath());

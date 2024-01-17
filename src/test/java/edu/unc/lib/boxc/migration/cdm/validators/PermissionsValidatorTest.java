@@ -44,21 +44,21 @@ public class PermissionsValidatorTest {
     @Test
     public void validMappingsTest() throws Exception {
         writeCsv(mappingBody("default,none,none"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertNumberErrors(errors, 0);
     }
 
     @Test
     public void noMappingFileTest() throws Exception {
         Assertions.assertThrows(MigrationException.class, () -> {
-            validator.validateMappings(false);
+            validator.validateMappings();
         });
     }
 
     @Test
     public void noEntriesTest() throws Exception {
         writeCsv(mappingBody());
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasError(errors, "Permission mappings file contained no mappings");
         assertNumberErrors(errors, 1);
     }
@@ -66,7 +66,7 @@ public class PermissionsValidatorTest {
     @Test
     public void blankIdTest() throws Exception {
         writeCsv(mappingBody(",none,none"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasError(errors, "Invalid blank id at line 2");
         assertNumberErrors(errors, 1);
     }
@@ -74,7 +74,7 @@ public class PermissionsValidatorTest {
     @Test
     public void blankEveryoneTest() throws Exception {
         writeCsv(mappingBody("default,,none"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasError(errors, "No 'everyone' permission mapped at line 2");
         assertNumberErrors(errors, 1);
     }
@@ -82,7 +82,7 @@ public class PermissionsValidatorTest {
     @Test
     public void invalidEveryoneTest() throws Exception {
         writeCsv(mappingBody("default,okaynope,none"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasError(errors, "Invalid 'everyone' permission at line 2, okaynope is not a valid patron permission");
         assertNumberErrors(errors, 1);
     }
@@ -90,7 +90,7 @@ public class PermissionsValidatorTest {
     @Test
     public void blankAuthenticatedTest() throws Exception {
         writeCsv(mappingBody("default,none,"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasError(errors, "No 'authenticated' permission mapped at line 2");
         assertNumberErrors(errors, 1);
     }
@@ -98,7 +98,7 @@ public class PermissionsValidatorTest {
     @Test
     public void invalidAuthenticatedTest() throws Exception {
         writeCsv(mappingBody("default,none,okaynope"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasError(errors, "Invalid 'authenticated' permission at line 2, " +
                 "okaynope is not a valid patron permission");
         assertNumberErrors(errors, 1);
@@ -108,7 +108,7 @@ public class PermissionsValidatorTest {
     public void multipleDefaultsTest() throws Exception {
         writeCsv(mappingBody("default,none,none",
                 "default,canViewOriginals,canViewOriginals"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasErrorMatching(errors, "Can only map default permissions once.*at line 3");
         assertNumberErrors(errors, 1);
     }
@@ -116,7 +116,7 @@ public class PermissionsValidatorTest {
     @Test
     public void tooFewColumnsTest() throws Exception {
         writeCsv(mappingBody("default,none"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasError(errors, "Invalid entry at line 2, must be 3 columns but were 2");
         assertNumberErrors(errors, 1);
     }
@@ -124,7 +124,7 @@ public class PermissionsValidatorTest {
     @Test
     public void tooManyColumnsTest() throws Exception {
         writeCsv(mappingBody("default,none,none,none"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasError(errors, "Invalid entry at line 2, must be 3 columns but were 4");
         assertNumberErrors(errors, 1);
     }
@@ -132,7 +132,7 @@ public class PermissionsValidatorTest {
     @Test
     public void errorsOnSameLineTest() throws Exception {
         writeCsv(mappingBody("default,okaynope,"));
-        List<String> errors = validator.validateMappings(false);
+        List<String> errors = validator.validateMappings();
         assertHasError(errors, "Invalid 'everyone' permission at line 2, " +
                 "okaynope is not a valid patron permission");
         assertHasErrorMatching(errors, "No 'authenticated' permission mapped at line 2");
