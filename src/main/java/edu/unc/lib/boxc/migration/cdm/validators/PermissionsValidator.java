@@ -18,7 +18,6 @@ import java.util.List;
 
 /**
  * Validator for permission file mappings.
- *
  * @author krwong
  */
 public class PermissionsValidator {
