@@ -138,7 +138,8 @@ public class PermissionsServiceTest {
         String expectedMessage = "Assigned role value is invalid. Must be one of the following patron roles: " +
                 "[none, canDiscover, canViewMetadata, canViewAccessCopies, canViewOriginals]";
         String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
+        assertTrue(actualMessage.contains(expectedMessage),
+                "Actual message did not contain expected text. Was: " + actualMessage);
     }
 
     @Test
