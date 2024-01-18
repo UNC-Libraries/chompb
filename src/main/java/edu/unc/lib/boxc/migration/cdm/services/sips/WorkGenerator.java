@@ -1,8 +1,10 @@
 package edu.unc.lib.boxc.migration.cdm.services.sips;
 
+import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationSipEntry;
+import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
@@ -17,6 +19,7 @@ import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
@@ -29,6 +32,8 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -52,6 +57,7 @@ public class WorkGenerator {
     protected DescriptionsService descriptionsService;
     protected AccessFileService accessFileService;
     protected PostMigrationReportService postMigrationReportService;
+    protected PermissionsInfo permissionsInfo;
 
     protected String cdmId;
     protected String cdmCreated;
@@ -85,6 +91,9 @@ public class WorkGenerator {
         workBag = model.createBag(workPid.getRepositoryPath());
         workBag.addProperty(RDF.type, Cdr.Work);
         workBag.addLiteral(CdrDeposit.createTime, cdmCreated);
+
+        // add permission to work
+        addPermission(cdmId, workBag);
 
         // Copy description to SIP
         copyDescriptionToSip(workPid, expDescPath);
@@ -201,4 +210,17 @@ public class WorkGenerator {
     protected boolean isSingleItem() {
         return true;
     }
+
+    protected void addPermission(String cdmId, Resource resource) throws IOException {
+        if (permissionsInfo != null) {
+            PermissionsInfo.PermissionMapping permissionMapping = permissionsInfo.getMappingByCdmId(cdmId);
+            if (permissionMapping != null) {
+                Property everyoneValue = UserRole.valueOf(permissionMapping.getEveryone()).getProperty();
+                Property authenticatedValue = UserRole.valueOf(permissionMapping.getAuthenticated()).getProperty();
+                resource.addLiteral(everyoneValue, PUBLIC_PRINC);
+                resource.addLiteral(authenticatedValue, AUTHENTICATED_PRINC);
+            }
+        }
+    }
+
 }

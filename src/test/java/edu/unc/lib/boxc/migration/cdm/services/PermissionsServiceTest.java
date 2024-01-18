@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -136,9 +137,9 @@ public class PermissionsServiceTest {
         });
 
         String expectedMessage = "Assigned role value is invalid. Must be one of the following patron roles: " +
-                "[none, canDiscover, canViewMetadata, canViewAccessCopies, canViewOriginals]";
+                "[none, canDiscover, canViewMetadata, canViewAccessCopies, canViewReducedQuality, canViewOriginals]";
         String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
+        assertEquals(expectedMessage, actualMessage);
     }
 
     @Test
@@ -156,7 +157,7 @@ public class PermissionsServiceTest {
 
         String expectedMessage = "Cannot create permissions, a file already exists. Use the force flag to overwrite.";
         String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
+        assertEquals(expectedMessage, actualMessage);
     }
 
     @Test
@@ -185,6 +186,26 @@ public class PermissionsServiceTest {
         }
     }
 
+    @Test
+    public void loadPermissionMappingsTest() throws Exception {
+        writeCsv(mappingBody("default,canViewMetadata,canViewMetadata", "testId,none,none"));
+
+        PermissionsInfo info = service.loadMappings(project);
+        assertMappingPresent(info, "default", "canViewMetadata", "canViewMetadata");
+        assertMappingPresent(info, "testId", "none", "none");
+
+        PermissionsInfo.PermissionMapping mapping = info.getDefaultMapping();
+        assertEquals("canViewMetadata", mapping.getEveryone());
+        assertEquals("canViewMetadata", mapping.getAuthenticated());
+
+        PermissionsInfo.PermissionMapping defaultMapping = info.getMappingByCdmId("default");
+        assertEquals("canViewMetadata", defaultMapping.getEveryone());
+        assertEquals("canViewMetadata", defaultMapping.getAuthenticated());
+        PermissionsInfo.PermissionMapping testMapping = info.getMappingByCdmId("testId");
+        assertEquals("none", testMapping.getEveryone());
+        assertEquals("none", testMapping.getAuthenticated());
+    }
+
     private String mappingBody(String... rows) {
         return String.join(",", PermissionsInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
@@ -194,5 +215,13 @@ public class PermissionsServiceTest {
         FileUtils.write(project.getPermissionsPath().toFile(),
                 mappingBody, StandardCharsets.UTF_8);
         ProjectPropertiesSerialization.write(project);
+    }
+
+    private void assertMappingPresent(PermissionsInfo info, String cdmid, String everyoneValue, String authenticatedValue) {
+        List<PermissionsInfo.PermissionMapping> mappings = info.getMappings();
+        PermissionsInfo.PermissionMapping mapping = mappings.stream().filter(m -> m.getId().equals(cdmid)).findFirst().get();
+
+        assertEquals(everyoneValue, mapping.getEveryone());
+        assertEquals(authenticatedValue, mapping.getAuthenticated());
     }
 }
