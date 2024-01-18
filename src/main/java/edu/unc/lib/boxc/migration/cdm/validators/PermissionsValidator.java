@@ -63,8 +63,6 @@ public class PermissionsValidator {
                 // id
                 if (StringUtils.isBlank(id)) {
                     errors.add("Invalid blank id at line " + i);
-                } else if (!PermissionsInfo.DEFAULT_ID.equals(id)) {
-                    errors.add("ID field must be 'default' (for now).");
                 }
 
                 // everyone

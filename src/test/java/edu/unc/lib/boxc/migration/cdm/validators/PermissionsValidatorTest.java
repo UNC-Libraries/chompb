@@ -43,7 +43,7 @@ public class PermissionsValidatorTest {
 
     @Test
     public void validMappingsTest() throws Exception {
-        writeCsv(mappingBody("default,none,none"));
+        writeCsv(mappingBody("25,none,none"));
         List<String> errors = validator.validateMappings();
         assertNumberErrors(errors, 0);
     }
@@ -73,7 +73,7 @@ public class PermissionsValidatorTest {
 
     @Test
     public void blankEveryoneTest() throws Exception {
-        writeCsv(mappingBody("default,,none"));
+        writeCsv(mappingBody("25,,none"));
         List<String> errors = validator.validateMappings();
         assertHasError(errors, "No 'everyone' permission mapped at line 2");
         assertNumberErrors(errors, 1);
@@ -97,7 +97,7 @@ public class PermissionsValidatorTest {
 
     @Test
     public void invalidAuthenticatedTest() throws Exception {
-        writeCsv(mappingBody("default,none,okaynope"));
+        writeCsv(mappingBody("26,none,okaynope"));
         List<String> errors = validator.validateMappings();
         assertHasError(errors, "Invalid 'authenticated' permission at line 2, " +
                 "okaynope is not a valid patron permission");
@@ -123,7 +123,7 @@ public class PermissionsValidatorTest {
 
     @Test
     public void tooManyColumnsTest() throws Exception {
-        writeCsv(mappingBody("default,none,none,none"));
+        writeCsv(mappingBody("25,none,none,none"));
         List<String> errors = validator.validateMappings();
         assertHasError(errors, "Invalid entry at line 2, must be 3 columns but were 4");
         assertNumberErrors(errors, 1);
@@ -131,7 +131,7 @@ public class PermissionsValidatorTest {
 
     @Test
     public void errorsOnSameLineTest() throws Exception {
-        writeCsv(mappingBody("default,okaynope,"));
+        writeCsv(mappingBody("26,okaynope,"));
         List<String> errors = validator.validateMappings();
         assertHasError(errors, "Invalid 'everyone' permission at line 2, " +
                 "okaynope is not a valid patron permission");
