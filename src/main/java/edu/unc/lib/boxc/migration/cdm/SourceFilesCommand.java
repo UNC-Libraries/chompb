@@ -10,6 +10,7 @@ import java.util.List;
 import edu.unc.lib.boxc.migration.cdm.options.ExportUnmappedSourceFilesOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmExportFilesService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
+import edu.unc.lib.boxc.migration.cdm.services.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -42,6 +43,7 @@ public class SourceFilesCommand {
     private SourceFileService sourceService;
     private CdmIndexService indexService;
     private CdmExportFilesService exportFilesService;
+    private SourceFilesSummaryService summaryService;
 
     @Command(name = "generate",
             description = {
@@ -146,8 +148,11 @@ public class SourceFilesCommand {
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         indexService = new CdmIndexService();
         indexService.setProject(project);
+        summaryService = new SourceFilesSummaryService();
+        summaryService.setProject(project);
         sourceService = new SourceFileService();
         sourceService.setIndexService(indexService);
+        sourceService.setSummaryService(summaryService);
         sourceService.setProject(project);
     }
 

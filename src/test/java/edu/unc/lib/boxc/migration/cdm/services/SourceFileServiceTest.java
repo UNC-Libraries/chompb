@@ -13,6 +13,8 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.AbstractOutputTest;
+import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
@@ -32,7 +34,7 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 /**
  * @author bbpennel
  */
-public class SourceFileServiceTest {
+public class SourceFileServiceTest extends AbstractOutputTest {
     private static final String PROJECT_NAME = "proj";
 
     @TempDir
@@ -41,6 +43,7 @@ public class SourceFileServiceTest {
     private MigrationProject project;
     private CdmIndexService indexService;
     private CdmFieldService fieldService;
+    private SourceFilesSummaryService summaryService;
     private SourceFileService service;
     private SipServiceHelper testHelper;
 
@@ -56,7 +59,10 @@ public class SourceFileServiceTest {
         Files.createDirectory(basePath);
         testHelper = new SipServiceHelper(project, basePath);
 
+        summaryService = testHelper.getSummaryService();
+        summaryService.setProject(project);
         service = testHelper.getSourceFileService();
+        service.setSummaryService(summaryService);
     }
 
     @Test
@@ -211,11 +217,12 @@ public class SourceFileServiceTest {
     }
 
     @Test
-    public void generateDryRunTest() throws Exception {
+    public void generateDryRunVerboseTest() throws Exception {
         OutputHelper.captureOutput(() -> {
             testHelper.indexExportData("mini_gilmer");
             SourceFileMappingOptions options = makeDefaultOptions();
             options.setDryRun(true);
+            options.setVerboseOutput(true);
             testHelper.addSourceFile("276_182_E.tif");
 
             service.generateMapping(options);
@@ -224,6 +231,20 @@ public class SourceFileServiceTest {
 
             assertMappedDateNotPresent();
         });
+    }
+
+    @Test
+    public void generateDryRunSummaryTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setDryRun(true);
+        testHelper.addSourceFile("276_182_E.tif");
+
+        service.generateMapping(options);
+
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
     @Test

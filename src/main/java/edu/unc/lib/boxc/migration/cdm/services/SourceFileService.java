@@ -8,6 +8,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -61,6 +62,8 @@ public class SourceFileService {
 
     protected MigrationProject project;
     private CdmIndexService indexService;
+    private SourceFilesSummaryService summaryService;
+    private int oldNumberFilesMapped;
 
     public SourceFileService() {
     }
@@ -83,6 +86,7 @@ public class SourceFileService {
         boolean needsMerge = false;
         // If performing an update, start by writing to a new temp mapping file
         if (options.getUpdate() && Files.exists(mappingPath)) {
+            oldNumberFilesMapped = summaryService.totalFilesMapped();
             mappingPath = getTempMappingPath();
             // Cleanup temp path if it already exists
             Files.deleteIfExists(mappingPath);
@@ -92,7 +96,8 @@ public class SourceFileService {
         // Iterate through exported objects in this collection to match against
         Connection conn = null;
         // Write to system.out if doing a dry run, otherwise write to mappings file
-        try (var csvPrinter = openMappingsPrinter((options.getDryRun() && !needsMerge) ? null : mappingPath)) {
+        try (var csvPrinter = openMappingsPrinter((options.getDryRun() && options.isVerboseOutput()
+                && !needsMerge ? null : mappingPath))) {
             Path basePath = options.getBasePath();
             // Query for all values of the export field to be used for matching
             conn = indexService.openDbConnection();
@@ -152,6 +157,11 @@ public class SourceFileService {
             throw new MigrationException("Error interacting with export index", e);
         } finally {
             CdmIndexService.closeDbConnection(conn);
+        }
+
+        // output summary
+        if (options.getDryRun()) {
+            summaryService.summary(oldNumberFilesMapped, Verbosity.NORMAL);
         }
 
         // Performing update operation with existing mapping, need to merge values
@@ -434,5 +444,9 @@ public class SourceFileService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    public void setSummaryService(SourceFilesSummaryService summaryService) {
+        this.summaryService = summaryService;
     }
 }

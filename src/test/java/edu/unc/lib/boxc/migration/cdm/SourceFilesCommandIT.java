@@ -76,7 +76,24 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateBasicMatchDryRunTest() throws Exception {
+    public void generateBasicMatchDryRunSummaryTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "--dry-run",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void generateBasicMatchDryRunVerboseTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("276_182_E.tif");
 
@@ -84,6 +101,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "generate",
                 "--dry-run",
+                "--verbose-output",
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
@@ -94,7 +112,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateNestedPatternMatchDryRunTest() throws Exception {
+    public void generateNestedPatternMatchDryRunVerboseTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
         Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
@@ -103,6 +121,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "generate",
                 "--dry-run",
+                "--verbose-output",
                 "-b", basePath.toString(),
                 "-p", "(\\d+)\\_(\\d+)_E.tif",
                 "-t", "00$1_op0$2_0001_e.tif" };
@@ -115,7 +134,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateUpdateAddSourceFileDryRunTest() throws Exception {
+    public void generateUpdateAddSourceFileDryRunVerboseTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("276_182_E.tif");
 
@@ -131,6 +150,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "source_files", "generate",
                 "-u",
                 "--dry-run",
+                "--verbose-output",
                 "-b", basePath.toString()};
         executeExpectSuccess(args2);
 
