@@ -7,6 +7,7 @@ import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.services.SourceFilesSummaryService;
 import edu.unc.lib.boxc.migration.cdm.validators.AggregateFilesValidator;
 import edu.unc.lib.boxc.migration.cdm.validators.SourceFilesValidator;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +37,7 @@ public class AggregateFilesCommand {
     private MigrationProject project;
     private AggregateFileMappingService aggregateService;
     private CdmIndexService indexService;
+    private SourceFilesSummaryService summaryService;
 
     @CommandLine.Command(name = "generate",
             description = {
@@ -130,8 +132,11 @@ public class AggregateFilesCommand {
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         indexService = new CdmIndexService();
         indexService.setProject(project);
+        summaryService = new SourceFilesSummaryService();
+        summaryService.setProject(project);
         aggregateService = new AggregateFileMappingService(sortBottom);
         aggregateService.setIndexService(indexService);
+        aggregateService.setSummaryService(summaryService);
         aggregateService.setProject(project);
     }
 }

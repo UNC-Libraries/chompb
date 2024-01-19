@@ -119,6 +119,7 @@ public class SipServiceHelper {
         indexService.setFieldService(fieldService);
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(indexService);
+        sourceFileService.setSummaryService(summaryService);
         sourceFileService.setProject(project);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
@@ -489,6 +490,7 @@ public class SipServiceHelper {
             this.aggregateFileMappingService = new AggregateFileMappingService(false);
             this.aggregateFileMappingService.setProject(project);
             this.aggregateFileMappingService.setIndexService(indexService);
+            this.aggregateFileMappingService.setSummaryService(summaryService);
         }
         return this.aggregateFileMappingService;
     }
@@ -498,6 +500,7 @@ public class SipServiceHelper {
             this.aggregateBottomMappingService = new AggregateFileMappingService(true);
             this.aggregateBottomMappingService.setProject(project);
             this.aggregateBottomMappingService.setIndexService(indexService);
+            this.aggregateBottomMappingService.setSummaryService(summaryService);
         }
         return this.aggregateBottomMappingService;
     }

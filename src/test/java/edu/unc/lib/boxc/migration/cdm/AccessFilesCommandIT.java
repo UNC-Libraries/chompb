@@ -96,6 +96,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "access_files", "generate",
                 "--dry-run",
+                "--verbose-output",
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
@@ -117,6 +118,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "access_files", "generate",
                 "--dry-run",
+                "--verbose-output",
                 "-b", basePath.toString(),
                 "-p", "(\\d+)\\_(\\d+)_E.tif",
                 "-t", "00$1_op0$2_0001_e.tif" };

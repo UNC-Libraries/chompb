@@ -69,7 +69,7 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         testHelper.indexExportData("mini_keepsakes");
         var aggrPath1 = testHelper.addSourceFile("617.pdf");
         var aggrPath2 = testHelper.addSourceFile("620.pdf");
-        executeExpectSuccess(withDryRun(argsGenerate("find")));
+        executeExpectSuccess(withDryRun(withVerboseOutput(argsGenerate("find"))));
 
         assertOutputContains("604,617.cpd," + aggrPath1 + ",");
         assertOutputContains("607,620.cpd," + aggrPath2 + ",");
@@ -206,6 +206,11 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
     private List<String> withDryRun(List<String> args) {
         args.add("--dry-run");
+        return args;
+    }
+
+    private List<String> withVerboseOutput(List<String> args) {
+        args.add("--verbose-output");
         return args;
     }
 }

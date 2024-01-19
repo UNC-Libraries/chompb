@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.services.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -129,8 +130,11 @@ public class AccessFilesCommand {
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         CdmIndexService indexService = new CdmIndexService();
         indexService.setProject(project);
+        SourceFilesSummaryService summaryService = new SourceFilesSummaryService();
+        summaryService.setProject(project);
         accessService = new AccessFileService();
         accessService.setIndexService(indexService);
+        accessService.setSummaryService(summaryService);
         accessService.setProject(project);
     }
 
