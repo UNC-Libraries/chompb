@@ -14,6 +14,10 @@ import java.util.Set;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
+/**
+ * Service for source files summary
+ * @author krwong
+ */
 public class SourceFilesSummaryService {
     private static final Logger log = getLogger(SourceFilesSummaryService.class);
     protected static final String INDENT = "    ";

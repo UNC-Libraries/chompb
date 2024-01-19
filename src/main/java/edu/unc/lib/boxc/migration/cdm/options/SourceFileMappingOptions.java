@@ -84,6 +84,10 @@ public class SourceFileMappingOptions {
                     + " but without attempting to map them to any files")
     private boolean populateBlank;
 
+    @Option(names = { "-vo", "--verbose-output"},
+            description = "")
+    private boolean verboseOutput;
+
     public Path getBasePath() {
         return basePath;
     }
@@ -162,5 +166,13 @@ public class SourceFileMappingOptions {
 
     public void setPopulateBlank(boolean populateBlank) {
         this.populateBlank = populateBlank;
+    }
+
+    public boolean isVerboseOutput() {
+        return verboseOutput;
+    }
+
+    public void setVerboseOutput(boolean verboseOutput) {
+        this.verboseOutput = verboseOutput;
     }
 }
