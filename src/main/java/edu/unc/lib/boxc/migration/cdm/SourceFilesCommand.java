@@ -10,7 +10,7 @@ import java.util.List;
 import edu.unc.lib.boxc.migration.cdm.options.ExportUnmappedSourceFilesOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmExportFilesService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
-import edu.unc.lib.boxc.migration.cdm.services.SourceFilesSummaryService;
+import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 

@@ -1,9 +1,9 @@
-package edu.unc.lib.boxc.migration.cdm.services;
+package edu.unc.lib.boxc.migration.cdm.status;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
-import edu.unc.lib.boxc.migration.cdm.status.StatusQueryService;
+import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -25,23 +25,20 @@ public class SourceFilesSummaryService {
 
     private MigrationProject project;
     private StatusQueryService queryService;
+    private SourceFileService sourceFileService;
 
     /**
      * Display summary about source file mapping
      * @param verbosity
      */
-    public void summary(int oldNumberFilesMapped, Verbosity verbosity) {
-        int newFilesMapped = newFilesMapped(oldNumberFilesMapped);
+    public void summary(int oldNumberFilesMapped, int newNumberFilesMapped, Verbosity verbosity) {
+        int newFilesMapped = newFilesMapped(oldNumberFilesMapped, newNumberFilesMapped);
         int totalFilesMapped = totalFilesMapped();
         int totalObjects = totalFilesInProject();
 
         if (verbosity.isNormal()) {
-            showField("New Files Mapped", newFilesMapped);
-        }
-        if (verbosity.isNormal()) {
+            showField("New Files Mapped", newNumberFilesMapped);
             showField("Total Files Mapped", totalFilesMapped);
-        }
-        if (verbosity.isNormal()) {
             showField("Total Files in Project", totalObjects);
         }
     }
@@ -49,7 +46,7 @@ public class SourceFilesSummaryService {
     /**
      * @return number of new files mapped
      */
-    public int newFilesMapped(int oldNumberFilesMapped) {
+    public int newFilesMapped(int oldNumberFilesMapped, int newNumberFilesMapped) {
         int totalFilesMapped = totalFilesMapped();
         return totalFilesMapped - oldNumberFilesMapped;
     }
@@ -58,29 +55,23 @@ public class SourceFilesSummaryService {
      * @return number of files mapped
      */
     public int totalFilesMapped() {
-        int totalFilesMapped = 0;
-
         Set<String> indexedIds = getQueryService().getObjectIdSet();
         Set<String> mappedIds = new HashSet<>();
         SourceFileService sourceFileService = getSourceFileService();
-        sourceFileService.setProject(project);
         try {
             SourceFilesInfo info = sourceFileService.loadMappings();
             for (SourceFilesInfo.SourceFileMapping mapping : info.getMappings()) {
-                if (mapping.getSourcePaths() != null) {
-                    if (indexedIds.contains(mapping.getCdmId())) {
-                        mappedIds.add(mapping.getCdmId());
-                    }
+                if (mapping.getSourcePaths() != null && indexedIds.contains(mapping.getCdmId())) {
+                    mappedIds.add(mapping.getCdmId());
                 }
             }
-            totalFilesMapped = mappedIds.size();
             return mappedIds.size();
         } catch (IOException e) {
             log.error("Failed to load mappings", e);
             outputLogger.info("Failed to load mappings: {}", e.getMessage());
         }
 
-        return totalFilesMapped;
+        return 0;
     }
 
     /**
@@ -100,7 +91,9 @@ public class SourceFilesSummaryService {
     }
 
     protected SourceFileService getSourceFileService() {
-        return new SourceFileService();
+        this.sourceFileService = new SourceFileService();
+        sourceFileService.setProject(project);
+        return this.sourceFileService;
     }
 
     protected StatusQueryService getQueryService() {

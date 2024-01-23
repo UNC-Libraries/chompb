@@ -9,6 +9,7 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
+import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -64,6 +65,7 @@ public class SourceFileService {
     private CdmIndexService indexService;
     private SourceFilesSummaryService summaryService;
     private int oldNumberFilesMapped;
+    private int newNumberFilesMapped;
 
     public SourceFileService() {
     }
@@ -93,13 +95,15 @@ public class SourceFileService {
             needsMerge = true;
         }
 
+        newNumberFilesMapped = 0;
         // Iterate through exported objects in this collection to match against
         Connection conn = null;
         // Write to system.out if doing a dry run, otherwise write to mappings file
-        try (var csvPrinter = openMappingsPrinter((options.getDryRun() && options.isVerboseOutput()
+        try (var csvPrinter = openMappingsPrinter((options.getDryRun()
                 && !needsMerge ? null : mappingPath))) {
             Path basePath = options.getBasePath();
             // Query for all values of the export field to be used for matching
+
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
@@ -143,6 +147,7 @@ public class SourceFileService {
                             log.debug("Found match for {} from field {}", cdmId, dbFilename);
                             csvPrinter.printRecord(cdmId, dbFilename,
                                     basePath.resolve(Paths.get(paths.get(0))).toString(), null);
+                            newNumberFilesMapped++;
                         } else {
                             throw new MigrationException("No paths returned for matching field value " + dbFilename);
                         }
@@ -153,6 +158,7 @@ public class SourceFileService {
                     csvPrinter.printRecord(cdmId, dbFilename, null, null);
                 }
             }
+            //summaryService.summary(oldNumberFilesMapped, newNumberFilesMapped, Verbosity.NORMAL);
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
         } finally {
@@ -161,7 +167,7 @@ public class SourceFileService {
 
         // output summary
         if (options.getDryRun()) {
-            summaryService.summary(oldNumberFilesMapped, Verbosity.NORMAL);
+            summaryService.summary(oldNumberFilesMapped, newNumberFilesMapped, Verbosity.NORMAL);
         }
 
         // Performing update operation with existing mapping, need to merge values

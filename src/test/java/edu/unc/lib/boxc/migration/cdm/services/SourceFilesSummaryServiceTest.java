@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.migration.cdm.AbstractOutputTest;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
+import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
@@ -44,7 +45,72 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +","));
 
-        summaryService.summary(0, Verbosity.NORMAL);
+        summaryService.summary(0, 1, Verbosity.NORMAL);
+
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void summaryDuplicateEntriesTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        writeCsv(mappingBody("25,," + path1 +",", "25,," + path1 +","));
+
+        summaryService.summary(0, 1, Verbosity.NORMAL);
+
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void summaryIdsNotInIndexTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        writeCsv(mappingBody("2,," + path1 +","));
+
+        summaryService.summary(0, 0, Verbosity.NORMAL);
+
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void summaryNothingMappedTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+
+        summaryService.summary(0, 0, Verbosity.NORMAL);
+
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void summaryEverythingMapped() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        Path path2 = testHelper.addSourceFile("26.txt");
+        Path path3 = testHelper.addSourceFile("27.txt");
+        writeCsv(mappingBody("25,," + path1 +",", "26,," + path2 +",", "27,," + path3 +","));
+
+        summaryService.summary(0, 3, Verbosity.NORMAL);
+
+        assertOutputMatches(".*New Files Mapped: +3.*");
+        assertOutputMatches(".*Total Files Mapped: +3.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void summaryNoPathMapped() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        writeCsv(mappingBody("25,," + path1 +",", "26,,,"));
+
+        summaryService.summary(0, 1, Verbosity.NORMAL);
 
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");

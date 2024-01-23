@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.AbstractOutputTest;
-import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
+import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
@@ -228,7 +228,6 @@ public class SourceFileServiceTest extends AbstractOutputTest {
             service.generateMapping(options);
 
             assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-
             assertMappedDateNotPresent();
         });
     }
@@ -242,9 +241,10 @@ public class SourceFileServiceTest extends AbstractOutputTest {
 
         service.generateMapping(options);
 
-        assertOutputMatches(".*New Files Mapped: +1.*");
-        assertOutputMatches(".*Total Files Mapped: +1.*");
-        assertOutputMatches(".*Total Files in Project: +3.*");
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains(".*New Files Mapped: +1.*");
+        assertOutputContains(".*Total Files Mapped: +1.*");
+        assertOutputContains(".*Total Files in Project: +3.*");
     }
 
     @Test
