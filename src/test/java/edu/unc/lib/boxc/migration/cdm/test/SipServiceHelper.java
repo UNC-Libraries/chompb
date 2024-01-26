@@ -28,7 +28,6 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
-import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -83,7 +82,6 @@ public class SipServiceHelper {
     private MigrationProject project;
     private CdmFieldService fieldService;
     private SourceFileService sourceFileService;
-    private SourceFilesSummaryService summaryService;
     private AccessFileService accessFileService;
     private AggregateFileMappingService aggregateFileMappingService;
     private AggregateFileMappingService aggregateBottomMappingService;
@@ -113,10 +111,7 @@ public class SipServiceHelper {
         indexService.setFieldService(fieldService);
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(indexService);
-        sourceFileService.setSummaryService(summaryService);
         sourceFileService.setProject(project);
-        summaryService = new SourceFilesSummaryService();
-        summaryService.setProject(project);
         accessFileService = new AccessFileService();
         accessFileService.setIndexService(indexService);
         accessFileService.setProject(project);
@@ -471,10 +466,6 @@ public class SipServiceHelper {
         return sourceFileService;
     }
 
-    public SourceFilesSummaryService getSummaryService() {
-        return summaryService;
-    }
-
     public AccessFileService getAccessFileService() {
         return accessFileService;
     }
@@ -484,7 +475,6 @@ public class SipServiceHelper {
             this.aggregateFileMappingService = new AggregateFileMappingService(false);
             this.aggregateFileMappingService.setProject(project);
             this.aggregateFileMappingService.setIndexService(indexService);
-            this.aggregateFileMappingService.setSummaryService(summaryService);
         }
         return this.aggregateFileMappingService;
     }
@@ -494,7 +484,6 @@ public class SipServiceHelper {
             this.aggregateBottomMappingService = new AggregateFileMappingService(true);
             this.aggregateBottomMappingService.setProject(project);
             this.aggregateBottomMappingService.setIndexService(indexService);
-            this.aggregateBottomMappingService.setSummaryService(summaryService);
         }
         return this.aggregateBottomMappingService;
     }

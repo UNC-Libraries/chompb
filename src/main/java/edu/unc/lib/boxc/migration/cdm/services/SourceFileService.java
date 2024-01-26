@@ -8,8 +8,6 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
-import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -20,7 +18,6 @@ import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -63,9 +60,6 @@ public class SourceFileService {
 
     protected MigrationProject project;
     private CdmIndexService indexService;
-    private SourceFilesSummaryService summaryService;
-    private int oldNumberFilesMapped;
-    private int newNumberFilesMapped;
 
     public SourceFileService() {
     }
@@ -88,19 +82,24 @@ public class SourceFileService {
         boolean needsMerge = false;
         // If performing an update, start by writing to a new temp mapping file
         if (options.getUpdate() && Files.exists(mappingPath)) {
-            oldNumberFilesMapped = summaryService.totalFilesMapped();
             mappingPath = getTempMappingPath();
             // Cleanup temp path if it already exists
             Files.deleteIfExists(mappingPath);
             needsMerge = true;
         }
 
-        newNumberFilesMapped = 0;
+        Path tempMappingPath = null;
+        if (options.getDryRun()) {
+            tempMappingPath = getTempMappingPath();
+            // Cleanup temp path if it already exists
+            Files.deleteIfExists(tempMappingPath);
+        }
+
         // Iterate through exported objects in this collection to match against
         Connection conn = null;
-        // Write to system.out if doing a dry run, otherwise write to mappings file
-        try (var csvPrinter = openMappingsPrinter((options.getDryRun()
-                && !needsMerge ? null : mappingPath))) {
+        // Write to temp mappings file if doing a dry run, otherwise write to mappings file
+        try (var csvPrinter = openMappingsPrinter((options.getDryRun() && !needsMerge ?
+                tempMappingPath : mappingPath))) {
             Path basePath = options.getBasePath();
             // Query for all values of the export field to be used for matching
 
@@ -147,7 +146,6 @@ public class SourceFileService {
                             log.debug("Found match for {} from field {}", cdmId, dbFilename);
                             csvPrinter.printRecord(cdmId, dbFilename,
                                     basePath.resolve(Paths.get(paths.get(0))).toString(), null);
-                            newNumberFilesMapped++;
                         } else {
                             throw new MigrationException("No paths returned for matching field value " + dbFilename);
                         }
@@ -158,16 +156,10 @@ public class SourceFileService {
                     csvPrinter.printRecord(cdmId, dbFilename, null, null);
                 }
             }
-            //summaryService.summary(oldNumberFilesMapped, newNumberFilesMapped, Verbosity.NORMAL);
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
         } finally {
             CdmIndexService.closeDbConnection(conn);
-        }
-
-        // output summary
-        if (options.getDryRun()) {
-            summaryService.summary(oldNumberFilesMapped, newNumberFilesMapped, Verbosity.NORMAL);
         }
 
         // Performing update operation with existing mapping, need to merge values
@@ -308,14 +300,22 @@ public class SourceFileService {
         // Cleanup temp merged path if it already exists
         Files.deleteIfExists(mergedPath);
 
+        // dry run temp mapping path
+        Path tempMappingPath = null;
+        if (options.getDryRun()) {
+            tempMappingPath = getTempMappingPath();
+            // Cleanup temp path if it already exists
+            Files.deleteIfExists(tempMappingPath);
+        }
+
         // Load the new mappings into memory
         SourceFilesInfo updateInfo = loadMappings(updatesPath);
 
         // Iterate through the existing mappings, merging in the updated mappings when appropriate
         try (
             var originalParser = openMappingsParser(originalPath);
-            // Write to system.out if doing a dry run, otherwise write to mappings file
-            var mergedPrinter = openMappingsPrinter(options.getDryRun() ? null : mergedPath);
+            // Write to temp mappings file if doing a dry run, otherwise write to mappings file
+            var mergedPrinter = openMappingsPrinter(options.getDryRun() ? tempMappingPath : mergedPath)
         ) {
             Set<String> origIds = new HashSet<>();
             for (CSVRecord originalRecord : originalParser) {
@@ -393,6 +393,14 @@ public class SourceFileService {
     }
 
     /**
+     * @return the temp source file mapping info for the configured project
+     * @throws IOException
+     */
+    public SourceFilesInfo loadTempMappings() throws IOException {
+        return loadMappings(getTempMappingPath());
+    }
+
+    /**
      * @return the source file mapping info for the provided project
      * @throws IOException
      */
@@ -433,14 +441,12 @@ public class SourceFileService {
     }
 
     /**
-     * @param mappingPath Path CSV will output to. If null, then will output to System.out
+     * @param mappingPath Path CSV will output to. If null, then will output to temporary CSV
      * @return CSVPrinter for writing to specified destination
      * @throws IOException
      */
     public static CSVPrinter openMappingsPrinter(Path mappingPath) throws IOException {
-        BufferedWriter writer = mappingPath == null ?
-                new BufferedWriter(new OutputStreamWriter(System.out)) :
-                Files.newBufferedWriter(mappingPath);
+        BufferedWriter writer = Files.newBufferedWriter(mappingPath);
         return new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(SourceFilesInfo.CSV_HEADERS));
     }
 
@@ -450,9 +456,5 @@ public class SourceFileService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
-    }
-
-    public void setSummaryService(SourceFilesSummaryService summaryService) {
-        this.summaryService = summaryService;
     }
 }

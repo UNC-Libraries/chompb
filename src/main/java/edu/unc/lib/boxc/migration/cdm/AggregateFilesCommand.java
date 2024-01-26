@@ -65,6 +65,10 @@ public class AggregateFilesCommand {
             initialize(options.isSortBottom());
 
             aggregateService.generateMapping(options);
+            if (options.getDryRun()) {
+                int oldNumberFilesMapped = summaryService.oldFilesMapped();
+                summaryService.summary(options, oldNumberFilesMapped, Verbosity.NORMAL);
+            }
             outputLogger.info("Aggregate file mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
@@ -135,7 +139,6 @@ public class AggregateFilesCommand {
         summaryService.setProject(project);
         aggregateService = new AggregateFileMappingService(sortBottom);
         aggregateService.setIndexService(indexService);
-        aggregateService.setSummaryService(summaryService);
         aggregateService.setProject(project);
     }
 }

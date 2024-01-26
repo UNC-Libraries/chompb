@@ -37,6 +37,7 @@ public class AccessFilesCommand {
     private CLIMain parentCommand;
 
     private MigrationProject project;
+    private SourceFilesSummaryService summaryService;
     private AccessFileService accessService;
 
     @Command(name = "generate",
@@ -51,6 +52,10 @@ public class AccessFilesCommand {
             initialize();
 
             accessService.generateMapping(options);
+            if (options.getDryRun()) {
+                int oldNumberFilesMapped = summaryService.oldFilesMapped();
+                summaryService.summary(options, oldNumberFilesMapped, Verbosity.NORMAL);
+            }
             outputLogger.info("Access mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
@@ -130,11 +135,10 @@ public class AccessFilesCommand {
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         CdmIndexService indexService = new CdmIndexService();
         indexService.setProject(project);
-        SourceFilesSummaryService summaryService = new SourceFilesSummaryService();
+        summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
         accessService = new AccessFileService();
         accessService.setIndexService(indexService);
-        accessService.setSummaryService(summaryService);
         accessService.setProject(project);
     }
 

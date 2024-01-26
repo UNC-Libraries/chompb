@@ -1,15 +1,23 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -91,19 +99,30 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("276_182_E.tif");
+        Path mappingPath = project.getAccessFilesMappingPath();
+        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "access_files", "generate",
                 "--dry-run",
-                "--verbose-output",
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
-        assertFalse(Files.exists(project.getAccessFilesMappingPath()));
-        assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
-        assertTrue(output.contains("26,276_183_E.tif,,"));
-        assertTrue(output.contains("27,276_203_E.tif,,"));
+        assertTrue(Files.exists(tempMappingPath));
+        try (
+                Reader reader = Files.newBufferedReader(tempMappingPath);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(SourceFilesInfo.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertIterableEquals(Arrays.asList("25", "276_182_E.tif", srcPath1.toString(), ""), rows.get(0));
+            assertIterableEquals(Arrays.asList("26", "276_183_E.tif", "", ""), rows.get(1));
+            assertIterableEquals(Arrays.asList("27", "276_203_E.tif", "", ""), rows.get(2));
+
+        }
 
         assertUpdatedDateNotPresent();
     }
@@ -113,21 +132,32 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         indexExportSamples();
         Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
         Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
+        Path mappingPath = project.getAccessFilesMappingPath();
+        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "access_files", "generate",
                 "--dry-run",
-                "--verbose-output",
                 "-b", basePath.toString(),
                 "-p", "(\\d+)\\_(\\d+)_E.tif",
                 "-t", "00$1_op0$2_0001_e.tif" };
         executeExpectSuccess(args);
 
-        assertFalse(Files.exists(project.getAccessFilesMappingPath()));
-        assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
-        assertTrue(output.contains("26,276_183_E.tif,,"));
-        assertTrue(output.contains("27,276_203_E.tif," + srcPath3 + ","));
+        assertTrue(Files.exists(tempMappingPath));
+        try (
+                Reader reader = Files.newBufferedReader(tempMappingPath);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(SourceFilesInfo.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertIterableEquals(Arrays.asList("25", "276_182_E.tif", srcPath1.toString(), ""), rows.get(0));
+            assertIterableEquals(Arrays.asList("26", "276_183_E.tif", "", ""), rows.get(1));
+            assertIterableEquals(Arrays.asList("27", "276_203_E.tif", srcPath3.toString(), ""), rows.get(2));
+
+        }
 
         assertUpdatedDateNotPresent();
     }

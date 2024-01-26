@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -79,6 +78,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     public void generateBasicMatchDryRunSummaryTest() throws Exception {
         indexExportSamples();
         addSourceFile("276_182_E.tif");
+        Path mappingPath = project.getSourceFilesMappingPath();
+        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -87,55 +88,57 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertTrue(Files.exists(tempMappingPath));
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
     @Test
-    public void generateBasicMatchDryRunVerboseTest() throws Exception {
+    public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("276_182_E.tif");
+        Path mappingPath = project.getSourceFilesMappingPath();
+        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "generate",
                 "--dry-run",
-                "--verbose-output",
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-        assertOutputContains("25,276_182_E.tif," + srcPath1 + ",");
-        assertOutputContains("26,276_183_E.tif,,");
-        assertOutputContains("27,276_203_E.tif,,");
+        assertTrue(Files.exists(tempMappingPath));
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
     @Test
-    public void generateNestedPatternMatchDryRunVerboseTest() throws Exception {
+    public void generateNestedPatternMatchDryRunTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
         Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
+        Path mappingPath = project.getSourceFilesMappingPath();
+        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "generate",
                 "--dry-run",
-                "--verbose-output",
                 "-b", basePath.toString(),
                 "-p", "(\\d+)\\_(\\d+)_E.tif",
                 "-t", "00$1_op0$2_0001_e.tif" };
         executeExpectSuccess(args);
 
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-        assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
-        assertOutputContains("26,276_183_E.tif,,");
-        assertOutputContains("27,276_203_E.tif," + srcPath3 + ",");
+        assertTrue(Files.exists(tempMappingPath));
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
     @Test
-    public void generateUpdateAddSourceFileDryRunVerboseTest() throws Exception {
+    public void generateUpdateAddSourceFileDryRunTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("276_182_E.tif");
 
@@ -151,16 +154,13 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "source_files", "generate",
                 "-u",
                 "--dry-run",
-                "--verbose-output",
                 "-b", basePath.toString()};
         executeExpectSuccess(args2);
 
-        assertOutputContains("25,276_182_E.tif," + srcPath1 + ",");
-        assertOutputContains("26,276_183_E.tif," + srcPath2 + ",");
-        assertOutputContains("27,276_203_E.tif,,");
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
     }
-
-
 
     @Test
     public void validateValidTest() throws Exception {

@@ -34,7 +34,7 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 /**
  * @author bbpennel
  */
-public class SourceFileServiceTest extends AbstractOutputTest {
+public class SourceFileServiceTest {
     private static final String PROJECT_NAME = "proj";
 
     @TempDir
@@ -43,7 +43,6 @@ public class SourceFileServiceTest extends AbstractOutputTest {
     private MigrationProject project;
     private CdmIndexService indexService;
     private CdmFieldService fieldService;
-    private SourceFilesSummaryService summaryService;
     private SourceFileService service;
     private SipServiceHelper testHelper;
 
@@ -59,10 +58,7 @@ public class SourceFileServiceTest extends AbstractOutputTest {
         Files.createDirectory(basePath);
         testHelper = new SipServiceHelper(project, basePath);
 
-        summaryService = testHelper.getSummaryService();
-        summaryService.setProject(project);
         service = testHelper.getSourceFileService();
-        service.setSummaryService(summaryService);
     }
 
     @Test
@@ -218,18 +214,18 @@ public class SourceFileServiceTest extends AbstractOutputTest {
 
     @Test
     public void generateDryRunVerboseTest() throws Exception {
-        OutputHelper.captureOutput(() -> {
-            testHelper.indexExportData("mini_gilmer");
-            SourceFileMappingOptions options = makeDefaultOptions();
-            options.setDryRun(true);
-            options.setVerboseOutput(true);
-            testHelper.addSourceFile("276_182_E.tif");
+        testHelper.indexExportData("mini_gilmer");
+        SourceFileMappingOptions options = makeDefaultOptions();
+        options.setDryRun(true);
+        options.setVerboseOutput(true);
+        testHelper.addSourceFile("276_182_E.tif");
+        Path mappingPath = project.getSourceFilesMappingPath();
+        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
-            service.generateMapping(options);
+        service.generateMapping(options);
 
-            assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-            assertMappedDateNotPresent();
-        });
+        assertTrue(Files.exists(tempMappingPath));
+        assertMappedDateNotPresent();
     }
 
     @Test
@@ -238,13 +234,13 @@ public class SourceFileServiceTest extends AbstractOutputTest {
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setDryRun(true);
         testHelper.addSourceFile("276_182_E.tif");
+        Path mappingPath = project.getSourceFilesMappingPath();
+        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         service.generateMapping(options);
 
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-        assertOutputContains(".*New Files Mapped: +1.*");
-        assertOutputContains(".*Total Files Mapped: +1.*");
-        assertOutputContains(".*Total Files in Project: +3.*");
+        assertTrue(Files.exists(tempMappingPath));
+        assertMappedDateNotPresent();
     }
 
     @Test
@@ -507,18 +503,16 @@ public class SourceFileServiceTest extends AbstractOutputTest {
 
         service.generateMapping(options);
 
-        OutputHelper.captureOutput(() -> {
-            testHelper.addSourceFile("276_183_E.tif");
-            options.setUpdate(true);
-            options.setDryRun(true);
-            service.generateMapping(options);
+        testHelper.addSourceFile("276_183_E.tif");
+        options.setUpdate(true);
+        options.setDryRun(true);
+        service.generateMapping(options);
 
-            SourceFilesInfo info2 = service.loadMappings();
-            assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
-            // Mapping should be unchanged
-            assertMappingPresent(info2, "26", "276_183_E.tif", null);
-            assertMappingPresent(info2, "27", "276_203_E.tif", null);
-        });
+        SourceFilesInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "25", "276_182_E.tif", srcPath1);
+        // Mapping should be unchanged
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", null);
     }
 
     @Test
