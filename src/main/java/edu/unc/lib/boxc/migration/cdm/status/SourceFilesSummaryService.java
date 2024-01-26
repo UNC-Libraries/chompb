@@ -39,7 +39,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     }
 
     /**
-     * @return number of new files mapped
+     * @return total number of files mapped
      */
     public int totalFilesMapped(SourceFileMappingOptions options, int newNumberFilesMapped, int oldNumberFilesMapped) {
         int totalFiles;
@@ -61,6 +61,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         SourceFileService sourceFileService = getSourceFileService();
         try {
             SourceFilesInfo info = sourceFileService.loadMappings();
+            // for dry run, count mappings in temp file
             if (options.getDryRun()) {
                 info = sourceFileService.loadTempMappings();
             }
