@@ -79,27 +79,16 @@ public class SourceFileService {
         Pattern fieldMatchingPattern = buildFieldMatchingPattern(options);
 
         Path mappingPath = getMappingPath();
-        boolean needsMerge = false;
-        // If performing an update, start by writing to a new temp mapping file
-        if (options.getUpdate() && Files.exists(mappingPath)) {
+        boolean needsMerge = options.getUpdate() && Files.exists(mappingPath);
+        // Write to temp mappings file if doing a dry run, otherwise write to mappings file
+        if (needsMerge || options.getDryRun()) {
             mappingPath = getTempMappingPath();
-            // Cleanup temp path if it already exists
-            Files.deleteIfExists(mappingPath);
-            needsMerge = true;
         }
-
-        Path tempMappingPath = null;
-        if (options.getDryRun()) {
-            tempMappingPath = getTempMappingPath();
-            // Cleanup temp path if it already exists
-            Files.deleteIfExists(tempMappingPath);
-        }
+        Files.deleteIfExists(mappingPath);
 
         // Iterate through exported objects in this collection to match against
         Connection conn = null;
-        // Write to temp mappings file if doing a dry run, otherwise write to mappings file
-        try (var csvPrinter = openMappingsPrinter((options.getDryRun() && !needsMerge ?
-                tempMappingPath : mappingPath))) {
+        try (var csvPrinter = openMappingsPrinter(mappingPath)) {
             Path basePath = options.getBasePath();
             // Query for all values of the export field to be used for matching
 
@@ -292,21 +281,13 @@ public class SourceFileService {
     /**
      * Merge existing mappings with updated mappings, writing to temporary files as intermediates
      * @param options
-     * @param updatesPath
+     * @param updatesPath the temp path containing the newly generated mappings to merge into the original mappings
      */
     private void mergeUpdates(SourceFileMappingOptions options, Path updatesPath) throws IOException {
         Path originalPath = getMappingPath();
         Path mergedPath = originalPath.getParent().resolve("~" + originalPath.getFileName().toString() + "_merged");
         // Cleanup temp merged path if it already exists
         Files.deleteIfExists(mergedPath);
-
-        // dry run temp mapping path
-        Path tempMappingPath = null;
-        if (options.getDryRun()) {
-            tempMappingPath = getTempMappingPath();
-            // Cleanup temp path if it already exists
-            Files.deleteIfExists(tempMappingPath);
-        }
 
         // Load the new mappings into memory
         SourceFilesInfo updateInfo = loadMappings(updatesPath);
@@ -315,7 +296,7 @@ public class SourceFileService {
         try (
             var originalParser = openMappingsParser(originalPath);
             // Write to temp mappings file if doing a dry run, otherwise write to mappings file
-            var mergedPrinter = openMappingsPrinter(options.getDryRun() ? tempMappingPath : mergedPath)
+            var mergedPrinter = openMappingsPrinter(mergedPath)
         ) {
             Set<String> origIds = new HashSet<>();
             for (CSVRecord originalRecord : originalParser) {
@@ -361,10 +342,11 @@ public class SourceFileService {
         }
 
         // swap the merged mappings to be the main mappings, unless we're doing a dry run
-        if (!options.getDryRun()) {
+        if (options.getDryRun()) {
+            Files.move(mergedPath, updatesPath, StandardCopyOption.REPLACE_EXISTING);
+        } else {
             Files.move(mergedPath, originalPath, StandardCopyOption.REPLACE_EXISTING);
         }
-        Files.delete(updatesPath);
     }
 
     protected SourceFileMapping resolveSourcePathConflict(SourceFileMappingOptions options,
