@@ -62,11 +62,10 @@ public class SourceFilesCommand {
 
         try {
             validateOptions(options);
-            initialize();
+            initialize(options.getDryRun());
 
             sourceService.generateMapping(options);
-            int oldNumberFilesMapped = summaryService.oldFilesMapped();
-            summaryService.summary(options, oldNumberFilesMapped, Verbosity.NORMAL);
+            summaryService.summary(Verbosity.NORMAL);
             outputLogger.info("Source file mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
@@ -85,7 +84,7 @@ public class SourceFilesCommand {
     public int validate(@Option(names = { "-f", "--force"},
             description = "Ignore incomplete mappings") boolean force) throws Exception {
         try {
-            initialize();
+            initialize(false);
             SourceFilesValidator validator = new SourceFilesValidator();
             validator.setProject(project);
             List<String> errors = validator.validateMappings(force);
@@ -116,7 +115,7 @@ public class SourceFilesCommand {
             description = "Display status of the source file mappings for this project")
     public int status() throws Exception {
         try {
-            initialize();
+            initialize(false);
             SourceFilesStatusService statusService = new SourceFilesStatusService();
             statusService.setProject(project);
             statusService.report(parentCommand.getVerbosity());
@@ -145,13 +144,14 @@ public class SourceFilesCommand {
         }
     }
 
-    private void initialize() throws IOException {
+    private void initialize(boolean dryRun) throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         indexService = new CdmIndexService();
         indexService.setProject(project);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
+        summaryService.setDryRun(dryRun);
         sourceService = new SourceFileService();
         sourceService.setIndexService(indexService);
         sourceService.setProject(project);
@@ -184,7 +184,7 @@ public class SourceFilesCommand {
     }
 
     private void initializeExportFilesService(ExportUnmappedSourceFilesOptions options) throws IOException {
-        initialize();
+        initialize(false);
         var fileRetrievalService = new CdmFileRetrievalService();
         fileRetrievalService.setChompbConfig(parentCommand.getChompbConfig());
         fileRetrievalService.setProject(project);

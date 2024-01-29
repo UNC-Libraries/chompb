@@ -53,7 +53,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +","));
 
-        summaryService.summary(options, 0, Verbosity.NORMAL);
+        summaryService.summary(Verbosity.NORMAL);
 
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
@@ -67,7 +67,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +",", "25,," + path1 +","));
 
-        summaryService.summary(options, 0, Verbosity.NORMAL);
+        summaryService.summary(Verbosity.NORMAL);
 
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
@@ -81,7 +81,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("2,," + path1 +","));
 
-        summaryService.summary(options, 0, Verbosity.NORMAL);
+        summaryService.summary(Verbosity.NORMAL);
 
         assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +0.*");
@@ -93,7 +93,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
 
-        summaryService.summary(options, 0, Verbosity.NORMAL);
+        summaryService.summary(Verbosity.NORMAL);
 
         assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +0.*");
@@ -109,7 +109,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         Path path3 = testHelper.addSourceFile("27.txt");
         writeCsv(mappingBody("25,," + path1 +",", "26,," + path2 +",", "27,," + path3 +","));
 
-        summaryService.summary(options, 0, Verbosity.NORMAL);
+        summaryService.summary(Verbosity.NORMAL);
 
         assertOutputMatches(".*New Files Mapped: +3.*");
         assertOutputMatches(".*Total Files Mapped: +3.*");
@@ -123,7 +123,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +",", "26,,,"));
 
-        summaryService.summary(options, 0, Verbosity.NORMAL);
+        summaryService.summary(Verbosity.NORMAL);
 
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");

@@ -7,6 +7,7 @@ import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,14 +22,16 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     private static final Logger log = getLogger(SourceFilesSummaryService.class);
 
     private SourceFileService sourceFileService;
+    private boolean dryRun;
 
     /**
      * Display summary about source file mapping
      * @param verbosity
      */
-    public void summary(SourceFileMappingOptions options, int oldFilesMapped, Verbosity verbosity) {
-        int newFilesMapped = newFilesMapped(options);
-        int totalFilesMapped = totalFilesMapped(options, newFilesMapped, oldFilesMapped);
+    public void summary(Verbosity verbosity) {
+        int oldFilesMapped = oldFilesMapped();
+        int newFilesMapped = newFilesMapped();
+        int totalFilesMapped = totalFilesMapped(newFilesMapped, oldFilesMapped);
         int totalObjects = totalFilesInProject();
 
         if (verbosity.isNormal()) {
@@ -41,52 +44,36 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     /**
      * @return total number of files mapped
      */
-    public int totalFilesMapped(SourceFileMappingOptions options, int newNumberFilesMapped, int oldNumberFilesMapped) {
-        int totalFiles;
-        // for dry run, count files in new temp source mapping and existing source mapping
-        if (options.getDryRun()) {
-            totalFiles = newNumberFilesMapped + oldNumberFilesMapped;
-        } else {
-            totalFiles = newFilesMapped(options);
-        }
-        return totalFiles;
+    public int totalFilesMapped(int newFilesMapped, int oldFilesMapped) {
+        return newFilesMapped + oldFilesMapped;
     }
 
     /**
      * @return number of new files mapped
      */
-    public int newFilesMapped(SourceFileMappingOptions options) {
-        Set<String> indexedIds = getQueryService().getObjectIdSet();
-        Set<String> mappedIds = new HashSet<>();
-        SourceFileService sourceFileService = getSourceFileService();
-        try {
-            SourceFilesInfo info = sourceFileService.loadMappings();
-            // for dry run, count mappings in temp file
-            if (options.getDryRun()) {
-                info = sourceFileService.loadTempMappings();
-            }
-            for (SourceFilesInfo.SourceFileMapping mapping : info.getMappings()) {
-                if (mapping.getSourcePaths() != null && indexedIds.contains(mapping.getCdmId())) {
-                    mappedIds.add(mapping.getCdmId());
-                }
-            }
-        } catch (IOException e) {
-            log.error("Failed to load mappings", e);
-            outputLogger.info("Failed to load mappings: {}", e.getMessage());
-        }
-
-        return mappedIds.size();
+    public int newFilesMapped() {
+        return countFilesMapped(getNewMappingPath());
     }
 
     /**
      * @return old number of files mapped
      */
     public int oldFilesMapped() {
+        if (!dryRun) {
+            return 0;
+        } else {
+            return countFilesMapped(getOldMappingPath());
+        }
+    }
+
+    /**
+     * @return number of files mapped
+     */
+    public int countFilesMapped(Path mappingPath) {
         Set<String> indexedIds = getQueryService().getObjectIdSet();
         Set<String> mappedIds = new HashSet<>();
-        SourceFileService sourceFileService = getSourceFileService();
         try {
-            SourceFilesInfo info = sourceFileService.loadMappings();
+            SourceFilesInfo info = SourceFileService.loadMappings(mappingPath);
             for (SourceFilesInfo.SourceFileMapping mapping : info.getMappings()) {
                 if (mapping.getSourcePaths() != null && indexedIds.contains(mapping.getCdmId())) {
                     mappedIds.add(mapping.getCdmId());
@@ -96,7 +83,6 @@ public class SourceFilesSummaryService extends AbstractStatusService {
             log.error("Failed to load mappings", e);
             outputLogger.info("Failed to load mappings: {}", e.getMessage());
         }
-
         return mappedIds.size();
     }
 
@@ -105,6 +91,22 @@ public class SourceFilesSummaryService extends AbstractStatusService {
      */
     public int totalFilesInProject() {
         return getQueryService().countIndexedFileObjects();
+    }
+
+    private Path getNewMappingPath() {
+        if (dryRun) {
+            return getSourceFileService().getTempMappingPath();
+        } else {
+            return project.getSourceFilesMappingPath();
+        }
+    }
+
+    private Path getOldMappingPath() {
+        return project.getSourceFilesMappingPath();
+    }
+
+    public void setDryRun(boolean dryRun) {
+        this.dryRun = dryRun;
     }
 
     protected SourceFileService getSourceFileService() {

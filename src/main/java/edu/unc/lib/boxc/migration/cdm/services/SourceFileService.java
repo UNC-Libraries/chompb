@@ -278,7 +278,7 @@ public class SourceFileService {
         return project.getSourceFilesMappingPath();
     }
 
-    protected Path getTempMappingPath() {
+    public Path getTempMappingPath() {
         var mappingPath = getMappingPath();
         return mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
     }
@@ -390,14 +390,6 @@ public class SourceFileService {
      */
     public SourceFilesInfo loadMappings() throws IOException {
         return loadMappings(getMappingPath());
-    }
-
-    /**
-     * @return the temp source file mapping info for the configured project
-     * @throws IOException
-     */
-    public SourceFilesInfo loadTempMappings() throws IOException {
-        return loadMappings(getTempMappingPath());
     }
 
     /**

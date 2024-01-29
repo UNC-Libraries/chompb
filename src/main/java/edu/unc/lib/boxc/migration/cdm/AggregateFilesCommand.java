@@ -62,12 +62,11 @@ public class AggregateFilesCommand {
 
         try {
             validateOptions(options);
-            initialize(options.isSortBottom());
+            initialize(options.isSortBottom(), options.getDryRun());
 
             aggregateService.generateMapping(options);
             if (options.getDryRun()) {
-                int oldNumberFilesMapped = summaryService.oldFilesMapped();
-                summaryService.summary(options, oldNumberFilesMapped, Verbosity.NORMAL);
+                summaryService.summary(Verbosity.NORMAL);
             }
             outputLogger.info("Aggregate file mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
@@ -90,7 +89,7 @@ public class AggregateFilesCommand {
                                 description = "Validate bottom sort mapping") boolean sortBottom) throws Exception {
         String mappingName = (sortBottom ? "Bottom" : "Top") + " aggregate file mappings";
         try {
-            initialize(sortBottom);
+            initialize(sortBottom, false);
             var validator = new AggregateFilesValidator(sortBottom);
             validator.setProject(project);
             List<String> errors = validator.validateMappings(force);
@@ -130,13 +129,14 @@ public class AggregateFilesCommand {
         }
     }
 
-    private void initialize(boolean sortBottom) throws IOException {
+    private void initialize(boolean sortBottom, boolean dryRun) throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         indexService = new CdmIndexService();
         indexService.setProject(project);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
+        summaryService.setDryRun(dryRun);
         aggregateService = new AggregateFileMappingService(sortBottom);
         aggregateService.setIndexService(indexService);
         aggregateService.setProject(project);
