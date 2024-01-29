@@ -49,7 +49,6 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
     @Test
     public void summaryOutputTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +","));
 
@@ -63,7 +62,6 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
     @Test
     public void summaryDuplicateEntriesTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +",", "25,," + path1 +","));
 
@@ -77,7 +75,6 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
     @Test
     public void summaryIdsNotInIndexTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("2,," + path1 +","));
 
@@ -91,7 +88,6 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
     @Test
     public void summaryNothingMappedTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
 
         summaryService.summary(Verbosity.NORMAL);
 
@@ -103,7 +99,6 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
     @Test
     public void summaryEverythingMapped() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
         Path path1 = testHelper.addSourceFile("25.txt");
         Path path2 = testHelper.addSourceFile("26.txt");
         Path path3 = testHelper.addSourceFile("27.txt");
@@ -119,7 +114,6 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
     @Test
     public void summaryNoPathMapped() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 +",", "26,,,"));
 
@@ -128,15 +122,6 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-    }
-
-    private SourceFileMappingOptions makeDefaultOptions() {
-        SourceFileMappingOptions options = new SourceFileMappingOptions();
-        options.setBasePath(basePath);
-        options.setExportField("file");
-        options.setFieldMatchingPattern("(.+)");
-        options.setFilenameTemplate("$1");
-        return options;
     }
 
     private String mappingBody(String... rows) {

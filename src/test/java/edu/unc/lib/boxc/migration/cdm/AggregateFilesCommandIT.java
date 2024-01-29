@@ -68,6 +68,9 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertTrue(Files.exists(project.getAggregateTopMappingPath()));
         assertFalse(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
     @Test
@@ -90,10 +93,12 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
             List<CSVRecord> rows = csvParser.getRecords();
             assertIterableEquals(Arrays.asList("604", "617.cpd", aggrPath1.toString(), ""), rows.get(0));
             assertIterableEquals(Arrays.asList("607", "620.cpd", aggrPath2.toString(), ""), rows.get(1));
-
         }
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
         assertFalse(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
     @Test
@@ -105,6 +110,9 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
         assertTrue(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
     @Test
@@ -118,6 +126,9 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertTrue(Files.exists(project.getAggregateTopMappingPath()));
         assertTrue(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
     @Test

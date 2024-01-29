@@ -52,9 +52,7 @@ public class AccessFilesCommand {
             initialize(options.getDryRun());
 
             accessService.generateMapping(options);
-            if (options.getDryRun()) {
-                summaryService.summary(Verbosity.NORMAL);
-            }
+            summaryService.summary(Verbosity.NORMAL);
             outputLogger.info("Access mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;

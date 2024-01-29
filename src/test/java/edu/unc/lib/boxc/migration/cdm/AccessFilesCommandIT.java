@@ -91,6 +91,9 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
 
         assertTrue(Files.exists(project.getAccessFilesMappingPath()));
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
 
         assertUpdatedDatePresent();
     }
@@ -121,8 +124,10 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
             assertIterableEquals(Arrays.asList("25", "276_182_E.tif", srcPath1.toString(), ""), rows.get(0));
             assertIterableEquals(Arrays.asList("26", "276_183_E.tif", "", ""), rows.get(1));
             assertIterableEquals(Arrays.asList("27", "276_203_E.tif", "", ""), rows.get(2));
-
         }
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
 
         assertUpdatedDateNotPresent();
     }
@@ -156,8 +161,10 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
             assertIterableEquals(Arrays.asList("25", "276_182_E.tif", srcPath1.toString(), ""), rows.get(0));
             assertIterableEquals(Arrays.asList("26", "276_183_E.tif", "", ""), rows.get(1));
             assertIterableEquals(Arrays.asList("27", "276_203_E.tif", srcPath3.toString(), ""), rows.get(2));
-
         }
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
 
         assertUpdatedDateNotPresent();
     }

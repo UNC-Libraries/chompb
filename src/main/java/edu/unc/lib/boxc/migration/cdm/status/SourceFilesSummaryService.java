@@ -1,7 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.status;
 
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import org.slf4j.Logger;

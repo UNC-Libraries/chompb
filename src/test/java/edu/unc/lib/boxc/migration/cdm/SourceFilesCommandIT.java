@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -118,6 +119,37 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void generateDryRunSummaryAndBasicMatchTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
+        Path mappingPath = project.getSourceFilesMappingPath();
+        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
+
+        String[] args1 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "--dry-run",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args1);
+
+        assertTrue(Files.exists(tempMappingPath));
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args2);
+
+        assertTrue(Files.exists(mappingPath));
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
     public void generateNestedPatternMatchDryRunTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
@@ -160,7 +192,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args2);
 
-        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
     }
