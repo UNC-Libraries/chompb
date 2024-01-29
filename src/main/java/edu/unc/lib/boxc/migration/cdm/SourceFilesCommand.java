@@ -65,10 +65,8 @@ public class SourceFilesCommand {
             initialize();
 
             sourceService.generateMapping(options);
-            if (options.getDryRun()) {
-                int oldNumberFilesMapped = summaryService.oldFilesMapped();
-                summaryService.summary(options, oldNumberFilesMapped, Verbosity.NORMAL);
-            }
+            int oldNumberFilesMapped = summaryService.oldFilesMapped();
+            summaryService.summary(options, oldNumberFilesMapped, Verbosity.NORMAL);
             outputLogger.info("Source file mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
