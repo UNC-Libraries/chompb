@@ -263,7 +263,7 @@ public class SourceFileService {
         ProjectPropertiesSerialization.write(project);
     }
 
-    protected Path getMappingPath() {
+    public Path getMappingPath() {
         return project.getSourceFilesMappingPath();
     }
 

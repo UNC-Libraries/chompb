@@ -147,7 +147,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         Path path1 = testHelper.addSourceFile("25.txt");
         Path path2 = testHelper.addSourceFile("26.txt");
         writeCsv(mappingBody("25,," + path1 +","));
-        writeTempCsv(mappingBody("26,," + path2 +","));
+        writeTempCsv(mappingBody("25,," + path1 +",","26,," + path2 +","));
         summaryService.setDryRun(true);
 
         summaryService.summary(Verbosity.NORMAL);

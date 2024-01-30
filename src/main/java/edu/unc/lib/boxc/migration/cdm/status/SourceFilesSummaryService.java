@@ -29,8 +29,8 @@ public class SourceFilesSummaryService extends AbstractStatusService {
      */
     public void summary(Verbosity verbosity) {
         int oldFilesMapped = oldFilesMapped();
-        int newFilesMapped = newFilesMapped();
-        int totalFilesMapped = totalFilesMapped(newFilesMapped, oldFilesMapped);
+        int totalFilesMapped = totalFilesMapped();
+        int newFilesMapped = newFilesMapped(totalFilesMapped, oldFilesMapped);
         int totalObjects = totalFilesInProject();
 
         if (verbosity.isNormal()) {
@@ -41,16 +41,16 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     }
 
     /**
-     * @return total number of files mapped
+     * @return number of new files mapped
      */
-    public int totalFilesMapped(int newFilesMapped, int oldFilesMapped) {
-        return newFilesMapped + oldFilesMapped;
+    public int newFilesMapped(int totalFilesMapped, int oldFilesMapped) {
+        return totalFilesMapped - oldFilesMapped;
     }
 
     /**
-     * @return number of new files mapped
+     * @return total number of files mapped
      */
-    public int newFilesMapped() {
+    public int totalFilesMapped() {
         return countFilesMapped(getNewMappingPath());
     }
 
@@ -96,12 +96,12 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         if (dryRun) {
             return sourceFileService.getTempMappingPath();
         } else {
-            return project.getSourceFilesMappingPath();
+            return sourceFileService.getMappingPath();
         }
     }
 
     private Path getOldMappingPath() {
-        return project.getSourceFilesMappingPath();
+        return sourceFileService.getMappingPath();
     }
 
     public void setDryRun(boolean dryRun) {
@@ -111,10 +111,4 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     public void setSourceFileService(SourceFileService sourceFileService) {
         this.sourceFileService = sourceFileService;
     }
-
-//    protected SourceFileService getSourceFileService() {
-//        this.sourceFileService = new SourceFileService();
-//        sourceFileService.setProject(project);
-//        return this.sourceFileService;
-//    }
 }
