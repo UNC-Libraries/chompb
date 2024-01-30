@@ -1,14 +1,9 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -18,7 +13,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -76,23 +70,10 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
-        Path mappingPath = project.getAggregateTopMappingPath();
-        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
-        var aggrPath1 = testHelper.addSourceFile("617.pdf");
-        var aggrPath2 = testHelper.addSourceFile("620.pdf");
+        testHelper.addSourceFile("617.pdf");
+        testHelper.addSourceFile("620.pdf");
         executeExpectSuccess(withDryRun(argsGenerate("find")));
 
-        try (
-                Reader reader = Files.newBufferedReader(tempMappingPath);
-                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                        .withFirstRecordAsHeader()
-                        .withHeader(SourceFilesInfo.CSV_HEADERS)
-                        .withTrim());
-        ) {
-            List<CSVRecord> rows = csvParser.getRecords();
-            assertIterableEquals(Arrays.asList("604", "617.cpd", aggrPath1.toString(), ""), rows.get(0));
-            assertIterableEquals(Arrays.asList("607", "620.cpd", aggrPath2.toString(), ""), rows.get(1));
-        }
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
         assertFalse(Files.exists(project.getAggregateBottomMappingPath()));
         assertOutputMatches(".*New Files Mapped: +2.*");

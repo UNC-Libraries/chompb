@@ -213,33 +213,15 @@ public class SourceFileServiceTest {
     }
 
     @Test
-    public void generateDryRunVerboseTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
-        options.setDryRun(true);
-        options.setVerboseOutput(true);
-        testHelper.addSourceFile("276_182_E.tif");
-        Path mappingPath = project.getSourceFilesMappingPath();
-        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
-
-        service.generateMapping(options);
-
-        assertTrue(Files.exists(tempMappingPath));
-        assertMappedDateNotPresent();
-    }
-
-    @Test
     public void generateDryRunSummaryTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         SourceFileMappingOptions options = makeDefaultOptions();
         options.setDryRun(true);
         testHelper.addSourceFile("276_182_E.tif");
-        Path mappingPath = project.getSourceFilesMappingPath();
-        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         service.generateMapping(options);
 
-        assertTrue(Files.exists(tempMappingPath));
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         assertMappedDateNotPresent();
     }
 
