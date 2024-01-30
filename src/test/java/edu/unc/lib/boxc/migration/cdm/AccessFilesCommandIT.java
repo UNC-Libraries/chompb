@@ -82,7 +82,6 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getAccessFilesMappingPath()));
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +0.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -93,7 +92,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
-        Path srcPath1 = addSourceFile("276_182_E.tif");
+        addSourceFile("276_182_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -102,7 +101,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertFalse(Files.exists(project.getAccessFilesMappingPath()));
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -113,8 +112,8 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateNestedPatternMatchDryRunTest() throws Exception {
         indexExportSamples();
-        Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
-        Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
+        addSourceFile("path/to/00276_op0182_0001_e.tif");
+        addSourceFile("00276_op0203_0001_e.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -125,7 +124,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
                 "-t", "00$1_op0$2_0001_e.tif" };
         executeExpectSuccess(args);
 
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertFalse(Files.exists(project.getAccessFilesMappingPath()));
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
