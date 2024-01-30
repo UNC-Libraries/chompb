@@ -112,7 +112,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
-        assertTrue(Files.exists(tempMappingPath));
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         try (
                 Reader reader = Files.newBufferedReader(tempMappingPath);
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
@@ -125,8 +125,8 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
             assertIterableEquals(Arrays.asList("26", "276_183_E.tif", "", ""), rows.get(1));
             assertIterableEquals(Arrays.asList("27", "276_203_E.tif", "", ""), rows.get(2));
         }
-        assertOutputMatches(".*New Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
 
         assertUpdatedDateNotPresent();
@@ -149,7 +149,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
                 "-t", "00$1_op0$2_0001_e.tif" };
         executeExpectSuccess(args);
 
-        assertTrue(Files.exists(tempMappingPath));
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         try (
                 Reader reader = Files.newBufferedReader(tempMappingPath);
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
@@ -162,8 +162,8 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
             assertIterableEquals(Arrays.asList("26", "276_183_E.tif", "", ""), rows.get(1));
             assertIterableEquals(Arrays.asList("27", "276_203_E.tif", srcPath3.toString(), ""), rows.get(2));
         }
-        assertOutputMatches(".*New Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
 
         assertUpdatedDateNotPresent();

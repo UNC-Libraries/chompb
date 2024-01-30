@@ -62,14 +62,29 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateBasicMatchTopTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
-        testHelper.addSourceFile("617.pdf");
-        testHelper.addSourceFile("620.pdf");
+//        testHelper.addSourceFile("617.pdf");
+//        testHelper.addSourceFile("620.pdf");
+        Path mappingPath = project.getAggregateTopMappingPath();
+        var aggrPath1 = testHelper.addSourceFile("617.pdf");
+        var aggrPath2 = testHelper.addSourceFile("620.pdf");
         executeExpectSuccess(argsGenerate("find"));
+
+        try (
+                Reader reader = Files.newBufferedReader(mappingPath);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(SourceFilesInfo.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertIterableEquals(Arrays.asList("604", "617.cpd", aggrPath1.toString(), ""), rows.get(0));
+            assertIterableEquals(Arrays.asList("607", "620.cpd", aggrPath2.toString(), ""), rows.get(1));
+        }
 
         assertTrue(Files.exists(project.getAggregateTopMappingPath()));
         assertFalse(Files.exists(project.getAggregateBottomMappingPath()));
-        assertOutputMatches(".*New Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
@@ -82,7 +97,6 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         var aggrPath2 = testHelper.addSourceFile("620.pdf");
         executeExpectSuccess(withDryRun(argsGenerate("find")));
 
-        assertTrue(Files.exists(tempMappingPath));
         try (
                 Reader reader = Files.newBufferedReader(tempMappingPath);
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
@@ -96,8 +110,8 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         }
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
         assertFalse(Files.exists(project.getAggregateBottomMappingPath()));
-        assertOutputMatches(".*New Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
@@ -110,8 +124,8 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
         assertTrue(Files.exists(project.getAggregateBottomMappingPath()));
-        assertOutputMatches(".*New Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
@@ -126,8 +140,8 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertTrue(Files.exists(project.getAggregateTopMappingPath()));
         assertTrue(Files.exists(project.getAggregateBottomMappingPath()));
-        assertOutputMatches(".*New Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
     }
 

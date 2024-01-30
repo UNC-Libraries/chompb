@@ -132,12 +132,13 @@ public class AccessFilesCommand {
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         CdmIndexService indexService = new CdmIndexService();
         indexService.setProject(project);
-        summaryService = new SourceFilesSummaryService();
-        summaryService.setProject(project);
-        summaryService.setDryRun(dryRun);
         accessService = new AccessFileService();
         accessService.setIndexService(indexService);
         accessService.setProject(project);
+        summaryService = new SourceFilesSummaryService();
+        summaryService.setProject(project);
+        summaryService.setDryRun(dryRun);
+        summaryService.setSourceFileService(accessService);
     }
 
 }

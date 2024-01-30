@@ -149,12 +149,13 @@ public class SourceFilesCommand {
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         indexService = new CdmIndexService();
         indexService.setProject(project);
-        summaryService = new SourceFilesSummaryService();
-        summaryService.setProject(project);
-        summaryService.setDryRun(dryRun);
         sourceService = new SourceFileService();
         sourceService.setIndexService(indexService);
         sourceService.setProject(project);
+        summaryService = new SourceFilesSummaryService();
+        summaryService.setProject(project);
+        summaryService.setDryRun(dryRun);
+        summaryService.setSourceFileService(sourceService);
     }
 
     @Command(name = "export_unmapped",

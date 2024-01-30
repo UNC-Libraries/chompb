@@ -132,11 +132,12 @@ public class AggregateFilesCommand {
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         indexService = new CdmIndexService();
         indexService.setProject(project);
-        summaryService = new SourceFilesSummaryService();
-        summaryService.setProject(project);
-        summaryService.setDryRun(dryRun);
         aggregateService = new AggregateFileMappingService(sortBottom);
         aggregateService.setIndexService(indexService);
         aggregateService.setProject(project);
+        summaryService = new SourceFilesSummaryService();
+        summaryService.setProject(project);
+        summaryService.setDryRun(dryRun);
+        summaryService.setSourceFileService(aggregateService);
     }
 }

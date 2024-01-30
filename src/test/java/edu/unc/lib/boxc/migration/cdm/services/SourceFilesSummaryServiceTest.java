@@ -3,7 +3,6 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.migration.cdm.AbstractOutputTest;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -29,6 +28,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
 
     private MigrationProject project;
     private SipServiceHelper testHelper;
+    private SourceFileService sourceFileService;
     private SourceFilesSummaryService summaryService;
 
     private Path basePath;
@@ -42,8 +42,11 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         Files.createDirectory(basePath);
 
         testHelper = new SipServiceHelper(project, basePath);
+        sourceFileService = new SourceFileService();
+        sourceFileService.setProject(project);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
+        summaryService.setSourceFileService(sourceFileService);
     }
 
     @Test
@@ -124,6 +127,36 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
+    @Test
+    public void summaryDryRun() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        writeTempCsv(mappingBody("25,," + path1 +","));
+        summaryService.setDryRun(true);
+
+        summaryService.summary(Verbosity.NORMAL);
+
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void summaryDryRunUpdateAddSourceFile() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        Path path2 = testHelper.addSourceFile("26.txt");
+        writeCsv(mappingBody("25,," + path1 +","));
+        writeTempCsv(mappingBody("26,," + path2 +","));
+        summaryService.setDryRun(true);
+
+        summaryService.summary(Verbosity.NORMAL);
+
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
     private String mappingBody(String... rows) {
         return String.join(",", SourceFilesInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
@@ -131,6 +164,15 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
 
     private void writeCsv(String mappingBody) throws IOException {
         FileUtils.write(project.getSourceFilesMappingPath().toFile(),
+                mappingBody, StandardCharsets.UTF_8);
+        project.getProjectProperties().setSourceFilesUpdatedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
+    }
+
+    private void writeTempCsv(String mappingBody) throws IOException {
+        Path mappingPath = project.getSourceFilesMappingPath();
+        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
+        FileUtils.write(tempMappingPath.toFile(),
                 mappingBody, StandardCharsets.UTF_8);
         project.getProjectProperties().setSourceFilesUpdatedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);

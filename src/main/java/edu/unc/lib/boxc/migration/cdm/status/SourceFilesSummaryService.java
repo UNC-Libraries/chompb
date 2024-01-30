@@ -94,7 +94,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
 
     private Path getNewMappingPath() {
         if (dryRun) {
-            return getSourceFileService().getTempMappingPath();
+            return sourceFileService.getTempMappingPath();
         } else {
             return project.getSourceFilesMappingPath();
         }
@@ -108,9 +108,13 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         this.dryRun = dryRun;
     }
 
-    protected SourceFileService getSourceFileService() {
-        this.sourceFileService = new SourceFileService();
-        sourceFileService.setProject(project);
-        return this.sourceFileService;
+    public void setSourceFileService(SourceFileService sourceFileService) {
+        this.sourceFileService = sourceFileService;
     }
+
+//    protected SourceFileService getSourceFileService() {
+//        this.sourceFileService = new SourceFileService();
+//        sourceFileService.setProject(project);
+//        return this.sourceFileService;
+//    }
 }

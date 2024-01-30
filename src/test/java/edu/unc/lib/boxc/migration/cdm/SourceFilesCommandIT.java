@@ -79,31 +79,9 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateBasicMatchDryRunSummaryTest() throws Exception {
-        indexExportSamples();
-        addSourceFile("276_182_E.tif");
-        Path mappingPath = project.getSourceFilesMappingPath();
-        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
-
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "source_files", "generate",
-                "--dry-run",
-                "-b", basePath.toString()};
-        executeExpectSuccess(args);
-
-        assertTrue(Files.exists(tempMappingPath));
-        assertOutputMatches(".*New Files Mapped: +1.*");
-        assertOutputMatches(".*Total Files Mapped: +1.*");
-        assertOutputMatches(".*Total Files in Project: +3.*");
-    }
-
-    @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("276_182_E.tif");
-        Path mappingPath = project.getSourceFilesMappingPath();
-        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -112,7 +90,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
-        assertTrue(Files.exists(tempMappingPath));
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -122,8 +100,6 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     public void generateDryRunSummaryAndBasicMatchTest() throws Exception {
         indexExportSamples();
         addSourceFile("276_182_E.tif");
-        Path mappingPath = project.getSourceFilesMappingPath();
-        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         String[] args1 = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -132,7 +108,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args1);
 
-        assertTrue(Files.exists(tempMappingPath));
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -143,7 +119,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args2);
 
-        assertTrue(Files.exists(mappingPath));
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -154,8 +130,6 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         indexExportSamples();
         Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
         Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
-        Path mappingPath = project.getSourceFilesMappingPath();
-        Path tempMappingPath = mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -166,7 +140,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-t", "00$1_op0$2_0001_e.tif" };
         executeExpectSuccess(args);
 
-        assertTrue(Files.exists(tempMappingPath));
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -183,6 +157,11 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+
         Path srcPath2 = addSourceFile("276_183_E.tif");
         String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -193,7 +172,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args2);
 
         assertOutputMatches(".*New Files Mapped: +1.*");
-        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
