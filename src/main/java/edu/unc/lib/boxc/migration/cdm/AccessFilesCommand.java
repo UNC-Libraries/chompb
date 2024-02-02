@@ -49,7 +49,7 @@ public class AccessFilesCommand {
 
         try {
             validateOptions(options);
-            initialize(options.getDryRun());
+            initialize(options.getDryRun(), options.isForce(), options.getUpdate());
 
             accessService.generateMapping(options);
             summaryService.summary(Verbosity.NORMAL);
@@ -71,7 +71,7 @@ public class AccessFilesCommand {
     public int validate(@Option(names = { "-f", "--force"},
             description = "Ignore incomplete mappings") boolean force) throws Exception {
         try {
-            initialize(false);
+            initialize(false, false, false);
             AccessFilesValidator validator = new AccessFilesValidator();
             validator.setProject(project);
             List<String> errors = validator.validateMappings(force);
@@ -102,7 +102,7 @@ public class AccessFilesCommand {
             description = "Display status of the access file mappings for this project")
     public int status() throws Exception {
         try {
-            initialize(false);
+            initialize(false, false, false);
             AccessFilesStatusService statusService = new AccessFilesStatusService();
             statusService.setProject(project);
             statusService.report(parentCommand.getVerbosity());
@@ -127,7 +127,7 @@ public class AccessFilesCommand {
         }
     }
 
-    private void initialize(boolean dryRun) throws IOException {
+    private void initialize(boolean dryRun, boolean force, boolean update) throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         CdmIndexService indexService = new CdmIndexService();
@@ -138,6 +138,8 @@ public class AccessFilesCommand {
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
         summaryService.setDryRun(dryRun);
+        summaryService.setForce(force);
+        summaryService.setUpdate(update);
         summaryService.setSourceFileService(accessService);
     }
 

@@ -22,6 +22,8 @@ public class SourceFilesSummaryService extends AbstractStatusService {
 
     private SourceFileService sourceFileService;
     private boolean dryRun;
+    private boolean force;
+    private boolean update;
 
     /**
      * Display summary about source file mapping
@@ -58,10 +60,10 @@ public class SourceFilesSummaryService extends AbstractStatusService {
      * @return old number of files mapped
      */
     public int oldFilesMapped() {
-        if (!dryRun) {
-            return 0;
-        } else {
+        if (force || update) {
             return countFilesMapped(getOldMappingPath());
+        } else {
+            return 0;
         }
     }
 
@@ -106,6 +108,14 @@ public class SourceFilesSummaryService extends AbstractStatusService {
 
     public void setDryRun(boolean dryRun) {
         this.dryRun = dryRun;
+    }
+
+    public void setForce(boolean force) {
+        this.force = force;
+    }
+
+    public void setUpdate(boolean update) {
+        this.update = update;
     }
 
     public void setSourceFileService(SourceFileService sourceFileService) {

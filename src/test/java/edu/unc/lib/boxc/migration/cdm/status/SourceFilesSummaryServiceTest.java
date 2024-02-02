@@ -150,11 +150,45 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         writeCsv(mappingBody("25,," + path1 +","));
         writeTempCsv(mappingBody("25,," + path1 +",","26,," + path2 +","));
         summaryService.setDryRun(true);
+        summaryService.setUpdate(true);
 
         summaryService.summary(Verbosity.NORMAL);
 
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void summaryDryRunUpdateAddSameSourceFile() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        writeCsv(mappingBody("25,," + path1 +","));
+        writeTempCsv(mappingBody("25,," + path1 +","));
+        summaryService.setDryRun(true);
+        summaryService.setUpdate(true);
+
+        summaryService.summary(Verbosity.NORMAL);
+
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void summaryDryRunForceAddSameSourceFile() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        Path path2 = testHelper.addSourceFile("26.txt");
+        writeCsv(mappingBody("25,," + path1 +",","26,," + path2 +","));
+        writeTempCsv(mappingBody("25,," + path1 +","));
+        summaryService.setDryRun(true);
+        summaryService.setForce(true);
+
+        summaryService.summary(Verbosity.NORMAL);
+
+        assertOutputMatches(".*New Files Mapped: +-1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
