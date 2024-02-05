@@ -64,6 +64,7 @@ public class SourceFilesCommand {
             validateOptions(options);
             initialize(options.getDryRun(), options.isForce(), options.getUpdate());
 
+            summaryService.captureOldState();
             sourceService.generateMapping(options);
             summaryService.summary(Verbosity.NORMAL);
             outputLogger.info("Source file mapping generated for {} in {}s", project.getProjectName(),

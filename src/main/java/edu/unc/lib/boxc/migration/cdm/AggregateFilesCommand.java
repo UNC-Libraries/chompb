@@ -64,6 +64,7 @@ public class AggregateFilesCommand {
             validateOptions(options);
             initialize(options.isSortBottom(), options.getDryRun(), options.isForce(), options.getUpdate());
 
+            summaryService.captureOldState();
             aggregateService.generateMapping(options);
             summaryService.summary(Verbosity.NORMAL);
             outputLogger.info("Aggregate file mapping generated for {} in {}s", project.getProjectName(),

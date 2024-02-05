@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +25,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     private boolean dryRun;
     private boolean force;
     private boolean update;
+    private int oldStateFilesMapped;
 
     /**
      * Display summary about source file mapping
@@ -60,7 +62,9 @@ public class SourceFilesSummaryService extends AbstractStatusService {
      * @return old number of files mapped
      */
     public int oldFilesMapped() {
-        if (force || update) {
+        if ((!dryRun && force) || (!dryRun && update)) {
+            return oldStateFilesMapped;
+        } else if (force || update) {
             return countFilesMapped(getOldMappingPath());
         } else {
             return 0;
@@ -106,6 +110,12 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         return sourceFileService.getMappingPath();
     }
 
+    public void captureOldState() {
+        if (Files.exists(getOldMappingPath())) {
+            setOldStateFilesMapped(countFilesMapped(getOldMappingPath()));
+        }
+    }
+
     public void setDryRun(boolean dryRun) {
         this.dryRun = dryRun;
     }
@@ -116,6 +126,10 @@ public class SourceFilesSummaryService extends AbstractStatusService {
 
     public void setUpdate(boolean update) {
         this.update = update;
+    }
+
+    public void setOldStateFilesMapped(int oldStateFilesMapped) {
+        this.oldStateFilesMapped = oldStateFilesMapped;
     }
 
     public void setSourceFileService(SourceFileService sourceFileService) {
