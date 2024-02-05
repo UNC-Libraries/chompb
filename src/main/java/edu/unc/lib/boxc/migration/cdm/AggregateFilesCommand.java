@@ -62,7 +62,7 @@ public class AggregateFilesCommand {
 
         try {
             validateOptions(options);
-            initialize(options.isSortBottom(), options.getDryRun(), options.isForce(), options.getUpdate());
+            initialize(options.isSortBottom(), options.getDryRun());
 
             summaryService.captureOldState();
             aggregateService.generateMapping(options);
@@ -88,7 +88,7 @@ public class AggregateFilesCommand {
                                 description = "Validate bottom sort mapping") boolean sortBottom) throws Exception {
         String mappingName = (sortBottom ? "Bottom" : "Top") + " aggregate file mappings";
         try {
-            initialize(sortBottom, false, false, false);
+            initialize(sortBottom, false);
             var validator = new AggregateFilesValidator(sortBottom);
             validator.setProject(project);
             List<String> errors = validator.validateMappings(force);
@@ -128,7 +128,7 @@ public class AggregateFilesCommand {
         }
     }
 
-    private void initialize(boolean sortBottom, boolean dryRun, boolean force, boolean update) throws IOException {
+    private void initialize(boolean sortBottom, boolean dryRun) throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         indexService = new CdmIndexService();
@@ -139,8 +139,6 @@ public class AggregateFilesCommand {
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
         summaryService.setDryRun(dryRun);
-        summaryService.setForce(force);
-        summaryService.setUpdate(update);
         summaryService.setSourceFileService(aggregateService);
     }
 }
