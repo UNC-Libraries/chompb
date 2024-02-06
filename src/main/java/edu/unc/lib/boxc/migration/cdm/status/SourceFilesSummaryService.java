@@ -23,20 +23,20 @@ public class SourceFilesSummaryService extends AbstractStatusService {
 
     private SourceFileService sourceFileService;
     private boolean dryRun;
-    private int oldStateFilesMapped;
+    private int previousStateFilesMapped;
 
     /**
      * Display summary about source file mapping
      * @param verbosity
      */
     public void summary(Verbosity verbosity) {
-        int oldFilesMapped = oldFilesMapped();
+        int previousFilesMapped = previousFilesMapped();
         int totalFilesMapped = totalFilesMapped();
-        int newFilesMapped = newFilesMapped(totalFilesMapped, oldFilesMapped);
+        int newFilesMapped = newFilesMapped(totalFilesMapped, previousFilesMapped);
         int totalObjects = totalFilesInProject();
 
         if (verbosity.isNormal()) {
-            showField("Previous Files Mapped", oldStateFilesMapped);
+            showField("Previous Files Mapped", previousFilesMapped);
             showField("New Files Mapped", newFilesMapped);
             showField("Total Files Mapped", totalFilesMapped);
             showField("Total Files in Project", totalObjects);
@@ -46,8 +46,8 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     /**
      * @return number of new files mapped
      */
-    public int newFilesMapped(int totalFilesMapped, int oldFilesMapped) {
-        return totalFilesMapped - oldFilesMapped;
+    public int newFilesMapped(int totalFilesMapped, int previousFilesMapped) {
+        return totalFilesMapped - previousFilesMapped;
     }
 
     /**
@@ -58,10 +58,10 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     }
 
     /**
-     * @return old number of files mapped
+     * @return previous number of files mapped
      */
-    public int oldFilesMapped() {
-        return oldStateFilesMapped;
+    public int previousFilesMapped() {
+        return previousStateFilesMapped;
     }
 
     /**
@@ -99,13 +99,13 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         }
     }
 
-    private Path getOldMappingPath() {
+    private Path getPreviousMappingPath() {
         return sourceFileService.getMappingPath();
     }
 
-    public void captureOldState() {
-        if (Files.exists(getOldMappingPath())) {
-            setOldStateFilesMapped(countFilesMapped(getOldMappingPath()));
+    public void capturePreviousState() {
+        if (Files.exists(getPreviousMappingPath())) {
+            setPreviousStateFilesMapped(countFilesMapped(getPreviousMappingPath()));
         }
     }
 
@@ -113,8 +113,8 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         this.dryRun = dryRun;
     }
 
-    public void setOldStateFilesMapped(int oldStateFilesMapped) {
-        this.oldStateFilesMapped = oldStateFilesMapped;
+    public void setPreviousStateFilesMapped(int previousStateFilesMapped) {
+        this.previousStateFilesMapped = previousStateFilesMapped;
     }
 
     public void setSourceFileService(SourceFileService sourceFileService) {

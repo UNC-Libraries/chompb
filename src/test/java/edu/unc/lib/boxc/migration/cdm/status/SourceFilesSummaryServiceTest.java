@@ -157,7 +157,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         writeCsv(mappingBody("25,," + path1 +","));
         writeTempCsv(mappingBody("25,," + path1 +",","26,," + path2 +","));
         summaryService.setDryRun(true);
-        summaryService.captureOldState();
+        summaryService.capturePreviousState();
 
         summaryService.summary(Verbosity.NORMAL);
 
@@ -174,7 +174,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         writeCsv(mappingBody("25,," + path1 +","));
         writeTempCsv(mappingBody("25,," + path1 +","));
         summaryService.setDryRun(true);
-        summaryService.captureOldState();
+        summaryService.capturePreviousState();
 
         summaryService.summary(Verbosity.NORMAL);
 
@@ -192,7 +192,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         writeCsv(mappingBody("25,," + path1 +",","26,," + path2 +","));
         writeTempCsv(mappingBody("25,," + path1 +","));
         summaryService.setDryRun(true);
-        summaryService.captureOldState();
+        summaryService.capturePreviousState();
 
         summaryService.summary(Verbosity.NORMAL);
 

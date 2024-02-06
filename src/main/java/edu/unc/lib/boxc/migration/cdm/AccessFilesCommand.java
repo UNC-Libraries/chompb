@@ -51,7 +51,7 @@ public class AccessFilesCommand {
             validateOptions(options);
             initialize(options.getDryRun());
 
-            summaryService.captureOldState();
+            summaryService.capturePreviousState();
             accessService.generateMapping(options);
             summaryService.summary(Verbosity.NORMAL);
             outputLogger.info("Access mapping generated for {} in {}s", project.getProjectName(),
