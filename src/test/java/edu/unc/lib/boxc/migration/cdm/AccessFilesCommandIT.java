@@ -82,6 +82,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getAccessFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +0.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -102,6 +103,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getAccessFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -125,6 +127,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getAccessFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");

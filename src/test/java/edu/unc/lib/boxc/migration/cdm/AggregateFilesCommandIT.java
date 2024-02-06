@@ -62,6 +62,7 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertTrue(Files.exists(project.getAggregateTopMappingPath()));
         assertFalse(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
@@ -76,6 +77,7 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
         assertFalse(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
@@ -90,6 +92,7 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
         assertTrue(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
@@ -106,6 +109,7 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertTrue(Files.exists(project.getAggregateTopMappingPath()));
         assertTrue(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");

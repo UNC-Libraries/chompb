@@ -36,6 +36,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         int totalObjects = totalFilesInProject();
 
         if (verbosity.isNormal()) {
+            showField("Previous Files Mapped", oldStateFilesMapped);
             showField("New Files Mapped", newFilesMapped);
             showField("Total Files Mapped", totalFilesMapped);
             showField("Total Files in Project", totalObjects);

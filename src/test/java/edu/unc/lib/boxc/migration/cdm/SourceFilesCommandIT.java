@@ -73,6 +73,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +0.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -91,6 +92,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -109,6 +111,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args1);
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -122,6 +125,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args2);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -143,6 +147,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -160,6 +165,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -174,6 +180,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args2);
 
+        assertOutputMatches(".*Previous Files Mapped: +1.*");
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -191,6 +198,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -204,6 +212,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args2);
 
+        assertOutputMatches(".*Previous Files Mapped: +1.*");
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -222,6 +231,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -236,6 +246,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-d"};
         executeExpectSuccess(args2);
 
+        assertOutputMatches(".*Previous Files Mapped: +2.*");
         assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -254,6 +265,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -267,6 +279,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-u"};
         executeExpectSuccess(args2);
 
+        assertOutputMatches(".*Previous Files Mapped: +2.*");
         assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -285,6 +298,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -300,6 +314,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-d"};
         executeExpectSuccess(args2);
 
+        assertOutputMatches(".*Previous Files Mapped: +2.*");
         assertOutputMatches(".*New Files Mapped: +-1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -318,6 +333,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
@@ -332,6 +348,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-f"};
         executeExpectSuccess(args2);
 
+        assertOutputMatches(".*Previous Files Mapped: +2.*");
         assertOutputMatches(".*New Files Mapped: +-1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
