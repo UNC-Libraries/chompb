@@ -24,7 +24,7 @@ public class AccessFileService extends SourceFileService {
     }
 
     @Override
-    protected Path getMappingPath() {
+    public Path getMappingPath() {
         return project.getAccessFilesMappingPath();
     }
 

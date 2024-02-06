@@ -23,7 +23,7 @@ public class AggregateFileMappingService extends SourceFileService {
     }
 
     @Override
-    protected Path getMappingPath() {
+    public Path getMappingPath() {
         if (sortBottom) {
             return project.getAggregateBottomMappingPath();
         } else {

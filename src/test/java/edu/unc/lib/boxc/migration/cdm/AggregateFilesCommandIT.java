@@ -62,20 +62,25 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertTrue(Files.exists(project.getAggregateTopMappingPath()));
         assertFalse(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
-        var aggrPath1 = testHelper.addSourceFile("617.pdf");
-        var aggrPath2 = testHelper.addSourceFile("620.pdf");
+        testHelper.addSourceFile("617.pdf");
+        testHelper.addSourceFile("620.pdf");
         executeExpectSuccess(withDryRun(argsGenerate("find")));
-
-        assertOutputContains("604,617.cpd," + aggrPath1 + ",");
-        assertOutputContains("607,620.cpd," + aggrPath2 + ",");
 
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
         assertFalse(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
     @Test
@@ -87,6 +92,10 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
         assertTrue(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
     @Test
@@ -100,6 +109,10 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         assertTrue(Files.exists(project.getAggregateTopMappingPath()));
         assertTrue(Files.exists(project.getAggregateBottomMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +5.*");
     }
 
     @Test

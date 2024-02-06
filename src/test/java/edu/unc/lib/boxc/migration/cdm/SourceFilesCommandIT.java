@@ -73,12 +73,16 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
-        Path srcPath1 = addSourceFile("276_182_E.tif");
+        addSourceFile("276_182_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -88,16 +92,50 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-        assertOutputContains("25,276_182_E.tif," + srcPath1 + ",");
-        assertOutputContains("26,276_183_E.tif,,");
-        assertOutputContains("27,276_203_E.tif,,");
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void generateDryRunAndBasicMatchTest() throws Exception {
+        indexExportSamples();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+
+        String[] args1 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "--dry-run",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args1);
+
+        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+
+        resetOutput();
+        addSourceFile("276_182_E.tif");
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args2);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
     @Test
     public void generateNestedPatternMatchDryRunTest() throws Exception {
         indexExportSamples();
-        Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
-        Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
+        addSourceFile("path/to/00276_op0182_0001_e.tif");
+        addSourceFile("00276_op0203_0001_e.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -109,15 +147,16 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getSourceFilesMappingPath()));
-        assertOutputContains("25,276_182_E.tif," + srcPath1.toString() + ",");
-        assertOutputContains("26,276_183_E.tif,,");
-        assertOutputContains("27,276_203_E.tif," + srcPath3 + ",");
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
     @Test
     public void generateUpdateAddSourceFileDryRunTest() throws Exception {
         indexExportSamples();
-        Path srcPath1 = addSourceFile("276_182_E.tif");
+        addSourceFile("276_182_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -125,7 +164,14 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args);
 
-        Path srcPath2 = addSourceFile("276_183_E.tif");
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+
+        resetOutput();
+        addSourceFile("276_183_E.tif");
         String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "generate",
@@ -134,12 +180,179 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-b", basePath.toString()};
         executeExpectSuccess(args2);
 
-        assertOutputContains("25,276_182_E.tif," + srcPath1 + ",");
-        assertOutputContains("26,276_183_E.tif," + srcPath2 + ",");
-        assertOutputContains("27,276_203_E.tif,,");
+        assertOutputMatches(".*Previous Files Mapped: +1.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
+    @Test
+    public void generateUpdateAddSourceFileTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
 
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+
+        resetOutput();
+        addSourceFile("276_183_E.tif");
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-u",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Previous Files Mapped: +1.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void generateUpdateAddSameSourceFileDryRunTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
+        addSourceFile("276_183_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+
+        resetOutput();
+        addSourceFile("276_183_E.tif");
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString(),
+                "-u",
+                "-d"};
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Previous Files Mapped: +2.*");
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void generateUpdateAddSameSourceFileTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
+        addSourceFile("276_183_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+
+        resetOutput();
+        addSourceFile("276_183_E.tif");
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString(),
+                "-u"};
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Previous Files Mapped: +2.*");
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void generateForceAddSourceFileDryRunTest() throws Exception {
+        indexExportSamples();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+        addSourceFile("276_183_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+
+        resetOutput();
+        Files.delete(srcPath1);
+        addSourceFile("276_183_E.tif");
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString(),
+                "-f",
+                "-d"};
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Previous Files Mapped: +2.*");
+        assertOutputMatches(".*New Files Mapped: +-1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
+    public void generateForceAddSourceFileTest() throws Exception {
+        indexExportSamples();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+        addSourceFile("276_183_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+
+        resetOutput();
+        Files.delete(srcPath1);
+        addSourceFile("276_183_E.tif");
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString(),
+                "-f"};
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Previous Files Mapped: +2.*");
+        assertOutputMatches(".*New Files Mapped: +-1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
 
     @Test
     public void validateValidTest() throws Exception {
@@ -296,6 +509,9 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
     private void indexExportSamples() throws Exception {

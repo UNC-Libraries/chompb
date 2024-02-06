@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -80,21 +79,19 @@ public class SourceFileService {
         Pattern fieldMatchingPattern = buildFieldMatchingPattern(options);
 
         Path mappingPath = getMappingPath();
-        boolean needsMerge = false;
-        // If performing an update, start by writing to a new temp mapping file
-        if (options.getUpdate() && Files.exists(mappingPath)) {
+        boolean needsMerge = options.getUpdate() && Files.exists(mappingPath);
+        // Write to temp mappings file if doing a dry run, otherwise write to mappings file
+        if (needsMerge || options.getDryRun()) {
             mappingPath = getTempMappingPath();
-            // Cleanup temp path if it already exists
-            Files.deleteIfExists(mappingPath);
-            needsMerge = true;
         }
+        Files.deleteIfExists(mappingPath);
 
         // Iterate through exported objects in this collection to match against
         Connection conn = null;
-        // Write to system.out if doing a dry run, otherwise write to mappings file
-        try (var csvPrinter = openMappingsPrinter((options.getDryRun() && !needsMerge) ? null : mappingPath)) {
+        try (var csvPrinter = openMappingsPrinter(mappingPath)) {
             Path basePath = options.getBasePath();
             // Query for all values of the export field to be used for matching
+
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
             stmt.setFetchSize(FETCH_SIZE);
@@ -266,11 +263,11 @@ public class SourceFileService {
         ProjectPropertiesSerialization.write(project);
     }
 
-    protected Path getMappingPath() {
+    public Path getMappingPath() {
         return project.getSourceFilesMappingPath();
     }
 
-    protected Path getTempMappingPath() {
+    public Path getTempMappingPath() {
         var mappingPath = getMappingPath();
         return mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
     }
@@ -284,7 +281,7 @@ public class SourceFileService {
     /**
      * Merge existing mappings with updated mappings, writing to temporary files as intermediates
      * @param options
-     * @param updatesPath
+     * @param updatesPath the temp path containing the newly generated mappings to merge into the original mappings
      */
     private void mergeUpdates(SourceFileMappingOptions options, Path updatesPath) throws IOException {
         Path originalPath = getMappingPath();
@@ -298,8 +295,8 @@ public class SourceFileService {
         // Iterate through the existing mappings, merging in the updated mappings when appropriate
         try (
             var originalParser = openMappingsParser(originalPath);
-            // Write to system.out if doing a dry run, otherwise write to mappings file
-            var mergedPrinter = openMappingsPrinter(options.getDryRun() ? null : mergedPath);
+            // Write to temp mappings file if doing a dry run, otherwise write to mappings file
+            var mergedPrinter = openMappingsPrinter(mergedPath)
         ) {
             Set<String> origIds = new HashSet<>();
             for (CSVRecord originalRecord : originalParser) {
@@ -345,10 +342,11 @@ public class SourceFileService {
         }
 
         // swap the merged mappings to be the main mappings, unless we're doing a dry run
-        if (!options.getDryRun()) {
+        if (options.getDryRun()) {
+            Files.move(mergedPath, updatesPath, StandardCopyOption.REPLACE_EXISTING);
+        } else {
             Files.move(mergedPath, originalPath, StandardCopyOption.REPLACE_EXISTING);
         }
-        Files.delete(updatesPath);
     }
 
     protected SourceFileMapping resolveSourcePathConflict(SourceFileMappingOptions options,
@@ -417,14 +415,12 @@ public class SourceFileService {
     }
 
     /**
-     * @param mappingPath Path CSV will output to. If null, then will output to System.out
+     * @param mappingPath Path CSV will output to. If null, then will output to temporary CSV
      * @return CSVPrinter for writing to specified destination
      * @throws IOException
      */
     public static CSVPrinter openMappingsPrinter(Path mappingPath) throws IOException {
-        BufferedWriter writer = mappingPath == null ?
-                new BufferedWriter(new OutputStreamWriter(System.out)) :
-                Files.newBufferedWriter(mappingPath);
+        BufferedWriter writer = Files.newBufferedWriter(mappingPath);
         return new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(SourceFilesInfo.CSV_HEADERS));
     }
 

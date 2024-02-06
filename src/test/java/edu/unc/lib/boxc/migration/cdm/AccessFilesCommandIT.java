@@ -82,7 +82,10 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getAccessFilesMappingPath()));
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
 
         assertUpdatedDatePresent();
     }
@@ -90,7 +93,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
-        Path srcPath1 = addSourceFile("276_182_E.tif");
+        addSourceFile("276_182_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -100,9 +103,10 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getAccessFilesMappingPath()));
-        assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
-        assertTrue(output.contains("26,276_183_E.tif,,"));
-        assertTrue(output.contains("27,276_203_E.tif,,"));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
 
         assertUpdatedDateNotPresent();
     }
@@ -110,8 +114,8 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateNestedPatternMatchDryRunTest() throws Exception {
         indexExportSamples();
-        Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
-        Path srcPath3 = addSourceFile("00276_op0203_0001_e.tif");
+        addSourceFile("path/to/00276_op0182_0001_e.tif");
+        addSourceFile("00276_op0203_0001_e.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -123,9 +127,10 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getAccessFilesMappingPath()));
-        assertTrue(output.contains("25,276_182_E.tif," + srcPath1.toString() + ","));
-        assertTrue(output.contains("26,276_183_E.tif,,"));
-        assertTrue(output.contains("27,276_203_E.tif," + srcPath3 + ","));
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files Mapped: +2.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
 
         assertUpdatedDateNotPresent();
     }
