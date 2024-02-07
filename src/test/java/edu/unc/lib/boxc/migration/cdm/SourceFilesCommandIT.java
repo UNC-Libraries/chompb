@@ -82,7 +82,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
-        addSourceFile("276_182_E.tif");
+        Path srcPath1 = addSourceFile("276_182_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -96,6 +96,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
     }
 
     @Test
@@ -115,6 +116,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
 
         resetOutput();
         addSourceFile("276_182_E.tif");
@@ -129,13 +131,14 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
     }
 
     @Test
     public void generateNestedPatternMatchDryRunTest() throws Exception {
         indexExportSamples();
-        addSourceFile("path/to/00276_op0182_0001_e.tif");
-        addSourceFile("00276_op0203_0001_e.tif");
+        Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
+        Path srcPath2 = addSourceFile("00276_op0203_0001_e.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -151,12 +154,14 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
+        assertOutputContains("27, 276_203_E.tif, " + srcPath2);
     }
 
     @Test
     public void generateUpdateAddSourceFileDryRunTest() throws Exception {
         indexExportSamples();
-        addSourceFile("276_182_E.tif");
+        Path srcPath1 = addSourceFile("276_182_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -169,9 +174,10 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
 
         resetOutput();
-        addSourceFile("276_183_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
         String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "generate",
@@ -184,12 +190,13 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("26, 276_183_E.tif, " + srcPath2);
     }
 
     @Test
     public void generateUpdateAddSourceFileTest() throws Exception {
         indexExportSamples();
-        addSourceFile("276_182_E.tif");
+        Path srcPath1 = addSourceFile("276_182_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -202,9 +209,10 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
 
         resetOutput();
-        addSourceFile("276_183_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
         String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "generate",
@@ -216,13 +224,14 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("26, 276_183_E.tif, " + srcPath2);
     }
 
     @Test
     public void generateUpdateAddSameSourceFileDryRunTest() throws Exception {
         indexExportSamples();
-        addSourceFile("276_182_E.tif");
-        addSourceFile("276_183_E.tif");
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -235,6 +244,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
+        assertOutputContains("26, 276_183_E.tif, " + srcPath2);
 
         resetOutput();
         addSourceFile("276_183_E.tif");
@@ -255,8 +266,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateUpdateAddSameSourceFileTest() throws Exception {
         indexExportSamples();
-        addSourceFile("276_182_E.tif");
-        addSourceFile("276_183_E.tif");
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -269,6 +280,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
+        assertOutputContains("26, 276_183_E.tif, " + srcPath2);
 
         resetOutput();
         addSourceFile("276_183_E.tif");
@@ -289,7 +302,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     public void generateForceAddSourceFileDryRunTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("276_182_E.tif");
-        addSourceFile("276_183_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -302,6 +315,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
+        assertOutputContains("26, 276_183_E.tif, " + srcPath2);
 
         resetOutput();
         Files.delete(srcPath1);
@@ -318,13 +333,14 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +-1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("26, 276_183_E.tif, " + srcPath2);
     }
 
     @Test
     public void generateForceAddSourceFileTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("276_182_E.tif");
-        addSourceFile("276_183_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -337,6 +353,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
+        assertOutputContains("26, 276_183_E.tif, " + srcPath2);
 
         resetOutput();
         Files.delete(srcPath1);
@@ -352,6 +370,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +-1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("26, 276_183_E.tif, " + srcPath2);
     }
 
     @Test

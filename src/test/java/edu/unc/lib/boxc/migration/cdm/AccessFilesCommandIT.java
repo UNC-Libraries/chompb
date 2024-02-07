@@ -93,7 +93,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
-        addSourceFile("276_182_E.tif");
+        Path srcPath1 = addSourceFile("276_182_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -107,6 +107,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
 
         assertUpdatedDateNotPresent();
     }
@@ -114,8 +115,8 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateNestedPatternMatchDryRunTest() throws Exception {
         indexExportSamples();
-        addSourceFile("path/to/00276_op0182_0001_e.tif");
-        addSourceFile("00276_op0203_0001_e.tif");
+        Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
+        Path srcPath2 = addSourceFile("00276_op0203_0001_e.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -131,6 +132,8 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
+        assertOutputContains("27, 276_203_E.tif, " + srcPath2);
 
         assertUpdatedDateNotPresent();
     }
