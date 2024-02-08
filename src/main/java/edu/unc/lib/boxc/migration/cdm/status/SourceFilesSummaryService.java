@@ -107,11 +107,11 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         List<CSVRecord> completeListNewFiles = new ArrayList<>();
 
         try (
-                Reader reader = Files.newBufferedReader(getNewMappingPath());
-                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                        .withFirstRecordAsHeader()
-                        .withHeader(SourceFilesInfo.CSV_HEADERS)
-                        .withTrim());
+            Reader reader = Files.newBufferedReader(getNewMappingPath());
+            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                    .withFirstRecordAsHeader()
+                    .withHeader(SourceFilesInfo.CSV_HEADERS)
+                    .withTrim());
         ) {
             completeListNewFiles = csvParser.getRecords();
         } catch (IOException e) {
