@@ -6,7 +6,6 @@ import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -16,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
@@ -121,18 +121,21 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     }
 
     /**
-     * @return sample list of new files mapped (first and last few rows)
+     * @return sample list of new files mapped (20 random files)
      */
     public List<CSVRecord> sampleListNewFiles() {
         List<CSVRecord> completeListNewFiles = completeListNewFiles();
-        List<CSVRecord> sampleListNewFiles;
+        List<CSVRecord> sampleListNewFiles = new ArrayList<>();
 
-        // sample the first 10 and last 10 files mapped
-        if (completeListNewFiles.size() > 20) {
-            sampleListNewFiles = completeListNewFiles.subList(0, 9);
-            sampleListNewFiles.addAll(completeListNewFiles.subList(completeListNewFiles.size() - 10, completeListNewFiles.size()));
-        } else {
-            sampleListNewFiles = completeListNewFiles;
+        // randomly sample 20 files mapped
+        Random rand = new Random();
+        int sampleSize = 20;
+
+        for (int i = 0; i < sampleSize; i++) {
+            int randomIndex = rand.nextInt(completeListNewFiles.size());
+            CSVRecord randomEntry = completeListNewFiles.get(randomIndex);
+            sampleListNewFiles.add(randomEntry);
+            completeListNewFiles.remove(randomIndex);
         }
 
         return sampleListNewFiles;
@@ -141,7 +144,11 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     public List<CSVRecord> listNewFiles() {
         List<CSVRecord> listNewFiles = new ArrayList<>();
         if (Files.exists(getNewMappingPath())) {
-            listNewFiles = sampleListNewFiles();
+            if (completeListNewFiles().size() > 20) {
+                listNewFiles = sampleListNewFiles();
+            } else {
+                listNewFiles = completeListNewFiles();
+            }
         }
         return listNewFiles;
     }
