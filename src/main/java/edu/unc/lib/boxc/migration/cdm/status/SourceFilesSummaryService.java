@@ -15,8 +15,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -27,36 +28,34 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class SourceFilesSummaryService extends AbstractStatusService {
     private static final Logger log = getLogger(SourceFilesSummaryService.class);
+    private static final String ID_FIELD = "id";
+    private static final String MATCHING_VALUE_FIELD = "matching_value";
+    private static final String SOURCE_FILE_FIELD = "source_file";
+    private static final String POTENTIAL_MATCHES_FIELD = "potential_matches";
 
     private SourceFileService sourceFileService;
     private boolean dryRun;
     private int previousStateFilesMapped;
+    private List<CSVRecord> previousStatePopulatedFiles;
+    private int sampleSize = 20;
 
     /**
      * Display summary about source file mapping
      * @param verbosity
      */
     public void summary(Verbosity verbosity) {
-        int previousFilesMapped = previousFilesMapped();
         int totalFilesMapped = totalFilesMapped();
-        int newFilesMapped = newFilesMapped(totalFilesMapped, previousFilesMapped);
+        int newFilesMapped = totalFilesMapped - previousStateFilesMapped;
         int totalObjects = totalFilesInProject();
         List<CSVRecord> listFiles = listNewFiles();
 
         if (verbosity.isNormal()) {
-            showField("Previous Files Mapped", previousFilesMapped);
+            showField("Previous Files Mapped", previousStateFilesMapped);
             showField("New Files Mapped", newFilesMapped);
             showField("Total Files Mapped", totalFilesMapped);
             showField("Total Files in Project", totalObjects);
             showFiles(listFiles);
         }
-    }
-
-    /**
-     * @return number of new files mapped
-     */
-    public int newFilesMapped(int totalFilesMapped, int previousFilesMapped) {
-        return totalFilesMapped - previousFilesMapped;
     }
 
     /**
@@ -67,26 +66,19 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     }
 
     /**
-     * @return previous number of files mapped
-     */
-    public int previousFilesMapped() {
-        return previousStateFilesMapped;
-    }
-
-    /**
      * @return number of files mapped
      */
     public int countFilesMapped(Path mappingPath) {
         Set<String> indexedIds = getQueryService().getObjectIdSet();
         Set<String> mappedIds = new HashSet<>();
         try {
-            SourceFilesInfo info = SourceFileService.loadMappings(mappingPath);
-            for (SourceFilesInfo.SourceFileMapping mapping : info.getMappings()) {
-                if (mapping.getSourcePaths() != null && indexedIds.contains(mapping.getCdmId())) {
-                    mappedIds.add(mapping.getCdmId());
+            List<CSVRecord> populatedEntries = loadPopulatedEntries(mappingPath);
+            for (CSVRecord entry : populatedEntries) {
+                if (!entry.get(SOURCE_FILE_FIELD).isEmpty() && indexedIds.contains(entry.get(ID_FIELD))) {
+                    mappedIds.add(entry.get(ID_FIELD));
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to load mappings", e);
             outputLogger.info("Failed to load mappings: {}", e.getMessage());
         }
@@ -101,53 +93,90 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     }
 
     /**
-     * @return complete list of new files mapped
+     * @return load list of all CSV records
      */
-    public List<CSVRecord> completeListNewFiles() {
-        List<CSVRecord> completeListNewFiles = new ArrayList<>();
+    public List<CSVRecord> loadAllEntries(Path mappingPath) {
+        List<CSVRecord> allEntries = new ArrayList<>();
 
         try (
-            Reader reader = Files.newBufferedReader(getNewMappingPath());
-            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .withHeader(SourceFilesInfo.CSV_HEADERS)
-                    .withTrim());
+                Reader reader = Files.newBufferedReader(mappingPath);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(SourceFilesInfo.CSV_HEADERS)
+                        .withTrim());
         ) {
-            completeListNewFiles = csvParser.getRecords();
+            for (CSVRecord csvRecord : csvParser) {
+                allEntries.add(csvRecord);
+            }
         } catch (IOException e) {
-            log.error("Failed to list new files", e);
+            log.error("Failed to list files", e);
         }
-        return completeListNewFiles;
+        return allEntries;
     }
 
     /**
-     * @return sample list of new files mapped (20 random files)
+     * @return load list of CSV records with source file populated
+     */
+    public List<CSVRecord> loadPopulatedEntries(Path mappingPath) {
+        List<CSVRecord> populatedEntries = loadAllEntries(mappingPath);
+
+        return populatedEntries.stream().filter(entry -> !entry.get(SOURCE_FILE_FIELD).isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * @return list of new CSV records with source file populated
+     */
+    public List<CSVRecord> getListNewEntries() {
+        List<CSVRecord> previousMappings = new ArrayList<>();
+        if (previousStatePopulatedFiles != null) {
+            previousMappings = previousStatePopulatedFiles;
+        }
+        List<CSVRecord> newMappings = loadPopulatedEntries(getNewMappingPath());
+
+        if (!previousMappings.isEmpty()) {
+            Set<String> previousIdentifiers = getIdentifierSet(previousMappings);
+            Set<String> newIdentifiers = getIdentifierSet(newMappings);
+            newIdentifiers.removeAll(previousIdentifiers);
+            return newMappings.stream().filter(entry -> newIdentifiers.contains(entry.get(ID_FIELD)))
+                    .collect(Collectors.toList());
+        } else {
+            return newMappings;
+        }
+    }
+
+    private Set<String> getIdentifierSet(List<CSVRecord> mappings) {
+        return mappings.stream().map(entry -> entry.get(ID_FIELD)).collect(Collectors.toSet());
+    }
+
+    /**
+     * @return sample list of new files mapped (every nth file)
      */
     public List<CSVRecord> sampleListNewFiles() {
-        List<CSVRecord> completeListNewFiles = completeListNewFiles();
-        List<CSVRecord> sampleListNewFiles = new ArrayList<>();
+        List<CSVRecord> completeListNewFiles = getListNewEntries();
+        List<CSVRecord> sampleListNewFiles;
 
-        // randomly sample 20 files mapped
-        Random rand = new Random();
-        int sampleSize = 20;
+        // select every nth entry
+        int interval = completeListNewFiles.size() / sampleSize;
 
-        for (int i = 0; i < sampleSize; i++) {
-            int randomIndex = rand.nextInt(completeListNewFiles.size());
-            CSVRecord randomEntry = completeListNewFiles.get(randomIndex);
-            sampleListNewFiles.add(randomEntry);
-            completeListNewFiles.remove(randomIndex);
-        }
+        sampleListNewFiles = IntStream.range(0, completeListNewFiles.size())
+                .filter(n -> n % interval == 0)
+                .mapToObj(completeListNewFiles::get)
+                .collect(Collectors.toList());
 
         return sampleListNewFiles;
     }
 
+    /**
+     * @return sample list of files mapped (if number of mapped files > sample size) or list of all files mapped
+     */
     public List<CSVRecord> listNewFiles() {
         List<CSVRecord> listNewFiles = new ArrayList<>();
         if (Files.exists(getNewMappingPath())) {
-            if (completeListNewFiles().size() > 20) {
+            if (loadPopulatedEntries(getNewMappingPath()).size() > sampleSize) {
                 listNewFiles = sampleListNewFiles();
             } else {
-                listNewFiles = completeListNewFiles();
+                listNewFiles = loadPopulatedEntries(getNewMappingPath());
             }
         }
         return listNewFiles;
@@ -168,6 +197,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     public void capturePreviousState() {
         if (Files.exists(getPreviousMappingPath())) {
             setPreviousStateFilesMapped(countFilesMapped(getPreviousMappingPath()));
+            setPreviousStatePopulatedFiles(loadPopulatedEntries(getPreviousMappingPath()));
         }
     }
 
@@ -176,8 +206,12 @@ public class SourceFilesSummaryService extends AbstractStatusService {
             outputLogger.info("Sample unavailable. No new files mapped.");
         } else {
             outputLogger.info("{}{}:", INDENT, "Sample of New Files");
+            outputLogger.info("{}{}{}{}{}{}", INDENT, INDENT, ID_FIELD + ",", MATCHING_VALUE_FIELD + ",",
+                    SOURCE_FILE_FIELD + ",", POTENTIAL_MATCHES_FIELD);
             for (CSVRecord file : listFiles) {
-                outputLogger.info("{}{}* {}", INDENT, INDENT, file);
+                outputLogger.info("{}{}{}{}{}{}", INDENT, INDENT,
+                        file.get(ID_FIELD) + ",", file.get(MATCHING_VALUE_FIELD) + ",",
+                        file.get(SOURCE_FILE_FIELD) + ",", file.get(POTENTIAL_MATCHES_FIELD));
             }
         }
     }
@@ -188,6 +222,14 @@ public class SourceFilesSummaryService extends AbstractStatusService {
 
     public void setPreviousStateFilesMapped(int previousStateFilesMapped) {
         this.previousStateFilesMapped = previousStateFilesMapped;
+    }
+
+    public void setPreviousStatePopulatedFiles(List<CSVRecord> previousStatePopulatedFiles) {
+        this.previousStatePopulatedFiles = previousStatePopulatedFiles;
+    }
+
+    public void setSampleSize(int sampleSize) {
+        this.sampleSize = sampleSize;
     }
 
     public void setSourceFileService(SourceFileService sourceFileService) {

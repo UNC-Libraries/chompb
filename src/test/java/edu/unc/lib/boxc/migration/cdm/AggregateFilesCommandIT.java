@@ -66,8 +66,8 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
-        assertOutputContains("604, 617.cpd, " + srcPath1);
-        assertOutputContains("607, 620.cpd, " + srcPath2);
+        assertOutputContains("604,617.cpd," + srcPath1);
+        assertOutputContains("607,620.cpd," + srcPath2);
     }
 
     @Test
@@ -83,8 +83,8 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
-        assertOutputContains("604, 617.cpd, " + srcPath1);
-        assertOutputContains("607, 620.cpd, " + srcPath2);
+        assertOutputContains("604,617.cpd," + srcPath1);
+        assertOutputContains("607,620.cpd," + srcPath2);
     }
 
     @Test
@@ -100,8 +100,8 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
-        assertOutputContains("604, 617.cpd, " + srcPath1);
-        assertOutputContains("607, 620.cpd, " + srcPath2);
+        assertOutputContains("604,617.cpd," + srcPath1);
+        assertOutputContains("607,620.cpd," + srcPath2);
     }
 
     @Test
@@ -119,8 +119,8 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
-        assertOutputContains("604, 617.cpd, " + srcPath1);
-        assertOutputContains("607, 620.cpd, " + srcPath2);
+        assertOutputContains("604,617.cpd," + srcPath1);
+        assertOutputContains("607,620.cpd," + srcPath2);
     }
 
     @Test

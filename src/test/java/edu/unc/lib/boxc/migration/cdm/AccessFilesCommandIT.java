@@ -107,7 +107,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
+        assertOutputContains("25,276_182_E.tif," + srcPath1);
 
         assertUpdatedDateNotPresent();
     }
@@ -132,8 +132,8 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, 276_182_E.tif, " + srcPath1);
-        assertOutputContains("27, 276_203_E.tif, " + srcPath2);
+        assertOutputContains("25,276_182_E.tif," + srcPath1);
+        assertOutputContains("27,276_203_E.tif," + srcPath2);
 
         assertUpdatedDateNotPresent();
     }

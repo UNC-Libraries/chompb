@@ -62,7 +62,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, , " + path1);
+        assertOutputContains("25,," + path1);
     }
 
     @Test
@@ -77,7 +77,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, , " + path1);
+        assertOutputContains("25,," + path1);
     }
 
     @Test
@@ -92,7 +92,6 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +0.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("2, , " + path1);
     }
 
     @Test
@@ -122,9 +121,9 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +3.*");
         assertOutputMatches(".*Total Files Mapped: +3.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, , " + path1);
-        assertOutputContains("26, , " + path2);
-        assertOutputContains("27, , " + path3);
+        assertOutputContains("25,," + path1);
+        assertOutputContains("26,," + path2);
+        assertOutputContains("27,," + path3);
     }
 
     @Test
@@ -139,7 +138,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, , " + path1);
+        assertOutputContains("25,," + path1);
     }
 
     @Test
@@ -155,7 +154,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, , " + path1);
+        assertOutputContains("25,," + path1);
     }
 
     @Test
@@ -174,8 +173,8 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, , " + path1);
-        assertOutputContains("26, , " + path2);
+        assertOutputContains("25,," + path1);
+        assertOutputContains("26,," + path2);
     }
 
     @Test
@@ -193,7 +192,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, , " + path1);
+        assertOutputContains("25,," + path1);
     }
 
     @Test
@@ -212,7 +211,52 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +-1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25, , " + path1);
+        assertOutputContains("25,," + path1);
+    }
+
+    @Test
+    public void summaryDryRunSampleSizeWithPreviousMappings() throws Exception {
+        testHelper.indexExportData("gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        Path path2 = testHelper.addSourceFile("26.txt");
+        writeCsv(mappingBody("25,," + path1 +","));
+        writeTempCsv(mappingBody("25,," + path1 +",","26,," + path2 +",","27,," + path1 +",","28,," + path2 +",",
+                "29,," + path1 +",", "30,," + path2 +",", "31,," + path1 +","));
+
+        summaryService.capturePreviousState();
+        summaryService.setDryRun(true);
+        summaryService.setSampleSize(3);
+        summaryService.summary(Verbosity.NORMAL);
+
+        assertOutputMatches(".*Previous Files Mapped: +1.*");
+        assertOutputMatches(".*New Files Mapped: +6.*");
+        assertOutputMatches(".*Total Files Mapped: +7.*");
+        assertOutputMatches(".*Total Files in Project: +161.*");
+        assertOutputContains("26,," + path2);
+        assertOutputContains("28,," + path2);
+        assertOutputContains("30,," + path2);
+    }
+
+    @Test
+    public void summarySampleSize() throws Exception {
+        testHelper.indexExportData("gilmer");
+        summaryService.capturePreviousState();
+        Path path1 = testHelper.addSourceFile("25.txt");
+        Path path2 = testHelper.addSourceFile("26.txt");
+        writeCsv(mappingBody("25,," + path1 +",","26,," + path2 +",","27,," + path1 +",","28,," + path2 +",",
+                "29,," + path1 +",", "30,," + path2 +",", "31,," + path1 +","));
+
+        summaryService.setSampleSize(3);
+        summaryService.summary(Verbosity.NORMAL);
+
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +7.*");
+        assertOutputMatches(".*Total Files Mapped: +7.*");
+        assertOutputMatches(".*Total Files in Project: +161.*");
+        assertOutputContains("25,," + path1);
+        assertOutputContains("27,," + path1);
+        assertOutputContains("29,," + path1);
+        assertOutputContains("31,," + path1);
     }
 
     private String mappingBody(String... rows) {
