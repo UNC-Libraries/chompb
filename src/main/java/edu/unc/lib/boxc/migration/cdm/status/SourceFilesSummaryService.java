@@ -55,14 +55,14 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     /**
      * @return total number of files mapped
      */
-    public int totalFilesMapped() {
+    private int totalFilesMapped() {
         return countFilesMapped(getNewStatePopulatedFiles());
     }
 
     /**
      * @return number of files mapped
      */
-    public int countFilesMapped(List<CSVRecord> populatedFiles) {
+    private int countFilesMapped(List<CSVRecord> populatedFiles) {
         Set<String> indexedIds = getQueryService().getObjectIdSet();
         Set<String> mappedIds = new HashSet<>();
 
@@ -78,14 +78,14 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     /**
      * @return number of files in project
      */
-    public int totalFilesInProject() {
+    private int totalFilesInProject() {
         return getQueryService().countIndexedFileObjects();
     }
 
     /**
      * @return load list of all CSV records
      */
-    public List<CSVRecord> loadAllFiles(Path mappingPath) {
+    private List<CSVRecord> loadAllFiles(Path mappingPath) {
         List<CSVRecord> allFiles = new ArrayList<>();
 
         try (var csvParser = SourceFileService.openMappingsParser(mappingPath)) {
@@ -101,7 +101,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     /**
      * @return load list of CSV records with source file populated
      */
-    public List<CSVRecord> loadPopulatedFiles(Path mappingPath) {
+    private List<CSVRecord> loadPopulatedFiles(Path mappingPath) {
         List<CSVRecord> populatedFiles = loadAllFiles(mappingPath);
 
         return populatedFiles.stream().filter(entry -> !entry.get(SourceFilesInfo.SOURCE_FILE_FIELD).isEmpty())
@@ -109,9 +109,9 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     }
 
     /**
-     * @return list of new CSV records with source file populated
+     * @return list of CSV records that have been populated since the previous mapping state
      */
-    public List<CSVRecord> getListNewPopulatedFiles() {
+    private List<CSVRecord> listNewlyPopulatedFiles() {
         List<CSVRecord> newMappings = getNewStatePopulatedFiles();
         if (previousStatePopulatedFiles == null) {
             return newMappings;
@@ -131,8 +131,8 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     /**
      * @return sample list of new files mapped (every nth file)
      */
-    public List<CSVRecord> sampleListNewFiles() {
-        List<CSVRecord> completeListNewFiles = getListNewPopulatedFiles();
+    private List<CSVRecord> sampleListNewFiles() {
+        List<CSVRecord> completeListNewFiles = listNewlyPopulatedFiles();
         List<CSVRecord> sampleListNewFiles;
 
         // select every nth file
@@ -149,13 +149,13 @@ public class SourceFilesSummaryService extends AbstractStatusService {
     /**
      * @return sample list of files mapped (if number of mapped files > sample size) or list of all files mapped
      */
-    public List<CSVRecord> listNewFiles() {
+    private List<CSVRecord> listNewFiles() {
         List<CSVRecord> listNewFiles = new ArrayList<>();
         if (Files.exists(getNewMappingPath())) {
             if (getNewStatePopulatedFiles().size() > sampleSize) {
                 listNewFiles = sampleListNewFiles();
             } else {
-                listNewFiles = getListNewPopulatedFiles();
+                listNewFiles = listNewlyPopulatedFiles();
             }
         }
         return listNewFiles;
@@ -179,7 +179,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         }
     }
 
-    protected void showFiles(List<CSVRecord> listFiles) {
+    private void showFiles(List<CSVRecord> listFiles) {
         if (listFiles.isEmpty()) {
             outputLogger.info("Sample unavailable. No new files mapped.");
         } else {
