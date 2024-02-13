@@ -56,8 +56,8 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateBasicMatchTopTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
-        testHelper.addSourceFile("617.pdf");
-        testHelper.addSourceFile("620.pdf");
+        Path srcPath1 = testHelper.addSourceFile("617.pdf");
+        Path srcPath2 = testHelper.addSourceFile("620.pdf");
         executeExpectSuccess(argsGenerate("find"));
 
         assertTrue(Files.exists(project.getAggregateTopMappingPath()));
@@ -66,13 +66,15 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
+        assertOutputContains("604,617.cpd," + srcPath1);
+        assertOutputContains("607,620.cpd," + srcPath2);
     }
 
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
-        testHelper.addSourceFile("617.pdf");
-        testHelper.addSourceFile("620.pdf");
+        Path srcPath1 = testHelper.addSourceFile("617.pdf");
+        Path srcPath2 = testHelper.addSourceFile("620.pdf");
         executeExpectSuccess(withDryRun(argsGenerate("find")));
 
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
@@ -81,13 +83,15 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
+        assertOutputContains("604,617.cpd," + srcPath1);
+        assertOutputContains("607,620.cpd," + srcPath2);
     }
 
     @Test
     public void generateBasicMatchBottomTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
-        testHelper.addSourceFile("617.pdf");
-        testHelper.addSourceFile("620.pdf");
+        Path srcPath1 = testHelper.addSourceFile("617.pdf");
+        Path srcPath2 = testHelper.addSourceFile("620.pdf");
         executeExpectSuccess(withSortBottom(argsGenerate("find")));
 
         assertFalse(Files.exists(project.getAggregateTopMappingPath()));
@@ -96,13 +100,15 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
+        assertOutputContains("604,617.cpd," + srcPath1);
+        assertOutputContains("607,620.cpd," + srcPath2);
     }
 
     @Test
     public void generateBasicMatchBothTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
-        testHelper.addSourceFile("617.pdf");
-        testHelper.addSourceFile("620.pdf");
+        Path srcPath1 = testHelper.addSourceFile("617.pdf");
+        Path srcPath2 = testHelper.addSourceFile("620.pdf");
         executeExpectSuccess(argsGenerate("find"));
 
         executeExpectSuccess(withSortBottom(argsGenerate("find")));
@@ -113,6 +119,8 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +5.*");
+        assertOutputContains("604,617.cpd," + srcPath1);
+        assertOutputContains("607,620.cpd," + srcPath2);
     }
 
     @Test
