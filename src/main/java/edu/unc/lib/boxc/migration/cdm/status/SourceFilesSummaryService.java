@@ -181,7 +181,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
 
     private void showFiles(List<CSVRecord> listFiles) {
         if (listFiles.isEmpty()) {
-            outputLogger.info("Sample unavailable. No new files mapped.");
+            outputLogger.info("{}{}", INDENT, "Sample unavailable. No new files mapped.");
         } else {
             outputLogger.info("{}{}:", INDENT, "Sample of New Files");
             outputLogger.info("{}{}{}{}{}{}", INDENT, INDENT, SourceFilesInfo.ID_FIELD + ",",
