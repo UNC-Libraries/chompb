@@ -59,7 +59,7 @@ public class PermissionsService {
                 BufferedWriter writer = Files.newBufferedWriter(fieldsPath);
                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(PermissionsInfo.CSV_HEADERS));
         ) {
-            if (options.getCdmId() != null && options.getCdmId().matches(PermissionsInfo.DEFAULT_ID)) {
+            if (options.isWithDefault()) {
                 csvPrinter.printRecord(PermissionsInfo.DEFAULT_ID,
                         everyoneField,
                         authenticatedField);

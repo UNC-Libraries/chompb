@@ -4,9 +4,9 @@ import edu.unc.lib.boxc.auth.api.UserRole;
 import picocli.CommandLine.Option;
 
 public class PermissionMappingOptions {
-    @Option(names = {"-id", "--cdm-id"},
-            description = "CDM ID(s) of the item(s) being mapped")
-    private String cdmId;
+    @Option(names = {"-wd", "--with-default"},
+            description = "Add 'default' entry to CSV mapping, 'id' field set to 'default")
+    private boolean withDefault;
 
     @Option(names = {"-e", "--everyone"},
             description = "The patron access role assigned to the “everyone” group.")
@@ -24,12 +24,12 @@ public class PermissionMappingOptions {
             description = "Staff only permissions, 'everyone' field and 'authenticated' field set to 'none'")
     private boolean staffOnly;
 
-    public String getCdmId() {
-        return cdmId;
+    public boolean isWithDefault() {
+        return withDefault;
     }
 
-    public void setCdmId(String cdmId) {
-        this.cdmId = cdmId;
+    public void setWithDefault(boolean withDefault) {
+        this.withDefault = withDefault;
     }
 
     public UserRole getEveryone() {

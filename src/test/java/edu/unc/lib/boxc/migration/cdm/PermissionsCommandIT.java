@@ -20,11 +20,19 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void generateNoDefaultPermissions() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate"};
+        executeExpectSuccess(args);
+    }
+
+    @Test
     public void generateDefaultPermissions() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
-                "-id", "default",
+                "-wd",
                 "--everyone", "canViewMetadata",
                 "--authenticated", "canViewMetadata"};
         executeExpectSuccess(args);
@@ -37,7 +45,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
-                "-id", "default"};
+                "-wd"};
         executeExpectSuccess(args);
         assertDefaultMapping("default", "canViewOriginals",
                 "canViewOriginals");
@@ -48,7 +56,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
-                "-id", "default",
+                "-wd",
                 "-so"};
         executeExpectSuccess(args);
         assertDefaultMapping("default", "none", "none");
@@ -59,7 +67,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
-                "-id", "default",
+                "-wd",
                 "--everyone", "canViewMetadata",
                 "--authenticated", "canManage"};
         executeExpectFailure(args);
@@ -75,7 +83,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
-                "-id", "default",
+                "-wd",
                 "--everyone", "canViewMetadata",
                 "--authenticated", "canViewMetadata"};
         executeExpectFailure(args);
@@ -91,7 +99,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
-                "-id", "default",
+                "-wd",
                 "--everyone", "canViewOriginals",
                 "--authenticated", "canViewOriginals",
                 "--force"};
@@ -105,7 +113,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
-                "-id", "default",
+                "-wd",
                 "--everyone", "canViewMetadata",
                 "--authenticated", "canViewMetadata"};
         executeExpectSuccess(args);
@@ -123,7 +131,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
-                "-id", "default",
+                "-wd",
                 "--everyone", "canViewMetadata",
                 "--authenticated", "canViewMetadata"};
         executeExpectSuccess(args);

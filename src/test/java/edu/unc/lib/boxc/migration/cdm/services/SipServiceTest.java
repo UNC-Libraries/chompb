@@ -15,7 +15,6 @@ import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
@@ -993,8 +992,7 @@ public class SipServiceTest {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.generatePermissionsMapping(PermissionsInfo.DEFAULT_ID, UserRole.canViewMetadata,
-                UserRole.canViewMetadata);
+        testHelper.generateDefaultPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
