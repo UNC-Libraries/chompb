@@ -41,14 +41,22 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         int totalFilesMapped = totalFilesMapped();
         int newFilesMapped = totalFilesMapped - previousStateFilesMapped;
         int totalObjects = totalFilesInProject();
-        List<CSVRecord> listFiles = listNewFiles();
+        List<CSVRecord> listSampleFiles = listNewFiles();
+        List<CSVRecord> listAllFiles = listNewlyPopulatedFiles();
 
         if (verbosity.isNormal()) {
             showField("Previous Files Mapped", previousStateFilesMapped);
             showField("New Files Mapped", newFilesMapped);
             showField("Total Files Mapped", totalFilesMapped);
             showField("Total Files in Project", totalObjects);
-            showFiles(listFiles);
+            showFiles(listSampleFiles);
+        }
+        if (verbosity.isVerbose()) {
+            showField("Previous Files Mapped", previousStateFilesMapped);
+            showField("New Files Mapped", newFilesMapped);
+            showField("Total Files Mapped", totalFilesMapped);
+            showField("Total Files in Project", totalObjects);
+            showFiles(listAllFiles);
         }
     }
 

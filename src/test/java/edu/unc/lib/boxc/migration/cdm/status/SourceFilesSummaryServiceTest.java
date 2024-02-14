@@ -259,6 +259,31 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputContains("31,," + path1);
     }
 
+    @Test
+    public void summaryVerbose() throws Exception {
+        testHelper.indexExportData("gilmer");
+        summaryService.capturePreviousState();
+        Path path1 = testHelper.addSourceFile("25.txt");
+        Path path2 = testHelper.addSourceFile("26.txt");
+        writeCsv(mappingBody("25,," + path1 +",","26,," + path2 +",","27,," + path1 +",",
+                "28,," + path2 +",", "29,," + path1 +",", "30,," + path2 +",", "31,," + path1 +","));
+
+        summaryService.setSampleSize(3);
+        summaryService.summary(Verbosity.VERBOSE);
+
+        assertOutputMatches(".*Previous Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +7.*");
+        assertOutputMatches(".*Total Files Mapped: +7.*");
+        assertOutputMatches(".*Total Files in Project: +161.*");
+        assertOutputContains("25,," + path1);
+        assertOutputContains("26,," + path2);
+        assertOutputContains("27,," + path1);
+        assertOutputContains("28,," + path2);
+        assertOutputContains("29,," + path1);
+        assertOutputContains("30,," + path2);
+        assertOutputContains("31,," + path1);
+    }
+
     private String mappingBody(String... rows) {
         return String.join(",", SourceFilesInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
