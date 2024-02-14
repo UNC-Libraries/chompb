@@ -38,26 +38,27 @@ public class SourceFilesSummaryService extends AbstractStatusService {
      * @param verbosity
      */
     public void summary(Verbosity verbosity) {
+        if (verbosity.isQuiet()) {
+            return;
+        }
+
         int totalFilesMapped = totalFilesMapped();
         int newFilesMapped = totalFilesMapped - previousStateFilesMapped;
         int totalObjects = totalFilesInProject();
-        List<CSVRecord> listSampleFiles = listNewFiles();
-        List<CSVRecord> listAllFiles = listNewlyPopulatedFiles();
+
+        showField("Previous Files Mapped", previousStateFilesMapped);
+        showField("New Files Mapped", newFilesMapped);
+        showField("Total Files Mapped", totalFilesMapped);
+        showField("Total Files in Project", totalObjects);
 
         if (verbosity.isNormal()) {
-            showField("Previous Files Mapped", previousStateFilesMapped);
-            showField("New Files Mapped", newFilesMapped);
-            showField("Total Files Mapped", totalFilesMapped);
-            showField("Total Files in Project", totalObjects);
+            List<CSVRecord> listSampleFiles = listNewFiles();
             outputLogger.info("{}{}:", INDENT, "Sample of New Files");
             showFiles(listSampleFiles);
         }
         if (verbosity.isVerbose()) {
-            showField("Previous Files Mapped", previousStateFilesMapped);
-            showField("New Files Mapped", newFilesMapped);
-            showField("Total Files Mapped", totalFilesMapped);
-            showField("Total Files in Project", totalObjects);
-            outputLogger.info("{}{}:", INDENT, "All New Files");
+            List<CSVRecord> listAllFiles = loadAllFiles(getNewMappingPath());
+            outputLogger.info("{}{}:", INDENT, "All Files");
             showFiles(listAllFiles);
         }
     }

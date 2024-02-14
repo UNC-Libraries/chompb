@@ -51,6 +51,21 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
     }
 
     @Test
+    public void summaryQuietOutputTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        writeCsv(mappingBody("25,," + path1 +","));
+
+        summaryService.summary(Verbosity.QUIET);
+
+        assertOutputDoesNotContain(".*Previous Files Mapped: +0.*");
+        assertOutputDoesNotContain(".*New Files Mapped: +1.*");
+        assertOutputDoesNotContain(".*Total Files Mapped: +1.*");
+        assertOutputDoesNotContain(".*Total Files in Project: +3.*");
+        assertOutputDoesNotContain("25,," + path1);
+    }
+
+    @Test
     public void summaryOutputTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
@@ -268,23 +283,23 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         Path path1 = testHelper.addSourceFile("25.txt");
         Path path2 = testHelper.addSourceFile("26.txt");
         writeCsv(mappingBody("25,," + path1 +",","26,," + path2 +",","27,," + path1 +",",
-                "28,," + path2 +",", "29,," + path1 +",", "30,," + path2 +",", "31,," + path1 +","));
+                "28,," + path2 +",", "29,," + path1 +",", "30,,,", "31,,,"));
 
         summaryService.setSampleSize(3);
         summaryService.summary(Verbosity.VERBOSE);
 
         assertOutputMatches(".*Previous Files Mapped: +0.*");
-        assertOutputMatches(".*New Files Mapped: +7.*");
-        assertOutputMatches(".*Total Files Mapped: +7.*");
+        assertOutputMatches(".*New Files Mapped: +5.*");
+        assertOutputMatches(".*Total Files Mapped: +5.*");
         assertOutputMatches(".*Total Files in Project: +161.*");
-        assertOutputContains("All New Files:");
+        assertOutputContains("All Files:");
         assertOutputContains("25,," + path1);
         assertOutputContains("26,," + path2);
         assertOutputContains("27,," + path1);
         assertOutputContains("28,," + path2);
         assertOutputContains("29,," + path1);
-        assertOutputContains("30,," + path2);
-        assertOutputContains("31,," + path1);
+        assertOutputContains("30,,,");
+        assertOutputContains("31,,,");
     }
 
     private String mappingBody(String... rows) {

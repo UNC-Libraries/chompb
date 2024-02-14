@@ -412,6 +412,28 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void generateAddSourceFileQuietTest() throws Exception {
+        indexExportSamples();
+        Path srcPath1 = addSourceFile("276_182_E.tif");
+        Path srcPath2 = addSourceFile("276_183_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString(),
+                "-q"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputDoesNotContain(".*Previous Files Mapped: +0.*");
+        assertOutputDoesNotContain(".*New Files Mapped: +2.*");
+        assertOutputDoesNotContain(".*Total Files Mapped: +2.*");
+        assertOutputDoesNotContain(".*Total Files in Project: +3.*");
+        assertOutputDoesNotContain("25,276_182_E.tif," + srcPath1);
+        assertOutputDoesNotContain("26,276_183_E.tif," + srcPath2);
+    }
+
+    @Test
     public void generateAddSourceFileVerboseTest() throws Exception {
         indexExportSamples();
         Path srcPath1 = addSourceFile("276_182_E.tif");
@@ -429,6 +451,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +2.*");
         assertOutputMatches(".*Total Files Mapped: +2.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        assertOutputContains("All Files:");
         assertOutputContains("25,276_182_E.tif," + srcPath1);
         assertOutputContains("26,276_183_E.tif," + srcPath2);
     }
