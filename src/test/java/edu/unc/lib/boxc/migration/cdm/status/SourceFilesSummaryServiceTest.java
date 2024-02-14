@@ -231,6 +231,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +6.*");
         assertOutputMatches(".*Total Files Mapped: +7.*");
         assertOutputMatches(".*Total Files in Project: +161.*");
+        assertOutputContains("Sample of New Files:");
         assertOutputDoesNotContain("25,," + path1);
         assertOutputContains("26,," + path2);
         assertOutputContains("28,," + path2);
@@ -253,6 +254,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +7.*");
         assertOutputMatches(".*Total Files Mapped: +7.*");
         assertOutputMatches(".*Total Files in Project: +161.*");
+        assertOutputContains("Sample of New Files:");
         assertOutputContains("25,," + path1);
         assertOutputContains("27,," + path1);
         assertOutputContains("29,," + path1);
@@ -275,6 +277,7 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*New Files Mapped: +7.*");
         assertOutputMatches(".*Total Files Mapped: +7.*");
         assertOutputMatches(".*Total Files in Project: +161.*");
+        assertOutputContains("All New Files:");
         assertOutputContains("25,," + path1);
         assertOutputContains("26,," + path2);
         assertOutputContains("27,," + path1);

@@ -49,6 +49,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
             showField("New Files Mapped", newFilesMapped);
             showField("Total Files Mapped", totalFilesMapped);
             showField("Total Files in Project", totalObjects);
+            outputLogger.info("{}{}:", INDENT, "Sample of New Files");
             showFiles(listSampleFiles);
         }
         if (verbosity.isVerbose()) {
@@ -56,6 +57,7 @@ public class SourceFilesSummaryService extends AbstractStatusService {
             showField("New Files Mapped", newFilesMapped);
             showField("Total Files Mapped", totalFilesMapped);
             showField("Total Files in Project", totalObjects);
+            outputLogger.info("{}{}:", INDENT, "All New Files");
             showFiles(listAllFiles);
         }
     }
@@ -189,9 +191,8 @@ public class SourceFilesSummaryService extends AbstractStatusService {
 
     private void showFiles(List<CSVRecord> listFiles) {
         if (listFiles.isEmpty()) {
-            outputLogger.info("{}{}", INDENT, "Sample unavailable. No new files mapped.");
+            outputLogger.info("{}{}{}", INDENT, INDENT, "Sample unavailable. No new files mapped.");
         } else {
-            outputLogger.info("{}{}:", INDENT, "Sample of New Files");
             outputLogger.info("{}{}{}{}{}{}", INDENT, INDENT, SourceFilesInfo.ID_FIELD + ",",
                     SourceFilesInfo.EXPORT_MATCHING_FIELD + ",", SourceFilesInfo.SOURCE_FILE_FIELD + ",",
                     SourceFilesInfo.POTENTIAL_MATCHES_FIELD);
