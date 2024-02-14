@@ -314,9 +314,9 @@ public class SipServiceHelper {
         archivalDestinationsService.addArchivalCollectionMappings(options);
     }
 
-    public void generatePermissionsMapping(String cdmId, UserRole everyone, UserRole authenticated) throws Exception {
+    public void generateDefaultPermissionsMapping(UserRole everyone, UserRole authenticated) throws Exception {
         PermissionMappingOptions options = new PermissionMappingOptions();
-        options.setCdmId(cdmId);
+        options.setWithDefault(true);
         options.setEveryone(everyone);
         options.setAuthenticated(authenticated);
         permissionsService.generateDefaultPermissions(options);

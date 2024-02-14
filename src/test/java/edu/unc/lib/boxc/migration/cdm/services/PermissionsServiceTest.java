@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -60,10 +62,27 @@ public class PermissionsServiceTest {
     }
 
     @Test
+    public void generateNoDefaultPermissionsTest() throws Exception {
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+
+        service.generateDefaultPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        try (
+                Reader reader = Files.newBufferedReader(permissionsMappingPath);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT);
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertIterableEquals(Arrays.asList(PermissionsInfo.ID_FIELD, PUBLIC_PRINC, AUTHENTICATED_PRINC), rows.get(0));
+        }
+    }
+
+    @Test
     public void generateDefaultPermissionsTest() throws Exception {
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
-        options.setCdmId("default");
+        options.setWithDefault(true);
         options.setEveryone(UserRole.canViewMetadata);
         options.setAuthenticated(UserRole.canViewMetadata);
 
@@ -86,7 +105,7 @@ public class PermissionsServiceTest {
     public void generateDefaultPermissionsUnspecifiedTest() throws Exception {
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
-        options.setCdmId("default");
+        options.setWithDefault(true);
 
         service.generateDefaultPermissions(options);
         assertTrue(Files.exists(permissionsMappingPath));
@@ -107,7 +126,7 @@ public class PermissionsServiceTest {
     public void generateDefaultPermissionsStaffOnlyTest() throws Exception {
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
-        options.setCdmId("default");
+        options.setWithDefault(true);
         options.setStaffOnly(true);
 
         service.generateDefaultPermissions(options);
@@ -128,7 +147,7 @@ public class PermissionsServiceTest {
     @Test
     public void generateDefaultPermissionsInvalidTest() throws Exception {
         var options = new PermissionMappingOptions();
-        options.setCdmId("default");
+        options.setWithDefault(true);
         options.setEveryone(UserRole.canViewMetadata);
         options.setAuthenticated(UserRole.canManage);
 
@@ -147,7 +166,7 @@ public class PermissionsServiceTest {
         writeCsv(mappingBody("default,none,none"));
 
         var options = new PermissionMappingOptions();
-        options.setCdmId("default");
+        options.setWithDefault(true);
         options.setEveryone(UserRole.canViewMetadata);
         options.setAuthenticated(UserRole.canViewMetadata);
 
@@ -166,7 +185,7 @@ public class PermissionsServiceTest {
         writeCsv(mappingBody("default,none,none"));
 
         var options = new PermissionMappingOptions();
-        options.setCdmId("default");
+        options.setWithDefault(true);
         options.setEveryone(UserRole.canViewMetadata);
         options.setAuthenticated(UserRole.canViewMetadata);
         options.setForce(true);
