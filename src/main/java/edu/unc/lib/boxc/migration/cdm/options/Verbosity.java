@@ -15,9 +15,16 @@ public enum Verbosity {
     }
 
     /**
-     * @return True if the level if normal or higher
+     * @return True if the level is normal or higher
      */
     public boolean isNormal() {
         return this.equals(NORMAL) || this.equals(VERBOSE);
+    }
+
+    /**
+     * @return True if the level is quiet
+     */
+    public boolean isQuiet() {
+        return this.equals(QUIET);
     }
 }

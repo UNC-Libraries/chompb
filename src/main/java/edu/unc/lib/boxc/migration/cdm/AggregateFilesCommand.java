@@ -66,7 +66,7 @@ public class AggregateFilesCommand {
 
             summaryService.capturePreviousState();
             aggregateService.generateMapping(options);
-            summaryService.summary(Verbosity.NORMAL);
+            summaryService.summary(parentCommand.getVerbosity());
             outputLogger.info("Aggregate file mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
