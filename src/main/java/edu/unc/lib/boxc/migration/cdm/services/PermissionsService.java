@@ -3,6 +3,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
@@ -19,9 +20,15 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -32,13 +39,14 @@ public class PermissionsService {
     private static final Logger log = getLogger(PermissionsService.class);
 
     private MigrationProject project;
+    private CdmIndexService indexService;
     private List<String> patronRoles;
 
     /**
-     * Generates default mapping csv
-     * @param options default mapping options
+     * Generates permission mapping csv
+     * @param options permission mapping options
      */
-    public void generateDefaultPermissions(PermissionMappingOptions options) throws Exception {
+    public void generatePermissions(PermissionMappingOptions options) throws Exception {
         Path fieldsPath = project.getPermissionsPath();
         ensureMappingState(options.isForce());
 
@@ -63,6 +71,54 @@ public class PermissionsService {
                 csvPrinter.printRecord(PermissionsInfo.DEFAULT_ID,
                         everyoneField,
                         authenticatedField);
+            }
+
+            // works and files
+            if (options.isWithWorks() && options.isWithFiles()) {
+                String workAndFileQuery = "select distinct " + CdmFieldInfo.CDM_ID +
+                        " from " + CdmIndexService.TB_NAME
+                        + " where " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                        + " or " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                        + " or " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
+                        + " or " + ENTRY_TYPE_FIELD + " is null";
+                List<String> workAndFileIds = getIds(workAndFileQuery);
+                for (String id : workAndFileIds) {
+                    csvPrinter.printRecord(id,
+                            everyoneField,
+                            authenticatedField);
+                }
+            }
+
+            // works
+            if (options.isWithWorks() && !options.isWithFiles()) {
+                // for every work in the project (grouped works, compound objects, and single file works)
+                String workQuery = "select distinct " + CdmFieldInfo.CDM_ID
+                        + " from " + CdmIndexService.TB_NAME
+                        + " where " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                        + " or " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                        + " or " + ENTRY_TYPE_FIELD + " is null";
+                List<String> workIds = getIds(workQuery);
+                for (String id : workIds) {
+                    csvPrinter.printRecord(id,
+                            everyoneField,
+                            authenticatedField);
+                }
+            }
+
+            // files
+            if (options.isWithFiles() && !options.isWithWorks()) {
+                // for every file in the project (compound children and grouped children)
+                // If the entry type is null, the object is a individual cdm object
+                String fileQuery = "select distinct " + CdmFieldInfo.CDM_ID +
+                        " from " + CdmIndexService.TB_NAME
+                        + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
+                        + " or " + ENTRY_TYPE_FIELD + " is null";
+                List<String> fileIds = getIds(fileQuery);
+                for (String id : fileIds) {
+                    csvPrinter.printRecord(id,
+                            everyoneField,
+                            authenticatedField);
+                }
             }
         }
 
@@ -146,7 +202,37 @@ public class PermissionsService {
         return roleValue;
     }
 
+    private List<String> getIds(String query) {
+        List<String> ids = new ArrayList<>();
+
+        getIndexService();
+        try (Connection conn = indexService.openDbConnection()) {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+            while (rs.next()) {
+                if (!rs.getString(1).isEmpty()) {
+                    ids.add(rs.getString(1));
+                }
+            }
+            return ids;
+        } catch (SQLException e) {
+            throw new MigrationException("Error interacting with export index", e);
+        }
+    }
+
+    private CdmIndexService getIndexService() {
+        if (indexService == null) {
+            indexService = new CdmIndexService();
+            indexService.setProject(project);
+        }
+        return indexService;
+    }
+
     public void setProject(MigrationProject project) {
         this.project = project;
+    }
+
+    public void setIndexService(CdmIndexService indexService) {
+        this.indexService = indexService;
     }
 }

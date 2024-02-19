@@ -39,7 +39,7 @@ public class PermissionsCommand {
         try {
             initialize();
 
-            permissionsService.generateDefaultPermissions(options);
+            permissionsService.generatePermissions(options);
             outputLogger.info("Permissions mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
