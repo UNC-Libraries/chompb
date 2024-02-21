@@ -138,22 +138,21 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateFilePermissions() throws Exception {
+    public void generateFilePermissionsWithDefault() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
+                "-wd",
                 "-wf",
                 "-e", "canViewMetadata",
                 "-a", "canViewMetadata"};
         executeExpectSuccess(args);
-        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
-        assertMapping(1, "26", "canViewMetadata", "canViewMetadata");
-        assertMapping(2, "27", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "default", "canViewMetadata", "canViewMetadata");
     }
 
     @Test
-    public void generateFilePermissionsWithForce() throws Exception {
+    public void generateWorkAndFilePermissionsWithForce() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
                 "default,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
@@ -161,6 +160,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
+                "-ww",
                 "-wf",
                 "-e", "canViewMetadata",
                 "-a", "canViewMetadata",
