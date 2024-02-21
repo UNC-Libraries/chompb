@@ -4,6 +4,8 @@ import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -196,6 +198,7 @@ public class PermissionsServiceTest {
     @Test
     public void generateWorkPermissionsGroupedWorksTest() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
+        setupGroupedIndex();
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
         options.setWithWorks(true);
@@ -216,6 +219,7 @@ public class PermissionsServiceTest {
     @Test
     public void generateFilePermissionsGroupedWorksTest() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
+        setupGroupedIndex();
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
         options.setWithFiles(true);
@@ -392,5 +396,14 @@ public class PermissionsServiceTest {
 
         assertEquals(everyoneValue, mapping.getEveryone());
         assertEquals(authenticatedValue, mapping.getAuthenticated());
+    }
+
+    private void setupGroupedIndex() throws Exception {
+        var options = new GroupMappingOptions();
+        options.setGroupField("groupa");
+        testHelper.getGroupMappingService().generateMapping(options);
+        var syncOptions = new GroupMappingSyncOptions();
+        syncOptions.setSortField("file");
+        testHelper.getGroupMappingService().syncMappings(syncOptions);
     }
 }

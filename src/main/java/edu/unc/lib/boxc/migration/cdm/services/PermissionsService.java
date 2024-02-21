@@ -73,13 +73,11 @@ public class PermissionsService {
                         authenticatedField);
             }
 
-            if (options.isWithWorks() && options.isWithFiles() || options.isWithWorks() || options.isWithFiles()) {
-                List<String> mappedIds = queryForMappedIds(options);
-                for (String id : mappedIds) {
-                    csvPrinter.printRecord(id,
-                            everyoneField,
-                            authenticatedField);
-                }
+            List<String> mappedIds = queryForMappedIds(options);
+            for (String id : mappedIds) {
+                csvPrinter.printRecord(id,
+                        everyoneField,
+                        authenticatedField);
             }
         }
 
