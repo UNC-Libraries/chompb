@@ -185,11 +185,7 @@ public class PermissionsService {
         // works and files
         if (options.isWithWorks() && options.isWithFiles()) {
             String workAndFileQuery = "select distinct " + CdmFieldInfo.CDM_ID +
-                    " from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null";
+                    " from " + CdmIndexService.TB_NAME;
             mappedIds = getIds(workAndFileQuery);
         }
 
