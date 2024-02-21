@@ -209,11 +209,9 @@ public class PermissionsServiceTest {
         assertTrue(Files.exists(permissionsMappingPath));
 
         List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
-        assertIterableEquals(Arrays.asList("25", "canViewMetadata", "canViewMetadata"), rows.get(0));
-        assertIterableEquals(Arrays.asList("26", "canViewMetadata", "canViewMetadata"), rows.get(1));
-        assertIterableEquals(Arrays.asList("27", "canViewMetadata", "canViewMetadata"), rows.get(2));
-        assertIterableEquals(Arrays.asList("28", "canViewMetadata", "canViewMetadata"), rows.get(3));
-        assertIterableEquals(Arrays.asList("29", "canViewMetadata", "canViewMetadata"), rows.get(4));
+        assertIterableEquals(Arrays.asList("27", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("28", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("29", "canViewMetadata", "canViewMetadata"), rows.get(2));
     }
 
     @Test

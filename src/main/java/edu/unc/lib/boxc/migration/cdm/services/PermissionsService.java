@@ -200,7 +200,8 @@ public class PermissionsService {
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
                     + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null";
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                    + " and " + CdmIndexService.PARENT_ID_FIELD + " is null";
             mappedIds = getIds(workQuery);
         }
 
