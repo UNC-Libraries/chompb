@@ -211,8 +211,9 @@ public class PermissionsService {
             // If the entry type is null, the object is a individual cdm object
             String fileQuery = "select distinct " + CdmFieldInfo.CDM_ID +
                     " from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD
-                    + "'" + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null";
+                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                    + " and " + CdmIndexService.PARENT_ID_FIELD + " is not null";
             mappedIds = getIds(fileQuery);
         }
 
