@@ -73,48 +73,9 @@ public class PermissionsService {
                         authenticatedField);
             }
 
-            // works and files
-            if (options.isWithWorks() && options.isWithFiles()) {
-                String workAndFileQuery = "select distinct " + CdmFieldInfo.CDM_ID +
-                        " from " + CdmIndexService.TB_NAME
-                        + " where " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
-                        + " or " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
-                        + " or " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
-                        + " or " + ENTRY_TYPE_FIELD + " is null";
-                List<String> workAndFileIds = getIds(workAndFileQuery);
-                for (String id : workAndFileIds) {
-                    csvPrinter.printRecord(id,
-                            everyoneField,
-                            authenticatedField);
-                }
-            }
-
-            // works
-            if (options.isWithWorks() && !options.isWithFiles()) {
-                // for every work in the project (grouped works, compound objects, and single file works)
-                String workQuery = "select distinct " + CdmFieldInfo.CDM_ID
-                        + " from " + CdmIndexService.TB_NAME
-                        + " where " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
-                        + " or " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
-                        + " or " + ENTRY_TYPE_FIELD + " is null";
-                List<String> workIds = getIds(workQuery);
-                for (String id : workIds) {
-                    csvPrinter.printRecord(id,
-                            everyoneField,
-                            authenticatedField);
-                }
-            }
-
-            // files
-            if (options.isWithFiles() && !options.isWithWorks()) {
-                // for every file in the project (compound children and grouped children)
-                // If the entry type is null, the object is a individual cdm object
-                String fileQuery = "select distinct " + CdmFieldInfo.CDM_ID +
-                        " from " + CdmIndexService.TB_NAME
-                        + " where " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_COMPOUND_CHILD + "'"
-                        + " or " + ENTRY_TYPE_FIELD + " is null";
-                List<String> fileIds = getIds(fileQuery);
-                for (String id : fileIds) {
+            if (options.isWithWorks() && options.isWithFiles() || options.isWithWorks() || options.isWithFiles()) {
+                List<String> mappedIds = queryForMappedIds(options);
+                for (String id : mappedIds) {
                     csvPrinter.printRecord(id,
                             everyoneField,
                             authenticatedField);
@@ -218,6 +179,45 @@ public class PermissionsService {
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
         }
+    }
+
+    private List<String> queryForMappedIds(PermissionMappingOptions options) {
+        List<String> mappedIds = new ArrayList<>();
+
+        // works and files
+        if (options.isWithWorks() && options.isWithFiles()) {
+            String workAndFileQuery = "select distinct " + CdmFieldInfo.CDM_ID +
+                    " from " + CdmIndexService.TB_NAME
+                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null";
+            mappedIds = getIds(workAndFileQuery);
+        }
+
+        // works
+        if (options.isWithWorks() && !options.isWithFiles()) {
+            // for every work in the project (grouped works, compound objects, and single file works)
+            String workQuery = "select distinct " + CdmFieldInfo.CDM_ID
+                    + " from " + CdmIndexService.TB_NAME
+                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null";
+            mappedIds = getIds(workQuery);
+        }
+
+        // files
+        if (options.isWithFiles() && !options.isWithWorks()) {
+            // for every file in the project (compound children and grouped children)
+            // If the entry type is null, the object is a individual cdm object
+            String fileQuery = "select distinct " + CdmFieldInfo.CDM_ID +
+                    " from " + CdmIndexService.TB_NAME
+                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD
+                    + "'" + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null";
+            mappedIds = getIds(fileQuery);
+        }
+
+        return mappedIds;
     }
 
     private CdmIndexService getIndexService() {
