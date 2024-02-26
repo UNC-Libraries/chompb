@@ -319,7 +319,7 @@ public class SipServiceHelper {
         options.setWithDefault(true);
         options.setEveryone(everyone);
         options.setAuthenticated(authenticated);
-        permissionsService.generateDefaultPermissions(options);
+        permissionsService.generatePermissions(options);
     }
 
     public List<Path> populateSourceFiles(String... filenames) throws Exception {

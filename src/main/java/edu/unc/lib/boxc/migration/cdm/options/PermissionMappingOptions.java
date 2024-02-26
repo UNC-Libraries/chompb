@@ -8,6 +8,15 @@ public class PermissionMappingOptions {
             description = "Add 'default' entry to CSV mapping, 'id' field set to 'default")
     private boolean withDefault;
 
+    @Option(names = {"-ww", "--with-works"},
+            description = "Add entry for every work (grouped works, compound objects, and single file works) " +
+                    "to CSV mapping")
+    private boolean withWorks;
+
+    @Option(names = {"-wf", "--with-files"},
+            description = "Add entry for every file (compound children and grouped children) to CSV mapping")
+    private boolean withFiles;
+
     @Option(names = {"-e", "--everyone"},
             description = "The patron access role assigned to the “everyone” group.")
     private UserRole everyone;
@@ -30,6 +39,22 @@ public class PermissionMappingOptions {
 
     public void setWithDefault(boolean withDefault) {
         this.withDefault = withDefault;
+    }
+
+    public boolean isWithWorks() {
+        return withWorks;
+    }
+
+    public void setWithWorks(boolean withWorks) {
+        this.withWorks = withWorks;
+    }
+
+    public boolean isWithFiles() {
+        return withFiles;
+    }
+
+    public void setWithFiles(boolean withFiles) {
+        this.withFiles = withFiles;
     }
 
     public UserRole getEveryone() {
