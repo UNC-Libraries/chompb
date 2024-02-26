@@ -17,6 +17,10 @@ public class PermissionMappingOptions {
             description = "Add entry for every file (compound children and grouped children) to CSV mapping")
     private boolean withFiles;
 
+    @Option(names = {"-id", "--cdm-id"},
+            description = "Work or File to add or update, can be cdmId or group work identifier")
+    private String cdmId;
+
     @Option(names = {"-e", "--everyone"},
             description = "The patron access role assigned to the “everyone” group.")
     private UserRole everyone;
@@ -51,6 +55,14 @@ public class PermissionMappingOptions {
 
     public boolean isWithFiles() {
         return withFiles;
+    }
+
+    public String getCdmId() {
+        return cdmId;
+    }
+
+    public void setCdmId(String cdmId) {
+        this.cdmId = cdmId;
     }
 
     public void setWithFiles(boolean withFiles) {

@@ -53,6 +53,26 @@ public class PermissionsCommand {
         }
     }
 
+    @Command(name = "set",
+            description = "Add or update an entry in an existing permissions mapping file")
+    public int set(@Mixin PermissionMappingOptions options) throws Exception {
+        try {
+            initialize();
+
+            permissionsService.capturePreviousState();
+            permissionsService.setPermissions(options);
+            outputLogger.info("Permissions mapping generated for cdmId {}", options.getCdmId());
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Cannot set mappings: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Failed to set mappings", e);
+            outputLogger.info("Failed to set mappings: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
     @Command(name = "validate",
             description = "Validate the permissions mapping file for this project")
     public int validate() throws Exception {

@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.auth.api.UserRole;
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
@@ -25,10 +26,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
-import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -41,13 +42,14 @@ public class PermissionsService {
     private MigrationProject project;
     private CdmIndexService indexService;
     private List<String> patronRoles;
+    private List<CSVRecord> previousStatePermissions;
 
     /**
      * Generates permission mapping csv
      * @param options permission mapping options
      */
     public void generatePermissions(PermissionMappingOptions options) throws Exception {
-        Path fieldsPath = project.getPermissionsPath();
+        Path permissionsPath = project.getPermissionsPath();
         ensureMappingState(options.isForce());
 
         String everyoneField;
@@ -64,7 +66,7 @@ public class PermissionsService {
         }
 
         try (
-                BufferedWriter writer = Files.newBufferedWriter(fieldsPath);
+                BufferedWriter writer = Files.newBufferedWriter(permissionsPath);
                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(PermissionsInfo.CSV_HEADERS));
         ) {
             if (options.isWithDefault()) {
@@ -82,6 +84,34 @@ public class PermissionsService {
         }
 
         ProjectPropertiesSerialization.write(project);
+    }
+
+    /**
+     * Update existing permission mapping csv
+     * @param options permission mapping options
+     */
+    public void setPermissions(PermissionMappingOptions options) throws Exception {
+        String cdmIdsQuery = "select distinct " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME;
+        List<String> cdmIds = getIds(cdmIdsQuery);
+        if (!cdmIds.contains(options.getCdmId())) {
+            throw new IllegalArgumentException("Id " + options.getCdmId() + " does not exist in this project.");
+        }
+
+        Path permissionsMappingPath = project.getPermissionsPath();
+        if (!Files.exists(permissionsMappingPath)) {
+            throw new InvalidProjectStateException("Permissions csv does not exist.");
+        }
+
+        try (
+            BufferedWriter writer = Files.newBufferedWriter(permissionsMappingPath);
+            CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(PermissionsInfo.CSV_HEADERS));
+        ) {
+            // add or update permission for a specific cdmId
+            List<List<String>> records = updateCsvRecords(options, permissionsMappingPath);
+            for (List<String> record : records) {
+                csvPrinter.printRecord(record.get(0), record.get(1), record.get(2));
+            }
+        }
     }
 
     /**
@@ -214,6 +244,61 @@ public class PermissionsService {
         }
 
         return mappedIds;
+    }
+
+    private List<List<String>> updateCsvRecords(PermissionMappingOptions options, Path permissionsMappingPath) throws Exception {
+        List<List<String>> updatedRecords = new ArrayList<>();
+        List<String> cdmIds = new ArrayList<>();
+        String everyoneField = getAssignedRoleValue(options.isStaffOnly(), options.getEveryone());
+        String authenticatedField = getAssignedRoleValue(options.isStaffOnly(), options.getAuthenticated());
+
+        // update existing entry
+        for (CSVRecord record : previousStatePermissions) {
+            cdmIds.add(record.get(0));
+            if (record.get(0).contains(options.getCdmId())) {
+                updatedRecords.add(Arrays.asList(options.getCdmId(), everyoneField, authenticatedField));
+            } else {
+                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2)));
+            }
+        }
+
+        // add new entry
+        if (!cdmIds.contains(options.getCdmId())) {
+            updatedRecords.add(Arrays.asList(options.getCdmId(), everyoneField, authenticatedField));
+        }
+
+        return updatedRecords;
+    }
+
+    public void capturePreviousState() {
+        if (Files.exists(project.getPermissionsPath())) {
+            setPreviousStatePermissions(getPreviousStatePermissions());
+        }
+    }
+
+    public void setPreviousStatePermissions(List<CSVRecord> previousStatePermissions) {
+        this.previousStatePermissions = previousStatePermissions;
+    }
+
+    public List<CSVRecord> getPreviousStatePermissions() {
+        if (previousStatePermissions == null) {
+            List<CSVRecord> permissions = new ArrayList<>();
+
+            try (
+                    Reader reader = Files.newBufferedReader(project.getPermissionsPath());
+                    CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                            .withFirstRecordAsHeader()
+                            .withHeader(PermissionsInfo.CSV_HEADERS)
+                            .withTrim());
+            ) {
+                permissions = csvParser.getRecords();
+            } catch (IOException e) {
+                log.error("Failed to list permissions", e);
+            }
+
+            setPreviousStatePermissions(permissions);
+        }
+        return previousStatePermissions;
     }
 
     private CdmIndexService getIndexService() {

@@ -190,6 +190,44 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void setPermissionExistingEntry() throws Exception {
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "25,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+
+        testHelper.indexExportData("mini_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-id", "25",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args);
+        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
+    public void setPermissionNewEntry() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-wd",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals"};
+        executeExpectSuccess(args);
+
+        testHelper.indexExportData("mini_gilmer");
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-id", "26",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args2);
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(1, "26", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
     public void validateValidDefaultPermissions() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -230,6 +268,28 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 + " is invalid");
         assertOutputContains("Can only map default permissions once, encountered reassignment at line 3");
         assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
+    }
+
+    @Test
+    public void validateValidSetPermissions() throws Exception {
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "25,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+
+        testHelper.indexExportData("mini_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-id", "25",
+                "--everyone", "canViewMetadata",
+                "--authenticated", "canViewMetadata"};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "validate" };
+        executeExpectSuccess(args2);
+
+        assertOutputContains("PASS: Permissions mapping at path " + project.getPermissionsPath() + " is valid");
     }
 
     private void assertMapping(int index, String id, String expectedEveryone, String expectedAuthenticated)
