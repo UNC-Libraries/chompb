@@ -305,8 +305,4 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         PermissionsInfo info = PermissionsService.loadMappings(project);
         return info.getMappings();
     }
-
-    private void assertMappingCount(List<PermissionsInfo.PermissionMapping> mappings, int count) {
-        assertEquals(count, mappings.size());
-    }
 }

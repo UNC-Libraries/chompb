@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
