@@ -59,7 +59,6 @@ public class PermissionsCommand {
         try {
             initialize();
 
-            permissionsService.capturePreviousState();
             permissionsService.setPermissions(options);
             outputLogger.info("Permissions mapping generated for cdmId {}", options.getCdmId());
             return 0;

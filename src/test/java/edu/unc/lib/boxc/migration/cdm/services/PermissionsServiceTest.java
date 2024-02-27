@@ -360,7 +360,6 @@ public class PermissionsServiceTest {
     @Test
     public void setPermissionExistingEntryTest() throws Exception {
         writeCsv(mappingBody("default,canViewMetadata,canViewMetadata", "25,none,none", "26,none,none", "27,none,none"));
-        service.capturePreviousState();
         testHelper.indexExportData("mini_gilmer");
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
@@ -381,7 +380,6 @@ public class PermissionsServiceTest {
     @Test
     public void setPermissionNewEntryTest() throws Exception {
         writeCsv(mappingBody("default,canViewMetadata,canViewMetadata", "25,none,none", "26,none,none"));
-        service.capturePreviousState();
         testHelper.indexExportData("mini_gilmer");
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
@@ -401,6 +399,7 @@ public class PermissionsServiceTest {
 
     @Test
     public void setPermissionInvalidIdTest() throws Exception {
+        writeCsv(mappingBody("default,canViewMetadata,canViewMetadata", "25,none,none", "26,none,none"));
         testHelper.indexExportData("mini_gilmer");
         var options = new PermissionMappingOptions();
         options.setCdmId("28");
