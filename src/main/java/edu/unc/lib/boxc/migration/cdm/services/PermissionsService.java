@@ -91,10 +91,7 @@ public class PermissionsService {
      * @param options permission mapping options
      */
     public void setPermissions(PermissionMappingOptions options) throws Exception {
-        String cdmIdsQuery = "select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmFieldInfo.CDM_ID + " = '" + options.getCdmId() + "'";
-        List<String> cdmIds = getIds(cdmIdsQuery);
-        if (!cdmIds.contains(options.getCdmId())) {
+        if (!doesIdExistInIndex(options.getCdmId())) {
             throw new IllegalArgumentException("Id " + options.getCdmId() + " does not exist in this project.");
         }
 
@@ -198,8 +195,8 @@ public class PermissionsService {
 
         getIndexService();
         try (Connection conn = indexService.openDbConnection()) {
-            var stmt = conn.prepareStatement(query);
-            var rs = stmt.executeQuery();
+            var stmt = conn.createStatement();
+            var rs = stmt.executeQuery(query);
             while (rs.next()) {
                 if (!rs.getString(1).isEmpty()) {
                     ids.add(rs.getString(1));
@@ -246,6 +243,27 @@ public class PermissionsService {
         }
 
         return mappedIds;
+    }
+
+    private boolean doesIdExistInIndex(String id) {
+        String query = "select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME
+                + " where " + CdmFieldInfo.CDM_ID + " = ?";
+        boolean idExists = false;
+
+        getIndexService();
+        try (Connection conn = indexService.openDbConnection()) {
+            var stmt = conn.prepareStatement(query);
+            stmt.setString(1, id);
+            var rs = stmt.executeQuery();
+            while (rs.next()) {
+                if (!rs.getString(1).isEmpty()) {
+                    idExists = true;
+                }
+            }
+            return idExists;
+        } catch (SQLException e) {
+            throw new MigrationException("Error interacting with export index", e);
+        }
     }
 
     private List<List<String>> updateCsvRecords(PermissionMappingOptions options, Path permissionsMappingPath) throws Exception {
