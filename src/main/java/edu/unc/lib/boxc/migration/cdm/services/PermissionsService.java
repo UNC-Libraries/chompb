@@ -101,7 +101,7 @@ public class PermissionsService {
         }
 
         // add or update permission for a specific cdmId
-        List<List<String>> records = updateCsvRecords(options, permissionsMappingPath);
+        List<List<String>> records = updateCsvRecords(options);
 
         try (
             BufferedWriter writer = Files.newBufferedWriter(permissionsMappingPath);
@@ -265,7 +265,7 @@ public class PermissionsService {
         }
     }
 
-    private List<List<String>> updateCsvRecords(PermissionMappingOptions options, Path permissionsMappingPath) throws Exception {
+    private List<List<String>> updateCsvRecords(PermissionMappingOptions options) {
         List<CSVRecord> previousRecords = getPermissions();
         List<List<String>> updatedRecords = new ArrayList<>();
         Set<String> cdmIds = new HashSet<>();
