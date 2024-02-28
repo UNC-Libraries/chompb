@@ -92,7 +92,7 @@ public class PermissionsService {
      */
     public void setPermissions(PermissionMappingOptions options) throws Exception {
         String cdmIdsQuery = "select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmFieldInfo.CDM_ID + " = " + options.getCdmId();
+                + " where " + CdmFieldInfo.CDM_ID + " = '" + options.getCdmId() + "'";
         List<String> cdmIds = getIds(cdmIdsQuery);
         if (!cdmIds.contains(options.getCdmId())) {
             throw new IllegalArgumentException("Id " + options.getCdmId() + " does not exist in this project.");
@@ -198,8 +198,8 @@ public class PermissionsService {
 
         getIndexService();
         try (Connection conn = indexService.openDbConnection()) {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
+            var stmt = conn.prepareStatement(query);
+            var rs = stmt.executeQuery();
             while (rs.next()) {
                 if (!rs.getString(1).isEmpty()) {
                     ids.add(rs.getString(1));

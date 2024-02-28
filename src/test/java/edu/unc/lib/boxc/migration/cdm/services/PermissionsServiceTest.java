@@ -378,6 +378,27 @@ public class PermissionsServiceTest {
     }
 
     @Test
+    public void setPermissionsGroupedWorkEntryTest() throws Exception {
+        writeCsv(mappingBody("default,canViewMetadata,canViewMetadata", "26,none,none", "27,none,none"));
+        testHelper.indexExportData("grouped_gilmer");
+        setupGroupedIndex();
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setCdmId("grp:groupa:group1");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("26", "none", "none"), rows.get(1));
+        assertIterableEquals(Arrays.asList("27", "none", "none"), rows.get(2));
+        assertIterableEquals(Arrays.asList("grp:groupa:group1", "canViewMetadata", "canViewMetadata"), rows.get(3));
+    }
+
+    @Test
     public void setPermissionNewEntryTest() throws Exception {
         writeCsv(mappingBody("default,canViewMetadata,canViewMetadata", "25,none,none", "26,none,none"));
         testHelper.indexExportData("mini_gilmer");

@@ -1,6 +1,8 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -228,6 +230,29 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void setPermissionNewGroupedWorkEntry() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-wd",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals"};
+        executeExpectSuccess(args);
+
+        testHelper.indexExportData("grouped_gilmer");
+        setupGroupedIndex();
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-id", "grp:groupa:group1",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args2);
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(1, "grp:groupa:group1", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
     public void validateValidDefaultPermissions() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -304,5 +329,14 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     private List<PermissionsInfo.PermissionMapping> getMappings() throws IOException {
         PermissionsInfo info = PermissionsService.loadMappings(project);
         return info.getMappings();
+    }
+
+    private void setupGroupedIndex() throws Exception {
+        var options = new GroupMappingOptions();
+        options.setGroupField("groupa");
+        testHelper.getGroupMappingService().generateMapping(options);
+        var syncOptions = new GroupMappingSyncOptions();
+        syncOptions.setSortField("file");
+        testHelper.getGroupMappingService().syncMappings(syncOptions);
     }
 }
