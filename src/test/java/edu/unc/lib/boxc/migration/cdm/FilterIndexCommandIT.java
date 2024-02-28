@@ -141,9 +141,9 @@ public class FilterIndexCommandIT extends AbstractCommandIT {
                 "-e", ""};
         executeExpectSuccess(args);
 
-        assertOutputContains("Filtering index from 5 to 1 remaining entries");
+        assertOutputContains("Filtering index from 5 to 2 remaining entries");
         assertOutputContains("Filtering of index for my_proj completed");
-        assertRemaining(1);
+        assertRemaining(2);
     }
 
     @Test

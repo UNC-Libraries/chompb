@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class PermissionsCommandIT extends AbstractCommandIT {
     @BeforeEach
@@ -250,6 +252,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args2);
         assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
         assertMapping(1, "grp:groupa:group1", "canViewMetadata", "canViewMetadata");
+        assertMappingCount(2);
     }
 
     @Test
@@ -329,6 +332,11 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     private List<PermissionsInfo.PermissionMapping> getMappings() throws IOException {
         PermissionsInfo info = PermissionsService.loadMappings(project);
         return info.getMappings();
+    }
+
+    private void assertMappingCount(int count) throws IOException {
+        var mappings = getMappings();
+        assertEquals(count, mappings.size());
     }
 
     private void setupGroupedIndex() throws Exception {

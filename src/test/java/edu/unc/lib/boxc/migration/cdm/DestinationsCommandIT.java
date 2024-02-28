@@ -449,12 +449,14 @@ public class DestinationsCommandIT extends AbstractCommandIT {
 
     private void assertArchivalCollectionMapping(String defaultDest, String defaultColl) throws Exception {
         var mappings = getMappings();
-        assertMappingCount(mappings, 3);
-        DestinationMapping group2Mapping = mappings.get(0);
+        assertMappingCount(mappings, 4);
+        DestinationMapping group11Mapping = mappings.get(0);
+        assertEquals("groupa:group11", group11Mapping.getId());
+        DestinationMapping group2Mapping = mappings.get(1);
         assertEquals("groupa:group2", group2Mapping.getId());
-        DestinationMapping group1Mapping = mappings.get(1);
+        DestinationMapping group1Mapping = mappings.get(2);
         assertEquals("groupa:group1", group1Mapping.getId());
-        DestinationMapping defaultMapping = mappings.get(2);
+        DestinationMapping defaultMapping = mappings.get(3);
         assertEquals(DestinationsInfo.DEFAULT_ID, defaultMapping.getId());
         assertEquals(defaultDest, defaultMapping.getDestination());
         assertEquals(defaultColl, defaultMapping.getCollectionId());
@@ -489,6 +491,11 @@ public class DestinationsCommandIT extends AbstractCommandIT {
                         .withHeader("Content-Type", "application/octet-stream")));
         //groupa:group2
         stubFor(get(urlEqualTo("/solr/select?q=collectionId%3Agroup2&fq=resourceType%3ACollection&wt=javabin&version=2"))
+                .willReturn(aResponse()
+                        .withBodyFile("arc_coll_resp_group2.bin")
+                        .withHeader("Content-Type", "application/octet-stream")));
+        //groupa:group11
+        stubFor(get(urlEqualTo("/solr/select?q=collectionId%3Agroup11&fq=resourceType%3ACollection&wt=javabin&version=2"))
                 .willReturn(aResponse()
                         .withBodyFile("arc_coll_resp_group2.bin")
                         .withHeader("Content-Type", "application/octet-stream")));

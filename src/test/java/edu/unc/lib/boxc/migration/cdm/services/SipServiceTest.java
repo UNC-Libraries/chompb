@@ -956,14 +956,14 @@ public class SipServiceTest {
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(3, sips.size());
 
-        // groupa:group2
+        // groupa:group2 and groupa:group11
         MigrationSip sip1 = sips.get(0);
         assertTrue(Files.exists(sip1.getSipPath()));
         assertEquals(DEST_UUID2, sip1.getDestinationPid().getUUID());
         Model model = testHelper.getSipModel(sip1);
         Bag depBag = model.getBag(sip1.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren = depBag.iterator().toList();
-        assertEquals(1, depBagChildren.size());
+        assertEquals(2, depBagChildren.size());
         assertPersistedSipInfoMatches(sip1);
 
         // groupa:group1
@@ -983,7 +983,7 @@ public class SipServiceTest {
         Model model3 = testHelper.getSipModel(sip3);
         Bag depBag3 = model3.getBag(sip3.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren3 = depBag3.iterator().toList();
-        assertEquals(2, depBagChildren3.size());
+        assertEquals(1, depBagChildren3.size());
         assertPersistedSipInfoMatches(sip3);
     }
 

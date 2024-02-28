@@ -248,7 +248,6 @@ public class PermissionsService {
     private boolean doesIdExistInIndex(String id) {
         String query = "select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME
                 + " where " + CdmFieldInfo.CDM_ID + " = ?";
-        boolean idExists = false;
 
         getIndexService();
         try (Connection conn = indexService.openDbConnection()) {
@@ -257,10 +256,10 @@ public class PermissionsService {
             var rs = stmt.executeQuery();
             while (rs.next()) {
                 if (!rs.getString(1).isEmpty()) {
-                    idExists = true;
+                    return true;
                 }
             }
-            return idExists;
+            return false;
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
         }
@@ -276,7 +275,7 @@ public class PermissionsService {
         // update existing entry
         for (CSVRecord record : previousRecords) {
             cdmIds.add(record.get(0));
-            if (record.get(0).contains(options.getCdmId())) {
+            if (record.get(0).equals(options.getCdmId())) {
                 updatedRecords.add(Arrays.asList(record.get(0), everyoneField, authenticatedField));
             } else {
                 updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2)));
