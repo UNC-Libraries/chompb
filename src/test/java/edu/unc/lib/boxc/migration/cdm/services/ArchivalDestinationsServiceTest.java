@@ -105,7 +105,7 @@ public class ArchivalDestinationsServiceTest {
         options.setFieldName("groupa");
 
         var result = service.generateCollectionNumbersList(options);
-        assertIterableEquals(Arrays.asList("group1", "group2"), result);
+        assertIterableEquals(Arrays.asList("group1", "group2", "group11"), result);
     }
 
     @Test
@@ -161,6 +161,7 @@ public class ArchivalDestinationsServiceTest {
         Map<String, String> expected = new HashMap<>();
         expected.put("group1", DEST_UUID);
         expected.put("group2", DEST_UUID2);
+        expected.put("group11", DEST_UUID2);
 
         var options = new DestinationMappingOptions();
         options.setFieldName("groupa");
@@ -214,8 +215,9 @@ public class ArchivalDestinationsServiceTest {
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertIterableEquals(Arrays.asList("groupa:group2", DEST_UUID2, ""), rows.get(0));
-            assertIterableEquals(Arrays.asList("groupa:group1", DEST_UUID, ""), rows.get(1));
+            assertIterableEquals(Arrays.asList("groupa:group11", DEST_UUID2, ""), rows.get(0));
+            assertIterableEquals(Arrays.asList("groupa:group2", DEST_UUID2, ""), rows.get(1));
+            assertIterableEquals(Arrays.asList("groupa:group1", DEST_UUID, ""), rows.get(2));
         }
     }
 

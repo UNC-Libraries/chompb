@@ -67,7 +67,7 @@ public class IndexFilteringServiceTest {
         options.setIncludeValues(Arrays.asList("group1", ""));
         var result = service.calculateRemainder(options);
         assertEquals(result.get("total"), 5);
-        assertEquals(result.get("remainder"), 4);
+        assertEquals(result.get("remainder"), 3);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class IndexFilteringServiceTest {
         options.setIncludeValues(Arrays.asList("group1", "group2", ""));
         var result = service.calculateRemainder(options);
         assertEquals(result.get("total"), 5);
-        assertEquals(result.get("remainder"), 5);
+        assertEquals(result.get("remainder"), 4);
     }
 
     @Test
@@ -168,7 +168,7 @@ public class IndexFilteringServiceTest {
         options.setIncludeValues(Arrays.asList("group1", ""));
         service.filterIndex(options);
         var remaining = getRemainingIds();
-        assertIterableEquals(Arrays.asList("25", "26", "28", "29"), remaining);
+        assertIterableEquals(Arrays.asList("25", "26", "29"), remaining);
     }
 
 

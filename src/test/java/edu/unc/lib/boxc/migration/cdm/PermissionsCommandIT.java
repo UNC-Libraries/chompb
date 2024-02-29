@@ -1,6 +1,8 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -190,6 +192,68 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void setPermissionExistingEntry() throws Exception {
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "25,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+
+        testHelper.indexExportData("mini_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-id", "25",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args);
+        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
+    public void setPermissionNewEntry() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-wd",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals"};
+        executeExpectSuccess(args);
+
+        testHelper.indexExportData("mini_gilmer");
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-id", "26",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args2);
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(1, "26", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
+    public void setPermissionNewGroupedWorkEntry() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-wd",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals"};
+        executeExpectSuccess(args);
+
+        testHelper.indexExportData("grouped_gilmer");
+        setupGroupedIndex();
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-id", "grp:groupa:group1",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args2);
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(1, "grp:groupa:group1", "canViewMetadata", "canViewMetadata");
+        assertMappingCount(2);
+    }
+
+    @Test
     public void validateValidDefaultPermissions() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -232,6 +296,28 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
     }
 
+    @Test
+    public void validateValidSetPermissions() throws Exception {
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "25,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+
+        testHelper.indexExportData("mini_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-id", "25",
+                "--everyone", "canViewMetadata",
+                "--authenticated", "canViewMetadata"};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "validate" };
+        executeExpectSuccess(args2);
+
+        assertOutputContains("PASS: Permissions mapping at path " + project.getPermissionsPath() + " is valid");
+    }
+
     private void assertMapping(int index, String id, String expectedEveryone, String expectedAuthenticated)
             throws IOException {
         var mappings = getMappings();
@@ -246,7 +332,17 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         return info.getMappings();
     }
 
-    private void assertMappingCount(List<PermissionsInfo.PermissionMapping> mappings, int count) {
+    private void assertMappingCount(int count) throws IOException {
+        var mappings = getMappings();
         assertEquals(count, mappings.size());
+    }
+
+    private void setupGroupedIndex() throws Exception {
+        var options = new GroupMappingOptions();
+        options.setGroupField("groupa");
+        testHelper.getGroupMappingService().generateMapping(options);
+        var syncOptions = new GroupMappingSyncOptions();
+        syncOptions.setSortField("file");
+        testHelper.getGroupMappingService().syncMappings(syncOptions);
     }
 }
