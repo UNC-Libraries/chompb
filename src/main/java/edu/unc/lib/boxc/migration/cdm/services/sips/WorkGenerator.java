@@ -172,6 +172,9 @@ public class WorkGenerator {
         Resource fileObjResc = makeFileResource(fileObjPid, sourceMapping.getFirstSourcePath());
         fileObjResc.addLiteral(CdrDeposit.createTime, cdmFileCreated);
 
+        // Add permission to source file
+        addPermission(cdmId, fileObjResc);
+
         // Link access file
         if (accessFilesInfo != null) {
             SourceFilesInfo.SourceFileMapping accessMapping = accessFilesInfo.getMappingByCdmId(cdmId);
@@ -211,7 +214,7 @@ public class WorkGenerator {
         return true;
     }
 
-    protected void addPermission(String cdmId, Resource resource) throws IOException {
+    protected void addPermission(String cdmId, Resource resource) {
         if (permissionsInfo != null) {
             PermissionsInfo.PermissionMapping permissionMapping = permissionsInfo.getMappingByCdmId(cdmId);
             if (permissionMapping != null) {
@@ -222,5 +225,4 @@ public class WorkGenerator {
             }
         }
     }
-
 }
