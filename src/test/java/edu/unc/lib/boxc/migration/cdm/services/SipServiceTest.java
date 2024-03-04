@@ -1063,14 +1063,12 @@ public class SipServiceTest {
                 stagingLocs.get(1), stagingLocs.get(2));
         assertTrue(workResc2.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
         assertTrue(workResc2.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
-        // Verify that the children of the compound object have descriptions added
         Resource work2File1Resc = testHelper.findChildByStagingLocation(work2Bag, stagingLocs.get(1));
         assertTrue(work2File1Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
         assertTrue(work2File1Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
         Resource work2File2Resc = testHelper.findChildByStagingLocation(work2Bag, stagingLocs.get(2));
         assertTrue(work2File2Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
         assertTrue(work2File2Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
-
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2014-02-17");
         assertTrue(workResc3.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
         assertTrue(workResc3.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
@@ -1083,6 +1081,7 @@ public class SipServiceTest {
         Resource work3File2Resc = testHelper.findChildByStagingLocation(work3Bag, stagingLocs.get(4));
         assertTrue(work3File2Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
         assertTrue(work3File2Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+
         assertPersistedSipInfoMatches(sip);
     }
 
@@ -1119,7 +1118,6 @@ public class SipServiceTest {
         Bag work1Bag = model.getBag(workResc1);
         testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", false,
                 stagingLocs.get(0), stagingLocs.get(1));
-        // Assert that children of grouped work have permissions
         Resource work1File1Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(0));
         assertTrue(work1File1Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
         assertTrue(work1File1Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
@@ -1168,6 +1166,12 @@ public class SipServiceTest {
         List<RDFNode> depBagChildren = depBag.iterator().toList();
         assertEquals(3, depBagChildren.size());
 
+        // Verify that compound object works do not have permissions
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
+        assertFalse(workResc1.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(workResc1.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+
         // Verify that the children of the compound object have permissions
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-17");
         Bag work2Bag = model.getBag(workResc2);
@@ -1179,7 +1183,6 @@ public class SipServiceTest {
         Resource work2File2Resc = testHelper.findChildByStagingLocation(work2Bag, stagingLocs.get(2));
         assertTrue(work2File2Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
         assertTrue(work2File2Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
-
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2014-02-17");
         Bag work3Bag = model.getBag(workResc3);
         testHelper.assertGroupedWorkPopulatedInSip(workResc3, dirManager, model, "607", false,
@@ -1198,7 +1201,6 @@ public class SipServiceTest {
         testHelper.indexExportData("grouped_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("grouped_mods.xml");
-        testHelper.generateFilePermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif",
                 "276_241_E.tif", "276_245a_E.tif");
 
@@ -1207,6 +1209,8 @@ public class SipServiceTest {
         GroupMappingService groupService = testHelper.getGroupMappingService();
         groupService.generateMapping(groupOptions);
         groupService.syncMappings(makeDefaultSyncOptions());
+        // permissions must be set after the grouping
+        testHelper.generateFilePermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1233,6 +1237,136 @@ public class SipServiceTest {
         Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
         assertTrue(work1File2Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
         assertTrue(work1File2Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        // Assert that grouped works do not have permissions
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
+        assertFalse(workResc2.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(workResc2.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
+        assertFalse(workResc3.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(workResc3.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-10");
+        assertFalse(workResc4.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(workResc4.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
+    @Test
+    public void generateSipWithCompoundObjectsWorkPermissions() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.generateWorkPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
+        DescriptionsService descriptionsService = new DescriptionsService();
+        descriptionsService.setProject(project);
+        descriptionsService.generateDocuments(false);
+        descriptionsService.expandDescriptions();
+        var sourceOptions = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        sourceOptions.setExportField("filena");
+        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
+                "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
+        assertTrue(workResc1.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertTrue(workResc1.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-17");
+        Bag work2Bag = model.getBag(workResc2);
+        testHelper.assertGroupedWorkPopulatedInSip(workResc2, dirManager, model, "604", false,
+                stagingLocs.get(1), stagingLocs.get(2));
+        assertTrue(workResc2.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertTrue(workResc2.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource work2File1Resc = testHelper.findChildByStagingLocation(work2Bag, stagingLocs.get(1));
+        assertFalse(work2File1Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(work2File1Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource work2File2Resc = testHelper.findChildByStagingLocation(work2Bag, stagingLocs.get(2));
+        assertFalse(work2File2Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(work2File2Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2014-02-17");
+        assertTrue(workResc3.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertTrue(workResc3.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Bag work3Bag = model.getBag(workResc3);
+        testHelper.assertGroupedWorkPopulatedInSip(workResc3, dirManager, model, "607", false,
+                stagingLocs.get(3), stagingLocs.get(4));
+        Resource work3File1Resc = testHelper.findChildByStagingLocation(work3Bag, stagingLocs.get(3));
+        assertFalse(work3File1Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(work3File1Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource work3File2Resc = testHelper.findChildByStagingLocation(work3Bag, stagingLocs.get(4));
+        assertFalse(work3File2Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(work3File2Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
+    @Test
+    public void generateSipsGroupedWorkWorkPermissions() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("grouped_mods.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif",
+                "276_241_E.tif", "276_245a_E.tif");
+
+        GroupMappingOptions groupOptions = new GroupMappingOptions();
+        groupOptions.setGroupField("groupa");
+        GroupMappingService groupService = testHelper.getGroupMappingService();
+        groupService.generateMapping(groupOptions);
+        groupService.syncMappings(makeDefaultSyncOptions());
+        // permissions must be set after the grouping
+        testHelper.generateWorkPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(4, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        Bag work1Bag = model.getBag(workResc1);
+        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1", false,
+                stagingLocs.get(0), stagingLocs.get(1));
+        // Assert that children of grouped work do not have permissions
+        Resource work1File1Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(0));
+        assertFalse(work1File1Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(work1File1Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
+        assertFalse(work1File2Resc.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertFalse(work1File2Resc.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+
+        // Assert that grouped worked have permissions
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
+        assertTrue(workResc2.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertTrue(workResc2.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
+        assertTrue(workResc3.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertTrue(workResc3.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
+        Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-10");
+        assertTrue(workResc4.hasProperty(CdrAcl.canViewMetadata, PUBLIC_PRINC));
+        assertTrue(workResc4.hasProperty(CdrAcl.canViewMetadata, AUTHENTICATED_PRINC));
 
         assertPersistedSipInfoMatches(sip);
     }

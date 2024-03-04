@@ -339,6 +339,14 @@ public class SipServiceHelper {
         permissionsService.generatePermissions(options);
     }
 
+    public void generateWorkPermissionsMapping(UserRole everyone, UserRole authenticated) throws Exception {
+        PermissionMappingOptions options = new PermissionMappingOptions();
+        options.setWithWorks(true);
+        options.setEveryone(everyone);
+        options.setAuthenticated(authenticated);
+        permissionsService.generatePermissions(options);
+    }
+
     public List<Path> populateSourceFiles(String... filenames) throws Exception {
         return populateSourceFiles(makeSourceFileOptions(sourceFilesBasePath), filenames);
     }
