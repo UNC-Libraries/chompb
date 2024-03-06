@@ -42,8 +42,8 @@ public class PermissionsValidator {
         ) {
             int i = 2;
             for (CSVRecord csvRecord : csvParser) {
-                if (csvRecord.size() != 3) {
-                    errors.add("Invalid entry at line " + i + ", must be 3 columns but were " + csvRecord.size());
+                if (csvRecord.size() != 4) {
+                    errors.add("Invalid entry at line " + i + ", must be 4 columns but were " + csvRecord.size());
                     i++;
                     continue;
                 }

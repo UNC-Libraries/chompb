@@ -13,8 +13,9 @@ import java.util.List;
 public class PermissionsInfo {
     public static final String DEFAULT_ID = "default";
     public static final String ID_FIELD = "id";
+    public static final String OBJECT_TYPE = "object_type";
     public static final String[] CSV_HEADERS = new String[] {
-            ID_FIELD, PUBLIC_PRINC, AUTHENTICATED_PRINC };
+            ID_FIELD, PUBLIC_PRINC, AUTHENTICATED_PRINC, OBJECT_TYPE };
 
     private List<PermissionMapping> mappings;
 
