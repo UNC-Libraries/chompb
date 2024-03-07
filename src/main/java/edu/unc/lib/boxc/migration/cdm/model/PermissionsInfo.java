@@ -15,7 +15,7 @@ public class PermissionsInfo {
     public static final String ID_FIELD = "id";
     public static final String OBJECT_TYPE = "object_type";
     public static final String[] CSV_HEADERS = new String[] {
-            ID_FIELD, PUBLIC_PRINC, AUTHENTICATED_PRINC, OBJECT_TYPE };
+            ID_FIELD, OBJECT_TYPE, PUBLIC_PRINC, AUTHENTICATED_PRINC };
 
     private List<PermissionMapping> mappings;
 

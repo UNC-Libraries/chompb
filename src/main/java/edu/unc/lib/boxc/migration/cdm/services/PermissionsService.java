@@ -23,13 +23,14 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -41,6 +42,12 @@ public class PermissionsService {
     private static final Logger log = getLogger(PermissionsService.class);
     public static final String WORK_OBJECT_TYPE = "work";
     public static final String FILE_OBJECT_TYPE = "file";
+    private static final String WORK_QUERY = "select " + CdmFieldInfo.CDM_ID
+            + " from " + CdmIndexService.TB_NAME
+            + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+            + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+            + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+            + " and " + CdmIndexService.PARENT_ID_FIELD + " is null";
 
     private MigrationProject project;
     private CdmIndexService indexService;
@@ -73,17 +80,17 @@ public class PermissionsService {
         ) {
             if (options.isWithDefault()) {
                 csvPrinter.printRecord(PermissionsInfo.DEFAULT_ID,
+                        "",
                         everyoneField,
-                        authenticatedField,
-                        "");
+                        authenticatedField);
             }
 
-            Map<String, String> mappedIdsAndObjectType = queryForMappedIds(options);
-            for (Map.Entry<String, String> entry : mappedIdsAndObjectType.entrySet()) {
+            List<Map.Entry<String, String>> mappedIdsAndObjectType = queryForMappedIds(options);
+            for (Map.Entry<String, String> entry : mappedIdsAndObjectType) {
                 csvPrinter.printRecord(entry.getKey(),
+                        entry.getValue(),
                         everyoneField,
-                        authenticatedField,
-                        entry.getValue());
+                        authenticatedField);
             }
         }
 
@@ -136,8 +143,8 @@ public class PermissionsService {
             for (CSVRecord csvRecord : csvParser) {
                 PermissionsInfo.PermissionMapping mapping = new PermissionsInfo.PermissionMapping();
                 mapping.setId(csvRecord.get(0));
-                mapping.setEveryone(csvRecord.get(1));
-                mapping.setAuthenticated(csvRecord.get(2));
+                mapping.setEveryone(csvRecord.get(2));
+                mapping.setAuthenticated(csvRecord.get(3));
                 mappings.add(mapping);
             }
             return info;
@@ -212,22 +219,16 @@ public class PermissionsService {
         }
     }
 
-    private Map<String, String> queryForMappedIds(PermissionMappingOptions options) {
+    private List<Map.Entry<String, String>> queryForMappedIds(PermissionMappingOptions options) {
         List<String> mappedIds;
-        Map<String, String> mappedIdsAndObjType = new HashMap<>();
+        List<Map.Entry<String, String>> mappedIdsAndObjType = new ArrayList<>();
 
         // works
         if (options.isWithWorks()) {
             // for every work in the project (grouped works, compound objects, and single file works)
-            String workQuery = "select distinct " + CdmFieldInfo.CDM_ID
-                    + " from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
-                    + " and " + CdmIndexService.PARENT_ID_FIELD + " is null";
-            mappedIds = getIds(workQuery);
+            mappedIds = getIds(WORK_QUERY);
             for (String id : mappedIds) {
-                mappedIdsAndObjType.put(id, WORK_OBJECT_TYPE);
+                mappedIdsAndObjType.add(new AbstractMap.SimpleEntry<>(id, WORK_OBJECT_TYPE));
             }
         }
 
@@ -235,18 +236,18 @@ public class PermissionsService {
         if (options.isWithFiles()) {
             // for every file in the project (compound children and grouped children)
             // If the entry type is null, the object is a individual cdm object
-            String fileQuery = "select distinct " + CdmFieldInfo.CDM_ID +
+            String fileQuery = "select " + CdmFieldInfo.CDM_ID +
                     " from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'"
                     + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
                     + " and " + CdmIndexService.PARENT_ID_FIELD + " is not null";
             mappedIds = getIds(fileQuery);
             for (String id : mappedIds) {
-                mappedIdsAndObjType.put(id, FILE_OBJECT_TYPE);
+                mappedIdsAndObjType.add(new AbstractMap.SimpleEntry<>(id, FILE_OBJECT_TYPE));
             }
         }
 
-        return mappedIdsAndObjType;
+        return mappedIdsAndObjType.stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList());
     }
 
     private boolean doesIdExistInIndex(String id) {
@@ -269,14 +270,8 @@ public class PermissionsService {
         }
     }
 
-    private boolean isWork(String id) {
-        String query = "select distinct " + CdmFieldInfo.CDM_ID
-                + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
-                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
-                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
-                + " and " + CdmIndexService.PARENT_ID_FIELD + " is null"
-                + " and " + CdmFieldInfo.CDM_ID + " = '" + id + "'";
+    private String getObjectType(String id) {
+        String query = WORK_QUERY + " and " + CdmFieldInfo.CDM_ID + " = '" + id + "'";
 
         getIndexService();
         try (Connection conn = indexService.openDbConnection()) {
@@ -284,10 +279,10 @@ public class PermissionsService {
             var rs = stmt.executeQuery(query);
             while (rs.next()) {
                 if (!rs.getString(1).isEmpty()) {
-                    return true;
+                    return WORK_OBJECT_TYPE;
                 }
             }
-            return false;
+            return FILE_OBJECT_TYPE;
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
         }
@@ -304,7 +299,7 @@ public class PermissionsService {
         for (CSVRecord record : previousRecords) {
             cdmIds.add(record.get(0));
             if (record.get(0).equals(options.getCdmId())) {
-                updatedRecords.add(Arrays.asList(record.get(0), everyoneField, authenticatedField, record.get(3)));
+                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), everyoneField, authenticatedField));
             } else {
                 updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3)));
             }
@@ -312,11 +307,8 @@ public class PermissionsService {
 
         // add new entry
         if (!cdmIds.contains(options.getCdmId())) {
-            if (isWork(options.getCdmId())) {
-                updatedRecords.add(Arrays.asList(options.getCdmId(), everyoneField, authenticatedField, WORK_OBJECT_TYPE));
-            } else {
-                updatedRecords.add(Arrays.asList(options.getCdmId(), everyoneField, authenticatedField, FILE_OBJECT_TYPE));
-            }
+            String objectType = getObjectType(options.getCdmId());
+            updatedRecords.add(Arrays.asList(options.getCdmId(), objectType, everyoneField, authenticatedField));
         }
 
         return updatedRecords;

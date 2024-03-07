@@ -48,8 +48,8 @@ public class PermissionsValidator {
                     continue;
                 }
                 String id = csvRecord.get(0);
-                String everyone = csvRecord.get(1);
-                String authenticated = csvRecord.get(2);
+                String everyone = csvRecord.get(2);
+                String authenticated = csvRecord.get(3);
 
                 // default values
                 if (PermissionsInfo.DEFAULT_ID.equals(id)) {
