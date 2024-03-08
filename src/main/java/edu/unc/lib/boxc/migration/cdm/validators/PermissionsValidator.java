@@ -42,14 +42,14 @@ public class PermissionsValidator {
         ) {
             int i = 2;
             for (CSVRecord csvRecord : csvParser) {
-                if (csvRecord.size() != 3) {
-                    errors.add("Invalid entry at line " + i + ", must be 3 columns but were " + csvRecord.size());
+                if (csvRecord.size() != 4) {
+                    errors.add("Invalid entry at line " + i + ", must be 4 columns but were " + csvRecord.size());
                     i++;
                     continue;
                 }
                 String id = csvRecord.get(0);
-                String everyone = csvRecord.get(1);
-                String authenticated = csvRecord.get(2);
+                String everyone = csvRecord.get(2);
+                String authenticated = csvRecord.get(3);
 
                 // default values
                 if (PermissionsInfo.DEFAULT_ID.equals(id)) {

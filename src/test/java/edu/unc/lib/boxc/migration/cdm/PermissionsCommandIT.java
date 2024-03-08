@@ -283,7 +283,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
 
         // Add a duplicate default permissions mapping
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "default,none,none", StandardCharsets.UTF_8, true);
+                "default,,none,none", StandardCharsets.UTF_8, true);
 
         String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -299,7 +299,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     @Test
     public void validateValidSetPermissions() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "25,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+                "25,work,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
         testHelper.indexExportData("mini_gilmer");
         String[] args = new String[] {
