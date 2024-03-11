@@ -539,6 +539,30 @@ public class PermissionsServiceTest {
         assertIterableEquals(Arrays.asList("607", "work", "canViewMetadata", "canViewMetadata"), rows.get(6));
     }
 
+    @Test
+    public void setPermissionsExistingWorksNewFiles() throws Exception {
+        writeCsv(mappingBody("216,work,canViewMetadata,canViewMetadata",
+                "604,work,canViewMetadata,canViewMetadata", "607,work,canViewMetadata,canViewMetadata"));
+        testHelper.indexExportData("mini_keepsakes");
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setWithFiles(true);
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("216", "work", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("602", "file", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("603", "file", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertIterableEquals(Arrays.asList("604", "work", "canViewMetadata", "canViewMetadata"), rows.get(3));
+        assertIterableEquals(Arrays.asList("605", "file", "canViewMetadata", "canViewMetadata"), rows.get(4));
+        assertIterableEquals(Arrays.asList("606", "file", "canViewMetadata", "canViewMetadata"), rows.get(5));
+        assertIterableEquals(Arrays.asList("607", "work", "canViewMetadata", "canViewMetadata"), rows.get(6));
+    }
+
     private String mappingBody(String... rows) {
         return String.join(",", PermissionsInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);

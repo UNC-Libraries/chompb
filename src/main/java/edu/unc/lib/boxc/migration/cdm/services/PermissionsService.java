@@ -26,6 +26,8 @@ import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -102,10 +104,8 @@ public class PermissionsService {
      * @param options permission mapping options
      */
     public void setPermissions(PermissionMappingOptions options) throws Exception {
-        if (options.getCdmId() != null) {
-            if (!doesIdExistInIndex(options.getCdmId())) {
-                throw new IllegalArgumentException("Id " + options.getCdmId() + " does not exist in this project.");
-            }
+        if (options.getCdmId() != null && !doesIdExistInIndex(options.getCdmId())) {
+            throw new IllegalArgumentException("Id " + options.getCdmId() + " does not exist in this project.");
         }
 
         Path permissionsMappingPath = project.getPermissionsPath();
@@ -332,6 +332,7 @@ public class PermissionsService {
             for (Map.Entry<String, String> workFileRecord : addWorkFileRecords) {
                 updatedRecords.add(Arrays.asList(workFileRecord.getKey(), workFileRecord.getValue(), everyoneField, authenticatedField));
             }
+            Collections.sort(updatedRecords, Comparator.comparing(e -> e.get(0)));
         }
 
         return updatedRecords;
