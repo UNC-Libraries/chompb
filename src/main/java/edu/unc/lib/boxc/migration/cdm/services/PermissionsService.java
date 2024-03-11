@@ -102,8 +102,10 @@ public class PermissionsService {
      * @param options permission mapping options
      */
     public void setPermissions(PermissionMappingOptions options) throws Exception {
-        if (!doesIdExistInIndex(options.getCdmId())) {
-            throw new IllegalArgumentException("Id " + options.getCdmId() + " does not exist in this project.");
+        if (options.getCdmId() != null) {
+            if (!doesIdExistInIndex(options.getCdmId())) {
+                throw new IllegalArgumentException("Id " + options.getCdmId() + " does not exist in this project.");
+            }
         }
 
         Path permissionsMappingPath = project.getPermissionsPath();
@@ -295,20 +297,41 @@ public class PermissionsService {
         String everyoneField = getAssignedRoleValue(options.isStaffOnly(), options.getEveryone());
         String authenticatedField = getAssignedRoleValue(options.isStaffOnly(), options.getAuthenticated());
 
-        // update existing entry
-        for (CSVRecord record : previousRecords) {
-            cdmIds.add(record.get(0));
-            if (record.get(0).equals(options.getCdmId())) {
-                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), everyoneField, authenticatedField));
-            } else {
-                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3)));
+        // add or update individual entry
+        if (options.getCdmId() != null) {
+            // update existing entry
+            for (CSVRecord record : previousRecords) {
+                cdmIds.add(record.get(0));
+                if (record.get(0).equals(options.getCdmId())) {
+                    updatedRecords.add(Arrays.asList(record.get(0), record.get(1), everyoneField, authenticatedField));
+                } else {
+                    updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3)));
+                }
+            }
+            // add new entry
+            if (!cdmIds.contains(options.getCdmId())) {
+                String objectType = getObjectType(options.getCdmId());
+                updatedRecords.add(Arrays.asList(options.getCdmId(), objectType, everyoneField, authenticatedField));
             }
         }
 
-        // add new entry
-        if (!cdmIds.contains(options.getCdmId())) {
-            String objectType = getObjectType(options.getCdmId());
-            updatedRecords.add(Arrays.asList(options.getCdmId(), objectType, everyoneField, authenticatedField));
+        // add or update with-works and with-files entries
+        if (options.isWithWorks() || options.isWithFiles()) {
+            List<Map.Entry<String, String>> addWorkFileRecords = queryForMappedIds(options);
+            Set<String> previousIds = previousRecords.stream().map(entry ->
+                    entry.get(PermissionsInfo.ID_FIELD)).collect(Collectors.toSet());
+            Set<String> workFileIds = addWorkFileRecords.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
+            // removed updated entries from list of previous entries and add unchanged previous entries to updatedRecords
+            previousIds.removeAll(workFileIds);
+            for (CSVRecord record : previousRecords) {
+                if (previousIds.contains(record.get(0))) {
+                    updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3)));
+                }
+            }
+            // add works or files to updatedRecords (includes updated entries and new entries)
+            for (Map.Entry<String, String> workFileRecord : addWorkFileRecords) {
+                updatedRecords.add(Arrays.asList(workFileRecord.getKey(), workFileRecord.getValue(), everyoneField, authenticatedField));
+            }
         }
 
         return updatedRecords;

@@ -78,7 +78,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     @Test
     public void generateDefaultPermissionsWithoutForceFlag() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "default,canViewMetadata,canViewMetadata", StandardCharsets.UTF_8, true);
+                "default,,canViewMetadata,canViewMetadata", StandardCharsets.UTF_8, true);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -94,7 +94,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     @Test
     public void generateDefaultPermissionsWithForceFlag() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "default,canViewMetadata,canViewMetadata", StandardCharsets.UTF_8, true);
+                "default,,canViewMetadata,canViewMetadata", StandardCharsets.UTF_8, true);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -156,7 +156,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     @Test
     public void generateWorkAndFilePermissionsWithForce() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "default,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+                "default,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
         testHelper.indexExportData("mini_gilmer");
         String[] args = new String[] {
@@ -194,7 +194,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     @Test
     public void setPermissionExistingEntry() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "25,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+                "25,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
         testHelper.indexExportData("mini_gilmer");
         String[] args = new String[] {
@@ -251,6 +251,71 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
         assertMapping(1, "grp:groupa:group1", "canViewMetadata", "canViewMetadata");
         assertMappingCount(2);
+    }
+
+    @Test
+    public void setPermissionsWithWorks() throws Exception {
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "25,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+
+        testHelper.indexExportData("mini_gilmer");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-ww",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args);
+        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
+        assertMapping(1, "26", "canViewMetadata", "canViewMetadata");
+        assertMapping(2, "27", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
+    public void setPermissionsWithFiles() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-wd",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals"};
+        executeExpectSuccess(args);
+
+        testHelper.indexExportData("grouped_gilmer");
+        setupGroupedIndex();
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-wf",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args2);
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(1, "25", "canViewMetadata", "canViewMetadata");
+        assertMapping(2, "26", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
+    public void setPermissionsWithWorksAndFiles() throws Exception {
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "603,file,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+
+        testHelper.indexExportData("mini_keepsakes");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-ww",
+                "-wf",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args);
+        assertMapping(0, "216", "canViewMetadata", "canViewMetadata");
+        assertMapping(1, "602", "canViewMetadata", "canViewMetadata");
+        assertMapping(2, "603", "canViewMetadata", "canViewMetadata");
+        assertMapping(3, "604", "canViewMetadata", "canViewMetadata");
+        assertMapping(4, "605", "canViewMetadata", "canViewMetadata");
+        assertMapping(5, "606", "canViewMetadata", "canViewMetadata");
+        assertMapping(6, "607", "canViewMetadata", "canViewMetadata");
     }
 
     @Test
