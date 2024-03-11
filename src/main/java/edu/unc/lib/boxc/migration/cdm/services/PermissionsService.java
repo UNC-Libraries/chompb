@@ -333,6 +333,11 @@ public class PermissionsService {
                 updatedRecords.add(Arrays.asList(workFileRecord.getKey(), workFileRecord.getValue(), everyoneField, authenticatedField));
             }
             Collections.sort(updatedRecords, Comparator.comparing(e -> e.get(0)));
+            // move default entry to top if it exists
+            if (previousIds.contains(PermissionsInfo.DEFAULT_ID)) {
+               List<String> defaultEntry = updatedRecords.remove(updatedRecords.size() - 1);
+               updatedRecords.add(0, defaultEntry);
+            }
         }
 
         return updatedRecords;

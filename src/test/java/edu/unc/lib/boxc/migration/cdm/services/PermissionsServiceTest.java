@@ -541,7 +541,7 @@ public class PermissionsServiceTest {
 
     @Test
     public void setPermissionsExistingWorksNewFiles() throws Exception {
-        writeCsv(mappingBody("216,work,canViewMetadata,canViewMetadata",
+        writeCsv(mappingBody("default,,none,none", "216,work,canViewMetadata,canViewMetadata",
                 "604,work,canViewMetadata,canViewMetadata", "607,work,canViewMetadata,canViewMetadata"));
         testHelper.indexExportData("mini_keepsakes");
         Path permissionsMappingPath = project.getPermissionsPath();
@@ -554,13 +554,14 @@ public class PermissionsServiceTest {
         assertTrue(Files.exists(permissionsMappingPath));
 
         List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
-        assertIterableEquals(Arrays.asList("216", "work", "canViewMetadata", "canViewMetadata"), rows.get(0));
-        assertIterableEquals(Arrays.asList("602", "file", "canViewMetadata", "canViewMetadata"), rows.get(1));
-        assertIterableEquals(Arrays.asList("603", "file", "canViewMetadata", "canViewMetadata"), rows.get(2));
-        assertIterableEquals(Arrays.asList("604", "work", "canViewMetadata", "canViewMetadata"), rows.get(3));
-        assertIterableEquals(Arrays.asList("605", "file", "canViewMetadata", "canViewMetadata"), rows.get(4));
-        assertIterableEquals(Arrays.asList("606", "file", "canViewMetadata", "canViewMetadata"), rows.get(5));
-        assertIterableEquals(Arrays.asList("607", "work", "canViewMetadata", "canViewMetadata"), rows.get(6));
+        assertIterableEquals(Arrays.asList("default", "", "none", "none"), rows.get(0));
+        assertIterableEquals(Arrays.asList("216", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("602", "file", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertIterableEquals(Arrays.asList("603", "file", "canViewMetadata", "canViewMetadata"), rows.get(3));
+        assertIterableEquals(Arrays.asList("604", "work", "canViewMetadata", "canViewMetadata"), rows.get(4));
+        assertIterableEquals(Arrays.asList("605", "file", "canViewMetadata", "canViewMetadata"), rows.get(5));
+        assertIterableEquals(Arrays.asList("606", "file", "canViewMetadata", "canViewMetadata"), rows.get(6));
+        assertIterableEquals(Arrays.asList("607", "work", "canViewMetadata", "canViewMetadata"), rows.get(7));
     }
 
     private String mappingBody(String... rows) {
