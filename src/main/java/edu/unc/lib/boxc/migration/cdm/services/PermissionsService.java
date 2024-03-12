@@ -28,13 +28,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -114,7 +112,7 @@ public class PermissionsService {
             throw new InvalidProjectStateException("Permissions csv does not exist.");
         }
 
-        // add or update permission for a specific cdmId
+        // add or update permission for a specific cdmId, works, and files
         List<List<String>> records = updateCsvRecords(options);
 
         try (
