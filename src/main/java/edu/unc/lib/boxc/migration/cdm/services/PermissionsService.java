@@ -26,14 +26,15 @@ import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -292,52 +293,57 @@ public class PermissionsService {
 
     private List<List<String>> updateCsvRecords(PermissionMappingOptions options) {
         List<CSVRecord> previousRecords = getPermissions();
+        List<Map.Entry<String, String>> workAndFileRecords = new ArrayList<>();
         List<List<String>> updatedRecords = new ArrayList<>();
-        Set<String> cdmIds = new HashSet<>();
+        Set<String> addedAndUpdatedIds = new HashSet<>();
         String everyoneField = getAssignedRoleValue(options.isStaffOnly(), options.getEveryone());
         String authenticatedField = getAssignedRoleValue(options.isStaffOnly(), options.getAuthenticated());
 
-        // add or update individual entry
+        // addedAndUpdatedIds: list of all ids that need to be added and updated
         if (options.getCdmId() != null) {
-            // update existing entry
-            for (CSVRecord record : previousRecords) {
-                cdmIds.add(record.get(0));
-                if (record.get(0).equals(options.getCdmId())) {
-                    updatedRecords.add(Arrays.asList(record.get(0), record.get(1), everyoneField, authenticatedField));
-                } else {
-                    updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3)));
-                }
-            }
-            // add new entry
-            if (!cdmIds.contains(options.getCdmId())) {
-                String objectType = getObjectType(options.getCdmId());
-                updatedRecords.add(Arrays.asList(options.getCdmId(), objectType, everyoneField, authenticatedField));
+            addedAndUpdatedIds.add(options.getCdmId());
+        }
+        if (options.isWithWorks() || options.isWithFiles()) {
+            workAndFileRecords = queryForMappedIds(options);
+            Set<String> workFileIds = workAndFileRecords.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
+            addedAndUpdatedIds.addAll(workFileIds);
+        }
+
+        // update existing entries and add unchanged entries to updatedRecords, then remove updated ids from updateIds
+        for (CSVRecord record : previousRecords) {
+            if (addedAndUpdatedIds.contains(record.get(0))) {
+                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), everyoneField, authenticatedField));
+                addedAndUpdatedIds.remove(record.get(0));
+            } else {
+                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3)));
+                addedAndUpdatedIds.remove(record.get(0));
             }
         }
 
-        // add or update with-works and with-files entries
-        if (options.isWithWorks() || options.isWithFiles()) {
-            List<Map.Entry<String, String>> addWorkFileRecords = queryForMappedIds(options);
-            Set<String> previousIds = previousRecords.stream().map(entry ->
-                    entry.get(PermissionsInfo.ID_FIELD)).collect(Collectors.toSet());
-            Set<String> workFileIds = addWorkFileRecords.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
-            // removed updated entries from list of previous entries and add unchanged previous entries to updatedRecords
-            previousIds.removeAll(workFileIds);
-            for (CSVRecord record : previousRecords) {
-                if (previousIds.contains(record.get(0))) {
-                    updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3)));
-                }
+        // add one new entry
+        if (addedAndUpdatedIds.contains(options.getCdmId())) {
+            String objectType = getObjectType(options.getCdmId());
+            updatedRecords.add(Arrays.asList(options.getCdmId(), objectType, everyoneField, authenticatedField));
+        }
+
+        // add new works or files entries
+        for (Map.Entry<String, String> workAndFileRecord : workAndFileRecords) {
+            if (addedAndUpdatedIds.contains(workAndFileRecord.getKey())) {
+                updatedRecords.add(Arrays.asList(workAndFileRecord.getKey(), workAndFileRecord.getValue(),
+                        everyoneField, authenticatedField));
             }
-            // add works or files to updatedRecords (includes updated entries and new entries)
-            for (Map.Entry<String, String> workFileRecord : addWorkFileRecords) {
-                updatedRecords.add(Arrays.asList(workFileRecord.getKey(), workFileRecord.getValue(), everyoneField, authenticatedField));
+        }
+
+        updatedRecords.sort(Comparator.comparing(entry -> entry.get(0)));
+        // move default entry to top if it exists
+        List<String> updatedIds = updatedRecords.stream().map(entry -> entry.get(0)).collect(Collectors.toList());
+        int i = 0;
+        for (String id : updatedIds) {
+            if (id.equals(PermissionsInfo.DEFAULT_ID)) {
+                List<String> defaultEntry = updatedRecords.remove(i);
+                updatedRecords.add(0, defaultEntry);
             }
-            Collections.sort(updatedRecords, Comparator.comparing(e -> e.get(0)));
-            // move default entry to top if it exists
-            if (previousIds.contains(PermissionsInfo.DEFAULT_ID)) {
-               List<String> defaultEntry = updatedRecords.remove(updatedRecords.size() - 1);
-               updatedRecords.add(0, defaultEntry);
-            }
+            i++;
         }
 
         return updatedRecords;
