@@ -299,10 +299,11 @@ public class PermissionsService {
 
         // addedAndUpdatedIds: list of all ids that need to be added and updated
         if (options.getCdmId() != null) {
+            workAndFileRecords.add(new AbstractMap.SimpleEntry<>(options.getCdmId(), getObjectType(options.getCdmId())));
             addedAndUpdatedIds.add(options.getCdmId());
         }
         if (options.isWithWorks() || options.isWithFiles()) {
-            workAndFileRecords = queryForMappedIds(options);
+            workAndFileRecords.addAll(queryForMappedIds(options));
             Set<String> workFileIds = workAndFileRecords.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
             addedAndUpdatedIds.addAll(workFileIds);
         }
@@ -318,12 +319,6 @@ public class PermissionsService {
             }
         }
 
-        // add one new entry
-        if (addedAndUpdatedIds.contains(options.getCdmId())) {
-            String objectType = getObjectType(options.getCdmId());
-            updatedRecords.add(Arrays.asList(options.getCdmId(), objectType, everyoneField, authenticatedField));
-        }
-
         // add new works or files entries
         for (Map.Entry<String, String> workAndFileRecord : workAndFileRecords) {
             if (addedAndUpdatedIds.contains(workAndFileRecord.getKey())) {
@@ -335,13 +330,9 @@ public class PermissionsService {
         updatedRecords.sort(Comparator.comparing(entry -> entry.get(0)));
         // move default entry to top if it exists
         List<String> updatedIds = updatedRecords.stream().map(entry -> entry.get(0)).collect(Collectors.toList());
-        int i = 0;
-        for (String id : updatedIds) {
-            if (id.equals(PermissionsInfo.DEFAULT_ID)) {
-                List<String> defaultEntry = updatedRecords.remove(i);
-                updatedRecords.add(0, defaultEntry);
-            }
-            i++;
+        if (updatedIds.contains(PermissionsInfo.DEFAULT_ID)) {
+            List<String> defaultEntry = updatedRecords.remove(updatedIds.indexOf(PermissionsInfo.DEFAULT_ID));
+            updatedRecords.add(0, defaultEntry);
         }
 
         return updatedRecords;
