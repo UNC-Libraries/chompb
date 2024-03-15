@@ -455,6 +455,115 @@ public class PermissionsServiceTest {
         assertEquals(expectedMessage, actualMessage);
     }
 
+    @Test
+    public void setPermissionWithWorksDefault() throws Exception {
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
+        testHelper.indexExportData("mini_gilmer");
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setWithWorks(true);
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertIterableEquals(Arrays.asList("27", "work", "canViewMetadata", "canViewMetadata"), rows.get(3));
+    }
+
+    @Test
+    public void setPermissionsWithFilesGroupedWork() throws Exception {
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata"));
+        testHelper.indexExportData("grouped_gilmer");
+        setupGroupedIndex();
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setWithFiles(true);
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("25", "file", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("26", "file", "canViewMetadata", "canViewMetadata"), rows.get(2));
+    }
+
+    @Test
+    public void setPermissionsWithFilesCompoundObjects() throws Exception {
+        writeCsv(mappingBody("603,file,canViewMetadata,canViewMetadata"));
+        testHelper.indexExportData("mini_keepsakes");
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setWithFiles(true);
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("602", "file", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("603", "file", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("605", "file", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertIterableEquals(Arrays.asList("606", "file", "canViewMetadata", "canViewMetadata"), rows.get(3));
+    }
+
+    @Test
+    public void setPermissionsWithWorksAndFiles() throws Exception {
+        writeCsv(mappingBody("604,work,canViewMetadata,canViewMetadata"));
+        testHelper.indexExportData("mini_keepsakes");
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setWithWorks(true);
+        options.setWithFiles(true);
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("216", "work", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("602", "file", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("603", "file", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertIterableEquals(Arrays.asList("604", "work", "canViewMetadata", "canViewMetadata"), rows.get(3));
+        assertIterableEquals(Arrays.asList("605", "file", "canViewMetadata", "canViewMetadata"), rows.get(4));
+        assertIterableEquals(Arrays.asList("606", "file", "canViewMetadata", "canViewMetadata"), rows.get(5));
+        assertIterableEquals(Arrays.asList("607", "work", "canViewMetadata", "canViewMetadata"), rows.get(6));
+    }
+
+    @Test
+    public void setPermissionsExistingWorksNewFiles() throws Exception {
+        writeCsv(mappingBody("default,,none,none", "216,work,canViewMetadata,canViewMetadata",
+                "604,work,canViewMetadata,canViewMetadata", "607,work,canViewMetadata,canViewMetadata"));
+        testHelper.indexExportData("mini_keepsakes");
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setWithFiles(true);
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "none", "none"), rows.get(0));
+        assertIterableEquals(Arrays.asList("216", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("602", "file", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertIterableEquals(Arrays.asList("603", "file", "canViewMetadata", "canViewMetadata"), rows.get(3));
+        assertIterableEquals(Arrays.asList("604", "work", "canViewMetadata", "canViewMetadata"), rows.get(4));
+        assertIterableEquals(Arrays.asList("605", "file", "canViewMetadata", "canViewMetadata"), rows.get(5));
+        assertIterableEquals(Arrays.asList("606", "file", "canViewMetadata", "canViewMetadata"), rows.get(6));
+        assertIterableEquals(Arrays.asList("607", "work", "canViewMetadata", "canViewMetadata"), rows.get(7));
+    }
+
     private String mappingBody(String... rows) {
         return String.join(",", PermissionsInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);

@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +103,7 @@ public class PermissionsService {
      * @param options permission mapping options
      */
     public void setPermissions(PermissionMappingOptions options) throws Exception {
-        if (!doesIdExistInIndex(options.getCdmId())) {
+        if (options.getCdmId() != null && !doesIdExistInIndex(options.getCdmId())) {
             throw new IllegalArgumentException("Id " + options.getCdmId() + " does not exist in this project.");
         }
 
@@ -111,7 +112,7 @@ public class PermissionsService {
             throw new InvalidProjectStateException("Permissions csv does not exist.");
         }
 
-        // add or update permission for a specific cdmId
+        // add or update permission for a specific cdmId, works, and files
         List<List<String>> records = updateCsvRecords(options);
 
         try (
@@ -290,25 +291,48 @@ public class PermissionsService {
 
     private List<List<String>> updateCsvRecords(PermissionMappingOptions options) {
         List<CSVRecord> previousRecords = getPermissions();
+        List<Map.Entry<String, String>> workAndFileRecords = new ArrayList<>();
         List<List<String>> updatedRecords = new ArrayList<>();
-        Set<String> cdmIds = new HashSet<>();
+        Set<String> addedAndUpdatedIds = new HashSet<>();
         String everyoneField = getAssignedRoleValue(options.isStaffOnly(), options.getEveryone());
         String authenticatedField = getAssignedRoleValue(options.isStaffOnly(), options.getAuthenticated());
 
-        // update existing entry
+        // addedAndUpdatedIds: list of all ids that need to be added and updated
+        if (options.getCdmId() != null) {
+            workAndFileRecords.add(new AbstractMap.SimpleEntry<>(options.getCdmId(), getObjectType(options.getCdmId())));
+            addedAndUpdatedIds.add(options.getCdmId());
+        }
+        if (options.isWithWorks() || options.isWithFiles()) {
+            workAndFileRecords.addAll(queryForMappedIds(options));
+            Set<String> workFileIds = workAndFileRecords.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
+            addedAndUpdatedIds.addAll(workFileIds);
+        }
+
+        // update existing entries and add unchanged entries to updatedRecords, then remove updated ids from updateIds
         for (CSVRecord record : previousRecords) {
-            cdmIds.add(record.get(0));
-            if (record.get(0).equals(options.getCdmId())) {
+            if (addedAndUpdatedIds.contains(record.get(0))) {
                 updatedRecords.add(Arrays.asList(record.get(0), record.get(1), everyoneField, authenticatedField));
+                addedAndUpdatedIds.remove(record.get(0));
             } else {
                 updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3)));
+                addedAndUpdatedIds.remove(record.get(0));
             }
         }
 
-        // add new entry
-        if (!cdmIds.contains(options.getCdmId())) {
-            String objectType = getObjectType(options.getCdmId());
-            updatedRecords.add(Arrays.asList(options.getCdmId(), objectType, everyoneField, authenticatedField));
+        // add new works or files entries
+        for (Map.Entry<String, String> workAndFileRecord : workAndFileRecords) {
+            if (addedAndUpdatedIds.contains(workAndFileRecord.getKey())) {
+                updatedRecords.add(Arrays.asList(workAndFileRecord.getKey(), workAndFileRecord.getValue(),
+                        everyoneField, authenticatedField));
+            }
+        }
+
+        updatedRecords.sort(Comparator.comparing(entry -> entry.get(0)));
+        // move default entry to top if it exists
+        List<String> updatedIds = updatedRecords.stream().map(entry -> entry.get(0)).collect(Collectors.toList());
+        if (updatedIds.contains(PermissionsInfo.DEFAULT_ID)) {
+            List<String> defaultEntry = updatedRecords.remove(updatedIds.indexOf(PermissionsInfo.DEFAULT_ID));
+            updatedRecords.add(0, defaultEntry);
         }
 
         return updatedRecords;
