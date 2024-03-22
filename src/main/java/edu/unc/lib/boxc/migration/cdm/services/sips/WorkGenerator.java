@@ -173,7 +173,7 @@ public class WorkGenerator {
         fileObjResc.addLiteral(CdrDeposit.createTime, cdmFileCreated);
 
         // Add permission to source file
-        addPermission(cdmId, fileObjResc);
+        addFilePermission(cdmId, fileObjResc);
 
         // Link access file
         if (accessFilesInfo != null) {
@@ -212,6 +212,10 @@ public class WorkGenerator {
      */
     protected boolean isSingleItem() {
         return true;
+    }
+
+    protected void addFilePermission(String cdmId, Resource resource) {
+        // No permissions are assigned to files in single file works
     }
 
     protected void addPermission(String cdmId, Resource resource) {

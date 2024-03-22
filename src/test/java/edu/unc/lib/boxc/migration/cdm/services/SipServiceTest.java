@@ -1033,6 +1033,13 @@ public class SipServiceTest {
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         assertDoesNotHavePermission(workResc3, CdrAcl.canViewMetadata);
 
+        Resource work1FileResc = getOnlyChildOf(workResc1);
+        assertPermissionsUnassigned(work1FileResc);
+        Resource work2FileResc = getOnlyChildOf(workResc2);
+        assertPermissionsUnassigned(work2FileResc);
+        Resource work3FileResc = getOnlyChildOf(workResc3);
+        assertPermissionsUnassigned(work3FileResc);
+
         assertPersistedSipInfoMatches(sip);
     }
 
