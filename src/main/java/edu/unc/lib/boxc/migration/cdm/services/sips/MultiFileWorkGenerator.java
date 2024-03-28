@@ -60,6 +60,11 @@ public class MultiFileWorkGenerator extends WorkGenerator {
         }
     }
 
+    @Override
+    protected void addFilePermission(String cdmId, Resource resource) {
+        addPermission(cdmId, resource);
+    }
+
     protected boolean isSingleItem() {
         return false;
     }

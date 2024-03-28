@@ -29,6 +29,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -55,6 +56,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
@@ -989,6 +991,13 @@ public class SipServiceTest {
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         assertHasPermission(workResc3, CdrAcl.canViewMetadata);
 
+        Resource work1FileResc = getOnlyChildOf(workResc1);
+        assertPermissionsUnassigned(work1FileResc);
+        Resource work2FileResc = getOnlyChildOf(workResc2);
+        assertPermissionsUnassigned(work2FileResc);
+        Resource work3FileResc = getOnlyChildOf(workResc3);
+        assertPermissionsUnassigned(work3FileResc);
+
         assertPersistedSipInfoMatches(sip);
     }
 
@@ -1024,6 +1033,13 @@ public class SipServiceTest {
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         assertDoesNotHavePermission(workResc3, CdrAcl.canViewMetadata);
 
+        Resource work1FileResc = getOnlyChildOf(workResc1);
+        assertPermissionsUnassigned(work1FileResc);
+        Resource work2FileResc = getOnlyChildOf(workResc2);
+        assertPermissionsUnassigned(work2FileResc);
+        Resource work3FileResc = getOnlyChildOf(workResc3);
+        assertPermissionsUnassigned(work3FileResc);
+
         assertPersistedSipInfoMatches(sip);
     }
 
@@ -1058,6 +1074,13 @@ public class SipServiceTest {
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         assertHasPermission(workResc3, CdrAcl.canViewMetadata);
+
+        Resource work1FileResc = getOnlyChildOf(workResc1);
+        assertPermissionsUnassigned(work1FileResc);
+        Resource work2FileResc = getOnlyChildOf(workResc2);
+        assertPermissionsUnassigned(work2FileResc);
+        Resource work3FileResc = getOnlyChildOf(workResc3);
+        assertPermissionsUnassigned(work3FileResc);
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -1446,5 +1469,31 @@ public class SipServiceTest {
     private void assertDoesNotHavePermission(Resource resource, Property permission) {
         assertFalse(resource.hasProperty(permission, PUBLIC_PRINC));
         assertFalse(resource.hasProperty(permission, AUTHENTICATED_PRINC));
+    }
+
+    private void assertPermissionsUnassigned(Resource resource) {
+        String message = "Expected no permissions to be assigned, but properties were " + convertResourcePropertiesToString(resource);
+        assertFalse(resource.hasProperty(CdrAcl.canViewMetadata), message);
+        assertFalse(resource.hasProperty(CdrAcl.canViewAccessCopies), message);
+        assertFalse(resource.hasProperty(CdrAcl.canViewOriginals), message);
+        assertFalse(resource.hasProperty(CdrAcl.canViewReducedQuality), message);
+        assertFalse(resource.hasProperty(CdrAcl.none), message);
+    }
+
+    private Resource getOnlyChildOf(Resource resource) {
+        List<RDFNode> children = getChildrenOfBag(resource);
+        assertEquals(1, children.size());
+        return children.get(0).asResource();
+    }
+
+    private List<RDFNode> getChildrenOfBag(Resource resource) {
+        Bag bag = resource.getModel().getBag(resource);
+        return bag.iterator().toList();
+    }
+
+    private String convertResourcePropertiesToString(Resource resource) {
+        return resource.listProperties().toList().stream()
+                .map(Statement::toString)
+                .collect(Collectors.joining("\n"));
     }
 }
