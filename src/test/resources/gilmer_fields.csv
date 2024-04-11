@@ -52,6 +52,8 @@ color,color,Color Space Raw Scan,false,n,n,y,n,BLANK
 coloa,coloa,Color Space filename,false,n,n,y,n,BLANK
 fila,fila,File Format Raw Scan,false,n,n,y,y,BLANK
 filb,filb,File Format filename,false,n,n,y,y,BLANK
+stream,stream,StreamingFile,false,n,n,n,y,BLANK
+duracl,duracl,duracloudSpace,false,n,n,n,y,identi
 full,full,path,false,n,n,n,n,BLANK
 fullrs,fullrs,Full resolution,false,n,n,y,n,
 dmoclcno,dmoclcno,OCLC number,false,n,n,y,n,
