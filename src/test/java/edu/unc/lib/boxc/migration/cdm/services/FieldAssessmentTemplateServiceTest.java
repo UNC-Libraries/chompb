@@ -53,7 +53,7 @@ public class FieldAssessmentTemplateServiceTest {
         XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
         Sheet sheet = workbook.getSheetAt(0);
 
-        assertEquals(60, sheet.getLastRowNum());
+        assertEquals(62, sheet.getLastRowNum());
         assertEquals(16, sheet.getRow(0).getPhysicalNumberOfCells());
         assertEquals(12, sheet.getRow(1).getPhysicalNumberOfCells());
         assertEquals(12, sheet.getRow(60).getPhysicalNumberOfCells());
