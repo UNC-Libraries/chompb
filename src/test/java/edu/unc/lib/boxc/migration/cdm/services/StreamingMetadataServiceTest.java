@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -76,7 +77,7 @@ public class StreamingMetadataServiceTest {
     public void getStreamingMetadataFail() throws Exception {
         testHelper.indexExportData("mini_gilmer");
 
-        Exception exception = assertThrows(NullPointerException.class, () -> {
+        Exception exception = assertThrows(MigrationException.class, () -> {
             service.getStreamingMetadata("25");
         });
     }
