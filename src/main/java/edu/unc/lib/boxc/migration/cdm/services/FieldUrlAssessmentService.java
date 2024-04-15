@@ -47,6 +47,9 @@ public class FieldUrlAssessmentService {
     public static final String REDIRECT_URL = "redirect url";
     public static final String[] URL_CSV_HEADERS = new String[] {
             NICK_FIELD, URL, SUCCESSFUL_INDICATOR, REDIRECT_INDICATOR, REDIRECT_URL };
+    public static final String URL_REGEX = "\\b((https?):" + "//[-a-zA-Z0-9+&@#/%?=" + "~_|!:,.;]*[-a-zA-Z0-9+"
+            + "&@#/%=~_|])";
+    public static final Pattern URL_PATTERN = Pattern.compile(URL_REGEX, Pattern.CASE_INSENSITIVE);
 
     /**
      * Generates a List of FieldUrlEntries that have the CDM field and associated URLs as attributes
@@ -71,7 +74,10 @@ public class FieldUrlAssessmentService {
                         + "\" from " + CdmIndexService.TB_NAME
                         + " where \"" + field + "\" like " + "'%http%'");
                 while (rs.next()) {
-                    fieldUrlEntries.add(new FieldUrlEntry(field, extractUrl(rs.getString(1))));
+                    var url = extractUrl(rs.getString(1));
+                    if (url != null) {
+                        fieldUrlEntries.add(new FieldUrlEntry(field, url));
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -86,13 +92,14 @@ public class FieldUrlAssessmentService {
      * Extracts url from the passed in CDM field value
      */
     private String extractUrl(String string) {
-        String regex = "\\b((https?):" + "//[-a-zA-Z0-9+&@#/%?=" + "~_|!:,.;]*[-a-zA-Z0-9+"
-                + "&@#/%=~_|])";
-        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(string);
+        Matcher matcher = URL_PATTERN.matcher(string);
         String extractUrl = null;
         if (matcher.find()) {
             extractUrl = matcher.group();
+            // URL must be at least 10 characters long (protocol, separator, domain)
+            if (extractUrl.length() < 10) {
+                return null;
+            }
         }
         return extractUrl;
     }
@@ -139,7 +146,8 @@ public class FieldUrlAssessmentService {
                     throw new IOException("Unrecognized response status: " + status + " for " + url);
                 }
             } catch (IOException e) {
-                log.warn(e.getMessage(), e);
+                log.warn("Failed to retrieve URL {}: {}", url, e.getMessage());
+                log.debug("Full error", e);
                 // invalid URL will be logged as an error url
                 csvPrinter.printRecord(field, url, "n", "n", null);
             }
