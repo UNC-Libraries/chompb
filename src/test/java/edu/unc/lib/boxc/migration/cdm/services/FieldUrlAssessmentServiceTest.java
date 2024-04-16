@@ -6,6 +6,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.permanentRedirect;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Reader;
@@ -15,6 +16,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -201,9 +203,95 @@ public class FieldUrlAssessmentServiceTest {
             assertEquals("y", rows.get(3).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("y", rows.get(4).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
             assertEquals("y", rows.get(5).get(FieldUrlAssessmentService.SUCCESSFUL_INDICATOR));
+            assertEquals(6, rows.size());
 
             assertEquals(invalidUrl, rows.get(1).get(FieldUrlAssessmentService.URL));
         }
+    }
+
+    @Test
+    public void urlWithSpaceAfterHttpTest() throws Exception {
+        var invalidUrl = "http ://example.com";
+        addProblematicUrlToDb(invalidUrl);
+        stubUrls(200);
+        service.generateReport();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            // the report should contain all the regular URLs, but should not contain the invalid URL
+            var urlValues = listUrlValues(rows);
+            assertIterableEquals(List.of(
+                    cdmBaseUrl + "/new_url_description",
+                    cdmBaseUrl + "/new_url_caption",
+                    cdmBaseUrl + "/new_url_caption_again",
+                    cdmBaseUrl + "/new_url_notes",
+                    cdmBaseUrl + "/00276/"),
+                    urlValues);
+        }
+    }
+
+    @Test
+    public void urlWithSpaceAfterProtocolTest() throws Exception {
+        var invalidUrl = "http:// example.com";
+        addProblematicUrlToDb(invalidUrl);
+        stubUrls(200);
+        service.generateReport();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            // the report should contain all the regular URLs, but should not contain the invalid URL
+            var urlValues = listUrlValues(rows);
+            assertIterableEquals(List.of(
+                            cdmBaseUrl + "/new_url_description",
+                            cdmBaseUrl + "/new_url_caption",
+                            cdmBaseUrl + "/new_url_caption_again",
+                            cdmBaseUrl + "/new_url_notes",
+                            cdmBaseUrl + "/00276/"),
+                    urlValues);
+        }
+    }
+
+    @Test
+    public void urlWithTinyDomainTest() throws Exception {
+        var invalidUrl = "https://e xample.com";
+        addProblematicUrlToDb(invalidUrl);
+        stubUrls(200);
+        service.generateReport();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            // the report should contain all the regular URLs, but should not contain the invalid URL
+            var urlValues = listUrlValues(rows);
+            assertIterableEquals(List.of(
+                            cdmBaseUrl + "/new_url_description",
+                            cdmBaseUrl + "/new_url_caption",
+                            cdmBaseUrl + "/new_url_caption_again",
+                            cdmBaseUrl + "/new_url_notes",
+                            cdmBaseUrl + "/00276/"),
+                    urlValues);
+        }
+    }
+
+    private List<String> listUrlValues(List<CSVRecord> rows) {
+        return rows.stream().map(row -> row.get(FieldUrlAssessmentService.URL)).collect(Collectors.toList());
     }
 
     private void stubUrls(int statusCode) {
