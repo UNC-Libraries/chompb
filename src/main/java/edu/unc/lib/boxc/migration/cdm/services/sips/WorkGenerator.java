@@ -101,6 +101,9 @@ public class WorkGenerator {
         // add permission to work
         addPermission(cdmId, workBag);
 
+        // Add streamingUrl
+        addStreamingMetadata(cdmId, workBag);
+
         // Copy description to SIP
         copyDescriptionToSip(workPid, expDescPath);
 
@@ -180,9 +183,6 @@ public class WorkGenerator {
 
         // Add permission to source file
         addFilePermission(cdmId, fileObjResc);
-
-        // Add streamingUrl
-        addStreamingMetadata(cdmId, fileObjResc);
 
         // Link access file
         if (accessFilesInfo != null) {
