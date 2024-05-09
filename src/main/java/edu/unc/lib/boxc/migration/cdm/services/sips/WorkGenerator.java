@@ -37,6 +37,7 @@ import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_P
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -46,6 +47,9 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class WorkGenerator {
     private static final Logger log = getLogger(WorkGenerator.class);
+    // use local streamingUrl property for now because Cdr.streamingUrl only exists in a feature branch
+    public static final Property streamingUrl = createProperty(
+            "http://cdr.unc.edu/definitions/model#streamingUrl");
     protected PIDMinter pidMinter;
     protected RedirectMappingService redirectMappingService;
     protected SourceFilesInfo sourceFilesInfo;
@@ -242,7 +246,7 @@ public class WorkGenerator {
             String streamingFile = streamingMetadata[0];
             String streamingUrlValue = "https://durastream.lib.unc.edu/player?spaceId=" + duracloudSpace
                     + "&filename=" + streamingFile;
-            resource.addProperty(Cdr.streamingUrl, streamingUrlValue);
+            resource.addProperty(streamingUrl, streamingUrlValue);
         }
     }
 }

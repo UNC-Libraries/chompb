@@ -28,6 +28,7 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
+import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -91,6 +92,7 @@ public class SipServiceHelper {
     private CdmIndexService indexService;
     private GroupMappingService groupMappingService;
     private PermissionsService permissionsService;
+    private StreamingMetadataService streamingMetadataService;
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
     private ChompbConfigService.ChompbConfig chompbConfig;
@@ -125,6 +127,10 @@ public class SipServiceHelper {
         archivalDestinationsService.setDestinationsService(destinationsService);
         permissionsService = new PermissionsService();
         permissionsService.setProject(project);
+        streamingMetadataService = new StreamingMetadataService();
+        streamingMetadataService.setProject(project);
+        streamingMetadataService.setFieldService(fieldService);
+        streamingMetadataService.setIndexService(indexService);
 
         Files.createDirectories(project.getExportPath());
     }
@@ -142,6 +148,7 @@ public class SipServiceHelper {
         service.setAggregateTopMappingService(getAggregateFileMappingService());
         service.setAggregateBottomMappingService(getAggregateBottomMappingService());
         service.setPermissionsService(permissionsService);
+        service.setStreamingMetadataService(streamingMetadataService);
         return service;
     }
 
