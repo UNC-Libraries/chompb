@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationSipEntry;
+import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
@@ -102,7 +103,9 @@ public class WorkGenerator {
         addPermission(cdmId, workBag);
 
         // Add streamingUrl
-        addStreamingMetadata(cdmId, workBag);
+        if (!cdmId.startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
+            addStreamingMetadata(cdmId, workBag);
+        }
 
         // Copy description to SIP
         copyDescriptionToSip(workPid, expDescPath);
@@ -183,6 +186,9 @@ public class WorkGenerator {
 
         // Add permission to source file
         addFilePermission(cdmId, fileObjResc);
+
+        // Add streamingUrl
+        addStreamingMetadata(cdmId, fileObjResc);
 
         // Link access file
         if (accessFilesInfo != null) {
