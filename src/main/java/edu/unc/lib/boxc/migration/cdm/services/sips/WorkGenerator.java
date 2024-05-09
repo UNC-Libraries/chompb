@@ -12,6 +12,7 @@ import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
+import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
@@ -58,6 +59,7 @@ public class WorkGenerator {
     protected AccessFileService accessFileService;
     protected PostMigrationReportService postMigrationReportService;
     protected PermissionsInfo permissionsInfo;
+    protected StreamingMetadataService streamingMetadataService;
 
     protected String cdmId;
     protected String cdmCreated;
@@ -175,6 +177,9 @@ public class WorkGenerator {
         // Add permission to source file
         addFilePermission(cdmId, fileObjResc);
 
+        // Add streamingUrl
+        addStreamingMetadata(cdmId, fileObjResc);
+
         // Link access file
         if (accessFilesInfo != null) {
             SourceFilesInfo.SourceFileMapping accessMapping = accessFilesInfo.getMappingByCdmId(cdmId);
@@ -227,6 +232,17 @@ public class WorkGenerator {
                 resource.addLiteral(everyoneValue, PUBLIC_PRINC);
                 resource.addLiteral(authenticatedValue, AUTHENTICATED_PRINC);
             }
+        }
+    }
+
+    protected void addStreamingMetadata(String cdmId, Resource resource) {
+        if (streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
+            String[] streamingMetadata = streamingMetadataService.getStreamingMetadata(cdmId);
+            String duracloudSpace = streamingMetadata[1];
+            String streamingFile = streamingMetadata[0];
+            String streamingUrlValue = "https://durastream.lib.unc.edu/player?spaceId=" + duracloudSpace
+                    + "&filename=" + streamingFile;
+            resource.addProperty(Cdr.streamingUrl, streamingUrlValue);
         }
     }
 }

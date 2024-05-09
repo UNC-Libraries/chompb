@@ -1374,6 +1374,43 @@ public class SipServiceTest {
         assertPersistedSipInfoMatches(sip);
     }
 
+    @Test
+    public void generateSipsWithStreamingUrl() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        assertFalse(workResc1.hasProperty(Cdr.streamingUrl, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        assertFalse(workResc2.hasProperty(Cdr.streamingUrl, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        assertTrue(workResc3.hasProperty(Cdr.streamingUrl, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
     private void solrResponseWithPid() throws Exception {
         QueryResponse testResponse1 = new QueryResponse();
         SolrDocument testDocument1 = new SolrDocument();
