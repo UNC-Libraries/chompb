@@ -9,6 +9,7 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
+import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 
 import java.io.IOException;
@@ -34,6 +35,7 @@ public class WorkGeneratorFactory {
     private AggregateFileMappingService aggregateBottomMappingService;
     private PIDMinter pidMinter;
     private PermissionsInfo permissionsInfo;
+    private StreamingMetadataService streamingMetadataService;
 
     public WorkGenerator create(String cdmId, String cdmCreated, String entryType) throws IOException {
         WorkGenerator gen;
@@ -58,6 +60,7 @@ public class WorkGeneratorFactory {
         gen.redirectMappingService = redirectMappingService;
         gen.postMigrationReportService = postMigrationReportService;
         gen.permissionsInfo = permissionsInfo;
+        gen.streamingMetadataService = streamingMetadataService;
         return gen;
     }
 
@@ -115,5 +118,9 @@ public class WorkGeneratorFactory {
 
     public void setPermissionsInfo(PermissionsInfo permissionsInfo) {
         this.permissionsInfo = permissionsInfo;
+    }
+
+    public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
+        this.streamingMetadataService = streamingMetadataService;
     }
 }

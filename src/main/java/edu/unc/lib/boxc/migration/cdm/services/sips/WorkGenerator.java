@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationSipEntry;
+import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
@@ -12,6 +13,7 @@ import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
+import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
@@ -36,6 +38,7 @@ import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_P
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -45,6 +48,9 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class WorkGenerator {
     private static final Logger log = getLogger(WorkGenerator.class);
+    // use local streamingUrl property for now because Cdr.streamingUrl only exists in a feature branch
+    public static final Property streamingUrl = createProperty(
+            "http://cdr.unc.edu/definitions/model#streamingUrl");
     protected PIDMinter pidMinter;
     protected RedirectMappingService redirectMappingService;
     protected SourceFilesInfo sourceFilesInfo;
@@ -58,6 +64,7 @@ public class WorkGenerator {
     protected AccessFileService accessFileService;
     protected PostMigrationReportService postMigrationReportService;
     protected PermissionsInfo permissionsInfo;
+    protected StreamingMetadataService streamingMetadataService;
 
     protected String cdmId;
     protected String cdmCreated;
@@ -175,6 +182,9 @@ public class WorkGenerator {
         // Add permission to source file
         addFilePermission(cdmId, fileObjResc);
 
+        // Add streamingUrl
+        addStreamingMetadata(cdmId, fileObjResc);
+
         // Link access file
         if (accessFilesInfo != null) {
             SourceFilesInfo.SourceFileMapping accessMapping = accessFilesInfo.getMappingByCdmId(cdmId);
@@ -227,6 +237,17 @@ public class WorkGenerator {
                 resource.addLiteral(everyoneValue, PUBLIC_PRINC);
                 resource.addLiteral(authenticatedValue, AUTHENTICATED_PRINC);
             }
+        }
+    }
+
+    protected void addStreamingMetadata(String cdmId, Resource resource) {
+        if (streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
+            String[] streamingMetadata = streamingMetadataService.getStreamingMetadata(cdmId);
+            String duracloudSpace = streamingMetadata[1];
+            String streamingFile = streamingMetadata[0];
+            String streamingUrlValue = "https://durastream.lib.unc.edu/player?spaceId=" + duracloudSpace
+                    + "&filename=" + streamingFile;
+            resource.addProperty(streamingUrl, streamingUrlValue);
         }
     }
 }

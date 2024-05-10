@@ -60,6 +60,7 @@ import java.util.stream.Collectors;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingUrl;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -1370,6 +1371,55 @@ public class SipServiceTest {
         assertHasPermission(workResc3, CdrAcl.canViewMetadata);
         Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-10");
         assertHasPermission(workResc4, CdrAcl.canViewMetadata);
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
+    @Test
+    public void generateSipsWithStreamingUrl() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        Bag workResc1Bag = model.getBag(workResc1);
+        List<RDFNode> workResc1Children = workResc1Bag.iterator().toList();
+        assertEquals(1, workResc1Children.size());
+        Resource workResc1FileObj = workResc1Children.get(0).asResource();
+        assertFalse(workResc1FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        Bag workResc2Bag = model.getBag(workResc2);
+        List<RDFNode> workResc2Children = workResc2Bag.iterator().toList();
+        assertEquals(1, workResc2Children.size());
+        Resource workResc2FileObj = workResc2Children.get(0).asResource();
+        assertFalse(workResc2FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        Bag workResc3Bag = model.getBag(workResc3);
+        List<RDFNode> workResc3Children = workResc3Bag.iterator().toList();
+        assertEquals(1, workResc3Children.size());
+        Resource workResc3FileObj = workResc3Children.get(0).asResource();
+        assertTrue(workResc3FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
 
         assertPersistedSipInfoMatches(sip);
     }
