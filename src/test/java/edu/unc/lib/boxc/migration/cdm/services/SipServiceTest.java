@@ -1406,7 +1406,12 @@ public class SipServiceTest {
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
-        assertTrue(workResc3.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+        // assert file in workResc3 has streamingUrl
+        Bag workResc3Bag = model.getBag(workResc3);
+        List<RDFNode> workChildren = workResc3Bag.iterator().toList();
+        assertEquals(1, workChildren.size());
+        Resource fileObjResc = workChildren.get(0).asResource();
+        assertTrue(fileObjResc.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
 
         assertPersistedSipInfoMatches(sip);

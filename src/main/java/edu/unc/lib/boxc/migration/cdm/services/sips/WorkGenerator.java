@@ -102,11 +102,6 @@ public class WorkGenerator {
         // add permission to work
         addPermission(cdmId, workBag);
 
-        // Add streamingUrl
-        if (!cdmId.startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
-            addStreamingMetadata(cdmId, workBag);
-        }
-
         // Copy description to SIP
         copyDescriptionToSip(workPid, expDescPath);
 
