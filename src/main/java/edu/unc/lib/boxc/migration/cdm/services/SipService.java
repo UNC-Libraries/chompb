@@ -221,10 +221,6 @@ public class SipService {
         if (props.getDescriptionsExpandedDate() == null) {
             throw new InvalidProjectStateException("Descriptions must be created and expanded");
         }
-        if (props.getSourceFilesUpdatedDate() == null || (props.getSourceFilesUpdatedDate() == null
-                && !streamingMetadataService.hasProjectStreamingMetadataField())) {
-            throw new InvalidProjectStateException("Source files must be mapped");
-        }
     }
 
     private void initializeDestinations(SipGenerationOptions options) {
