@@ -166,7 +166,7 @@ public class SipServiceTest {
             service.generateSips(makeOptions());
             fail();
         } catch (InvalidProjectStateException e) {
-            assertTrue(e.getMessage().contains("Source files must be mapped"),
+            assertTrue(e.getMessage().contains("Cannot transform object 25, no source file has been mapped"),
                     "Unexpected message: " + e.getMessage());
         }
     }
