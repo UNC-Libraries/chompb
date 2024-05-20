@@ -40,9 +40,10 @@ public class SourceFilesValidatorTest {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
 
+        testHelper = new SipServiceHelper(project, tmpFolder);
         validator = new SourceFilesValidator();
         validator.setProject(project);
-        testHelper = new SipServiceHelper(project, tmpFolder);
+        validator.setStreamingMetadataService(testHelper.getStreamingMetadataService());
     }
 
     @Test
@@ -62,6 +63,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void blankIdTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody(",," + path + ","));
         List<String> errors = validator.validateMappings(false);
@@ -71,6 +73,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void blankPathTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("25,,,"));
         List<String> errors = validator.validateMappings(false);
         assertHasError(errors, "No path mapped at line 2");
@@ -79,6 +82,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void invalidRelativePathTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("25,,path/is/relative.txt,"));
         List<String> errors = validator.validateMappings(false);
         assertHasError(errors, "Invalid path at line 2, path is not absolute");
@@ -87,6 +91,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void pathDoesNotExistTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path = testHelper.addSourceFile("25.txt");
         Files.delete(path);
         writeCsv(mappingBody("25,," + path + ","));
@@ -97,6 +102,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void pathIsDirectoryTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path = testHelper.addSourceFile("25.txt");
         Files.delete(path);
         Files.createDirectory(path);
@@ -128,6 +134,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void duplicateIdTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         Path path2 = testHelper.addSourceFile("26.txt");
         writeCsv(mappingBody("25,," + path1 + ",",
@@ -139,6 +146,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void duplicatePathTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 + ",",
                 "26,," + path1 + ","));
@@ -149,6 +157,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void validMappingsTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         Path path2 = testHelper.addSourceFile("26.txt");
         writeCsv(mappingBody("25,," + path1 + ",",
@@ -159,6 +168,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void errorsOnMultipleLinesTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         Path path2 = testHelper.addSourceFile("26.txt");
         writeCsv(mappingBody(",," + path1 + ",",
@@ -171,6 +181,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void errorsOnSameLineTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path1 = testHelper.addSourceFile("25.txt");
         writeCsv(mappingBody("25,," + path1 + ",",
                              "25,," + path1 + ","));
@@ -182,6 +193,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void ignorableErrorsWithoutForceTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path2 = testHelper.addSourceFile("26.txt");
         writeCsv(mappingBody("25,,,",
                              "26,," + path2 + ","));
@@ -192,10 +204,20 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void ignorableErrorsWithForceTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
         Path path2 = testHelper.addSourceFile("26.txt");
         writeCsv(mappingBody("25,,,",
                              "26,," + path2 + ","));
         List<String> errors = validator.validateMappings(true);
+        assertNumberErrors(errors, 0);
+    }
+
+    @Test
+    public void streamingMetadataTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path2 = testHelper.addSourceFile("26.txt");
+        writeCsv(mappingBody("26,," + path2 + ",", "27,,,"));
+        List<String> errors = validator.validateMappings(false);
         assertNumberErrors(errors, 0);
     }
 

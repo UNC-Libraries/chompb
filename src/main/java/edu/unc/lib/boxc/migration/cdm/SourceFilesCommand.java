@@ -9,7 +9,9 @@ import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.options.ExportUnmappedSourceFilesOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmExportFilesService;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
+import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -43,7 +45,9 @@ public class SourceFilesCommand {
     private SourceFileService sourceService;
     private CdmIndexService indexService;
     private CdmExportFilesService exportFilesService;
+    private CdmFieldService fieldService;
     private SourceFilesSummaryService summaryService;
+    private StreamingMetadataService streamingMetadataService;
 
     @Command(name = "generate",
             description = {
@@ -88,6 +92,7 @@ public class SourceFilesCommand {
             initialize(false);
             SourceFilesValidator validator = new SourceFilesValidator();
             validator.setProject(project);
+            validator.setStreamingMetadataService(streamingMetadataService);
             List<String> errors = validator.validateMappings(force);
             if (errors.isEmpty()) {
                 outputLogger.info("PASS: Source file mapping at path {} is valid",
@@ -119,6 +124,7 @@ public class SourceFilesCommand {
             initialize(false);
             SourceFilesStatusService statusService = new SourceFilesStatusService();
             statusService.setProject(project);
+            statusService.setStreamingMetadataService(streamingMetadataService);
             statusService.report(parentCommand.getVerbosity());
 
             return 0;
@@ -148,6 +154,7 @@ public class SourceFilesCommand {
     private void initialize(boolean dryRun) throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
+        fieldService = new CdmFieldService();
         indexService = new CdmIndexService();
         indexService.setProject(project);
         sourceService = new SourceFileService();
@@ -157,6 +164,10 @@ public class SourceFilesCommand {
         summaryService.setProject(project);
         summaryService.setDryRun(dryRun);
         summaryService.setSourceFileService(sourceService);
+        streamingMetadataService = new StreamingMetadataService();
+        streamingMetadataService.setProject(project);
+        streamingMetadataService.setFieldService(fieldService);
+        streamingMetadataService.setIndexService(indexService);
     }
 
     @Command(name = "export_unmapped",

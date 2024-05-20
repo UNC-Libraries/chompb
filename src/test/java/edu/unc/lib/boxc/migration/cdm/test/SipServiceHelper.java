@@ -546,6 +546,10 @@ public class SipServiceHelper {
         return indexService;
     }
 
+    public StreamingMetadataService getStreamingMetadataService() {
+        return streamingMetadataService;
+    }
+
     public PIDMinter getPidMinter() {
         return pidMinter;
     }

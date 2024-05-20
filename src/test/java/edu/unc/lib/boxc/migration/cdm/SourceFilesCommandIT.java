@@ -496,8 +496,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputContains("FAIL: Source file mapping at path " + project.getSourceFilesMappingPath()
                 + " is invalid");
         assertOutputContains("- No path mapped at line 3");
-        assertOutputContains("- No path mapped at line 4");
-        assertEquals(3, output.split("    - ").length, "Must only be two errors: " + output);
+        assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
     }
 
     @Test
