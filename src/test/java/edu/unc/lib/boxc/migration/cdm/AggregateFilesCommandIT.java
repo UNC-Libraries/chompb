@@ -153,7 +153,7 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
 
         // This should produce a duplicate
         Files.writeString(project.getAggregateTopMappingPath(),
-                "\nsomeid,somefield," + aggrPath2 + "|" + aggrPath1 + ",",
+                "\n2,somefield," + aggrPath2 + "|" + aggrPath1 + ",",
                 StandardOpenOption.APPEND);
 
         String[] args = new String[] {
