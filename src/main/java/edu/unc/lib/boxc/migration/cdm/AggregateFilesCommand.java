@@ -5,10 +5,8 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.AggregateFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
-import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import edu.unc.lib.boxc.migration.cdm.validators.AggregateFilesValidator;
 import org.apache.commons.lang3.StringUtils;
@@ -37,9 +35,7 @@ public class AggregateFilesCommand {
 
     private MigrationProject project;
     private AggregateFileMappingService aggregateService;
-    private CdmFieldService fieldService;
     private CdmIndexService indexService;
-    private StreamingMetadataService streamingMetadataService;
     private SourceFilesSummaryService summaryService;
 
     @CommandLine.Command(name = "generate",
@@ -95,7 +91,6 @@ public class AggregateFilesCommand {
             initialize(sortBottom, false);
             var validator = new AggregateFilesValidator(sortBottom);
             validator.setProject(project);
-            validator.setStreamingMetadataService(streamingMetadataService);
             List<String> errors = validator.validateMappings(force);
 
             var mappingPath = sortBottom ? project.getAggregateBottomMappingPath()
@@ -136,7 +131,6 @@ public class AggregateFilesCommand {
     private void initialize(boolean sortBottom, boolean dryRun) throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
-        fieldService = new CdmFieldService();
         indexService = new CdmIndexService();
         indexService.setProject(project);
         aggregateService = new AggregateFileMappingService(sortBottom);
@@ -146,9 +140,5 @@ public class AggregateFilesCommand {
         summaryService.setProject(project);
         summaryService.setDryRun(dryRun);
         summaryService.setSourceFileService(aggregateService);
-        streamingMetadataService = new StreamingMetadataService();
-        streamingMetadataService.setProject(project);
-        streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(indexService);
     }
 }

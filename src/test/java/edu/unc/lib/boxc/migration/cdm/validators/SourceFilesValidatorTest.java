@@ -221,6 +221,18 @@ public class SourceFilesValidatorTest {
         assertNumberErrors(errors, 0);
     }
 
+    @Test
+    public void streamingMetadataAndInvalidSourcePathTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path path = testHelper.addSourceFile("25.txt");
+        Path path2 = testHelper.addSourceFile("27.txt");
+        Files.delete(path2);
+        writeCsv(mappingBody("25,," + path + ",", "27,," + path2 + ","));
+        List<String> errors = validator.validateMappings(false);
+        assertHasError(errors, "Invalid path at line 3, file does not exist");
+        assertNumberErrors(errors, 1);
+    }
+
     private void assertHasError(List<String> errors, String expected) {
         assertTrue(errors.contains(expected),
                 "Expected error:\n" + expected + "\nBut the returned errors were:\n" + String.join("\n", errors));

@@ -76,37 +76,30 @@ public class SourceFilesValidator {
     }
 
     protected void validateSourcePath(int i, String id, SourceFileMapping mapping, boolean force) {
-        if (!id.isEmpty() && streamingMetadataService.verifyRecordHasStreamingMetadata(id)) {
-            String[] streamingMetadata = streamingMetadataService.getStreamingMetadata(id);
-            String streamingUrl = "https://durastream.lib.unc.edu/player?spaceId=" + streamingMetadata[1]
-                    + "&filename=" + streamingMetadata[0];
-            previousPaths.add(streamingUrl);
-        } else {
-            if (mapping.getSourcePaths() == null || mapping.getSourcePaths().isEmpty()) {
-                if (!force && !allowUnmapped()) {
-                    errors.add("No path mapped at line " + i);
-                }
-                return;
+        if (mapping.getSourcePaths() == null || mapping.getSourcePaths().isEmpty()) {
+            if (!force && !allowUnmapped() && !streamingMetadataService.verifyRecordHasStreamingMetadata(id)) {
+                errors.add("No path mapped at line " + i);
             }
-            for (var sourcePath: mapping.getSourcePaths()) {
-                if (previousPaths.contains(sourcePath.toString())) {
-                    errors.add("Duplicate mapping for path " + sourcePath + " at line " + i);
-                } else {
-                    try {
-                        if (!sourcePath.isAbsolute()) {
-                            errors.add("Invalid path at line " + i + ", path is not absolute");
-                        } else if (Files.exists(sourcePath)) {
-                            if (Files.isDirectory(sourcePath)) {
-                                errors.add("Invalid path at line " + i + ", path is a directory");
-                            }
-                        } else {
-                            errors.add("Invalid path at line " + i + ", file does not exist");
+            return;
+        }
+        for (var sourcePath: mapping.getSourcePaths()) {
+            if (previousPaths.contains(sourcePath.toString())) {
+                errors.add("Duplicate mapping for path " + sourcePath + " at line " + i);
+            } else {
+                try {
+                    if (!sourcePath.isAbsolute()) {
+                        errors.add("Invalid path at line " + i + ", path is not absolute");
+                    } else if (Files.exists(sourcePath)) {
+                        if (Files.isDirectory(sourcePath)) {
+                            errors.add("Invalid path at line " + i + ", path is a directory");
                         }
-                    } catch (InvalidPathException e) {
-                        errors.add("Invalid path at line " + i + ", not a valid file path");
+                    } else {
+                        errors.add("Invalid path at line " + i + ", file does not exist");
                     }
-                    previousPaths.add(sourcePath.toString());
+                } catch (InvalidPathException e) {
+                    errors.add("Invalid path at line " + i + ", not a valid file path");
                 }
+                previousPaths.add(sourcePath.toString());
             }
         }
     }
