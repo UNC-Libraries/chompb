@@ -21,7 +21,7 @@ public class SipGenerationOptions {
     private String username;
 
     @Option(names = {"-sc", "--suppress-collection-redirect"},
-            description = {"Suppress collection level redirects"})
+            description = {"Suppress collection level redirects produced during SIP generation."})
     private boolean suppressCollectionRedirect;
 
     public boolean isForce() {

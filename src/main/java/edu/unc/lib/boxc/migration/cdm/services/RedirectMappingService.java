@@ -74,7 +74,7 @@ public class RedirectMappingService {
 
     /**
      * Analyzes list of sips to add collection-specific row(s) to Redirect Mapping CSV
-     * @param sips list of MigrationSips
+     * @param options SipGenerationOptions, sips list of MigrationSips
      */
     public void addCollectionRow(SipGenerationOptions options, List<MigrationSip> sips) throws IOException {
         List<String> destinationIds = new ArrayList<>();
