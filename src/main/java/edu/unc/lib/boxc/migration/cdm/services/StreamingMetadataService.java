@@ -49,7 +49,7 @@ public class StreamingMetadataService {
         return streamingFields[0] != null && streamingFields[1] != null;
     }
 
-    private boolean hasProjectStreamingMetadataField() {
+    public boolean hasProjectStreamingMetadataField() {
         if (projectHasStreamingMetadata == null) {
             // check if project has streamingFile field and duracloudSpace field
             fieldService.validateFieldsFile(project);

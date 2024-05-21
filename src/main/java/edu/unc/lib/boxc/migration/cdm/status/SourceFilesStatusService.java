@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
+import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.migration.cdm.validators.SourceFilesValidator;
 import org.slf4j.Logger;
@@ -25,6 +26,9 @@ import org.slf4j.Logger;
  */
 public class SourceFilesStatusService extends AbstractStatusService {
     private static final Logger log = getLogger(SourceFilesStatusService.class);
+
+    private StreamingMetadataService streamingMetadataService;
+
     /**
      * Display a stand alone report of the source file mapping status
      * @param verbosity
@@ -48,6 +52,7 @@ public class SourceFilesStatusService extends AbstractStatusService {
         }
         SourceFilesValidator validator = getValidator();
         validator.setProject(project);
+        validator.setStreamingMetadataService(streamingMetadataService);
         List<String> errors = validator.validateMappings(forceValidation());
         int numErrors = errors.size();
         if (numErrors == 0) {
@@ -114,6 +119,10 @@ public class SourceFilesStatusService extends AbstractStatusService {
 
     protected SourceFileService getMappingService() {
         return new SourceFileService();
+    }
+
+    public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
+        this.streamingMetadataService = streamingMetadataService;
     }
 
     protected boolean forceValidation() {

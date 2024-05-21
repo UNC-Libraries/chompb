@@ -14,6 +14,7 @@ import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
+import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -23,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class ProjectStatusService extends AbstractStatusService {
     private CdmFieldService fieldService;
+    private StreamingMetadataService streamingMetadataService;
 
     public void report() {
         outputLogger.info("Status for project {}", project.getProjectName());
@@ -116,6 +118,7 @@ public class ProjectStatusService extends AbstractStatusService {
         SourceFilesStatusService statusService = new SourceFilesStatusService();
         statusService.setProject(project);
         statusService.setQueryService(getQueryService());
+        statusService.setStreamingMetadataService(streamingMetadataService);
         statusService.reportStats(totalObjects, Verbosity.QUIET);
     }
 
@@ -123,6 +126,7 @@ public class ProjectStatusService extends AbstractStatusService {
         AccessFilesStatusService statusService = new AccessFilesStatusService();
         statusService.setProject(project);
         statusService.setQueryService(getQueryService());
+        statusService.setStreamingMetadataService(streamingMetadataService);
         statusService.reportStats(totalObjects, Verbosity.QUIET);
     }
 
@@ -141,5 +145,9 @@ public class ProjectStatusService extends AbstractStatusService {
         descStatus.setDescriptionsService(descService);
         descStatus.setQueryService(getQueryService());
         descStatus.reportStats(totalObjects, Verbosity.QUIET);
+    }
+
+    public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
+        this.streamingMetadataService = streamingMetadataService;
     }
 }

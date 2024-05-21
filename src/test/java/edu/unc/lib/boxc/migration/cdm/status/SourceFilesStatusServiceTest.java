@@ -41,6 +41,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
         testHelper = new SipServiceHelper(project, tmpFolder);
         statusService = new SourceFilesStatusService();
         statusService.setProject(project);
+        statusService.setStreamingMetadataService(testHelper.getStreamingMetadataService());
     }
 
     @Test

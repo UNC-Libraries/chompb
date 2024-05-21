@@ -496,8 +496,28 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputContains("FAIL: Source file mapping at path " + project.getSourceFilesMappingPath()
                 + " is invalid");
         assertOutputContains("- No path mapped at line 3");
-        assertOutputContains("- No path mapped at line 4");
-        assertEquals(3, output.split("    - ").length, "Must only be two errors: " + output);
+        assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
+    }
+
+
+    @Test
+    public void validateStreamingMetadataTest() throws Exception {
+        indexExportSamples();
+        addSourceFile("276_182_E.tif");
+        addSourceFile("276_183_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "validate" };
+        executeExpectSuccess(args2);
+
+        assertOutputContains("PASS: Source file mapping at path " + project.getSourceFilesMappingPath() + " is valid");
     }
 
     @Test

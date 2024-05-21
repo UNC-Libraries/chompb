@@ -5,7 +5,6 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +12,7 @@ import java.util.Set;
 
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
+import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -30,6 +30,7 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
  */
 public class SourceFilesValidator {
     protected MigrationProject project;
+    protected StreamingMetadataService streamingMetadataService;
     protected Set<String> previousIds = new HashSet<>();
     protected Set<String> previousPaths = new HashSet<>();
     protected List<String> errors = new ArrayList<>();
@@ -62,7 +63,7 @@ public class SourceFilesValidator {
                     previousIds.add(id);
                 }
 
-                validateSourcePath(i, mapping, force);
+                validateSourcePath(i, id, mapping, force);
                 i++;
             }
             if (i == 2) {
@@ -74,9 +75,9 @@ public class SourceFilesValidator {
         return errors;
     }
 
-    protected void validateSourcePath(int i, SourceFileMapping mapping, boolean force) {
+    protected void validateSourcePath(int i, String id, SourceFileMapping mapping, boolean force) {
         if (mapping.getSourcePaths() == null || mapping.getSourcePaths().isEmpty()) {
-            if (!force && !allowUnmapped()) {
+            if (!force && !allowUnmapped() && !streamingMetadataService.verifyRecordHasStreamingMetadata(id)) {
                 errors.add("No path mapped at line " + i);
             }
             return;
@@ -109,6 +110,10 @@ public class SourceFilesValidator {
 
     public void setProject(MigrationProject project) {
         this.project = project;
+    }
+
+    public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
+        this.streamingMetadataService = streamingMetadataService;
     }
 
     protected boolean allowUnmapped() {
