@@ -4,7 +4,6 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
-import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
@@ -76,7 +75,7 @@ public class RedirectMappingService {
      * Analyzes list of sips to add collection-specific row(s) to Redirect Mapping CSV
      * @param options SipGenerationOptions, sips list of MigrationSips
      */
-    public void addCollectionRow(SipGenerationOptions options, List<MigrationSip> sips) throws IOException {
+    public void addCollectionRow(List<MigrationSip> sips) throws IOException {
         List<String> destinationIds = new ArrayList<>();
         List<String> newCollectionIds = new ArrayList<>();
 
@@ -98,14 +97,12 @@ public class RedirectMappingService {
                     "for redirect mapping. You will need to add any redirect mappings to redirect_mappings.csv");
             return;
         }
-        if (!options.isSuppressCollectionRedirect()) {
-            // there is exactly one distinct new collection, so we'll redirect to it
-            if (uniqueNewCollectionIds.size() == 1) {
-                csvPrinter.printRecord(cdmCollectionId, null, newCollectionIds.get(0), null);
-                return;
-            }
-            // there are 0 collections or there are multiple collections, so redirect to the boxc destination
-            csvPrinter.printRecord(cdmCollectionId, null, destinationIds.get(0), null);
+        // there is exactly one distinct new collection, so we'll redirect to it
+        if (uniqueNewCollectionIds.size() == 1) {
+            csvPrinter.printRecord(cdmCollectionId, null, newCollectionIds.get(0), null);
+            return;
         }
+        // there are 0 collections or there are multiple collections, so redirect to the boxc destination
+        csvPrinter.printRecord(cdmCollectionId, null, destinationIds.get(0), null);
     }
 }
