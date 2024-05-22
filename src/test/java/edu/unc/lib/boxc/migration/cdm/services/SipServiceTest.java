@@ -918,6 +918,35 @@ public class SipServiceTest {
     }
 
     @Test
+    public void generateSipWithSuppressedCollectionRedirectMapping() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, "001234");
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        SipGenerationOptions options = new SipGenerationOptions();
+        options.setUsername(USERNAME);
+        options.setForce(false);
+        options.setSuppressCollectionRedirect(true);
+
+        service.generateSips(options);
+        try (
+                Reader reader = Files.newBufferedReader(project.getRedirectMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(RedirectMappingService.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            // collection row should not redirect
+            assertEquals(3, rows.toArray().length);
+            assertRedirectMappingRowContentIsCorrect(rows.get(0), project, "25");
+            assertRedirectMappingRowContentIsCorrect(rows.get(1), project, "26");
+            assertRedirectMappingRowContentIsCorrect(rows.get(2), project, "27");
+        }
+    }
+
+    @Test
     public void generateSipsWithArchivalCollection() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         solrResponseWithPid();

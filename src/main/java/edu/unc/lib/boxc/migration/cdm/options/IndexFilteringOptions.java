@@ -42,7 +42,7 @@ public class IndexFilteringOptions {
 
     @CommandLine.Option(names = {"-ee", "--exclude-range-end"},
             description = {
-                    "Filter the index to records which are AFTER the provided END value. Exclusive of start/end values."})
+                    "Filter the index to records AFTER the provided END value. Exclusive of start/end values."})
     private String excludeRangeEnd;
 
     @CommandLine.Option(names = {"-d", "--dry-run"},

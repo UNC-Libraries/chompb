@@ -187,7 +187,9 @@ public class SipService {
                 }
             }
             DisplayProgressUtil.finishProgress();
-            redirectMappingService.addCollectionRow(sips);
+            if (!options.isSuppressCollectionRedirect()) {
+                redirectMappingService.addCollectionRow(sips);
+            }
             project.getProjectProperties().setSipsGeneratedDate(Instant.now());
             ProjectPropertiesSerialization.write(project);
 

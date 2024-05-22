@@ -20,6 +20,10 @@ public class SipGenerationOptions {
             defaultValue = "${sys:user.name}")
     private String username;
 
+    @Option(names = {"-sc", "--suppress-collection-redirect"},
+            description = {"Suppress collection level redirects produced during SIP generation."})
+    private boolean suppressCollectionRedirect;
+
     public boolean isForce() {
         return force;
     }
@@ -34,5 +38,13 @@ public class SipGenerationOptions {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public boolean isSuppressCollectionRedirect() {
+        return suppressCollectionRedirect;
+    }
+
+    public void setSuppressCollectionRedirect(boolean suppressCollectionRedirect) {
+        this.suppressCollectionRedirect = suppressCollectionRedirect;
     }
 }
