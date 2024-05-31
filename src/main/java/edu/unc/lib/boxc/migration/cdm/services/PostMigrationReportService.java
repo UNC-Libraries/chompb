@@ -35,6 +35,7 @@ public class PostMigrationReportService {
     private MigrationProject project;
     private ChompbConfig chompbConfig;
     private DescriptionsService descriptionsService;
+    private SourceFileService sourceFileService;
     private CSVPrinter csvPrinter;
     private SAXBuilder saxBuilder;
     private String singleBaseUrl;
@@ -99,10 +100,19 @@ public class PostMigrationReportService {
         String cdmUrl = buildCdmUrl(cdmObjectId, true, isSingleItem);
         String boxcTitle = getParentTitle(cdmObjectId);
         String boxcUrl = this.bxcBaseUrl + boxcWorkId;
+        String matchingValue = null;
         String parentUrl = null;
         String parentTitle = null;
         String objType = ResourceType.Work.name();
-        addRow(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle, childCount);
+        String sourceFile = null;
+
+        if (isSingleItem) {
+            matchingValue = getMatchingValue(cdmObjectId);
+            sourceFile = getSourceFile(cdmObjectId);
+        }
+
+        addRow(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
+                null, parentUrl, parentTitle, childCount);
     }
 
     /**
@@ -120,15 +130,28 @@ public class PostMigrationReportService {
         String cdmUrl = buildCdmUrl(fileCdmId, false, isSingleItem);
         String boxcTitle = extractTitle(fileCdmId);
         String boxcUrl = this.bxcBaseUrl + boxcFileId;
+        String matchingValue;
         String parentUrl = this.bxcBaseUrl + boxcWorkId;
         String parentTitle = getParentTitle(parentCdmId);
         String objType = ResourceType.File.name();
-        addRow(fileCdmId, cdmUrl, objType, boxcUrl, boxcTitle, null, parentUrl, parentTitle, null);
+        String sourceFile;
+
+        if (isSingleItem) {
+            matchingValue = getMatchingValue(parentCdmId);
+            sourceFile = getSourceFile(parentCdmId);
+        } else {
+            matchingValue = getMatchingValue(fileCdmId);
+            sourceFile = getSourceFile(fileCdmId);
+        }
+
+        addRow(fileCdmId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
+                null, parentUrl, parentTitle, null);
     }
 
     protected void addRow(String cdmId, String cdmUrl, String objType, String boxcUrl, String boxcTitle,
-                        String verified, String parentUrl, String parentTitle, Integer childCount) throws IOException {
-        csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle,
+                          String matchingValue, String sourceFile, String verified, String parentUrl,
+                          String parentTitle, Integer childCount) throws IOException {
+        csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
                 verified, parentUrl, parentTitle, childCount);
     }
 
@@ -175,6 +198,21 @@ public class PostMigrationReportService {
         return null;
     }
 
+    private String getMatchingValue(String cdmId) throws IOException {
+        var sourceFilesInfo = sourceFileService.loadMappings();
+        String matchingValue = sourceFilesInfo.getMappingByCdmId(cdmId).getMatchingValue();
+//        if (matchingValue.isEmpty()) {
+//            return null;
+//        }
+        return matchingValue;
+    }
+
+    private String getSourceFile(String cdmId) throws IOException {
+        var sourceFilesInfo = sourceFileService.loadMappings();
+        String sourceFile = sourceFilesInfo.getMappingByCdmId(cdmId).getSourcePathString();
+        return sourceFile;
+    }
+
     public void setProject(MigrationProject project) {
         this.project = project;
     }
@@ -185,5 +223,9 @@ public class PostMigrationReportService {
 
     public void setDescriptionsService(DescriptionsService descriptionsService) {
         this.descriptionsService = descriptionsService;
+    }
+
+    public void setSourceFileService(SourceFileService sourceFileService) {
+        this.sourceFileService = sourceFileService;
     }
 }
