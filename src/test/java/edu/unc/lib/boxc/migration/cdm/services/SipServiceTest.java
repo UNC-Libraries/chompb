@@ -800,11 +800,20 @@ public class SipServiceTest {
                 "http://localhost/cdm/singleitem/collection/proj/id/27",
                 "Work",
                 "Fort DeRussy on Red River, Louisiana",
-                "276_203_E.tif",
-                paths.get(2).toString(),
+                "",
+                "",
                 "",
                 "",
                 "1");
+        assertContainsRow(pmRows, "27/original_file",
+                "http://localhost/cdm/singleitem/collection/proj/id/27",
+                "File",
+                "",
+                "276_203_E.tif",
+                paths.get(2).toString(),
+                "",
+                "Fort DeRussy on Red River, Louisiana",
+                "");
     }
 
     @Test

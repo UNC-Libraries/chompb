@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants;
 import edu.unc.lib.boxc.model.api.ResourceType;
@@ -43,6 +44,7 @@ public class PostMigrationReportService {
     private String bxcBaseUrl;
     private static final int CACHE_SIZE = 16;
     private Map<String, String> parentTitleCache;
+    private SourceFilesInfo sourceFilesInfo;
 
     /**
      * Initialize the service
@@ -105,11 +107,6 @@ public class PostMigrationReportService {
         String parentTitle = null;
         String objType = ResourceType.Work.name();
         String sourceFile = null;
-
-        if (isSingleItem) {
-            matchingValue = getMatchingValue(cdmObjectId);
-            sourceFile = getSourceFile(cdmObjectId);
-        }
 
         addRow(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
                 null, parentUrl, parentTitle, childCount);
@@ -199,18 +196,22 @@ public class PostMigrationReportService {
     }
 
     private String getMatchingValue(String cdmId) throws IOException {
-        var sourceFilesInfo = sourceFileService.loadMappings();
+        var sourceFilesInfo = getSourceFilesInfo();
         String matchingValue = sourceFilesInfo.getMappingByCdmId(cdmId).getMatchingValue();
-//        if (matchingValue.isEmpty()) {
-//            return null;
-//        }
         return matchingValue;
     }
 
     private String getSourceFile(String cdmId) throws IOException {
-        var sourceFilesInfo = sourceFileService.loadMappings();
+        var sourceFilesInfo = getSourceFilesInfo();
         String sourceFile = sourceFilesInfo.getMappingByCdmId(cdmId).getSourcePathString();
         return sourceFile;
+    }
+
+    private SourceFilesInfo getSourceFilesInfo() throws IOException {
+        if (sourceFilesInfo == null) {
+            sourceFilesInfo = sourceFileService.loadMappings();
+        }
+        return sourceFilesInfo;
     }
 
     public void setProject(MigrationProject project) {
