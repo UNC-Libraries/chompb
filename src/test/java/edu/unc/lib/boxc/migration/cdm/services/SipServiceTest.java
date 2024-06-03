@@ -800,8 +800,8 @@ public class SipServiceTest {
                 "http://localhost/cdm/singleitem/collection/proj/id/27",
                 "Work",
                 "Fort DeRussy on Red River, Louisiana",
-                "",
-                "",
+                "276_203_E.tif",
+                paths.get(2).toString(),
                 "",
                 "",
                 "1");

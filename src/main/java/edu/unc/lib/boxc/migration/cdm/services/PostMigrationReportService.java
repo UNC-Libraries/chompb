@@ -108,6 +108,11 @@ public class PostMigrationReportService {
         String objType = ResourceType.Work.name();
         String sourceFile = null;
 
+        if (isSingleItem) {
+            matchingValue = getMatchingValue(cdmObjectId);
+            sourceFile = getSourceFile(cdmObjectId);
+        }
+
         addRow(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
                 null, parentUrl, parentTitle, childCount);
     }
