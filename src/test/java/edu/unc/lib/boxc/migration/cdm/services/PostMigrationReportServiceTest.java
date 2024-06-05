@@ -1,16 +1,22 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
@@ -34,6 +40,7 @@ public class PostMigrationReportServiceTest {
     private MigrationProject project;
     private SipServiceHelper testHelper;
     private DescriptionsService descriptionsService;
+    private SourceFileService sourceFileService;
     private PostMigrationReportService service;
 
     @BeforeEach
@@ -44,11 +51,13 @@ public class PostMigrationReportServiceTest {
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         testHelper = new SipServiceHelper(project, tmpFolder);
         descriptionsService = testHelper.getDescriptionsService();
+        sourceFileService = testHelper.getSourceFileService();
 
         service = new PostMigrationReportService();
         service.setProject(project);
         service.setChompbConfig(testHelper.getChompbConfig());
         service.setDescriptionsService(testHelper.getDescriptionsService());
+        service.setSourceFileService(testHelper.getSourceFileService());
         service.init();
     }
 
@@ -59,6 +68,9 @@ public class PostMigrationReportServiceTest {
 
     @Test
     public void addSingleItemTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path srcPath1 = testHelper.addSourceFile("25.txt");
+        writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
         service.addWorkRow("25", BOXC_ID_1, 1, true);
@@ -72,6 +84,8 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_1,
                 "Redoubt C",
                 "",
+                srcPath1.toString(),
+                "",
                 "",
                 "",
                 "1");
@@ -81,6 +95,8 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_2,
                 "",
                 "",
+                srcPath1.toString(),
+                "",
                 BOXC_URL_1,
                 "Redoubt C",
                 "");
@@ -88,6 +104,9 @@ public class PostMigrationReportServiceTest {
 
     @Test
     public void addSingleItemWithFileDescTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        Path srcPath1 = testHelper.addSourceFile("25.txt");
+        writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
         testHelper.populateDescriptions("gilmer_mods1.xml", "gilmer_mods_children.xml");
 
         service.addWorkRow("25", BOXC_ID_1, 1, true);
@@ -101,6 +120,8 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_1,
                 "Redoubt C",
                 "",
+                srcPath1.toString(),
+                "",
                 "",
                 "",
                 "1");
@@ -110,6 +131,8 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_2,
                 "Redoubt C Scan File",
                 "",
+                srcPath1.toString(),
+                "",
                 BOXC_URL_1,
                 "Redoubt C",
                 "");
@@ -117,6 +140,10 @@ public class PostMigrationReportServiceTest {
 
     @Test
     public void addGroupedTest() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        Path srcPath1 = testHelper.addSourceFile("26.txt");
+        Path srcPath2 = testHelper.addSourceFile("27.txt");
+        writeSourceFileCsv(mappingBody("26,," + srcPath1 +",", "27,," + srcPath2 +","));
         testHelper.populateDescriptions("grouped_mods.xml");
 
         service.addWorkRow("grp:groupa:group1", BOXC_ID_1, 2, false);
@@ -133,12 +160,16 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "",
+                "",
+                "",
                 "2");
         assertContainsRow(rows, "26",
                 "http://localhost/cdm/singleitem/collection/proj/id/26",
                 "File",
                 BOXC_URL_2,
                 "Plan of Battery McIntosh",
+                "",
+                srcPath1.toString(),
                 "",
                 BOXC_URL_1,
                 "Folder Group 1",
@@ -149,6 +180,8 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_3,
                 "Fort DeRussy on Red River, Louisiana",
                 "",
+                srcPath2.toString(),
+                "",
                 BOXC_URL_1,
                 "Folder Group 1",
                 "");
@@ -157,6 +190,9 @@ public class PostMigrationReportServiceTest {
     @Test
     public void addCompoundTest() throws Exception {
         testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
+        Path srcPath1 = testHelper.addSourceFile("nccg_ck_1042-22_v1.tif");
+        Path srcPath2 = testHelper.addSourceFile("nccg_ck_1042-22_v2.tif");
+        writeSourceFileCsv(mappingBody("602,," + srcPath1 +",", "603,," + srcPath2 +","));
         descriptionsService.generateDocuments(true);
         descriptionsService.expandDescriptions();
 
@@ -174,12 +210,16 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "",
+                "",
+                "",
                 "2");
         assertContainsRow(rows, "602",
                 "http://localhost/cdm/singleitem/collection/proj/id/602",
                 "File",
                 BOXC_URL_2,
                 "World War II ration book",
+                "",
+                srcPath1.toString(),
                 "",
                 BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
@@ -190,8 +230,22 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_3,
                 "World War II ration book (instructions)",
                 "",
+                srcPath2.toString(),
+                "",
                 BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
                 "");
+    }
+
+    private String mappingBody(String... rows) {
+        return String.join(",", SourceFilesInfo.CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void writeSourceFileCsv(String mappingBody) throws IOException {
+        FileUtils.write(project.getSourceFilesMappingPath().toFile(),
+                mappingBody, StandardCharsets.UTF_8);
+        project.getProjectProperties().setSourceFilesUpdatedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
     }
 }

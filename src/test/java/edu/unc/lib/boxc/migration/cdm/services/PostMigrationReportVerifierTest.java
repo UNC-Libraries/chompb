@@ -82,9 +82,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, "", "", 1);
+                null, null, null, "", "", 1);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-        null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -98,6 +98,8 @@ public class PostMigrationReportVerifierTest {
                 "Work",
                 BOXC_URL_1,
                 "Redoubt C",
+                "",
+                "",
                 HttpStatus.OK.name(),
                 "",
                 "",
@@ -107,6 +109,8 @@ public class PostMigrationReportVerifierTest {
                 "File",
                 BOXC_URL_2,
                 "A file",
+                "",
+                "",
                 HttpStatus.OK.name(),
                 BOXC_URL_1,
                 "Redoubt C",
@@ -120,9 +124,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, "", "", 1);
+                null, null, null, "", "", 1);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -136,6 +140,8 @@ public class PostMigrationReportVerifierTest {
                 "Work",
                 BOXC_URL_1,
                 "Redoubt C",
+                "",
+                "",
                 HttpStatus.NOT_FOUND.name(),
                 "",
                 "",
@@ -145,6 +151,8 @@ public class PostMigrationReportVerifierTest {
                 "File",
                 BOXC_URL_2,
                 "A file",
+                "",
+                "",
                 HttpStatus.NOT_FOUND.name(),
                 BOXC_URL_1,
                 "Redoubt C",
@@ -157,9 +165,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                HttpStatus.OK.name(), "", "", 1);
+                null, null, HttpStatus.OK.name(), "", "", 1);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -173,6 +181,8 @@ public class PostMigrationReportVerifierTest {
                 "Work",
                 BOXC_URL_1,
                 "Redoubt C",
+                "",
+                "",
                 HttpStatus.OK.name(),
                 "",
                 "",
@@ -182,6 +192,8 @@ public class PostMigrationReportVerifierTest {
                 "File",
                 BOXC_URL_2,
                 "A file",
+                "",
+                "",
                 HttpStatus.OK.name(),
                 BOXC_URL_1,
                 "Redoubt C",

@@ -91,6 +91,7 @@ public class SipService {
         postMigrationReportService.setDescriptionsService(descriptionsService);
         postMigrationReportService.setProject(project);
         postMigrationReportService.setChompbConfig(chompbConfig);
+        postMigrationReportService.setSourceFileService(sourceFileService);
         postMigrationReportService.init();
 
         workGeneratorFactory = new WorkGeneratorFactory();

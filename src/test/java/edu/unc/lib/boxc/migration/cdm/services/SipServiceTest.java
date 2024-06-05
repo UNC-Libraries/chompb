@@ -745,7 +745,7 @@ public class SipServiceTest {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("grouped_mods.xml");
-        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        List<Path> paths = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         setupGroupIndex();
 
@@ -775,11 +775,15 @@ public class SipServiceTest {
                 "Folder Group 1",
                 "",
                 "",
+                "",
+                "",
                 "2");
         assertContainsRow(pmRows, "25",
                 "http://localhost/cdm/singleitem/collection/proj/id/25",
                 "File",
                 "",
+                "276_182_E.tif",
+                paths.get(0).toString(),
                 "",
                 "Folder Group 1",
                 "");
@@ -787,6 +791,8 @@ public class SipServiceTest {
                 "http://localhost/cdm/singleitem/collection/proj/id/26",
                 "File",
                 "Plan of Battery McIntosh",
+                "276_183_E.tif",
+                paths.get(1).toString(),
                 "",
                 "Folder Group 1",
                 "");
@@ -794,9 +800,20 @@ public class SipServiceTest {
                 "http://localhost/cdm/singleitem/collection/proj/id/27",
                 "Work",
                 "Fort DeRussy on Red River, Louisiana",
+                "276_203_E.tif",
+                paths.get(2).toString(),
                 "",
                 "",
                 "1");
+        assertContainsRow(pmRows, "27/original_file",
+                "http://localhost/cdm/singleitem/collection/proj/id/27",
+                "File",
+                "",
+                "276_203_E.tif",
+                paths.get(2).toString(),
+                "",
+                "Fort DeRussy on Red River, Louisiana",
+                "");
     }
 
     @Test

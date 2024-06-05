@@ -51,9 +51,9 @@ public class MigrationTypeReportServiceTest {
     public void reportCountWorksTest() throws Exception {
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, "", "", 1);
+                null, null, null, "", "", 1);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null);
         reportGenerator.closeCsv();
 
         long numWorks = service.countWorks();
@@ -64,11 +64,11 @@ public class MigrationTypeReportServiceTest {
     public void reportCountFilesTest() throws Exception {
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, "", "", 1);
+                null, null, null, "", "", 1);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null);
         reportGenerator.addRow("27", CDM_URL_3, "File", BOXC_URL_3, "A file",
-                null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null);
         reportGenerator.closeCsv();
 
         long numFiles = service.countFiles();

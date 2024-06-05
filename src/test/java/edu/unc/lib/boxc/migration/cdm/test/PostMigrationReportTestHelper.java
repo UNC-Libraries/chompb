@@ -36,24 +36,27 @@ public class PostMigrationReportTestHelper {
 
     // Assert row matches, without verifying the bxc urls in case the ids are unknown
     public static void assertContainsRow(List<List<String>> rows, String cdmId, String cdmUrl, String objType,
-                                         String bxcTitle, String verified, String parentTitle, String childCount) {
+                                         String bxcTitle, String matchingValue, String sourceFile,
+                                         String verified, String parentTitle, String childCount) {
         var found = rows.stream().filter(r -> r.get(0).equals(cdmId)).findFirst().orElse(null);
         assertNotNull(found, "Did not find row for CDM id" + cdmId);
         assertEquals(cdmUrl, found.get(1));
         assertEquals(objType, found.get(2));
         assertEquals(bxcTitle, found.get(4));
-        assertEquals(verified, found.get(5));
-        assertEquals(parentTitle, found.get(7));
-        assertEquals(childCount, found.get(8));
+        assertEquals(matchingValue, found.get(5));
+        assertEquals(sourceFile, found.get(6));
+        assertEquals(verified, found.get(7));
+        assertEquals(parentTitle, found.get(9));
+        assertEquals(childCount, found.get(10));
     }
 
     // Assert row matches all provided fields
     public static void assertContainsRow(List<List<String>> rows, String cdmId, String cdmUrl, String objType,
-                                         String bxcUrl, String bxcTitle, String verified, String parentUrl,
-                                         String parentTitle, String childCount) {
+                                         String bxcUrl, String bxcTitle, String matchingValue, String sourceFile,
+                                         String verified, String parentUrl, String parentTitle, String childCount) {
         var found = rows.stream().filter(r -> r.get(0).equals(cdmId)).findFirst().orElse(null);
         assertNotNull(found, "Did not find row for CDM id " + cdmId + ", rows were:\n" + rows);
-        assertEquals(Arrays.asList(cdmId, cdmUrl, objType, bxcUrl, bxcTitle, verified, parentUrl,
-                parentTitle, childCount), found);
+        assertEquals(Arrays.asList(cdmId, cdmUrl, objType, bxcUrl, bxcTitle, matchingValue, sourceFile, verified,
+                parentUrl, parentTitle, childCount), found);
     }
 }
