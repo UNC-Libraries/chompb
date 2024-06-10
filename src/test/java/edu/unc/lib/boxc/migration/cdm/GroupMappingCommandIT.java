@@ -48,6 +48,18 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void generateMultipleMatchSucceedsTest() throws Exception {
+        indexExportSamples();
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "generate",
+                "-n", "groupa, dcmi"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getGroupMappingPath()));
+    }
+
+    @Test
     public void generateAndSyncTest() throws Exception {
         indexExportSamples();
         String[] args = new String[] {

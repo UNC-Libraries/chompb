@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -404,7 +405,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
 
     private void setupGroupedIndex() throws Exception {
         var options = new GroupMappingOptions();
-        options.setGroupField("groupa");
+        options.setGroupField(Arrays.asList("groupa"));
         testHelper.getGroupMappingService().generateMapping(options);
         var syncOptions = new GroupMappingSyncOptions();
         syncOptions.setSortField("file");

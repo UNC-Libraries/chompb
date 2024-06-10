@@ -120,7 +120,7 @@ public class GroupMappingCommand {
     }
 
     private void validateOptions(GroupMappingOptions options) {
-        if (StringUtils.isBlank(options.getGroupField())) {
+        if (options.getGroupField().size() == 0) {
             throw new IllegalArgumentException("Must provide an group field name");
         }
     }

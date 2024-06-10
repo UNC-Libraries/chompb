@@ -152,20 +152,20 @@ public class GroupMappingServiceTest {
         assertGroupAMappingsPresent(info);
 
         options.setForce(true);
-        options.setGroupField("digitc");
+        options.setGroupField(Arrays.asList("digitc"));
 
         service.generateMapping(options);
 
         // Mapping state should have been overwritten
         GroupMappingInfo info2 = service.loadMappings();
-        assertMappingPresent(info2, "25", "digitc:2005-11-10");
-        assertMappingPresent(info2, "26", null);
-        assertMappingPresent(info2, "27", null);
-        assertMappingPresent(info2, "28", "digitc:2005-11-10");
-        assertMappingPresent(info2, "29", "digitc:2005-11-10");
+        assertMappingPresent(info2, "25", "digitc:2005-11-10", null);
+        assertMappingPresent(info2, "26", null, null);
+        assertMappingPresent(info2, "27", null, null);
+        assertMappingPresent(info2, "28", "digitc:2005-11-10", null);
+        assertMappingPresent(info2, "29", "digitc:2005-11-10", null);
         assertEquals(5, info2.getMappings().size());
 
-        assertGroupingPresent(info2, "digitc:2005-11-10", "25", "28", "29");
+        assertGroupingPresent(info2, "digitc:2005-11-10", "null", "25", "28", "29");
         assertEquals(1, info2.getGroupedMappings().size());
 
         assertMappedDatePresent();
@@ -181,17 +181,17 @@ public class GroupMappingServiceTest {
         assertEquals(5, info.getMappings().size());
 
         options.setUpdate(true);
-        options.setGroupField("digitc");
+        options.setGroupField(Arrays.asList("digitc"));
 
         service.generateMapping(options);
 
         // Mapping state should have been overwritten
         GroupMappingInfo info2 = service.loadMappings();
-        assertMappingPresent(info2, "25", "groupa:group1");
-        assertMappingPresent(info2, "26", "groupa:group1");
-        assertMappingPresent(info2, "27", null);
-        assertMappingPresent(info2, "28", "digitc:2005-11-10");
-        assertMappingPresent(info2, "29", "digitc:2005-11-10");
+        assertMappingPresent(info2, "25", "groupa:group1", null);
+        assertMappingPresent(info2, "26", "groupa:group1", null);
+        assertMappingPresent(info2, "27", null, null);
+        assertMappingPresent(info2, "28", "digitc:2005-11-10", null);
+        assertMappingPresent(info2, "29", "digitc:2005-11-10", null);
         assertEquals(5, info2.getMappings().size());
 
         assertMappedDatePresent();
@@ -201,28 +201,28 @@ public class GroupMappingServiceTest {
     public void generateUpdateForceRunTest() throws Exception {
         indexExportSamples();
         GroupMappingOptions options = makeDefaultOptions();
-        options.setGroupField("digitc");
+        options.setGroupField(Arrays.asList("digitc"));
         service.generateMapping(options);
 
         GroupMappingInfo info = service.loadMappings();
-        assertMappingPresent(info, "25", "digitc:2005-11-10");
-        assertMappingPresent(info, "26", null);
-        assertMappingPresent(info, "27", null);
-        assertMappingPresent(info, "28", "digitc:2005-11-10");
-        assertMappingPresent(info, "29", "digitc:2005-11-10");
+        assertMappingPresent(info, "25", "digitc:2005-11-10", null);
+        assertMappingPresent(info, "26", null, null);
+        assertMappingPresent(info, "27", null, null);
+        assertMappingPresent(info, "28", "digitc:2005-11-10", null);
+        assertMappingPresent(info, "29", "digitc:2005-11-10", null);
         assertEquals(5, info.getMappings().size());
 
         options.setUpdate(true);
         options.setForce(true);
-        options.setGroupField("groupa");
+        options.setGroupField(Arrays.asList("groupa"));
         service.generateMapping(options);
 
         GroupMappingInfo info2 = service.loadMappings();
-        assertMappingPresent(info2, "25", "groupa:group1");
-        assertMappingPresent(info2, "26", "groupa:group1");
-        assertMappingPresent(info2, "27", null);
-        assertMappingPresent(info2, "28", "digitc:2005-11-10");
-        assertMappingPresent(info2, "29", "digitc:2005-11-10");
+        assertMappingPresent(info2, "25", "groupa:group1", null);
+        assertMappingPresent(info2, "26", "groupa:group1", null);
+        assertMappingPresent(info2, "27", null, null);
+        assertMappingPresent(info2, "28", "digitc:2005-11-10", null);
+        assertMappingPresent(info2, "29", "digitc:2005-11-10", null);
         assertEquals(5, info2.getMappings().size());
 
         assertMappedDatePresent();
@@ -305,7 +305,7 @@ public class GroupMappingServiceTest {
     public void syncSecondRunWithCleanupTest() throws Exception {
         indexExportSamples();
         GroupMappingOptions options = makeDefaultOptions();
-        options.setGroupField("digitc");
+        options.setGroupField(Arrays.asList("digitc"));
         service.generateMapping(options);
 
         service.syncMappings(makeDefaultSyncOptions());
@@ -326,7 +326,7 @@ public class GroupMappingServiceTest {
             CdmIndexService.closeDbConnection(conn);
         }
 
-        options.setGroupField("groupa");
+        options.setGroupField(Arrays.asList("groupa"));
         options.setForce(true);
         service.generateMapping(options);
 
@@ -343,13 +343,89 @@ public class GroupMappingServiceTest {
             assertNumberOfGroups(conn, 1);
             assertParentIdsPresent(conn, "groupa:group1", null);
 
-            assertGroupingPresent(info, "groupa:group1", "25", "26");
+            assertGroupingPresent(info, "groupa:group1", "null", "25", "26");
             assertEquals(1, info.getGroupedMappings().size());
 
             assertSyncedDatePresent();
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
+    }
+
+    @Test
+    public void generateSingleRunMultipleGroupsTest() throws Exception {
+        indexExportSamples();
+        GroupMappingOptions options = new GroupMappingOptions();
+        options.setGroupField(Arrays.asList("groupa", "dcmi"));
+        service.generateMapping(options);
+
+        GroupMappingInfo info = service.loadMappings();
+
+        assertMappingPresent(info, "25", "groupa:group1", "dcmi:Image");
+        assertMappingPresent(info, "26", "groupa:group1", "dcmi:Image");
+        assertMappingPresent(info, "27", null, null);
+        assertMappingPresent(info, "28", null, null);
+        assertMappingPresent(info, "29", null, null);
+        assertEquals(5, info.getMappings().size());
+
+        assertGroupingPresent(info, "groupa:group1", "dcmi:Image", "25", "26");
+        assertEquals(1, info.getGroupedMappings().size());
+
+        assertMappedDatePresent();
+    }
+
+    @Test
+    public void syncSingleRunMultipleGroupsTest() throws Exception {
+        indexExportSamples();
+        GroupMappingOptions options = new GroupMappingOptions();
+        options.setGroupField(Arrays.asList("groupa", "dcmi"));
+        service.generateMapping(options);
+
+        service.syncMappings(makeDefaultSyncOptions());
+
+        Connection conn = null;
+        try {
+            GroupMappingInfo info = service.loadMappings();
+            conn = indexService.openDbConnection();
+            assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
+            assertWorkSynced(conn, "dcmi:Image", "Redoubt C", "2005-11-23");
+            assertFilesGrouped(conn, "groupa:group1", "25", "26");
+            assertFileHasOrder(conn, "25", 1);
+            assertFileHasOrder(conn, "26", 0);
+            // Group key with a single child should not be grouped
+            assertNumberOfGroups(conn, 1);
+            assertParentIdsPresent(conn, "groupa:group1", null);
+            assertSyncedDatePresent();
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
+    public void generateMultipleGroupsForceUpdateRunTest() throws Exception {
+        indexExportSamples();
+        GroupMappingOptions options = makeDefaultOptions();
+        service.generateMapping(options);
+
+        GroupMappingInfo info = service.loadMappings();
+        assertEquals(5, info.getMappings().size());
+
+        options.setUpdate(true);
+        options.setForce(true);
+        options.setGroupField(Arrays.asList("groupa", "dcmi"));
+
+        service.generateMapping(options);
+
+        // Mapping state should have been overwritten
+        GroupMappingInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "25", "groupa:group1", "dcmi:Image");
+        assertMappingPresent(info2, "26", "groupa:group1", "dcmi:Image");
+        assertMappingPresent(info2, "27", null, null);
+        assertMappingPresent(info2, "28", null, null);
+        assertMappingPresent(info2, "29", null, null);
+        assertEquals(5, info2.getMappings().size());
+
+        assertMappedDatePresent();
     }
 
     private void assertWorkSynced(Connection conn, String workId, String expectedTitle, String expectedCreated)
@@ -437,7 +513,7 @@ public class GroupMappingServiceTest {
 
     private GroupMappingOptions makeDefaultOptions() {
         GroupMappingOptions options = new GroupMappingOptions();
-        options.setGroupField("groupa");
+        options.setGroupField(Arrays.asList("groupa"));
         return options;
     }
 
@@ -452,21 +528,23 @@ public class GroupMappingServiceTest {
                 "Expected message exception to contain '" + expected + "', but was: " + e.getMessage());
     }
 
-    private void assertMappingPresent(GroupMappingInfo info, String id, String expectedMatchedVal) {
+    private void assertMappingPresent(GroupMappingInfo info, String id, String expectedMatchedVal1,
+                                      String expectedMatchedVal2) {
         GroupMapping mapping = info.getMappingByCdmId(id);
         assertNotNull(mapping);
         assertEquals(id, mapping.getCdmId());
-        assertEquals(asGroupKey(expectedMatchedVal), mapping.getGroupKey());
+        assertEquals(asGroupKey(expectedMatchedVal1), mapping.getGroupKey1());
+        assertEquals(asGroupKey(expectedMatchedVal2), mapping.getGroupKey2());
     }
 
-    private void assertGroupingPresent(GroupMappingInfo groupedInfo, String groupKey, String... cdmIds) {
+    private void assertGroupingPresent(GroupMappingInfo groupedInfo, String groupKey1, String groupKey2, String... cdmIds) {
         Map<String, List<String>> groupedMappings = groupedInfo.getGroupedMappings();
-        List<String> objIds = groupedMappings.get(asGroupKey(groupKey));
+        List<String> objIds = groupedMappings.get(asGroupKey(groupKey1));
         List<String> expectedIds = Arrays.asList(cdmIds);
         assertTrue(objIds.containsAll(expectedIds),
-                "Expected group " + groupKey + " to contain " + expectedIds + " but contained " + objIds);
+                "Expected group " + groupKey1 + " to contain " + expectedIds + " but contained " + objIds);
         assertEquals(expectedIds.size(), objIds.size(),
-                "Expected group " + groupKey + " to contain " + expectedIds + " but contained " + objIds);
+                "Expected group " + groupKey1 + " to contain " + expectedIds + " but contained " + objIds);
     }
 
     private void assertMappedDatePresent() throws Exception {
@@ -490,15 +568,15 @@ public class GroupMappingServiceTest {
     }
 
     private void assertGroupAMappingsPresent(GroupMappingInfo info) {
-        assertMappingPresent(info, "25", "groupa:group1");
-        assertMappingPresent(info, "26", "groupa:group1");
+        assertMappingPresent(info, "25", "groupa:group1", null);
+        assertMappingPresent(info, "26", "groupa:group1", null);
         // Single member group should not be mapped
-        assertMappingPresent(info, "27", null);
-        assertMappingPresent(info, "28", null);
-        assertMappingPresent(info, "29", null);
+        assertMappingPresent(info, "27", null, null);
+        assertMappingPresent(info, "28", null, null);
+        assertMappingPresent(info, "29", null, null);
         assertEquals(5, info.getMappings().size());
 
-        assertGroupingPresent(info, "groupa:group1", "25", "26");
+        assertGroupingPresent(info, "groupa:group1", null, "25", "26");
         assertEquals(1, info.getGroupedMappings().size());
     }
 

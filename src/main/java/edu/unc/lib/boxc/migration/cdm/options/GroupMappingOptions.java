@@ -2,6 +2,8 @@ package edu.unc.lib.boxc.migration.cdm.options;
 
 import picocli.CommandLine.Option;
 
+import java.util.List;
+
 /**
  * Options for generating object grouping mappings
  *
@@ -11,9 +13,9 @@ public class GroupMappingOptions {
 
     @Option(names = {"-n", "--field-name"},
             description = {
-                    "Name of the CDM export field to perform grouping on."},
+                    "Name(s) of the CDM export field to perform grouping on."},
             defaultValue = "file")
-    private String groupField;
+    private List<String> groupField;
 
     @Option(names = {"-u", "--update"},
             description = {
@@ -31,11 +33,11 @@ public class GroupMappingOptions {
             description = "Overwrite mapping file if one already exists")
     private boolean force;
 
-    public String getGroupField() {
+    public List<String> getGroupField() {
         return groupField;
     }
 
-    public void setGroupField(String groupField) {
+    public void setGroupField(List<String> groupField) {
         this.groupField = groupField;
     }
 
