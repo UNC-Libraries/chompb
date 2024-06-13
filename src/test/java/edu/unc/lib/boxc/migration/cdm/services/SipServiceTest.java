@@ -1496,7 +1496,7 @@ public class SipServiceTest {
         return options;
     }
 
-    private void setupGroupIndex() throws IOException {
+    private void setupGroupIndex() throws Exception {
         GroupMappingOptions groupOptions = new GroupMappingOptions();
         groupOptions.setGroupField(Arrays.asList("groupa"));
         GroupMappingService groupService = testHelper.getGroupMappingService();

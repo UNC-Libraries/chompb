@@ -12,11 +12,10 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class GroupMappingInfo {
     public static final String GROUPED_WORK_PREFIX = "grp:";
-    public static final String GROUP_KEY1 = "group1";
-    public static final String GROUP_KEY2 = "group2";
+    public static final String GROUP_KEY = "group";
     public static final String ID_FIELD = "id";
     public static final String[] CSV_HEADERS = new String[] {
-            ID_FIELD, GROUP_KEY1, GROUP_KEY2 };
+            ID_FIELD, GROUP_KEY };
 
     private Map<String, List<String>> groupedMappings = new HashMap<>();
     private List<GroupMapping> mappings = new ArrayList<>();
@@ -53,8 +52,7 @@ public class GroupMappingInfo {
 
     public static class GroupMapping {
         private String cdmId;
-        private String groupKey1;
-        private String groupKey2;
+        private String groupKey;
 
         public String getCdmId() {
             return cdmId;
@@ -64,27 +62,15 @@ public class GroupMappingInfo {
             this.cdmId = cdmId;
         }
 
-        public String getGroupKey1() {
-            return groupKey1;
+        public String getGroupKey() {
+            return groupKey;
         }
 
-        public void setGroupKey1(String groupKey1) {
-            if (StringUtils.isBlank(groupKey1)) {
-                this.groupKey1 = null;
+        public void setGroupKey(String groupKey) {
+            if (StringUtils.isBlank(groupKey)) {
+                this.groupKey = null;
             } else {
-                this.groupKey1 = groupKey1;
-            }
-        }
-
-        public String getGroupKey2() {
-            return groupKey2;
-        }
-
-        public void setGroupKey2(String groupKey2) {
-            if (StringUtils.isBlank(groupKey2)) {
-                this.groupKey2 = null;
-            } else {
-                this.groupKey2 = groupKey2;
+                this.groupKey = groupKey;
             }
         }
     }
