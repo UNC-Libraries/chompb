@@ -88,11 +88,7 @@ public class GroupMappingService {
 
             // Return set of all group keys that have at least 2 records in them
             var multiMemberGroupSet = new HashSet<String>();
-            if (options.getGroupField().size() == 1) {
-                generateOneGroupMapping(options, stmt, multiMemberGroupSet, csvPrinter);
-            } else if (options.getGroupField().size() >= 2) {
-               generateMultipleGroupMapping(options, stmt, multiMemberGroupSet, csvPrinter);
-            }
+            generateMultipleGroupMapping(options, stmt, multiMemberGroupSet, csvPrinter);
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
         } finally {
@@ -109,45 +105,10 @@ public class GroupMappingService {
         }
     }
 
-    private void generateOneGroupMapping(GroupMappingOptions options, Statement stmt,
-                                         HashSet<String> multiMemberGroupSet, CSVPrinter csvPrinter) throws Exception {
-        ResultSet groupRs = stmt.executeQuery("select " + options.getGroupField().get(0)
-                + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
-                + " group by " + options.getGroupField().get(0)
-                + " having count(*) > 1");
-        while (groupRs.next()) {
-            var groupValue = groupRs.getString(1);
-            if (StringUtils.isBlank(groupValue)) {
-                continue;
-            }
-            multiMemberGroupSet.add(groupValue);
-        }
-
-        ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", " + options.getGroupField().get(0)
-                + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
-                + " order by " + CdmFieldInfo.CDM_ID + " ASC");
-        while (rs.next()) {
-            String cdmId = rs.getString(1);
-            String matchedValue = rs.getString(2);
-
-            // Add empty mapping for records either not in groups or in groups with fewer than 2 members
-            if (StringUtils.isBlank(matchedValue) || !multiMemberGroupSet.contains(matchedValue)) {
-                log.debug("No matching field for object {}", cdmId);
-                csvPrinter.printRecord(cdmId, null);
-                continue;
-            }
-
-            String groupKey = GroupMappingInfo.GROUPED_WORK_PREFIX + options.getGroupField().get(0) + ":" + matchedValue;
-            csvPrinter.printRecord(cdmId, groupKey);
-        }
-    }
-
     private void generateMultipleGroupMapping(GroupMappingOptions options, Statement stmt,
-                                              HashSet<String> multiMemberGroupSet, CSVPrinter csvPrinter) throws Exception {
-        int numberGroups = options.getGroupField().size();
-        String multipleGroups = String.join(", ", options.getGroupField());
+                                              Set<String> multiMemberGroupSet, CSVPrinter csvPrinter) throws Exception {
+        int numberGroups = options.getGroupFields().size();
+        String multipleGroups = String.join(", ", options.getGroupFields());
 
         ResultSet groupRs = stmt.executeQuery("select " + multipleGroups
                 + " from " + CdmIndexService.TB_NAME
@@ -155,12 +116,17 @@ public class GroupMappingService {
                 + " group by " + multipleGroups
                 + " having count(*) > 1");
         while (groupRs.next()) {
+            List<String> groupValues = new ArrayList<>();
             for (int i = 1; i < numberGroups + 1; i++) {
                 var groupValue = groupRs.getString(i);
                 if (StringUtils.isBlank(groupValue)) {
                     continue;
                 }
-                multiMemberGroupSet.add(groupValue);
+                groupValues.add(groupValue);
+            }
+            if (!groupValues.isEmpty()) {
+                var multipleGroupValues = String.join(",", groupValues);
+                multiMemberGroupSet.add(multipleGroupValues);
             }
         }
 
@@ -177,17 +143,23 @@ public class GroupMappingService {
                     matchedValues.add(matchedValue);
                 }
             }
+            // Join matched values when grouping by multiple fields
+            String multipleMatchedValues = null;
+            if (numberGroups > 1 && !matchedValues.isEmpty()) {
+                multipleMatchedValues = String.join(",", matchedValues);
+            }
 
-                // Add empty mapping for records either not in groups or in groups with fewer than 2 members
-                if (matchedValues.isEmpty() || !matchedValues.containsAll(multiMemberGroupSet)) {
-                    log.debug("No matching field for object {}", cdmId);
-                    csvPrinter.printRecord(cdmId, null);
-                    continue;
-                }
+            // Add empty mapping for records either not in groups or in groups with fewer than 2 members
+            if (matchedValues.isEmpty() || (numberGroups == 1 && !multiMemberGroupSet.containsAll(matchedValues))
+                    || (numberGroups >= 2 && !multiMemberGroupSet.contains(multipleMatchedValues))) {
+                log.debug("No matching field for object {}", cdmId);
+                csvPrinter.printRecord(cdmId, null);
+                continue;
+            }
 
             List<String> listGroups = new ArrayList<>();
             for (int i = 0; i < numberGroups; i++) {
-                listGroups.add(options.getGroupField().get(i) + ":" + matchedValues.get(i));
+                listGroups.add(options.getGroupFields().get(i) + ":" + matchedValues.get(i));
             }
             String groupKey = GroupMappingInfo.GROUPED_WORK_PREFIX + String.join(",", listGroups);
             csvPrinter.printRecord(cdmId, groupKey);

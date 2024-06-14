@@ -405,7 +405,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
 
     private void setupGroupedIndex() throws Exception {
         var options = new GroupMappingOptions();
-        options.setGroupField(Arrays.asList("groupa"));
+        options.setGroupFields(Arrays.asList("groupa"));
         testHelper.getGroupMappingService().generateMapping(options);
         var syncOptions = new GroupMappingSyncOptions();
         syncOptions.setSortField("file");

@@ -1498,7 +1498,7 @@ public class SipServiceTest {
 
     private void setupGroupIndex() throws Exception {
         GroupMappingOptions groupOptions = new GroupMappingOptions();
-        groupOptions.setGroupField(Arrays.asList("groupa"));
+        groupOptions.setGroupFields(Arrays.asList("groupa"));
         GroupMappingService groupService = testHelper.getGroupMappingService();
         groupService.generateMapping(groupOptions);
         groupService.syncMappings(makeDefaultSyncOptions());

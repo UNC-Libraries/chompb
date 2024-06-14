@@ -15,7 +15,7 @@ public class GroupMappingOptions {
             description = {
                     "Name(s) of the CDM export field to perform grouping on."},
             defaultValue = "file")
-    private List<String> groupField;
+    private List<String> groupFields;
 
     @Option(names = {"-u", "--update"},
             description = {
@@ -33,12 +33,12 @@ public class GroupMappingOptions {
             description = "Overwrite mapping file if one already exists")
     private boolean force;
 
-    public List<String> getGroupField() {
-        return groupField;
+    public List<String> getGroupFields() {
+        return groupFields;
     }
 
-    public void setGroupField(List<String> groupField) {
-        this.groupField = groupField;
+    public void setGroupFields(List<String> groupFields) {
+        this.groupFields = groupFields;
     }
 
     public boolean getUpdate() {

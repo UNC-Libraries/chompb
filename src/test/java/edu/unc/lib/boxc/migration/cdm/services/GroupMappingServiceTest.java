@@ -152,7 +152,7 @@ public class GroupMappingServiceTest {
         assertGroupAMappingsPresent(info);
 
         options.setForce(true);
-        options.setGroupField(Arrays.asList("digitc"));
+        options.setGroupFields(Arrays.asList("digitc"));
 
         service.generateMapping(options);
 
@@ -181,7 +181,7 @@ public class GroupMappingServiceTest {
         assertEquals(5, info.getMappings().size());
 
         options.setUpdate(true);
-        options.setGroupField(Arrays.asList("digitc"));
+        options.setGroupFields(Arrays.asList("digitc"));
 
         service.generateMapping(options);
 
@@ -201,7 +201,7 @@ public class GroupMappingServiceTest {
     public void generateUpdateForceRunTest() throws Exception {
         indexExportSamples();
         GroupMappingOptions options = makeDefaultOptions();
-        options.setGroupField(Arrays.asList("digitc"));
+        options.setGroupFields(Arrays.asList("digitc"));
         service.generateMapping(options);
 
         GroupMappingInfo info = service.loadMappings();
@@ -214,7 +214,7 @@ public class GroupMappingServiceTest {
 
         options.setUpdate(true);
         options.setForce(true);
-        options.setGroupField(Arrays.asList("groupa"));
+        options.setGroupFields(Arrays.asList("groupa"));
         service.generateMapping(options);
 
         GroupMappingInfo info2 = service.loadMappings();
@@ -305,7 +305,7 @@ public class GroupMappingServiceTest {
     public void syncSecondRunWithCleanupTest() throws Exception {
         indexExportSamples();
         GroupMappingOptions options = makeDefaultOptions();
-        options.setGroupField(Arrays.asList("digitc"));
+        options.setGroupFields(Arrays.asList("digitc"));
         service.generateMapping(options);
 
         service.syncMappings(makeDefaultSyncOptions());
@@ -326,7 +326,7 @@ public class GroupMappingServiceTest {
             CdmIndexService.closeDbConnection(conn);
         }
 
-        options.setGroupField(Arrays.asList("groupa"));
+        options.setGroupFields(Arrays.asList("groupa"));
         options.setForce(true);
         service.generateMapping(options);
 
@@ -356,7 +356,7 @@ public class GroupMappingServiceTest {
     public void generateSingleRunMultipleGroupsTest() throws Exception {
         indexExportSamples();
         GroupMappingOptions options = new GroupMappingOptions();
-        options.setGroupField(Arrays.asList("groupa", "dcmi"));
+        options.setGroupFields(Arrays.asList("groupa", "dcmi"));
         service.generateMapping(options);
 
         GroupMappingInfo info = service.loadMappings();
@@ -378,7 +378,7 @@ public class GroupMappingServiceTest {
     public void syncSingleRunMultipleGroupsTest() throws Exception {
         indexExportSamples();
         GroupMappingOptions options = new GroupMappingOptions();
-        options.setGroupField(Arrays.asList("groupa", "dcmi"));
+        options.setGroupFields(Arrays.asList("groupa", "dcmi"));
         service.generateMapping(options);
 
         service.syncMappings(makeDefaultSyncOptions());
@@ -412,7 +412,7 @@ public class GroupMappingServiceTest {
 
         options.setUpdate(true);
         options.setForce(true);
-        options.setGroupField(Arrays.asList("groupa", "dcmi"));
+        options.setGroupFields(Arrays.asList("groupa", "dcmi"));
 
         service.generateMapping(options);
 
@@ -513,7 +513,7 @@ public class GroupMappingServiceTest {
 
     private GroupMappingOptions makeDefaultOptions() {
         GroupMappingOptions options = new GroupMappingOptions();
-        options.setGroupField(Arrays.asList("groupa"));
+        options.setGroupFields(Arrays.asList("groupa"));
         return options;
     }
 

@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -120,7 +119,7 @@ public class GroupMappingCommand {
     }
 
     private void validateOptions(GroupMappingOptions options) {
-        if (options.getGroupField().size() == 0) {
+        if (options.getGroupFields().isEmpty()) {
             throw new IllegalArgumentException("Must provide an group field name");
         }
     }
