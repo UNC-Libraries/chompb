@@ -119,15 +119,10 @@ public class GroupMappingService {
             List<String> groupValues = new ArrayList<>();
             for (int i = 1; i < numberGroups + 1; i++) {
                 var groupValue = groupRs.getString(i);
-                if (StringUtils.isBlank(groupValue)) {
-                    continue;
-                }
                 groupValues.add(groupValue);
             }
-            if (!groupValues.isEmpty()) {
-                var multipleGroupValues = String.join(",", groupValues);
-                multiMemberGroupSet.add(multipleGroupValues);
-            }
+            var multipleGroupValues = buildKey(groupValues);
+            multiMemberGroupSet.add(multipleGroupValues);
         }
 
         ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", " + multipleGroups
@@ -139,19 +134,12 @@ public class GroupMappingService {
             List<String> matchedValues = new ArrayList<>();
             for (int i = 2; i < numberGroups + 2; i++) {
                 var matchedValue = rs.getString(i);
-                if (!StringUtils.isBlank(matchedValue)) {
-                    matchedValues.add(matchedValue);
-                }
+                matchedValues.add(matchedValue);
             }
-            // Join matched values when grouping by multiple fields
-            String multipleMatchedValues = null;
-            if (numberGroups > 1 && !matchedValues.isEmpty()) {
-                multipleMatchedValues = String.join(",", matchedValues);
-            }
+            var multipleMatchedValues = buildKey(matchedValues);
 
             // Add empty mapping for records either not in groups or in groups with fewer than 2 members
-            if (matchedValues.isEmpty() || (numberGroups == 1 && !multiMemberGroupSet.containsAll(matchedValues))
-                    || (numberGroups >= 2 && !multiMemberGroupSet.contains(multipleMatchedValues))) {
+            if (multipleMatchedValues == null || !multiMemberGroupSet.contains(multipleMatchedValues)) {
                 log.debug("No matching field for object {}", cdmId);
                 csvPrinter.printRecord(cdmId, null);
                 continue;
@@ -195,6 +183,14 @@ public class GroupMappingService {
                         + " Use the force flag to overwrite.");
             }
         }
+    }
+
+    private String buildKey(List<String> values) {
+        String joinedValues = null;
+        if (!values.isEmpty()) {
+            joinedValues = String.join(",", values);
+        }
+        return joinedValues;
     }
 
     /**
