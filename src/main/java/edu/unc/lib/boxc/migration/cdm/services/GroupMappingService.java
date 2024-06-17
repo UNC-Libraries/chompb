@@ -187,7 +187,7 @@ public class GroupMappingService {
 
     private String buildKey(List<String> values) {
         String joinedValues = null;
-        if (!values.isEmpty()) {
+        if (!values.stream().allMatch(String::isEmpty)) {
             joinedValues = String.join(",", values);
         }
         return joinedValues;
