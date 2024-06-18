@@ -87,6 +87,33 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void generateAndSyncMultipleGroupsTest() throws Exception {
+        indexExportSamples();
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "generate",
+                "-n", "groupa,dcmi" };
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getGroupMappingPath()));
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "group_mapping", "sync" };
+        executeExpectSuccess(args2);
+
+        var indexService = new CdmIndexService();
+        indexService.setProject(project);
+        Connection conn = null;
+        try {
+            conn = indexService.openDbConnection();
+            assertFilesGrouped(conn, "25", "26");
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
     public void statusNotGenerated() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
