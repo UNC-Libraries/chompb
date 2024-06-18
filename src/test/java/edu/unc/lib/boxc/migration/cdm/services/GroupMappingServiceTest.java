@@ -428,6 +428,58 @@ public class GroupMappingServiceTest {
         assertMappedDatePresent();
     }
 
+    @Test
+    public void syncSecondRunWithCleanupMultipleGroupsTest() throws Exception {
+        indexExportSamples();
+        GroupMappingOptions options = makeDefaultOptions();
+        options.setGroupFields(Arrays.asList("digitc"));
+        service.generateMapping(options);
+
+        service.syncMappings(makeDefaultSyncOptions());
+
+        Connection conn = null;
+        try {
+            GroupMappingInfo info = service.loadMappings();
+            conn = indexService.openDbConnection();
+            assertWorkSynced(conn, "digitc:2005-11-10", "Redoubt C", "2005-11-23");
+            assertFilesGrouped(conn, "digitc:2005-11-10", "25", "28", "29");
+            assertFileHasOrder(conn, "25", 0);
+            assertFileHasOrder(conn, "28", 1);
+            assertFileHasOrder(conn, "29", 2);
+            assertNumberOfGroups(conn, 1);
+            assertParentIdsPresent(conn, "digitc:2005-11-10", null);
+            assertSyncedDatePresent();
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+
+        options.setGroupFields(Arrays.asList("groupa", "dcmi"));
+        options.setForce(true);
+        service.generateMapping(options);
+
+        service.syncMappings(makeDefaultSyncOptions());
+
+        try {
+            GroupMappingInfo info = service.loadMappings();
+            conn = indexService.openDbConnection();
+            assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
+            assertWorkSynced(conn, "dcmi:Image", "Redoubt C", "2005-11-23");
+            assertFilesGrouped(conn, "groupa:group1,dcmi:Image", "25", "26");
+            assertFileHasOrder(conn, "25", 1);
+            assertFileHasOrder(conn, "26", 0);
+            // Group key with a single child should not be grouped
+            assertNumberOfGroups(conn, 1);
+            assertParentIdsPresent(conn, "groupa:group1,dcmi:Image", null);
+
+            assertGroupingPresent(info, "groupa:group1,dcmi:Image", "25", "26");
+            assertEquals(1, info.getGroupedMappings().size());
+
+            assertSyncedDatePresent();
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
     private void assertWorkSynced(Connection conn, String workId, String expectedTitle, String expectedCreated)
             throws Exception {
         String groupKey = asGroupKey(workId);

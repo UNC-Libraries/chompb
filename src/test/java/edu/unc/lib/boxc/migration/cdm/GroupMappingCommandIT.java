@@ -53,7 +53,7 @@ public class GroupMappingCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "group_mapping", "generate",
-                "-n", "groupa, dcmi"};
+                "-n", "groupa,dcmi"};
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getGroupMappingPath()));

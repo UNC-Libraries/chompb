@@ -12,6 +12,7 @@ import java.util.List;
 public class GroupMappingOptions {
 
     @Option(names = {"-n", "--field-name"},
+            split = ",",
             description = {
                     "Name(s) of the CDM export field to perform grouping on."},
             defaultValue = "file")
