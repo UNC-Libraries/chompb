@@ -599,7 +599,7 @@ public class PermissionsServiceTest {
 
     private void setupGroupedIndex() throws Exception {
         var options = new GroupMappingOptions();
-        options.setGroupField("groupa");
+        options.setGroupFields(Arrays.asList("groupa"));
         testHelper.getGroupMappingService().generateMapping(options);
         var syncOptions = new GroupMappingSyncOptions();
         syncOptions.setSortField("file");

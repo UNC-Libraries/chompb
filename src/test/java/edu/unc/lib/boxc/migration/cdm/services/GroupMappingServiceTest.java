@@ -152,7 +152,7 @@ public class GroupMappingServiceTest {
         assertGroupAMappingsPresent(info);
 
         options.setForce(true);
-        options.setGroupField("digitc");
+        options.setGroupFields(Arrays.asList("digitc"));
 
         service.generateMapping(options);
 
@@ -181,7 +181,7 @@ public class GroupMappingServiceTest {
         assertEquals(5, info.getMappings().size());
 
         options.setUpdate(true);
-        options.setGroupField("digitc");
+        options.setGroupFields(Arrays.asList("digitc"));
 
         service.generateMapping(options);
 
@@ -201,7 +201,7 @@ public class GroupMappingServiceTest {
     public void generateUpdateForceRunTest() throws Exception {
         indexExportSamples();
         GroupMappingOptions options = makeDefaultOptions();
-        options.setGroupField("digitc");
+        options.setGroupFields(Arrays.asList("digitc"));
         service.generateMapping(options);
 
         GroupMappingInfo info = service.loadMappings();
@@ -214,7 +214,7 @@ public class GroupMappingServiceTest {
 
         options.setUpdate(true);
         options.setForce(true);
-        options.setGroupField("groupa");
+        options.setGroupFields(Arrays.asList("groupa"));
         service.generateMapping(options);
 
         GroupMappingInfo info2 = service.loadMappings();
@@ -305,7 +305,7 @@ public class GroupMappingServiceTest {
     public void syncSecondRunWithCleanupTest() throws Exception {
         indexExportSamples();
         GroupMappingOptions options = makeDefaultOptions();
-        options.setGroupField("digitc");
+        options.setGroupFields(Arrays.asList("digitc"));
         service.generateMapping(options);
 
         service.syncMappings(makeDefaultSyncOptions());
@@ -326,7 +326,7 @@ public class GroupMappingServiceTest {
             CdmIndexService.closeDbConnection(conn);
         }
 
-        options.setGroupField("groupa");
+        options.setGroupFields(Arrays.asList("groupa"));
         options.setForce(true);
         service.generateMapping(options);
 
@@ -344,6 +344,134 @@ public class GroupMappingServiceTest {
             assertParentIdsPresent(conn, "groupa:group1", null);
 
             assertGroupingPresent(info, "groupa:group1", "25", "26");
+            assertEquals(1, info.getGroupedMappings().size());
+
+            assertSyncedDatePresent();
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
+    public void generateSingleRunMultipleGroupsTest() throws Exception {
+        indexExportSamples();
+        GroupMappingOptions options = new GroupMappingOptions();
+        options.setGroupFields(Arrays.asList("groupa", "dcmi"));
+        service.generateMapping(options);
+
+        GroupMappingInfo info = service.loadMappings();
+
+        assertMappingPresent(info, "25", "groupa:group1,dcmi:Image");
+        assertMappingPresent(info, "26", "groupa:group1,dcmi:Image");
+        assertMappingPresent(info, "27", null);
+        assertMappingPresent(info, "28", null);
+        assertMappingPresent(info, "29", null);
+        assertEquals(5, info.getMappings().size());
+
+        assertGroupingPresent(info, "groupa:group1,dcmi:Image", "25", "26");
+        assertEquals(1, info.getGroupedMappings().size());
+
+        assertMappedDatePresent();
+    }
+
+    @Test
+    public void syncSingleRunMultipleGroupsTest() throws Exception {
+        indexExportSamples();
+        GroupMappingOptions options = new GroupMappingOptions();
+        options.setGroupFields(Arrays.asList("groupa", "dcmi"));
+        service.generateMapping(options);
+
+        service.syncMappings(makeDefaultSyncOptions());
+
+        Connection conn = null;
+        try {
+            GroupMappingInfo info = service.loadMappings();
+            conn = indexService.openDbConnection();
+            assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
+            assertWorkSynced(conn, "dcmi:Image", "Redoubt C", "2005-11-23");
+            assertFilesGrouped(conn, "groupa:group1,dcmi:Image", "25", "26");
+            assertFileHasOrder(conn, "25", 1);
+            assertFileHasOrder(conn, "26", 0);
+            // Group key with a single child should not be grouped
+            assertNumberOfGroups(conn, 1);
+            assertParentIdsPresent(conn, "groupa:group1,dcmi:Image", null);
+            assertSyncedDatePresent();
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
+    public void generateMultipleGroupsForceUpdateRunTest() throws Exception {
+        indexExportSamples();
+        GroupMappingOptions options = makeDefaultOptions();
+        service.generateMapping(options);
+
+        GroupMappingInfo info = service.loadMappings();
+        assertEquals(5, info.getMappings().size());
+
+        options.setUpdate(true);
+        options.setForce(true);
+        options.setGroupFields(Arrays.asList("groupa", "dcmi"));
+
+        service.generateMapping(options);
+
+        // Mapping state should have been overwritten
+        GroupMappingInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "25", "groupa:group1,dcmi:Image");
+        assertMappingPresent(info2, "26", "groupa:group1,dcmi:Image");
+        assertMappingPresent(info2, "27", null);
+        assertMappingPresent(info2, "28", null);
+        assertMappingPresent(info2, "29", null);
+        assertEquals(5, info2.getMappings().size());
+
+        assertMappedDatePresent();
+    }
+
+    @Test
+    public void syncSecondRunWithCleanupMultipleGroupsTest() throws Exception {
+        indexExportSamples();
+        GroupMappingOptions options = makeDefaultOptions();
+        options.setGroupFields(Arrays.asList("digitc"));
+        service.generateMapping(options);
+
+        service.syncMappings(makeDefaultSyncOptions());
+
+        Connection conn = null;
+        try {
+            GroupMappingInfo info = service.loadMappings();
+            conn = indexService.openDbConnection();
+            assertWorkSynced(conn, "digitc:2005-11-10", "Redoubt C", "2005-11-23");
+            assertFilesGrouped(conn, "digitc:2005-11-10", "25", "28", "29");
+            assertFileHasOrder(conn, "25", 0);
+            assertFileHasOrder(conn, "28", 1);
+            assertFileHasOrder(conn, "29", 2);
+            assertNumberOfGroups(conn, 1);
+            assertParentIdsPresent(conn, "digitc:2005-11-10", null);
+            assertSyncedDatePresent();
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+
+        options.setGroupFields(Arrays.asList("groupa", "dcmi"));
+        options.setForce(true);
+        service.generateMapping(options);
+
+        service.syncMappings(makeDefaultSyncOptions());
+
+        try {
+            GroupMappingInfo info = service.loadMappings();
+            conn = indexService.openDbConnection();
+            assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
+            assertWorkSynced(conn, "dcmi:Image", "Redoubt C", "2005-11-23");
+            assertFilesGrouped(conn, "groupa:group1,dcmi:Image", "25", "26");
+            assertFileHasOrder(conn, "25", 1);
+            assertFileHasOrder(conn, "26", 0);
+            // Group key with a single child should not be grouped
+            assertNumberOfGroups(conn, 1);
+            assertParentIdsPresent(conn, "groupa:group1,dcmi:Image", null);
+
+            assertGroupingPresent(info, "groupa:group1,dcmi:Image", "25", "26");
             assertEquals(1, info.getGroupedMappings().size());
 
             assertSyncedDatePresent();
@@ -437,7 +565,7 @@ public class GroupMappingServiceTest {
 
     private GroupMappingOptions makeDefaultOptions() {
         GroupMappingOptions options = new GroupMappingOptions();
-        options.setGroupField("groupa");
+        options.setGroupFields(Arrays.asList("groupa"));
         return options;
     }
 
