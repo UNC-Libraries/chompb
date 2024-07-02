@@ -147,12 +147,14 @@ public class WorkGenerator {
     protected SourceFilesInfo.SourceFileMapping getSourceFileMapping(String cdmId) {
         SourceFilesInfo.SourceFileMapping sourceMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
         if (sourceMapping == null || sourceMapping.getSourcePaths() == null) {
-            String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
-            if (options.isForce()) {
-                outputLogger.info(message);
-                throw new SipService.SkipObjectException();
-            } else {
-                throw new InvalidProjectStateException(message);
+            if (!streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
+                String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
+                if (options.isForce()) {
+                    outputLogger.info(message);
+                    throw new SipService.SkipObjectException();
+                } else {
+                    throw new InvalidProjectStateException(message);
+                }
             }
         }
         return sourceMapping;
