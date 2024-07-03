@@ -23,6 +23,7 @@
         <csv.version>1.9.0</csv.version>
         <junit.jupiter.version>5.9.2</junit.jupiter.version>
         <solr.solrj.version>8.10.1</solr.solrj.version>
+        <embedded-redis.version>0.7.3</embedded-redis.version>
     </properties>
 
     <build>
@@ -224,6 +225,7 @@
                     <artifactId>slf4j-simple</artifactId>
                 </exclusion>
             </exclusions>
+            <version>${embedded-redis.version}</version>
         </dependency>
         <dependency>
             <groupId>org.awaitility</groupId>

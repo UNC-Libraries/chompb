@@ -156,19 +156,25 @@ public class SipServiceHelper {
         return new DepositDirectoryManager(sip.getDepositPid(), project.getSipsPath(), true);
     }
 
-    public void assertObjectPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager, Model depModel,
-            Path stagingPath, Path accessPath, String cdmId) throws Exception {
+    public Resource getFirstSipFileInWork(Resource objResc, DepositDirectoryManager dirManager, Model depModel) {
         assertTrue(objResc.hasProperty(RDF.type, Cdr.Work));
         Bag workBag = depModel.getBag(objResc);
         List<RDFNode> workChildren = workBag.iterator().toList();
         assertEquals(1, workChildren.size());
-        Resource fileObjResc = workChildren.get(0).asResource();
+        return workChildren.get(0).asResource();
+    }
+
+    public void assertObjectPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager, Model depModel,
+            Path stagingPath, Path accessPath, String cdmId) throws Exception {
+        Resource fileObjResc = getFirstSipFileInWork(objResc, dirManager, depModel);
         assertTrue(fileObjResc.hasProperty(RDF.type, Cdr.FileObject));
 
         // Check for source file
-        Resource origResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamOriginal).getResource();
-        assertTrue(origResc.hasLiteral(CdrDeposit.stagingLocation, stagingPath.toUri().toString()));
-        assertTrue(origResc.hasLiteral(CdrDeposit.label, stagingPath.getFileName().toString()));
+        if (stagingPath != null) {
+            Resource origResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamOriginal).getResource();
+            assertTrue(origResc.hasLiteral(CdrDeposit.stagingLocation, stagingPath.toUri().toString()));
+            assertTrue(origResc.hasLiteral(CdrDeposit.label, stagingPath.getFileName().toString()));
+        }
 
         if (accessPath == null) {
             // Verify no access copy

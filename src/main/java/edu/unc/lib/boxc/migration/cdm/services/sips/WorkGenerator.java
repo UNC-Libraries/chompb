@@ -50,6 +50,8 @@ public class WorkGenerator {
     // use local streamingUrl property for now because Cdr.streamingUrl only exists in a feature branch
     public static final Property streamingUrl = createProperty(
             "http://cdr.unc.edu/definitions/model#streamingUrl");
+    public static final Property streamingType = createProperty(
+            "http://cdr.unc.edu/definitions/model#streamingType");
     protected PIDMinter pidMinter;
     protected RedirectMappingService redirectMappingService;
     protected SourceFilesInfo sourceFilesInfo;
@@ -147,12 +149,14 @@ public class WorkGenerator {
     protected SourceFilesInfo.SourceFileMapping getSourceFileMapping(String cdmId) {
         SourceFilesInfo.SourceFileMapping sourceMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
         if (sourceMapping == null || sourceMapping.getSourcePaths() == null) {
-            String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
-            if (options.isForce()) {
-                outputLogger.info(message);
-                throw new SipService.SkipObjectException();
-            } else {
-                throw new InvalidProjectStateException(message);
+            if (!streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
+                String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
+                if (options.isForce()) {
+                    outputLogger.info(message);
+                    throw new SipService.SkipObjectException();
+                } else {
+                    throw new InvalidProjectStateException(message);
+                }
             }
         }
         return sourceMapping;
@@ -165,9 +169,11 @@ public class WorkGenerator {
         workBag.add(fileObjResc);
 
         // Link source file
-        Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
-        origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
-        origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
+        if (sourcePath != null) {
+            Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
+            origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
+            origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
+        }
         return fileObjResc;
     }
 
@@ -247,6 +253,7 @@ public class WorkGenerator {
             String streamingUrlValue = "https://durastream.lib.unc.edu/player?spaceId=" + duracloudSpace
                     + "&filename=" + streamingFile;
             resource.addProperty(streamingUrl, streamingUrlValue);
+            resource.addProperty(streamingType, "video");
         }
     }
 }

@@ -40,6 +40,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -323,6 +324,92 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, sourcePath4, null, "28");
         Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-10");
         testHelper.assertObjectPopulatedInSip(workResc4, dirManager, model, sourcePath5, null, "29");
+
+        String[] argsSubmit = new String[] {
+                "-w", projPath.toString(),
+                "submit",
+                "-g", GROUPS };
+        executeExpectSuccess(argsSubmit);
+
+        initDepositStatusFactory();
+        assertDepositStatusSet(sip);
+    }
+
+    @Test
+    public void fileWithStreamingOnlyNoSourceFileTest() throws Exception {
+        mockFieldInfoUrl("cdm_fields_resp.json", COLLECTION_ID);
+
+        String[] argsInit = new String[] {
+                "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
+                "init",
+                "-p", COLLECTION_ID,
+                "-e", "test"};
+        executeExpectSuccess(argsInit);
+
+        Path projPath = baseDir.resolve(COLLECTION_ID);
+        MigrationProject project = new MigrationProject(projPath);
+
+        String[] argsExport = new String[] {
+                "-w", projPath.toString(),
+                "--env-config", chompbConfigPath,
+                "export",
+                "-p", TestSshServer.PASSWORD };
+        executeExpectSuccess(argsExport);
+
+        String[] argsIndex = new String[] {
+                "-w", projPath.toString(),
+                "index"};
+        executeExpectSuccess(argsIndex);
+
+        String[] argsDest = new String[] {
+                "-w",  projPath.toString(),
+                "destinations", "generate",
+                "-dd", DEST_UUID};
+        executeExpectSuccess(argsDest);
+
+        testHelper = new SipServiceHelper(project, filesBasePath);
+        Path sourcePath1 = testHelper.addSourceFile("276_182_E.tif");
+        Path sourcePath2 = testHelper.addSourceFile("276_183_E.tif");
+        // No source file item 27, so that it will only have streaming
+
+        String[] argsSource = new String[] {
+                "-w", projPath.toString(),
+                "source_files", "generate",
+                "-b", testHelper.getSourceFilesBasePath().toString(),
+                "-n", "file"};
+        executeExpectSuccess(argsSource);
+
+        Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
+                project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
+        String[] argsDesc = new String[] {
+                "-w", projPath.toString(),
+                "descriptions", "expand" };
+        executeExpectSuccess(argsDesc);
+
+        String[] args = new String[] {
+                "-w", projPath.toString(),
+                "sips", "generate" };
+        executeExpectSuccess(args);
+
+        MigrationSip sip = testHelper.extractSipFromOutput(output);
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, sourcePath1, null, "25");
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath2, null, "26");
+        // Work 3 has no source file, but does have a streaming url
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, null, null, "27");
+        Resource fileResc3 = testHelper.getFirstSipFileInWork(workResc3, dirManager, model);
+        assertTrue(fileResc3.hasProperty(streamingUrl));
 
         String[] argsSubmit = new String[] {
                 "-w", projPath.toString(),
