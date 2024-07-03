@@ -50,6 +50,8 @@ public class WorkGenerator {
     // use local streamingUrl property for now because Cdr.streamingUrl only exists in a feature branch
     public static final Property streamingUrl = createProperty(
             "http://cdr.unc.edu/definitions/model#streamingUrl");
+    public static final Property streamingType = createProperty(
+            "http://cdr.unc.edu/definitions/model#streamingType");
     protected PIDMinter pidMinter;
     protected RedirectMappingService redirectMappingService;
     protected SourceFilesInfo sourceFilesInfo;
@@ -251,6 +253,7 @@ public class WorkGenerator {
             String streamingUrlValue = "https://durastream.lib.unc.edu/player?spaceId=" + duracloudSpace
                     + "&filename=" + streamingFile;
             resource.addProperty(streamingUrl, streamingUrlValue);
+            resource.addProperty(streamingType, "video");
         }
     }
 }
