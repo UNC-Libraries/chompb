@@ -167,9 +167,11 @@ public class WorkGenerator {
         workBag.add(fileObjResc);
 
         // Link source file
-        Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
-        origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
-        origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
+        if (sourcePath != null) {
+            Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
+            origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
+            origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
+        }
         return fileObjResc;
     }
 

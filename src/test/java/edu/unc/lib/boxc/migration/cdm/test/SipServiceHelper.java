@@ -170,8 +170,8 @@ public class SipServiceHelper {
         assertTrue(fileObjResc.hasProperty(RDF.type, Cdr.FileObject));
 
         // Check for source file
-        Resource origResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamOriginal).getResource();
         if (stagingPath != null) {
+            Resource origResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamOriginal).getResource();
             assertTrue(origResc.hasLiteral(CdrDeposit.stagingLocation, stagingPath.toUri().toString()));
             assertTrue(origResc.hasLiteral(CdrDeposit.label, stagingPath.getFileName().toString()));
         }
