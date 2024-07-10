@@ -60,6 +60,7 @@ import java.util.stream.Collectors;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingType;
 import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingUrl;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -1466,6 +1467,7 @@ public class SipServiceTest {
         Resource workResc3FileObj = workResc3Children.get(0).asResource();
         assertTrue(workResc3FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        assertTrue(workResc3FileObj.hasProperty(streamingType, "Video"));
 
         assertPersistedSipInfoMatches(sip);
     }

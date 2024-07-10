@@ -40,6 +40,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingType;
 import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -410,6 +411,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, null, null, "27");
         Resource fileResc3 = testHelper.getFirstSipFileInWork(workResc3, dirManager, model);
         assertTrue(fileResc3.hasProperty(streamingUrl));
+        assertTrue(fileResc3.hasProperty(streamingType));
 
         String[] argsSubmit = new String[] {
                 "-w", projPath.toString(),

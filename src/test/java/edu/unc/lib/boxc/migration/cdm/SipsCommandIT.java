@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingType;
 import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -270,6 +271,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         Resource workResc3FileObj = workResc3Children.get(0).asResource();
         assertTrue(workResc3FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        assertTrue(workResc3FileObj.hasProperty(streamingType, "Video"));
     }
 
     private void assertChildFileModsPopulated(DepositDirectoryManager dirManager, Resource workResc,

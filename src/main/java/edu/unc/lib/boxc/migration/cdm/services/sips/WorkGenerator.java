@@ -18,6 +18,7 @@ import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -253,7 +254,12 @@ public class WorkGenerator {
             String streamingUrlValue = "https://durastream.lib.unc.edu/player?spaceId=" + duracloudSpace
                     + "&filename=" + streamingFile;
             resource.addProperty(streamingUrl, streamingUrlValue);
-            resource.addProperty(streamingType, "video");
+            // set streamingType to sound if mp3 and video if mp4 or anything else (for now)
+            if (FilenameUtils.getExtension(streamingFile).equals("mp3")) {
+                resource.addProperty(streamingType, "Sound");
+            } else {
+                resource.addProperty(streamingType, "Video");
+            }
         }
     }
 }
