@@ -255,7 +255,7 @@ public class WorkGenerator {
                     + "&filename=" + streamingFile;
             resource.addProperty(streamingUrl, streamingUrlValue);
             // set streamingType to sound if mp3 and video if mp4 or anything else (for now)
-            if (FilenameUtils.getExtension(streamingFile).equals("mp3")) {
+            if (FilenameUtils.getExtension(streamingFile).equalsIgnoreCase("mp3")) {
                 resource.addProperty(streamingType, "sound");
             } else {
                 resource.addProperty(streamingType, "video");
