@@ -225,7 +225,7 @@ public class SipsCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateStreamingFileOnlyTest() throws Exception {
+    public void generateStreamingFilesOnlyTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
@@ -254,15 +254,18 @@ public class SipsCommandIT extends AbstractCommandIT {
         assertFalse(workResc1FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
 
+        // mp4 file extension
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Bag workResc2Bag = model.getBag(workResc2);
         List<RDFNode> workResc2Children = workResc2Bag.iterator().toList();
         assertEquals(1, workResc2Children.size());
         Resource workResc2FileObj = workResc2Children.get(0).asResource();
-        assertFalse(workResc2FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
-                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        assertTrue(workResc2FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_video-playlist.m3u8"));
+        assertTrue(workResc2FileObj.hasProperty(streamingType, "video"));
 
+        // mp3 file extension
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         Bag workResc3Bag = model.getBag(workResc3);
@@ -271,7 +274,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         Resource workResc3FileObj = workResc3Children.get(0).asResource();
         assertTrue(workResc3FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
-        assertTrue(workResc3FileObj.hasProperty(streamingType, "video"));
+        assertTrue(workResc3FileObj.hasProperty(streamingType, "sound"));
     }
 
     private void assertChildFileModsPopulated(DepositDirectoryManager dirManager, Resource workResc,

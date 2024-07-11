@@ -251,11 +251,12 @@ public class WorkGenerator {
             String[] streamingMetadata = streamingMetadataService.getStreamingMetadata(cdmId);
             String duracloudSpace = streamingMetadata[1];
             String streamingFile = streamingMetadata[0];
+            String streamingFileOriginalExtension = streamingMetadata[3];
             String streamingUrlValue = "https://durastream.lib.unc.edu/player?spaceId=" + duracloudSpace
                     + "&filename=" + streamingFile;
             resource.addProperty(streamingUrl, streamingUrlValue);
             // set streamingType to sound if mp3 and video if mp4 or anything else (for now)
-            if (FilenameUtils.getExtension(streamingFile).equalsIgnoreCase("mp3")) {
+            if (FilenameUtils.getExtension(streamingFileOriginalExtension).equalsIgnoreCase("mp3")) {
                 resource.addProperty(streamingType, "sound");
             } else {
                 resource.addProperty(streamingType, "video");

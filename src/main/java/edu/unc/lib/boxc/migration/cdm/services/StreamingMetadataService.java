@@ -85,7 +85,10 @@ public class StreamingMetadataService {
             duracloudSpace = DURACLOUD_CLOSED;
         }
 
-        return new String[] {streamingFile, duracloudSpace, STREAMING_HOST};
+        // original file extension (needed for streamingType)
+        String streamingFileExtension = streamingValues[0];
+
+        return new String[] {streamingFile, duracloudSpace, STREAMING_HOST, streamingFileExtension};
     }
 
     private String[] getStreamingFieldValues(String cdmId) {

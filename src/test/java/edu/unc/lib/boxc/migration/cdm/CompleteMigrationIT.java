@@ -404,8 +404,12 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, sourcePath1, null, "25");
+        // Work 2 has a source file and a streaming url
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath2, null, "26");
+        Resource fileResc2 = testHelper.getFirstSipFileInWork(workResc2, dirManager, model);
+        assertTrue(fileResc2.hasProperty(streamingUrl));
+        assertTrue(fileResc2.hasProperty(streamingType));
         // Work 3 has no source file, but does have a streaming url
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, null, null, "27");

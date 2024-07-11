@@ -1451,14 +1451,17 @@ public class SipServiceTest {
         Resource workResc1FileObj = workResc1Children.get(0).asResource();
         assertFalse(workResc1FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Bag workResc2Bag = model.getBag(workResc2);
         List<RDFNode> workResc2Children = workResc2Bag.iterator().toList();
         assertEquals(1, workResc2Children.size());
         Resource workResc2FileObj = workResc2Children.get(0).asResource();
-        assertFalse(workResc2FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
-                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        assertTrue(workResc2FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_video-playlist.m3u8"));
+        assertTrue(workResc2FileObj.hasProperty(streamingType, "video"));
+
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         Bag workResc3Bag = model.getBag(workResc3);
@@ -1467,7 +1470,7 @@ public class SipServiceTest {
         Resource workResc3FileObj = workResc3Children.get(0).asResource();
         assertTrue(workResc3FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
-        assertTrue(workResc3FileObj.hasProperty(streamingType, "video"));
+        assertTrue(workResc3FileObj.hasProperty(streamingType, "sound"));
 
         assertPersistedSipInfoMatches(sip);
     }
