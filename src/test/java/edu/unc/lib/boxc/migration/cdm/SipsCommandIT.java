@@ -271,7 +271,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         Resource workResc3FileObj = workResc3Children.get(0).asResource();
         assertTrue(workResc3FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
-        assertTrue(workResc3FileObj.hasProperty(streamingType, "Video"));
+        assertTrue(workResc3FileObj.hasProperty(streamingType, "video"));
     }
 
     private void assertChildFileModsPopulated(DepositDirectoryManager dirManager, Resource workResc,
