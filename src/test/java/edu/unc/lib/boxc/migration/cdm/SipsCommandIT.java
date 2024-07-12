@@ -19,8 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingType;
-import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingUrl;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -250,7 +250,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         List<RDFNode> workResc1Children = workResc1Bag.iterator().toList();
         assertEquals(1, workResc1Children.size());
         Resource workResc1FileObj = workResc1Children.get(0).asResource();
-        assertFalse(workResc1FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+        assertFalse(workResc1FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
 
         // mp4 file extension
@@ -260,9 +260,9 @@ public class SipsCommandIT extends AbstractCommandIT {
         List<RDFNode> workResc2Children = workResc2Bag.iterator().toList();
         assertEquals(1, workResc2Children.size());
         Resource workResc2FileObj = workResc2Children.get(0).asResource();
-        assertTrue(workResc2FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+        assertTrue(workResc2FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_video-playlist.m3u8"));
-        assertTrue(workResc2FileObj.hasProperty(streamingType, "video"));
+        assertTrue(workResc2FileObj.hasProperty(STREAMING_TYPE, "video"));
 
         // mp3 file extension
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
@@ -271,9 +271,9 @@ public class SipsCommandIT extends AbstractCommandIT {
         List<RDFNode> workResc3Children = workResc3Bag.iterator().toList();
         assertEquals(1, workResc3Children.size());
         Resource workResc3FileObj = workResc3Children.get(0).asResource();
-        assertTrue(workResc3FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+        assertTrue(workResc3FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
-        assertTrue(workResc3FileObj.hasProperty(streamingType, "sound"));
+        assertTrue(workResc3FileObj.hasProperty(STREAMING_TYPE, "sound"));
     }
 
     private void assertChildFileModsPopulated(DepositDirectoryManager dirManager, Resource workResc,
