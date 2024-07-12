@@ -329,7 +329,7 @@ public class SipServiceTest {
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
         // Only populating 2 out of 3 source files expected from the export
-        testHelper.populateSourceFiles("276_182_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_203_E.tif");
 
         try {
             service.generateSips(makeOptions());
@@ -362,7 +362,7 @@ public class SipServiceTest {
 
         Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren = depBag.iterator().toList();
-        assertEquals(2, depBagChildren.size());
+        assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");

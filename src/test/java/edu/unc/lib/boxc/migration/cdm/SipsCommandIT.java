@@ -49,8 +49,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_203_E.tif");
-        Files.delete(stagingLocs.get(1));
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_183_E.tif", "276_203_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -66,7 +65,7 @@ public class SipsCommandIT extends AbstractCommandIT {
                 "--force" };
         executeExpectSuccess(argsF);
 
-        assertOutputContains("Cannot transform object 26, no source file has been mapped");
+        assertOutputContains("Cannot transform object 25, no source file has been mapped");
 
         MigrationSip sipF = extractSipFromOutput();
 
@@ -77,8 +76,8 @@ public class SipsCommandIT extends AbstractCommandIT {
         List<RDFNode> depBagChildrenF = depBagF.iterator().toList();
         assertEquals(2, depBagChildrenF.size());
 
-        Resource workResc1F = testHelper.getResourceByCreateTime(depBagChildrenF, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1F, dirManagerF, modelF, stagingLocs.get(0), null, "25");
+        Resource workResc2F = testHelper.getResourceByCreateTime(depBagChildrenF, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2F, dirManagerF, modelF, stagingLocs.get(0), null, "26");
         Resource workResc3F = testHelper.getResourceByCreateTime(depBagChildrenF, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3F, dirManagerF, modelF, stagingLocs.get(1), null, "27");
 
