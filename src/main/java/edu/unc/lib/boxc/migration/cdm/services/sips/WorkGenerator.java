@@ -18,6 +18,8 @@ import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
+import edu.unc.lib.boxc.search.api.SearchFieldKey;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -48,9 +50,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class WorkGenerator {
     private static final Logger log = getLogger(WorkGenerator.class);
     // use local streamingUrl property for now because Cdr.streamingUrl only exists in a feature branch
-    public static final Property streamingUrl = createProperty(
+    public static final Property STREAMING_URL = createProperty(
             "http://cdr.unc.edu/definitions/model#streamingUrl");
-    public static final Property streamingType = createProperty(
+    public static final Property STREAMING_TYPE = createProperty(
             "http://cdr.unc.edu/definitions/model#streamingType");
     protected PIDMinter pidMinter;
     protected RedirectMappingService redirectMappingService;
@@ -250,10 +252,16 @@ public class WorkGenerator {
             String[] streamingMetadata = streamingMetadataService.getStreamingMetadata(cdmId);
             String duracloudSpace = streamingMetadata[1];
             String streamingFile = streamingMetadata[0];
+            String streamingFileOriginalExtension = streamingMetadata[3];
             String streamingUrlValue = "https://durastream.lib.unc.edu/player?spaceId=" + duracloudSpace
                     + "&filename=" + streamingFile;
-            resource.addProperty(streamingUrl, streamingUrlValue);
-            resource.addProperty(streamingType, "video");
+            resource.addProperty(STREAMING_URL, streamingUrlValue);
+            // set streamingType to sound if mp3 and video if mp4 or anything else (for now)
+            if (FilenameUtils.getExtension(streamingFileOriginalExtension).equalsIgnoreCase("mp3")) {
+                resource.addProperty(STREAMING_TYPE, "sound");
+            } else {
+                resource.addProperty(STREAMING_TYPE, "video");
+            }
         }
     }
 }

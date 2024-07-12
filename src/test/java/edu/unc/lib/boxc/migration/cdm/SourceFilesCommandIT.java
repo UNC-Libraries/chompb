@@ -480,7 +480,6 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     @Test
     public void validateInvalidTest() throws Exception {
         indexExportSamples();
-        addSourceFile("276_182_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -495,7 +494,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
         assertOutputContains("FAIL: Source file mapping at path " + project.getSourceFilesMappingPath()
                 + " is invalid");
-        assertOutputContains("- No path mapped at line 3");
+        assertOutputContains("- No path mapped at line 2");
         assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
     }
 
@@ -567,7 +566,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Objects Mapped: +2 \\(66.7%\\).*");
         assertOutputMatches(".*Unmapped Objects: +1.*");
         assertOutputMatches(".*Unmapped Objects:.*\n + \\* 26.*");
-        assertOutputMatches(".*Mappings Valid: +No.*");
+        assertOutputMatches(".*Mappings Valid: +Yes.*");
         assertOutputMatches(".*Potential Matches: +0.*");
     }
 

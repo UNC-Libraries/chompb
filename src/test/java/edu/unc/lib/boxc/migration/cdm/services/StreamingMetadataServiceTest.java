@@ -71,6 +71,7 @@ public class StreamingMetadataServiceTest {
         assertEquals("gilmer_recording-playlist.m3u8", result[0]);
         assertEquals("open-hls", result[1]);
         assertEquals("duracloud", result[2]);
+        assertEquals("gilmer_recording.mp3", result[3]);
     }
 
     @Test

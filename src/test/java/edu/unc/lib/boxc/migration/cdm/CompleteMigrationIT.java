@@ -7,7 +7,6 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
@@ -40,7 +39,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingUrl;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -403,13 +403,18 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, sourcePath1, null, "25");
+        // Work 2 has a source file and a streaming url
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath2, null, "26");
+        Resource fileResc2 = testHelper.getFirstSipFileInWork(workResc2, dirManager, model);
+        assertTrue(fileResc2.hasProperty(STREAMING_URL));
+        assertTrue(fileResc2.hasProperty(STREAMING_TYPE));
         // Work 3 has no source file, but does have a streaming url
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, null, null, "27");
         Resource fileResc3 = testHelper.getFirstSipFileInWork(workResc3, dirManager, model);
-        assertTrue(fileResc3.hasProperty(streamingUrl));
+        assertTrue(fileResc3.hasProperty(STREAMING_URL));
+        assertTrue(fileResc3.hasProperty(STREAMING_TYPE));
 
         String[] argsSubmit = new String[] {
                 "-w", projPath.toString(),

@@ -60,7 +60,8 @@ import java.util.stream.Collectors;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
-import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingUrl;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_URL;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -328,7 +329,7 @@ public class SipServiceTest {
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
         // Only populating 2 out of 3 source files expected from the export
-        testHelper.populateSourceFiles("276_182_E.tif", "276_203_E.tif");
+        testHelper.populateSourceFiles("276_203_E.tif");
 
         try {
             service.generateSips(makeOptions());
@@ -361,7 +362,7 @@ public class SipServiceTest {
 
         Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
         List<RDFNode> depBagChildren = depBag.iterator().toList();
-        assertEquals(2, depBagChildren.size());
+        assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
@@ -1448,24 +1449,28 @@ public class SipServiceTest {
         List<RDFNode> workResc1Children = workResc1Bag.iterator().toList();
         assertEquals(1, workResc1Children.size());
         Resource workResc1FileObj = workResc1Children.get(0).asResource();
-        assertFalse(workResc1FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+        assertFalse(workResc1FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Bag workResc2Bag = model.getBag(workResc2);
         List<RDFNode> workResc2Children = workResc2Bag.iterator().toList();
         assertEquals(1, workResc2Children.size());
         Resource workResc2FileObj = workResc2Children.get(0).asResource();
-        assertFalse(workResc2FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
-                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        assertTrue(workResc2FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_video-playlist.m3u8"));
+        assertTrue(workResc2FileObj.hasProperty(STREAMING_TYPE, "video"));
+
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         Bag workResc3Bag = model.getBag(workResc3);
         List<RDFNode> workResc3Children = workResc3Bag.iterator().toList();
         assertEquals(1, workResc3Children.size());
         Resource workResc3FileObj = workResc3Children.get(0).asResource();
-        assertTrue(workResc3FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+        assertTrue(workResc3FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        assertTrue(workResc3FileObj.hasProperty(STREAMING_TYPE, "sound"));
 
         assertPersistedSipInfoMatches(sip);
     }

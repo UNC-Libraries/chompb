@@ -19,7 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.streamingUrl;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -48,8 +49,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_203_E.tif");
-        Files.delete(stagingLocs.get(1));
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_183_E.tif", "276_203_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -65,7 +65,7 @@ public class SipsCommandIT extends AbstractCommandIT {
                 "--force" };
         executeExpectSuccess(argsF);
 
-        assertOutputContains("Cannot transform object 26, no source file has been mapped");
+        assertOutputContains("Cannot transform object 25, no source file has been mapped");
 
         MigrationSip sipF = extractSipFromOutput();
 
@@ -76,8 +76,8 @@ public class SipsCommandIT extends AbstractCommandIT {
         List<RDFNode> depBagChildrenF = depBagF.iterator().toList();
         assertEquals(2, depBagChildrenF.size());
 
-        Resource workResc1F = testHelper.getResourceByCreateTime(depBagChildrenF, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1F, dirManagerF, modelF, stagingLocs.get(0), null, "25");
+        Resource workResc2F = testHelper.getResourceByCreateTime(depBagChildrenF, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2F, dirManagerF, modelF, stagingLocs.get(0), null, "26");
         Resource workResc3F = testHelper.getResourceByCreateTime(depBagChildrenF, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3F, dirManagerF, modelF, stagingLocs.get(1), null, "27");
 
@@ -224,7 +224,7 @@ public class SipsCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateStreamingFileOnlyTest() throws Exception {
+    public void generateStreamingFilesOnlyTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
@@ -250,26 +250,30 @@ public class SipsCommandIT extends AbstractCommandIT {
         List<RDFNode> workResc1Children = workResc1Bag.iterator().toList();
         assertEquals(1, workResc1Children.size());
         Resource workResc1FileObj = workResc1Children.get(0).asResource();
-        assertFalse(workResc1FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+        assertFalse(workResc1FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
 
+        // mp4 file extension
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Bag workResc2Bag = model.getBag(workResc2);
         List<RDFNode> workResc2Children = workResc2Bag.iterator().toList();
         assertEquals(1, workResc2Children.size());
         Resource workResc2FileObj = workResc2Children.get(0).asResource();
-        assertFalse(workResc2FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
-                "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        assertTrue(workResc2FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
+                "spaceId=open-hls&filename=gilmer_video-playlist.m3u8"));
+        assertTrue(workResc2FileObj.hasProperty(STREAMING_TYPE, "video"));
 
+        // mp3 file extension
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         Bag workResc3Bag = model.getBag(workResc3);
         List<RDFNode> workResc3Children = workResc3Bag.iterator().toList();
         assertEquals(1, workResc3Children.size());
         Resource workResc3FileObj = workResc3Children.get(0).asResource();
-        assertTrue(workResc3FileObj.hasProperty(streamingUrl, "https://durastream.lib.unc.edu/player?" +
+        assertTrue(workResc3FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
+        assertTrue(workResc3FileObj.hasProperty(STREAMING_TYPE, "sound"));
     }
 
     private void assertChildFileModsPopulated(DepositDirectoryManager dirManager, Resource workResc,
