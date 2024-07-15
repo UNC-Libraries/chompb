@@ -73,7 +73,11 @@ public class MigrationProjectFactory {
         properties.setCreator(user);
         properties.setCreatedDate(Instant.now());
         properties.setName(projectName);
-        properties.setCdmCollectionId(collectionId == null ? projectName : collectionId);
+        if (cdmEnvId == null) {
+            properties.setCdmCollectionId(null);
+        } else {
+            properties.setCdmCollectionId(collectionId == null ? projectName : collectionId);
+        }
         properties.setCdmEnvironmentId(cdmEnvId);
         properties.setBxcEnvironmentId(bxcEnvId);
         project.setProjectProperties(properties);

@@ -105,7 +105,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void initCdmCollectioNotFoundTest() throws Exception {
+    public void initCdmCollectionNotFoundTest() throws Exception {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
@@ -186,6 +186,23 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         assertProjectDirectoryNotCreate();
     }
 
+    @Test
+    public void initNewProjectTest() throws Exception {
+        String[] initArgs = new String[] {
+                "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
+                "init",
+                "-p", "test_file_project",
+                "-s", "files" };
+        executeExpectSuccess(initArgs);
+
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(baseDir.resolve("test_file_project"));
+        MigrationProjectProperties properties = project.getProjectProperties();
+        assertNewProjectPropertiesSet(properties, "test_file_project", null);
+
+        assertTrue(Files.exists(project.getDescriptionsPath()), "Description folder not created");
+    }
+
     private void assertProjectDirectoryNotCreate() throws IOException {
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(baseDir)) {
             for (Path path : dirStream) {
@@ -203,6 +220,17 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         assertNull(properties.getHookId());
         assertNull(properties.getCollectionNumber());
         assertEquals(CdmEnvironmentHelper.DEFAULT_ENV_ID, properties.getCdmEnvironmentId());
+        assertEquals(BxcEnvironmentHelper.DEFAULT_ENV_ID, properties.getBxcEnvironmentId());
+    }
+
+    private void assertNewProjectPropertiesSet(MigrationProjectProperties properties, String expName, String expCollId) {
+        assertEquals(USERNAME, properties.getCreator());
+        assertEquals(expName, properties.getName(), "Project name did not match expected value");
+        assertEquals(expCollId, properties.getCdmCollectionId(), "CDM Collection ID did not match expected value");
+        assertNotNull(properties.getCreatedDate(), "Created date not set");
+        assertNull(properties.getHookId());
+        assertNull(properties.getCollectionNumber());
+        assertNull(properties.getCdmEnvironmentId());
         assertEquals(BxcEnvironmentHelper.DEFAULT_ENV_ID, properties.getBxcEnvironmentId());
     }
 

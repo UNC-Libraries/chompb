@@ -2,6 +2,7 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
@@ -53,6 +54,9 @@ public class InitializeProjectCommand implements Callable<Integer> {
                 "If not specified, then the project will be initialized in the current directory.",
                 "If the project name is different from the CDM collection ID, then use -c to specify the ID." })
     private String projectName;
+    @Option(names = {"-s", "--source"},
+            description = {"Initialize a new project that doesn't need to be linked with a CDM collection."})
+    private String newProject;
 
     private CdmFieldService fieldService;
     private CloseableHttpClient httpClient;
@@ -87,48 +91,60 @@ public class InitializeProjectCommand implements Callable<Integer> {
             log.error("Unable to read application configuration", e);
             return 1;
         }
-        var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnvId);
 
         Path currentPath = parentCommand.getWorkingDirectory();
         String projDisplayName = projectName == null ? currentPath.getFileName().toString() : projectName;
         String collId = cdmCollectionId == null ? projDisplayName : cdmCollectionId;
-
-        // Retrieve field information from CDM
-        CdmFieldInfo fieldInfo;
-        try {
-            fieldService.setCdmBaseUri(cdmEnvConfig.getHttpBaseUrl());
-            fieldInfo = fieldService.retrieveFieldsForCollection(collId);
-        } catch (IOException | MigrationException e) {
-            log.error("Failed to retrieve field information for collection in project", e);
-            outputLogger.info("Failed to retrieve field information for collection {} in project {}:\n{}",
-                    collId, projDisplayName, e.getMessage());
-            return 1;
-        }
-
         String username = System.getProperty("user.name");
 
-        // Instantiate the project
-        MigrationProject project = null;
-        try {
-            project = MigrationProjectFactory.createMigrationProject(
-                    currentPath, projectName, cdmCollectionId, username, cdmEnvId, bxcEnvId);
+        if (newProject != null && !newProject.isBlank()) {
+            // Instantiate the project
+            try {
+                MigrationProjectFactory.createMigrationProject(
+                        currentPath, projectName, null, username, null, bxcEnvId);
 
-            // Persist field info to the project
-            fieldService.persistFieldsToProject(project, fieldInfo);
-        } catch (InvalidProjectStateException e) {
-            outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
-            return 1;
-        }
+            } catch (InvalidProjectStateException e) {
+                outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
+                return 1;
+            }
+        } else {
+            var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnvId);
 
-        //Record collection's finding aid (if available)
-        try {
-            findingAidService.setProject(project);
-            findingAidService.setCdmFieldService(fieldService);
-            findingAidService.recordFindingAid();
-        } catch (Exception e) {
-            log.error("Failed to record finding aid for collection", e);
-            outputLogger.info("Failed to record finding aid for collection", e);
-            return 1;
+            // Retrieve field information from CDM
+            CdmFieldInfo fieldInfo;
+            try {
+                fieldService.setCdmBaseUri(cdmEnvConfig.getHttpBaseUrl());
+                fieldInfo = fieldService.retrieveFieldsForCollection(collId);
+            } catch (IOException | MigrationException e) {
+                log.error("Failed to retrieve field information for collection in project", e);
+                outputLogger.info("Failed to retrieve field information for collection {} in project {}:\n{}",
+                        collId, projDisplayName, e.getMessage());
+                return 1;
+            }
+
+            // Instantiate the project
+            MigrationProject project = null;
+            try {
+                project = MigrationProjectFactory.createMigrationProject(
+                        currentPath, projectName, cdmCollectionId, username, cdmEnvId, bxcEnvId);
+
+                // Persist field info to the project
+                fieldService.persistFieldsToProject(project, fieldInfo);
+            } catch (InvalidProjectStateException e) {
+                outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
+                return 1;
+            }
+
+            //Record collection's finding aid (if available)
+            try {
+                findingAidService.setProject(project);
+                findingAidService.setCdmFieldService(fieldService);
+                findingAidService.recordFindingAid();
+            } catch (Exception e) {
+                log.error("Failed to record finding aid for collection", e);
+                outputLogger.info("Failed to record finding aid for collection", e);
+                return 1;
+            }
         }
 
         outputLogger.info("Initialized project {} in {}s", projDisplayName, (System.nanoTime() - start) / 1e9);
