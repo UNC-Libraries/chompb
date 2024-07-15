@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -53,8 +54,9 @@ public class CdmExportServiceTest {
     @BeforeEach
     public void setup() throws Exception {
         closeable = openMocks(this);
-        project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+        project = MigrationProjectFactory.createCdmMigrationProject(
+                tmpFolder, PROJECT_NAME, null, "user",
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         fieldService = new CdmFieldService();
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);

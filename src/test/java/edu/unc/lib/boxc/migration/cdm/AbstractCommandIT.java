@@ -28,6 +28,7 @@ public class AbstractCommandIT extends AbstractOutputTest {
     protected final static String PROJECT_ID = "my_proj";
     protected final static String USERNAME = "theuser";
     private final String initialUser = System.getProperty("user.name");
+    private static final String PROJECT_SOURCE = "cdm";
 
     protected CommandLine migrationCommand;
     protected SipServiceHelper testHelper;
@@ -52,7 +53,7 @@ public class AbstractCommandIT extends AbstractOutputTest {
 
     protected void initProject() throws IOException {
         project = MigrationProjectFactory.createMigrationProject(baseDir, PROJECT_ID, defaultCollectionId, USERNAME,
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID, PROJECT_SOURCE);
     }
 
     protected void initProjectAndHelper() throws IOException {

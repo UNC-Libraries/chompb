@@ -196,8 +196,14 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(baseDir.resolve("test_file_project"));
         MigrationProjectProperties properties = project.getProjectProperties();
-        assertNewProjectPropertiesSet(properties, "test_file_project", null);
-
+        assertEquals(USERNAME, properties.getCreator());
+        assertEquals("test_file_project", properties.getName(), "Project name did not match expected value");
+        assertNull(properties.getCdmCollectionId(), "CDM Collection ID did not match expected value");
+        assertNotNull(properties.getCreatedDate(), "Created date not set");
+        assertNull(properties.getHookId());
+        assertNull(properties.getCollectionNumber());
+        assertNull(properties.getCdmEnvironmentId());
+        assertEquals(BxcEnvironmentHelper.DEFAULT_ENV_ID, properties.getBxcEnvironmentId());
         assertTrue(Files.exists(project.getDescriptionsPath()), "Description folder not created");
     }
 
@@ -218,17 +224,6 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         assertNull(properties.getHookId());
         assertNull(properties.getCollectionNumber());
         assertEquals(CdmEnvironmentHelper.DEFAULT_ENV_ID, properties.getCdmEnvironmentId());
-        assertEquals(BxcEnvironmentHelper.DEFAULT_ENV_ID, properties.getBxcEnvironmentId());
-    }
-
-    private void assertNewProjectPropertiesSet(MigrationProjectProperties properties, String expName, String expCollId) {
-        assertEquals(USERNAME, properties.getCreator());
-        assertEquals(expName, properties.getName(), "Project name did not match expected value");
-        assertEquals(expCollId, properties.getCdmCollectionId(), "CDM Collection ID did not match expected value");
-        assertNotNull(properties.getCreatedDate(), "Created date not set");
-        assertNull(properties.getHookId());
-        assertNull(properties.getCollectionNumber());
-        assertNull(properties.getCdmEnvironmentId());
         assertEquals(BxcEnvironmentHelper.DEFAULT_ENV_ID, properties.getBxcEnvironmentId());
     }
 

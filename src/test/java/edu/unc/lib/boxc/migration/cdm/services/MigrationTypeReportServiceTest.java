@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author krwong
  */
 public class MigrationTypeReportServiceTest {
+    private static final String PROJECT_SOURCE = "cdm";
     private static final String BOXC_BASE_URL = "http://localhost:46887/bxc/record/";
     private static final String BOXC_ID_1 = "bb3b83d7-2962-4604-a7d0-9afcb4ec99b1";
     private static final String BOXC_ID_2 = "91c08272-260f-40f1-bb7c-78854d504368";
@@ -38,7 +39,7 @@ public class MigrationTypeReportServiceTest {
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, "proj", null, "user",
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID, PROJECT_SOURCE);
         testHelper = new SipServiceHelper(project, tmpFolder);
         reportGenerator = new PostMigrationReportService();
         reportGenerator.setProject(project);

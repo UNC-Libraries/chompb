@@ -34,6 +34,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
  * @author bbpennel
  */
 public class PostMigrationReportVerifierTest {
+    protected final static String PROJECT_SOURCE = "cdm";
     private static final String BOXC_URL_1 = "http://example.com/bxc/bb3b83d7-2962-4604-a7d0-9afcb4ec99b1";
     private static final String BOXC_URL_2 = "http://example.com/bxc/91c08272-260f-40f1-bb7c-78854d504368";
     private static final String CDM_URL_1 = "http://localhost/cdm/singleitem/collection/proj/id/25";
@@ -53,7 +54,7 @@ public class PostMigrationReportVerifierTest {
         closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, "proj", null, "user",
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID, PROJECT_SOURCE);
         testHelper = new SipServiceHelper(project, tmpFolder);
         reportGenerator = new PostMigrationReportService();
         reportGenerator.setProject(project);

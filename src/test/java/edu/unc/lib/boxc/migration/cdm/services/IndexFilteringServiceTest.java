@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class IndexFilteringServiceTest {
     private static final String PROJECT_NAME = "proj";
     private static final String USERNAME = "migr_user";
+    private static final String PROJECT_SOURCE = "cdm";
     @TempDir
     public Path tmpFolder;
     private SipServiceHelper testHelper;
@@ -38,7 +39,7 @@ public class IndexFilteringServiceTest {
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME, null, USERNAME,
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID, PROJECT_SOURCE);
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = new IndexFilteringService();
         service.setProject(project);

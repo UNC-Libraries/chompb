@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
@@ -36,8 +37,9 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
 
     @BeforeEach
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
+        project = MigrationProjectFactory.createCdmMigrationProject(
+                tmpFolder, PROJECT_NAME, null, USERNAME,
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
 
         basePath = tmpFolder.resolve("testFolder");
         Files.createDirectory(basePath);

@@ -21,10 +21,18 @@ public class MigrationProjectFactory {
     private MigrationProjectFactory() {
     }
 
-    public static MigrationProject createMigrationProject(Path path, String name,
-                                                          String collectionId, String user, String cdmEnvId)
+    public static MigrationProject createCdmMigrationProject(Path path, String name,
+                                                             String collectionId, String user,
+                                                             String cdmEnvId, String bxcEnvId)
             throws IOException {
-        return createMigrationProject(path, name, collectionId, user, cdmEnvId, null);
+        return createMigrationProject(path, name, collectionId, user, cdmEnvId, bxcEnvId, "cdm");
+    }
+
+    public static MigrationProject createFilesMigrationProject(Path path, String name,
+                                                          String collectionId, String user,
+                                                               String bxcEnvId, String projectSource)
+            throws IOException {
+        return createMigrationProject(path, name, collectionId, user, null, bxcEnvId, projectSource);
     }
 
     /**
@@ -40,7 +48,7 @@ public class MigrationProjectFactory {
      */
     public static MigrationProject createMigrationProject(Path path, String name,
                                                           String collectionId, String user,
-                                                          String cdmEnvId, String bxcEnvId)
+                                                          String cdmEnvId, String bxcEnvId, String projectSource)
             throws IOException {
         Assert.notNull(path, "Project path not set");
         Assert.notNull(user, "Username not set");
@@ -73,13 +81,14 @@ public class MigrationProjectFactory {
         properties.setCreator(user);
         properties.setCreatedDate(Instant.now());
         properties.setName(projectName);
-        if (cdmEnvId == null) {
-            properties.setCdmCollectionId(null);
-        } else {
+        if (projectSource.equalsIgnoreCase("cdm")) {
             properties.setCdmCollectionId(collectionId == null ? projectName : collectionId);
+        } else {
+            properties.setCdmCollectionId(null);
         }
         properties.setCdmEnvironmentId(cdmEnvId);
         properties.setBxcEnvironmentId(bxcEnvId);
+        properties.setProjectSource(projectSource);
         project.setProjectProperties(properties);
         ProjectPropertiesSerialization.write(propertiesPath, properties);
 

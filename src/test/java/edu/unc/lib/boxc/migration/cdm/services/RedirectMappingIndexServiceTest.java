@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class RedirectMappingIndexServiceTest {
     private static final String PROJECT_NAME = "proj";
     private static final String DEST_UUID = "7a33f5e6-f0ca-461c-8df0-c76c62198b17";
+    protected final static String PROJECT_SOURCE = "cdm";
 
     @TempDir
     public Path tmpFolder;
@@ -49,7 +50,7 @@ public class RedirectMappingIndexServiceTest {
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME, null, "user",
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID, PROJECT_SOURCE);
         testHelper = new SipServiceHelper(project, tmpFolder);
         redirectMappingHelper = new RedirectMappingHelper(project);
         redirectMappingHelper.createRedirectMappingsTableInDb();

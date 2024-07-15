@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
 
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,8 +36,9 @@ public class DestinationsStatusServiceTest extends AbstractOutputTest {
 
     @BeforeEach
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
+        project = MigrationProjectFactory.createCdmMigrationProject(
+                tmpFolder, PROJECT_NAME, null, USERNAME,
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
 
         testHelper = new SipServiceHelper(project, tmpFolder);
         statusService = new DestinationsStatusService();

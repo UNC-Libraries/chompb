@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
 import org.apache.commons.io.FileUtils;
@@ -182,8 +183,9 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     }
 
     private Path createProject(String collId) throws Exception {
-        MigrationProject project = MigrationProjectFactory.createMigrationProject(
-                baseDir, collId, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID);
+        MigrationProject project = MigrationProjectFactory.createCdmMigrationProject(
+                baseDir, collId, null, USERNAME,
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
         CdmFieldEntry fieldEntry = new CdmFieldEntry();
         fieldEntry.setNickName("title");

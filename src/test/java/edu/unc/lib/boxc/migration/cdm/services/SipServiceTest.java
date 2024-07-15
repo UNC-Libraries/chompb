@@ -79,6 +79,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
 public class SipServiceTest {
     private static final String PROJECT_NAME = "proj";
     private static final String USERNAME = "migr_user";
+    private static final String PROJECT_SOURCE = "cdm";
     private static final String DEST_UUID = "bfe93126-849a-43a5-b9d9-391e18ffacc6";
     private static final String DEST_UUID2 = "8ae56bbc-400e-496d-af4b-3c585e20dba1";
     private static final String DEST_UUID3 = "bdbd99af-36a5-4bab-9785-e3a802d3737e";
@@ -103,7 +104,7 @@ public class SipServiceTest {
         closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME, null, USERNAME,
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID, PROJECT_SOURCE);
 
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = testHelper.createSipsService();

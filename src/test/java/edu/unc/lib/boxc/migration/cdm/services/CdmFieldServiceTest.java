@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
@@ -56,8 +57,9 @@ public class CdmFieldServiceTest {
     @BeforeEach
     public void setup() throws Exception {
         closeable = openMocks(this);
-        project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+        project = MigrationProjectFactory.createCdmMigrationProject(
+                tmpFolder, PROJECT_NAME, null, "user",
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         service = new CdmFieldService();
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);

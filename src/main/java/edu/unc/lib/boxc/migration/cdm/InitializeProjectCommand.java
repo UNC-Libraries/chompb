@@ -54,8 +54,11 @@ public class InitializeProjectCommand implements Callable<Integer> {
                 "If the project name is different from the CDM collection ID, then use -c to specify the ID." })
     private String projectName;
     @Option(names = {"-s", "--source"},
-            description = {"Initialize a new project that doesn't need to be linked with a CDM collection."})
-    private String newProject;
+            description = {"Specify the source of migration data when initializing a new project. Accepted values: " +
+                    "cdm (CDM collection), files (filesystem, doesn't need to be linked with CDM collection)." +
+                    "Defaults to cdm."},
+            defaultValue = "cdm")
+    private String projectSource;
 
     private CdmFieldService fieldService;
     private CloseableHttpClient httpClient;
@@ -93,57 +96,71 @@ public class InitializeProjectCommand implements Callable<Integer> {
 
         Path currentPath = parentCommand.getWorkingDirectory();
         String projDisplayName = projectName == null ? currentPath.getFileName().toString() : projectName;
+        Integer integer = null;
+
+        if (projectSource.equalsIgnoreCase("cdm")) {
+            integer = initCdmProject(config, currentPath, projDisplayName, start);
+        } else if (projectSource.equalsIgnoreCase("files")) {
+            integer = initFilesProject(currentPath, projDisplayName, start);
+        }
+
+        return integer;
+    }
+
+    private Integer initCdmProject(ChompbConfig config, Path currentPath, String projDisplayName, long start) throws Exception {
+        var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnvId);
         String collId = cdmCollectionId == null ? projDisplayName : cdmCollectionId;
         String username = System.getProperty("user.name");
 
-        if (newProject != null && !newProject.isBlank()) {
-            // Instantiate the project
-            try {
-                MigrationProjectFactory.createMigrationProject(
-                        currentPath, projectName, null, username, null, bxcEnvId);
+        // Retrieve field information from CDM
+        CdmFieldInfo fieldInfo;
+        try {
+            fieldService.setCdmBaseUri(cdmEnvConfig.getHttpBaseUrl());
+            fieldInfo = fieldService.retrieveFieldsForCollection(collId);
+        } catch (IOException | MigrationException e) {
+            log.error("Failed to retrieve field information for collection in project", e);
+            outputLogger.info("Failed to retrieve field information for collection {} in project {}:\n{}",
+                    collId, projDisplayName, e.getMessage());
+            return 1;
+        }
 
-            } catch (InvalidProjectStateException e) {
-                outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
-                return 1;
-            }
-        } else {
-            var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnvId);
+        // Instantiate the project
+        MigrationProject project = null;
+        try {
+            project = MigrationProjectFactory.createCdmMigrationProject(
+                    currentPath, projectName, cdmCollectionId, username, cdmEnvId, bxcEnvId);
 
-            // Retrieve field information from CDM
-            CdmFieldInfo fieldInfo;
-            try {
-                fieldService.setCdmBaseUri(cdmEnvConfig.getHttpBaseUrl());
-                fieldInfo = fieldService.retrieveFieldsForCollection(collId);
-            } catch (IOException | MigrationException e) {
-                log.error("Failed to retrieve field information for collection in project", e);
-                outputLogger.info("Failed to retrieve field information for collection {} in project {}:\n{}",
-                        collId, projDisplayName, e.getMessage());
-                return 1;
-            }
+            // Persist field info to the project
+            fieldService.persistFieldsToProject(project, fieldInfo);
+        } catch (InvalidProjectStateException e) {
+            outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
+            return 1;
+        }
 
-            // Instantiate the project
-            MigrationProject project = null;
-            try {
-                project = MigrationProjectFactory.createMigrationProject(
-                        currentPath, projectName, cdmCollectionId, username, cdmEnvId, bxcEnvId);
+        //Record collection's finding aid (if available)
+        try {
+            findingAidService.setProject(project);
+            findingAidService.setCdmFieldService(fieldService);
+            findingAidService.recordFindingAid();
+        } catch (Exception e) {
+            log.error("Failed to record finding aid for collection", e);
+            outputLogger.info("Failed to record finding aid for collection", e);
+            return 1;
+        }
 
-                // Persist field info to the project
-                fieldService.persistFieldsToProject(project, fieldInfo);
-            } catch (InvalidProjectStateException e) {
-                outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
-                return 1;
-            }
+        outputLogger.info("Initialized project {} in {}s", projDisplayName, (System.nanoTime() - start) / 1e9);
+        return 0;
+    }
 
-            //Record collection's finding aid (if available)
-            try {
-                findingAidService.setProject(project);
-                findingAidService.setCdmFieldService(fieldService);
-                findingAidService.recordFindingAid();
-            } catch (Exception e) {
-                log.error("Failed to record finding aid for collection", e);
-                outputLogger.info("Failed to record finding aid for collection", e);
-                return 1;
-            }
+    private Integer initFilesProject(Path currentPath, String projDisplayName, long start) throws Exception {
+        String username = System.getProperty("user.name");
+
+        try {
+            MigrationProjectFactory.createFilesMigrationProject(
+                    currentPath, projectName, null, username,  bxcEnvId, projectSource);
+        } catch (InvalidProjectStateException e) {
+            outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
+            return 1;
         }
 
         outputLogger.info("Initialized project {} in {}s", projDisplayName, (System.nanoTime() - start) / 1e9);
