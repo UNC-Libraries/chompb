@@ -19,8 +19,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.IOUtils;
@@ -187,7 +185,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void initNewProjectTest() throws Exception {
+    public void initNewProjectFromFilesystemTest() throws Exception {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
