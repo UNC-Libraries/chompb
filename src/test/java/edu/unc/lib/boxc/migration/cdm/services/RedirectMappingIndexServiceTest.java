@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class RedirectMappingIndexServiceTest {
     private static final String PROJECT_NAME = "proj";
     private static final String DEST_UUID = "7a33f5e6-f0ca-461c-8df0-c76c62198b17";
-    protected final static String PROJECT_SOURCE = "cdm";
 
     @TempDir
     public Path tmpFolder;

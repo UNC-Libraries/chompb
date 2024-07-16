@@ -217,6 +217,7 @@ public class MigrationProjectFactoryTest {
         MigrationProjectProperties returnedProperties = projectLoaded.getProjectProperties();
         assertEquals(USERNAME, returnedProperties.getCreator());
         assertEquals(PROJ_NAME, returnedProperties.getName(), "Project name did not match expected value");
+        assertEquals(MigrationProject.PROJECT_SOURCE_FILES, returnedProperties.getProjectSource());
         assertNull(returnedProperties.getCdmCollectionId());
         assertNotNull(returnedProperties.getCreatedDate(), "Created date not set");
         assertNull(returnedProperties.getCdmEnvironmentId());
@@ -226,6 +227,7 @@ public class MigrationProjectFactoryTest {
         MigrationProjectProperties propertiesFile = ProjectPropertiesSerialization.read(propertiesPath);
         assertEquals(USERNAME, propertiesFile.getCreator());
         assertEquals(PROJ_NAME, propertiesFile.getName(), "Project name did not match expected value");
+        assertEquals(MigrationProject.PROJECT_SOURCE_FILES, propertiesFile.getProjectSource());
         assertNull(propertiesFile.getCdmCollectionId());
         assertNotNull(propertiesFile.getCreatedDate(), "Created date not set");
         assertNull(propertiesFile.getCdmEnvironmentId());
