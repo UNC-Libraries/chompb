@@ -33,8 +33,8 @@ public class StreamingMetadataServiceTest {
     public void setup() throws Exception {
         closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, "user",
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
+                BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = new StreamingMetadataService();
         service.setProject(project);

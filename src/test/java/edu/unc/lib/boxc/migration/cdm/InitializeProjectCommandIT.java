@@ -19,8 +19,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.IOUtils;
@@ -105,7 +103,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void initCdmCollectioNotFoundTest() throws Exception {
+    public void initCdmCollectionNotFoundTest() throws Exception {
         String[] initArgs = new String[] {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
@@ -184,6 +182,29 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         assertOutputContains("Must provide an env-config option");
 
         assertProjectDirectoryNotCreate();
+    }
+
+    @Test
+    public void initNewProjectFromFilesystemTest() throws Exception {
+        String[] initArgs = new String[] {
+                "-w", baseDir.toString(),
+                "--env-config", chompbConfigPath,
+                "init",
+                "-p", "test_file_project",
+                "-s", "files" };
+        executeExpectSuccess(initArgs);
+
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(baseDir.resolve("test_file_project"));
+        MigrationProjectProperties properties = project.getProjectProperties();
+        assertEquals(USERNAME, properties.getCreator());
+        assertEquals("test_file_project", properties.getName(), "Project name did not match expected value");
+        assertNull(properties.getCdmCollectionId());
+        assertNotNull(properties.getCreatedDate(), "Created date not set");
+        assertNull(properties.getHookId());
+        assertNull(properties.getCollectionNumber());
+        assertNull(properties.getCdmEnvironmentId());
+        assertEquals(BxcEnvironmentHelper.DEFAULT_ENV_ID, properties.getBxcEnvironmentId());
+        assertTrue(Files.exists(project.getDescriptionsPath()), "Description folder not created");
     }
 
     private void assertProjectDirectoryNotCreate() throws IOException {

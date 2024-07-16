@@ -37,8 +37,8 @@ public class IndexFilteringServiceTest {
     @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, USERNAME,
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID,
+                BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = new IndexFilteringService();
         service.setProject(project);

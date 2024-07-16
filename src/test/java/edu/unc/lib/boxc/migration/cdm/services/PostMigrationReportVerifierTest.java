@@ -52,8 +52,8 @@ public class PostMigrationReportVerifierTest {
     public void setup() throws Exception {
         closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, "proj", null, "user",
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, "proj", null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
+                BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         testHelper = new SipServiceHelper(project, tmpFolder);
         reportGenerator = new PostMigrationReportService();
         reportGenerator.setProject(project);

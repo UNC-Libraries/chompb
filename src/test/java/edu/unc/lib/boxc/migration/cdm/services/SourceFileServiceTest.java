@@ -13,10 +13,8 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 
-import edu.unc.lib.boxc.migration.cdm.AbstractOutputTest;
-import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
-import edu.unc.lib.boxc.migration.cdm.test.OutputHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,8 +48,9 @@ public class SourceFileServiceTest {
 
     @BeforeEach
     public void setup() throws Exception {
-        project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+        project = MigrationProjectFactory.createCdmMigrationProject(
+                tmpFolder, PROJECT_NAME, null, "user",
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
         basePath = tmpFolder.resolve("testFolder");

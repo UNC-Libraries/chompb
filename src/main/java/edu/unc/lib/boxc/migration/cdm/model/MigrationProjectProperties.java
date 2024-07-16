@@ -28,6 +28,7 @@ public class MigrationProjectProperties {
     private String collectionNumber;
     private String cdmEnvironmentId;
     private String bxcEnvironmentId;
+    private String projectSource;
 
     public MigrationProjectProperties() {
         sipsSubmitted = new HashSet<>();
@@ -229,5 +230,13 @@ public class MigrationProjectProperties {
 
     public void setBxcEnvironmentId(String bxcEnvironmentId) {
         this.bxcEnvironmentId = bxcEnvironmentId;
+    }
+
+    public String getProjectSource() {
+        return projectSource;
+    }
+
+    public void setProjectSource(String projectSource) {
+        this.projectSource = projectSource;
     }
 }

@@ -53,6 +53,12 @@ public class InitializeProjectCommand implements Callable<Integer> {
                 "If not specified, then the project will be initialized in the current directory.",
                 "If the project name is different from the CDM collection ID, then use -c to specify the ID." })
     private String projectName;
+    @Option(names = {"-s", "--source"},
+            description = {"Specify the source of migration data when initializing a new project. Accepted values: " +
+                    "cdm (CDM collection), files (filesystem, doesn't need to be linked with CDM collection)." +
+                    "Defaults to cdm."},
+            defaultValue = "cdm")
+    private String projectSource;
 
     private CdmFieldService fieldService;
     private CloseableHttpClient httpClient;
@@ -87,11 +93,27 @@ public class InitializeProjectCommand implements Callable<Integer> {
             log.error("Unable to read application configuration", e);
             return 1;
         }
-        var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnvId);
 
         Path currentPath = parentCommand.getWorkingDirectory();
         String projDisplayName = projectName == null ? currentPath.getFileName().toString() : projectName;
+        Integer integer = -1;
+
+        if (projectSource.equalsIgnoreCase(MigrationProject.PROJECT_SOURCE_CDM)) {
+            integer = initCdmProject(config, currentPath, projDisplayName, start);
+        } else if (projectSource.equalsIgnoreCase(MigrationProject.PROJECT_SOURCE_FILES)) {
+            integer = initFilesProject(currentPath, projDisplayName, start);
+        } else {
+            log.error("Invalid project source: {}", projectSource);
+            outputLogger.info("Invalid project source: {}", projectSource);
+        }
+
+        return integer;
+    }
+
+    private Integer initCdmProject(ChompbConfig config, Path currentPath, String projDisplayName, long start) throws Exception {
+        var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnvId);
         String collId = cdmCollectionId == null ? projDisplayName : cdmCollectionId;
+        String username = System.getProperty("user.name");
 
         // Retrieve field information from CDM
         CdmFieldInfo fieldInfo;
@@ -105,12 +127,10 @@ public class InitializeProjectCommand implements Callable<Integer> {
             return 1;
         }
 
-        String username = System.getProperty("user.name");
-
         // Instantiate the project
-        MigrationProject project = null;
+        MigrationProject project;
         try {
-            project = MigrationProjectFactory.createMigrationProject(
+            project = MigrationProjectFactory.createCdmMigrationProject(
                     currentPath, projectName, cdmCollectionId, username, cdmEnvId, bxcEnvId);
 
             // Persist field info to the project
@@ -128,6 +148,20 @@ public class InitializeProjectCommand implements Callable<Integer> {
         } catch (Exception e) {
             log.error("Failed to record finding aid for collection", e);
             outputLogger.info("Failed to record finding aid for collection", e);
+            return 1;
+        }
+
+        outputLogger.info("Initialized project {} in {}s", projDisplayName, (System.nanoTime() - start) / 1e9);
+        return 0;
+    }
+
+    private Integer initFilesProject(Path currentPath, String projDisplayName, long start) throws Exception {
+        String username = System.getProperty("user.name");
+
+        try {
+            MigrationProjectFactory.createFilesMigrationProject(currentPath, projectName, username,  bxcEnvId);
+        } catch (InvalidProjectStateException e) {
+            outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
             return 1;
         }
 

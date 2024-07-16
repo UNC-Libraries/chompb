@@ -3,6 +3,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -11,6 +12,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,7 @@ public class MigrationProjectFactoryTest {
     public Path tmpFolder;
     private Path projectsBase;
     private String testEnv = CdmEnvironmentHelper.DEFAULT_ENV_ID;
+    private String bxcTestEnv = BxcEnvironmentHelper.DEFAULT_ENV_ID;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -42,7 +45,8 @@ public class MigrationProjectFactoryTest {
     @Test
     public void createNoUserTest() throws Exception {
         try {
-            MigrationProjectFactory.createMigrationProject(projectsBase, null, null, null, testEnv);
+            MigrationProjectFactory.createCdmMigrationProject(projectsBase, null, null, null,
+                    testEnv, bxcTestEnv);
             fail();
         } catch (IllegalArgumentException e) {
             // Expected
@@ -53,7 +57,7 @@ public class MigrationProjectFactoryTest {
     @Test
     public void createWithNameTest() throws Exception {
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv);
+                .createCdmMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv, bxcTestEnv);
 
         assertNotNull(project);
         assertEquals(projectsBase.resolve(PROJ_NAME), project.getProjectPath());
@@ -68,7 +72,7 @@ public class MigrationProjectFactoryTest {
         Files.createDirectory(projectsBase.resolve(PROJ_NAME));
 
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv);
+                .createCdmMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv, bxcTestEnv);
 
         assertNotNull(project);
         assertEquals(projectsBase.resolve(PROJ_NAME), project.getProjectPath());
@@ -82,7 +86,7 @@ public class MigrationProjectFactoryTest {
         Files.createFile(projectsBase.resolve(PROJ_NAME));
         try {
             // Create file at expected project path
-            MigrationProjectFactory.createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv);
+            MigrationProjectFactory.createCdmMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv, bxcTestEnv);
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue(e.getMessage().contains("already exists and is not a directory"));
@@ -92,7 +96,7 @@ public class MigrationProjectFactoryTest {
     @Test
     public void createWithNameAndCollectionTest() throws Exception {
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME, testEnv);
+                .createCdmMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME, testEnv, bxcTestEnv);
 
         assertNotNull(project);
         assertEquals(projectsBase.resolve(PROJ_NAME), project.getProjectPath());
@@ -108,7 +112,7 @@ public class MigrationProjectFactoryTest {
         Files.createDirectory(projectPath);
 
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectPath, null, null, USERNAME, testEnv);
+                .createCdmMigrationProject(projectPath, null, null, USERNAME, testEnv, bxcTestEnv);
 
         assertNotNull(project);
         assertEquals(projectPath, project.getProjectPath());
@@ -124,7 +128,7 @@ public class MigrationProjectFactoryTest {
         Files.createDirectory(projectPath);
 
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectPath, null, COLL_ID, USERNAME, testEnv);
+                .createCdmMigrationProject(projectPath, null, COLL_ID, USERNAME, testEnv, bxcTestEnv);
 
         assertNotNull(project);
         assertEquals(projectPath, project.getProjectPath());
@@ -136,11 +140,11 @@ public class MigrationProjectFactoryTest {
     @Test
     public void createProjectAlreadyExistsTest() throws Exception {
         MigrationProject project = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv);
+                .createCdmMigrationProject(projectsBase, PROJ_NAME, null, USERNAME, testEnv, bxcTestEnv);
 
         try {
             // Create file at expected project path
-            MigrationProjectFactory.createMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME, testEnv);
+            MigrationProjectFactory.createCdmMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME, testEnv, bxcTestEnv);
             fail();
         } catch (InvalidProjectStateException e) {
             assertTrue(e.getMessage().contains("directory already contains a migration project"));
@@ -184,7 +188,7 @@ public class MigrationProjectFactoryTest {
     public void loadValidProject() throws Exception {
         Path projectPath = projectsBase.resolve(PROJ_NAME);
         MigrationProject projectCreated = MigrationProjectFactory
-                .createMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME, testEnv);
+                .createCdmMigrationProject(projectsBase, PROJ_NAME, COLL_ID, USERNAME, testEnv, bxcTestEnv);
 
         MigrationProject projectLoaded = MigrationProjectFactory.loadMigrationProject(projectPath);
 
@@ -193,6 +197,40 @@ public class MigrationProjectFactoryTest {
 
         assertReturnedPropertiesPopulated(projectLoaded, PROJ_NAME, COLL_ID);
         assertPropertiesFilePopulated(projectLoaded, PROJ_NAME, COLL_ID);
+
+        assertEquals(projectCreated.getProjectProperties().getCreatedDate(),
+                projectLoaded.getProjectProperties().getCreatedDate(),
+                "Expect created and loaded projects to have same timestamp");
+    }
+
+    @Test
+    public void createFilesMigrationTest() throws Exception {
+        Path projectPath = projectsBase.resolve(PROJ_NAME);
+        MigrationProject projectCreated = MigrationProjectFactory
+                .createFilesMigrationProject(projectsBase, PROJ_NAME, USERNAME, bxcTestEnv);
+
+        MigrationProject projectLoaded = MigrationProjectFactory.loadMigrationProject(projectPath);
+
+        assertNotNull(projectLoaded);
+        assertEquals(projectPath, projectLoaded.getProjectPath());
+
+        MigrationProjectProperties returnedProperties = projectLoaded.getProjectProperties();
+        assertEquals(USERNAME, returnedProperties.getCreator());
+        assertEquals(PROJ_NAME, returnedProperties.getName(), "Project name did not match expected value");
+        assertEquals(MigrationProject.PROJECT_SOURCE_FILES, returnedProperties.getProjectSource());
+        assertNull(returnedProperties.getCdmCollectionId());
+        assertNotNull(returnedProperties.getCreatedDate(), "Created date not set");
+        assertNull(returnedProperties.getCdmEnvironmentId());
+
+        Path propertiesPath = projectLoaded.getProjectPropertiesPath();
+        assertTrue(Files.exists(propertiesPath), "Properties object must exist");
+        MigrationProjectProperties propertiesFile = ProjectPropertiesSerialization.read(propertiesPath);
+        assertEquals(USERNAME, propertiesFile.getCreator());
+        assertEquals(PROJ_NAME, propertiesFile.getName(), "Project name did not match expected value");
+        assertEquals(MigrationProject.PROJECT_SOURCE_FILES, propertiesFile.getProjectSource());
+        assertNull(propertiesFile.getCdmCollectionId());
+        assertNotNull(propertiesFile.getCreatedDate(), "Created date not set");
+        assertNull(propertiesFile.getCdmEnvironmentId());
 
         assertEquals(projectCreated.getProjectProperties().getCreatedDate(),
                 projectLoaded.getProjectProperties().getCreatedDate(),

@@ -52,7 +52,8 @@ public class AbstractCommandIT extends AbstractOutputTest {
 
     protected void initProject() throws IOException {
         project = MigrationProjectFactory.createMigrationProject(baseDir, PROJECT_ID, defaultCollectionId, USERNAME,
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID,
+                MigrationProject.PROJECT_SOURCE_CDM);
     }
 
     protected void initProjectAndHelper() throws IOException {

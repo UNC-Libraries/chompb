@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
@@ -50,7 +51,8 @@ public class DescriptionsServiceTest {
     @BeforeEach
     public void setup() throws Exception {
         basePath = tmpFolder;
-        project = MigrationProjectFactory.createMigrationProject(basePath, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID);
+        project = MigrationProjectFactory.createCdmMigrationProject(basePath, PROJECT_NAME, null,
+                "user", CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getDescriptionsPath());
         service = new DescriptionsService();
         service.setProject(project);

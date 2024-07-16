@@ -102,8 +102,8 @@ public class SipServiceTest {
     public void setup() throws Exception {
         closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, USERNAME,
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
+                tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID,
+                BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
 
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = testHelper.createSipsService();
