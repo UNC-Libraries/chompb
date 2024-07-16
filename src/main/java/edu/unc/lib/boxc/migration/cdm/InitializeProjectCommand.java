@@ -96,12 +96,15 @@ public class InitializeProjectCommand implements Callable<Integer> {
 
         Path currentPath = parentCommand.getWorkingDirectory();
         String projDisplayName = projectName == null ? currentPath.getFileName().toString() : projectName;
-        Integer integer = null;
+        Integer integer = -1;
 
-        if (projectSource.equalsIgnoreCase("cdm")) {
+        if (projectSource.equalsIgnoreCase(MigrationProject.PROJECT_SOURCE_CDM)) {
             integer = initCdmProject(config, currentPath, projDisplayName, start);
-        } else if (projectSource.equalsIgnoreCase("files")) {
+        } else if (projectSource.equalsIgnoreCase(MigrationProject.PROJECT_SOURCE_FILES)) {
             integer = initFilesProject(currentPath, projDisplayName, start);
+        } else {
+            log.error("Invalid project source: {}", projectSource);
+            outputLogger.info("Invalid project source: {}", projectSource);
         }
 
         return integer;
@@ -125,7 +128,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
         }
 
         // Instantiate the project
-        MigrationProject project = null;
+        MigrationProject project;
         try {
             project = MigrationProjectFactory.createCdmMigrationProject(
                     currentPath, projectName, cdmCollectionId, username, cdmEnvId, bxcEnvId);
@@ -156,8 +159,7 @@ public class InitializeProjectCommand implements Callable<Integer> {
         String username = System.getProperty("user.name");
 
         try {
-            MigrationProjectFactory.createFilesMigrationProject(
-                    currentPath, projectName, null, username,  bxcEnvId, projectSource);
+            MigrationProjectFactory.createFilesMigrationProject(currentPath, projectName, username,  bxcEnvId);
         } catch (InvalidProjectStateException e) {
             outputLogger.info("Failed to initialize project {}: {}", projDisplayName, e.getMessage());
             return 1;

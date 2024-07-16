@@ -21,18 +21,17 @@ public class MigrationProjectFactory {
     private MigrationProjectFactory() {
     }
 
-    public static MigrationProject createCdmMigrationProject(Path path, String name,
-                                                             String collectionId, String user,
-                                                             String cdmEnvId, String bxcEnvId)
+    public static MigrationProject createCdmMigrationProject(Path path, String name, String collectionId,
+                                                             String user, String cdmEnvId, String bxcEnvId)
             throws IOException {
-        return createMigrationProject(path, name, collectionId, user, cdmEnvId, bxcEnvId, "cdm");
+        return createMigrationProject(path, name, collectionId, user, cdmEnvId, bxcEnvId,
+                MigrationProject.PROJECT_SOURCE_CDM);
     }
 
-    public static MigrationProject createFilesMigrationProject(Path path, String name,
-                                                          String collectionId, String user,
-                                                               String bxcEnvId, String projectSource)
+    public static MigrationProject createFilesMigrationProject(Path path, String name, String user, String bxcEnvId)
             throws IOException {
-        return createMigrationProject(path, name, collectionId, user, null, bxcEnvId, projectSource);
+        return createMigrationProject(path, name, null, user, null, bxcEnvId,
+                MigrationProject.PROJECT_SOURCE_FILES);
     }
 
     /**
@@ -81,7 +80,7 @@ public class MigrationProjectFactory {
         properties.setCreator(user);
         properties.setCreatedDate(Instant.now());
         properties.setName(projectName);
-        if (projectSource.equalsIgnoreCase("cdm")) {
+        if (projectSource.equalsIgnoreCase(MigrationProject.PROJECT_SOURCE_CDM)) {
             properties.setCdmCollectionId(collectionId == null ? projectName : collectionId);
         } else {
             properties.setCdmCollectionId(null);

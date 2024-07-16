@@ -25,6 +25,8 @@ public class MigrationProject {
     public static final String REDIRECT_MAPPING_FILENAME = "redirect_mappings.csv";
     public static final String POST_MIGR_REPORT_FILENAME = "post_migration_report.csv";
     public static final String PERMISSIONS_FILENAME = "patron_permissions.csv";
+    public static final String PROJECT_SOURCE_CDM = "cdm";
+    public static final String PROJECT_SOURCE_FILES = "files";
 
     private Path projectPath;
     private MigrationProjectProperties properties;

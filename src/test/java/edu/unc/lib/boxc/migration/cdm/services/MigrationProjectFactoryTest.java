@@ -3,6 +3,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -196,6 +197,38 @@ public class MigrationProjectFactoryTest {
 
         assertReturnedPropertiesPopulated(projectLoaded, PROJ_NAME, COLL_ID);
         assertPropertiesFilePopulated(projectLoaded, PROJ_NAME, COLL_ID);
+
+        assertEquals(projectCreated.getProjectProperties().getCreatedDate(),
+                projectLoaded.getProjectProperties().getCreatedDate(),
+                "Expect created and loaded projects to have same timestamp");
+    }
+
+    @Test
+    public void createFilesMigrationTest() throws Exception {
+        Path projectPath = projectsBase.resolve(PROJ_NAME);
+        MigrationProject projectCreated = MigrationProjectFactory
+                .createFilesMigrationProject(projectsBase, PROJ_NAME, USERNAME, bxcTestEnv);
+
+        MigrationProject projectLoaded = MigrationProjectFactory.loadMigrationProject(projectPath);
+
+        assertNotNull(projectLoaded);
+        assertEquals(projectPath, projectLoaded.getProjectPath());
+
+        MigrationProjectProperties returnedProperties = projectLoaded.getProjectProperties();
+        assertEquals(USERNAME, returnedProperties.getCreator());
+        assertEquals(PROJ_NAME, returnedProperties.getName(), "Project name did not match expected value");
+        assertNull(returnedProperties.getCdmCollectionId());
+        assertNotNull(returnedProperties.getCreatedDate(), "Created date not set");
+        assertNull(returnedProperties.getCdmEnvironmentId());
+
+        Path propertiesPath = projectLoaded.getProjectPropertiesPath();
+        assertTrue(Files.exists(propertiesPath), "Properties object must exist");
+        MigrationProjectProperties propertiesFile = ProjectPropertiesSerialization.read(propertiesPath);
+        assertEquals(USERNAME, propertiesFile.getCreator());
+        assertEquals(PROJ_NAME, propertiesFile.getName(), "Project name did not match expected value");
+        assertNull(propertiesFile.getCdmCollectionId());
+        assertNotNull(propertiesFile.getCreatedDate(), "Created date not set");
+        assertNull(propertiesFile.getCdmEnvironmentId());
 
         assertEquals(projectCreated.getProjectProperties().getCreatedDate(),
                 projectLoaded.getProjectProperties().getCreatedDate(),

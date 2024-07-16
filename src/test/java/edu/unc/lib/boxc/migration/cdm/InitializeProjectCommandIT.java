@@ -198,7 +198,7 @@ public class InitializeProjectCommandIT extends AbstractCommandIT {
         MigrationProjectProperties properties = project.getProjectProperties();
         assertEquals(USERNAME, properties.getCreator());
         assertEquals("test_file_project", properties.getName(), "Project name did not match expected value");
-        assertNull(properties.getCdmCollectionId(), "CDM Collection ID did not match expected value");
+        assertNull(properties.getCdmCollectionId());
         assertNotNull(properties.getCreatedDate(), "Created date not set");
         assertNull(properties.getHookId());
         assertNull(properties.getCollectionNumber());

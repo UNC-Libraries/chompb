@@ -28,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 public class ExportStateServiceTest {
     private static final String PROJECT_NAME = "proj";
-    private static final String PROJECT_SOURCE = "cdm";
     @TempDir
     public Path tmpFolder;
 
@@ -38,8 +37,8 @@ public class ExportStateServiceTest {
     @BeforeEach
     public void setup() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, "user",
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID, PROJECT_SOURCE);
+                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
+                BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         exportStateService = new ExportStateService();
         exportStateService.setProject(project);

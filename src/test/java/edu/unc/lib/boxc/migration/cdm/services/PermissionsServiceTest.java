@@ -39,7 +39,6 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 public class PermissionsServiceTest {
     private static final String PROJECT_NAME = "proj";
-    private static final String PROJECT_SOURCE = "cdm";
 
     @TempDir
     public Path tmpFolder;
@@ -53,8 +52,8 @@ public class PermissionsServiceTest {
     public void setup() throws Exception {
         closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, "user",
-                CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID, PROJECT_SOURCE);
+                tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
+                BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = new PermissionsService();
         service.setProject(project);
