@@ -304,6 +304,32 @@ public class SourceFilesSummaryServiceTest extends AbstractOutputTest {
         assertOutputContains("31,,,");
     }
 
+    // State which produces a sample interval of 0 resulting in a divide by zero in BXC-4621
+    @Test
+    public void summaryWithPreviousStateAndSampleSizeLowerThanNewSize() throws Exception {
+        testHelper.indexExportData("gilmer");
+        Path path1 = testHelper.addSourceFile("25.txt");
+        Path path2 = testHelper.addSourceFile("26.txt");
+        Path path3 = testHelper.addSourceFile("27.txt");
+        writeCsv(mappingBody("25,," + path1 +",",
+                "26,," + path2 +","));
+        summaryService.capturePreviousState();
+        writeCsv(mappingBody("25,," + path1 +",",
+                "26,," + path2 +",",
+                "27,," + path3 +","));
+        summaryService.setSampleSize(2);
+        summaryService.summary(Verbosity.NORMAL);
+
+        assertOutputMatches(".*Previous Files Mapped: +2.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +3.*");
+        assertOutputMatches(".*Total Files in Project: +161.*");
+        assertOutputContains("Sample of New Files:");
+        assertOutputDoesNotContain("25,," + path1);
+        assertOutputDoesNotContain("26,," + path2);
+        assertOutputContains("27,," + path3);
+    }
+
     private String mappingBody(String... rows) {
         return String.join(",", SourceFilesInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
