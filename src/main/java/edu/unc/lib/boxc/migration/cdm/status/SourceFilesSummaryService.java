@@ -147,8 +147,12 @@ public class SourceFilesSummaryService extends AbstractStatusService {
         List<CSVRecord> sampleListNewFiles;
 
         // select every nth file
-        int interval = completeListNewFiles.size() / sampleSize;
-
+        int interval;
+        if (completeListNewFiles.size() <= sampleSize) {
+            interval = 1;
+        } else {
+            interval = completeListNewFiles.size() / sampleSize;
+        }
         sampleListNewFiles = IntStream.range(0, completeListNewFiles.size())
                 .filter(n -> n % interval == 0)
                 .mapToObj(completeListNewFiles::get)
