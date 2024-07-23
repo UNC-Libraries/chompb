@@ -11,7 +11,6 @@ import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
-import edu.unc.lib.boxc.model.fcrepo.ids.RepositoryPIDMinter;
 import edu.unc.lib.boxc.operations.impl.events.PremisLoggerFactoryImpl;
 import edu.unc.lib.boxc.persist.api.PackagingType;
 import org.junit.jupiter.api.AfterEach;
@@ -19,7 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
-import redis.embedded.RedisServer;
 
 import java.io.BufferedWriter;
 import java.net.URI;
@@ -41,7 +39,6 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
     private final static int REDIS_PORT = 46380;
     private final static String GROUPS = "my:admin:group";
 
-    private RedisServer redisServer;
     private SipService sipService;
 
     private DepositStatusFactory depositStatusFactory;
@@ -58,10 +55,8 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
     @BeforeEach
     public void setup() throws Exception {
         initProjectAndHelper();
-        redisServer = new RedisServer(REDIS_PORT);
         System.setProperty("REDIS_HOST", "localhost");
         System.setProperty("REDIS_PORT", Integer.toString(REDIS_PORT));
-        redisServer.start();
         sipService = testHelper.createSipsService();
     }
 
@@ -83,7 +78,6 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
         if (jedisPool != null) {
             jedisPool.close();
         }
-        redisServer.stop();
     }
 
     @Test

@@ -216,18 +216,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>it.ozimov</groupId>
-            <artifactId>embedded-redis</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>${embedded-redis.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
