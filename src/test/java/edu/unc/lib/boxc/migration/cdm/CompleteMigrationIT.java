@@ -23,7 +23,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
-import redis.embedded.RedisServer;
 
 import java.io.IOException;
 import java.net.URI;
@@ -58,7 +57,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
     private TestSshServer testSshServer;
     private Path filesBasePath;
 
-    private RedisServer redisServer;
     private DepositStatusFactory depositStatusFactory;
     private JedisPool jedisPool;
 
@@ -66,10 +64,8 @@ public class CompleteMigrationIT extends AbstractCommandIT {
     public void setup() throws Exception {
         filesBasePath = tmpFolder;
 
-        redisServer = new RedisServer(REDIS_PORT);
         System.setProperty("REDIS_HOST", "localhost");
         System.setProperty("REDIS_PORT", Integer.toString(REDIS_PORT));
-        redisServer.start();
 
         testSshServer = new TestSshServer();
         testSshServer.startServer();
@@ -102,7 +98,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
     public void after() throws Exception {
         System.clearProperty("REDIS_HOST");
         System.clearProperty("REDIS_PORT");
-        redisServer.stop();
         if (jedisPool != null) {
             jedisPool.close();
         }
