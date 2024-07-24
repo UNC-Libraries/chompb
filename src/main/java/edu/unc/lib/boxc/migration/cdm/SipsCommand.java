@@ -64,7 +64,12 @@ public class SipsCommand {
 
             List<MigrationSip> sips = sipService.generateSips(options);
             for (MigrationSip sip : sips) {
-                outputLogger.info("Generated SIP for deposit with ID {}", sip.getDepositPid().getId());
+                if (sip.getWorksCount() == 0) {
+                    outputLogger.info("Skipped SIP for destination {}, it contained no works.", sip.getDestinationId());
+                    continue;
+                }
+                outputLogger.info("Generated SIP for deposit with ID {} (containing {} works)",
+                        sip.getDepositPid().getId(), sip.getWorksCount());
                 outputLogger.info("    * SIP path: {}", sip.getSipPath());
                 if (sip.getNewCollectionPid() != null) {
                     outputLogger.info("    * Added new collection {} with box-c id {}",
