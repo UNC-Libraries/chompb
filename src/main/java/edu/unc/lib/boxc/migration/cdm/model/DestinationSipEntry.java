@@ -4,8 +4,12 @@ import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_P
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -36,6 +40,7 @@ public class DestinationSipEntry {
     DepositModelManager depositModelManager;
     DepositDirectoryManager depositDirManager;
     private Model writeModel;
+    private Path tdbPath;
 
     public DestinationSipEntry(PID depositPid, DestinationMapping mapping, Path sipPath, PIDMinter pidMinter) {
         this.depositPid = depositPid;
@@ -66,7 +71,15 @@ public class DestinationSipEntry {
     }
 
     public Path getTdbPath() {
-        return depositDirManager.getDepositDir().resolve(SipService.SIP_TDB_PATH);
+        if (tdbPath == null) {
+            try {
+                tdbPath = Files.createTempDirectory("sip-tdb");
+                tdbPath.toFile().deleteOnExit();
+            } catch (IOException e) {
+                throw new MigrationException(e);
+            }
+        }
+        return tdbPath;
     }
 
     public Model getWriteModel() {
@@ -83,6 +96,11 @@ public class DestinationSipEntry {
 
     public void close() {
         depositModelManager.close();
+        try {
+            FileUtils.deleteDirectory(getTdbPath().toFile());
+        } catch (IOException e) {
+            log.warn("Failed to cleanup Jena model directory", e.getMessage());
+        }
     }
 
     public Bag getDestinationBag() {

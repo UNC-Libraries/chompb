@@ -55,7 +55,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class SipService {
     private static final Logger log = getLogger(SipService.class);
-    public static final String SIP_TDB_PATH = "tdb_model";
     public static final String MODEL_EXPORT_NAME = "model.n3";
     public static final String SIP_INFO_NAME = "sip_info.json";
     private static final ObjectReader SIP_INFO_READER = new ObjectMapper().readerFor(MigrationSip.class);
@@ -218,12 +217,6 @@ public class SipService {
         exportDepositModel(entry);
         // Serialize the SIP info out to file
         SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
-        // Cleanup the TDB directory now that it has been exported
-        try {
-            FileUtils.deleteDirectory(entry.getTdbPath().toFile());
-        } catch (IOException e) {
-            log.warn("Failed to cleanup TDB directory", e);
-        }
     }
 
     private int countWorksInSip(DestinationSipEntry entry) {
