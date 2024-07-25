@@ -580,8 +580,8 @@ public class SourceFileServiceTest {
         service.addMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
-        assertMappingPresent(info, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
-        assertMappingPresent(info, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00001", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00002", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         assertEquals(2, info.getMappings().size());
     }
 
@@ -595,8 +595,8 @@ public class SourceFileServiceTest {
         service.addMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
-        assertMappingPresent(info, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
-        assertMappingPresent(info, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00001", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00002", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         assertMappingPresent(info, "test-00003", "", Path.of("IMG_2377.jpeg"));
         assertEquals(3, info.getMappings().size());
     }
@@ -611,8 +611,8 @@ public class SourceFileServiceTest {
         service.addMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
-        assertMappingPresent(info, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
-        assertMappingPresent(info, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00001", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00002", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         assertEquals(2, info.getMappings().size());
 
         SourceFileMappingOptions options2 = new SourceFileMappingOptions();
@@ -624,8 +624,8 @@ public class SourceFileServiceTest {
         service.addMapping(options2);
 
         SourceFilesInfo info2 = service.loadMappings();
-        assertMappingPresent(info2, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
-        assertMappingPresent(info2, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00001", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00002", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         assertMappingPresent(info2, "test-00003", "", Path.of("IMG_2377.jpeg"));
         assertEquals(3, info2.getMappings().size());
     }
@@ -640,8 +640,8 @@ public class SourceFileServiceTest {
         service.addMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
-        assertMappingPresent(info, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
-        assertMappingPresent(info, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00001", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00002", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         assertEquals(2, info.getMappings().size());
 
         SourceFileMappingOptions options2 = new SourceFileMappingOptions();
@@ -654,9 +654,9 @@ public class SourceFileServiceTest {
         service.addMapping(options2);
 
         SourceFilesInfo info2 = service.loadMappings();
-        assertMappingPresent(info2, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
-        assertMappingPresent(info2, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
-        assertEquals(2, info.getMappings().size());
+        assertMappingPresent(info2, "test-00001", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info2, "test-00002", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        assertEquals(2, info2.getMappings().size());
     }
 
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
