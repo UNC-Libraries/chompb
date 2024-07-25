@@ -22,10 +22,12 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.migration.cdm.validators.DestinationsValidator;
 import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
+import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.operations.api.events.PremisLoggerFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -53,7 +55,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class SipService {
     private static final Logger log = getLogger(SipService.class);
-    public static final String SIP_TDB_PATH = "tdb_model";
     public static final String MODEL_EXPORT_NAME = "model.n3";
     public static final String SIP_INFO_NAME = "sip_info.json";
     private static final ObjectReader SIP_INFO_READER = new ObjectMapper().readerFor(MigrationSip.class);
@@ -171,21 +172,19 @@ public class SipService {
             // Finalize all the SIPs by closing and exporting their models
             List<MigrationSip> sips = new ArrayList<>();
             for (DestinationSipEntry entry : destEntries) {
-                entry.commitModel();
-                exportDepositModel(entry);
+                var worksInSipCount = countWorksInSip(entry);
                 MigrationSip sip = new MigrationSip(entry);
+                sip.setWorksCount(worksInSipCount);
                 sips.add(sip);
+                // Cleanup the SIP directory if no works were added
+                if (worksInSipCount == 0) {
+                    cleanupSip(sip);
+                } else {
+                    persistSip(entry, sip);
+                }
                 // update progress bar
                 destinationCount++;
                 DisplayProgressUtil.displayProgress(destinationCount, destinationTotal);
-                // Serialize the SIP info out to file
-                SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
-                // Cleanup the TDB directory not that it has been exported
-                try {
-                    FileUtils.deleteDirectory(entry.getTdbPath().toFile());
-                } catch (IOException e) {
-                    log.warn("Failed to cleanup TDB directory", e);
-                }
             }
             DisplayProgressUtil.finishProgress();
             if (!options.isSuppressCollectionRedirect()) {
@@ -203,6 +202,31 @@ public class SipService {
             redirectMappingService.closeCsv();
             postMigrationReportService.closeCsv();
         }
+    }
+
+    private void cleanupSip(MigrationSip sip) {
+        try {
+            FileUtils.deleteDirectory(sip.getSipPath().toFile());
+        } catch (IOException e) {
+            log.warn("Failed to cleanup SIP directory", e);
+        }
+    }
+
+    private void persistSip(DestinationSipEntry entry, MigrationSip sip) throws IOException {
+        entry.commitModel();
+        exportDepositModel(entry);
+        // Serialize the SIP info out to file
+        SIP_INFO_WRITER.writeValue(sip.getSipPath().resolve(SIP_INFO_NAME).toFile(), sip);
+    }
+
+    private int countWorksInSip(DestinationSipEntry entry) {
+        var worksCount = 0;
+        var it = entry.getWriteModel().listResourcesWithProperty(RDF.type, Cdr.Work);
+        while (it.hasNext()) {
+            it.next();
+            worksCount++;
+        }
+        return worksCount;
     }
 
     private void exportDepositModel(DestinationSipEntry entry) throws IOException {

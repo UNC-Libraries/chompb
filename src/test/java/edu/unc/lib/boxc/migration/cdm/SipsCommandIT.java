@@ -17,7 +17,9 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_TYPE;
 import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_URL;
@@ -274,6 +276,59 @@ public class SipsCommandIT extends AbstractCommandIT {
         assertTrue(workResc3FileObj.hasProperty(STREAMING_URL, "https://durastream.lib.unc.edu/player?" +
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
         assertTrue(workResc3FileObj.hasProperty(STREAMING_TYPE, "sound"));
+    }
+
+    @Test
+    public void generateOneDestinationHasNoWorksTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        // Default destination will have no works mapped to it
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        var archivalDestUuid = "96ecf2e0-5a7d-465f-ad1c-b1fcec1f58c5";
+        var destsPath = project.getDestinationMappingsPath();
+        Files.write(destsPath, ("dcmi:Image," + archivalDestUuid + ",").getBytes(), StandardOpenOption.APPEND);
+
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "sips", "generate" };
+        executeExpectSuccess(args);
+
+        assertOutputContains("Skipped SIP for destination " + DEST_UUID + ", it contained no works");
+        try (Stream<Path> stream = Files.list(project.getSipsPath())) {
+            assertEquals(1, stream.count(), "There can only be one sip directory");
+        }
+
+        // The other sip should have 3 works listed in the output
+        assertOutputContains("containing 3 works");
+        // And should be populated normally
+        MigrationSip sip = extractSipFromOutput();
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+
+        String[] argsList = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "sips", "list" };
+        executeExpectSuccess(argsList);
+
+        assertOutputContains("SIP/Deposit ID: " + sip.getDepositId());
+        assertOutputContains("    Path: " + sip.getSipPath());
+        // Should only be one sip listed
+        assertEquals(1, getOutput().lines().filter(l -> l.contains("SIP/Deposit ID")).count());
+
     }
 
     private void assertChildFileModsPopulated(DepositDirectoryManager dirManager, Resource workResc,

@@ -19,6 +19,7 @@ public class MigrationSip {
     private PID newCollectionPid;
     private Path sipPath;
     private PID destinationPid;
+    private int worksCount;
 
     public MigrationSip() {
     }
@@ -121,5 +122,16 @@ public class MigrationSip {
 
     public void setDestinationId(String destinationId) {
         this.destinationPid = PIDs.get(destinationId);
+    }
+
+    /**
+     * @return The number of works contained within this SIP
+     */
+    public int getWorksCount() {
+        return worksCount;
+    }
+
+    public void setWorksCount(int worksCount) {
+        this.worksCount = worksCount;
     }
 }
