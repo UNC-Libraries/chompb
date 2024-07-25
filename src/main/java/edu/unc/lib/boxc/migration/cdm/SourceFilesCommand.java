@@ -138,6 +138,31 @@ public class SourceFilesCommand {
         }
     }
 
+    @Command(name = "add",
+            description = {"Add the source mapping file for this project.",
+                    "Mappings are produced by listing files from a directory using the --base-path option.",
+                    "The user provides a list of file extensions field to include, extensions set using the --extensions option.",
+                    "The user can set an optional prefix for chompb ids using the --optional-prefix option.",
+                    "The resulting will be written to the source_files.csv for this project, unless "
+                            + "the --dry-run flag is provided."})
+    public int add(@Mixin SourceFileMappingOptions options) throws Exception {
+        try {
+            long start = System.nanoTime();
+            initialize(options.getDryRun());
+            sourceService.addMapping(options);
+            outputLogger.info("Source file mapping added for {} in {}s", project.getProjectName(),
+                    (System.nanoTime() - start) / 1e9);
+            return 0;
+        } catch (MigrationException e) {
+            outputLogger.info("Add source file mapping failed: {}", e.getMessage(), e);
+            return 1;
+        } catch (Exception e) {
+            log.error("Add failed", e);
+            outputLogger.info("Add source file mapping failed: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
     private void validateOptions(SourceFileMappingOptions options) {
         // If populating a blank mapping then other arguments not needed.
         if (options.isPopulateBlank()) {

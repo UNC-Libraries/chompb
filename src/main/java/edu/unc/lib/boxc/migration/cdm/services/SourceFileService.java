@@ -13,6 +13,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -48,6 +49,7 @@ import java.util.stream.Stream;
 
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -359,6 +361,111 @@ public class SourceFileService {
             // retain original source path
             return origMapping;
         }
+    }
+
+    /**
+     * Add the source file mapping (populates the source_files mapping with files from the filesystem)
+     * @param options
+     * @throws IOException
+     */
+    public void addMapping(SourceFileMappingOptions options) throws Exception {
+        ensureMappingState(options);
+        Path mappingPath = getMappingPath();
+
+        // If rerunning addMapping, iterate through the existing mappings
+        List<String> origIds = new ArrayList<>();
+        List<String> origSourcePaths = new ArrayList<>();
+        if (Files.exists(mappingPath)) {
+            try (var originalParser = openMappingsParser(mappingPath)) {
+                for (CSVRecord originalRecord : originalParser) {
+                    origIds.add(originalRecord.get(0));
+                    origSourcePaths.add(originalRecord.get(2));
+                }
+            }
+        }
+
+        // Write to temp mappings file if doing a dry run, otherwise write to mappings file
+        if (options.getDryRun()) {
+            mappingPath = getTempMappingPath();
+        }
+        Files.deleteIfExists(mappingPath);
+
+        try (var csvPrinter = openMappingsPrinter(mappingPath)) {
+            // Insert previous mappings and get the previous highest id
+            int lastId = 0;
+            if (!origIds.isEmpty()) {
+                for (int i = 0; i < origIds.size(); i++) {
+                    csvPrinter.printRecord(origIds.get(i), null, origSourcePaths.get(i), null);
+                }
+                lastId = findHighestId(origIds);
+            }
+
+            // Generate source file mapping entry for each file
+            List<String> fileList = gatherFilesystemCandidatePaths(options, new ArrayList<>());
+            Map<Integer, String> fileMap = new HashMap<>();
+            for (String file : fileList) {
+                fileMap.put(fileList.indexOf(file) + 1, file);
+            }
+
+            for (Map.Entry<Integer, String> entry : fileMap.entrySet()) {
+                String id = generateFileId(entry.getKey() + lastId, options);
+                csvPrinter.printRecord(id, null, entry.getValue(), null);
+            }
+        }
+
+        if (!options.getDryRun()) {
+            setUpdatedDate(Instant.now());
+        }
+    }
+
+    private List<String> gatherFilesystemCandidatePaths(SourceFileMappingOptions options, List<String> origSourcePaths)
+            throws Exception {
+        Path basePath = options.getBasePath();
+        if (!Files.isDirectory(basePath)) {
+            throw new IllegalArgumentException("Base path must be a directory");
+        }
+
+        List<String> fileList = new ArrayList<>();
+        Files.walkFileTree(basePath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                if (!Files.isDirectory(file) && options.getExtensions().contains(FilenameUtils.getExtension(file.toString()))
+                        && !origSourcePaths.contains(file.toString())) {
+                    fileList.add(basePath.relativize(file).toString());
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return fileList;
+    }
+
+    private String generateFileId(int number, SourceFileMappingOptions options) {
+        String fileId;
+        String hexString = Integer.toHexString(number).toUpperCase();
+        String formattedHex = String.format("%5s", hexString).replace(' ', '0');
+
+        if (!options.getOptionalPrefix().isEmpty()) {
+            fileId = options.getOptionalPrefix() + "-" + formattedHex;
+        } else {
+            fileId = formattedHex;
+        }
+
+        return fileId;
+    }
+
+    private int findHighestId(List<String> ids) throws Exception {
+        return ids.stream().map(id -> parseIdValueToInt(id)).max(Integer::compareTo).stream().findFirst().get();
+    }
+
+    private int parseIdValueToInt(String id) {
+        int idToInt;
+        if (id.contains("-")) {
+            idToInt = Integer.parseInt(id.split("-")[1]);
+        } else {
+            idToInt = Integer.parseInt(id);
+        }
+        return idToInt;
     }
 
     public static void writeMapping(CSVPrinter csvPrinter, SourceFileMapping mapping) throws IOException {

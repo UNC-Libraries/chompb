@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
@@ -568,8 +570,96 @@ public class SourceFileServiceTest {
         assertEquals(3, info2.getMappings().size());
     }
 
+    @Test
+    public void addMappingTest() throws Exception {
+        SourceFileMappingOptions options = new SourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalPrefix("test");
+
+        service.addMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        assertMappingPresent(info, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertEquals(2, info.getMappings().size());
+    }
+
+    @Test
+    public void addMappingMultipleExtensionsTest() throws Exception {
+        SourceFileMappingOptions options = new SourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Arrays.asList("tif", "jpeg"));
+        options.setOptionalPrefix("test");
+
+        service.addMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        assertMappingPresent(info, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info, "test-00003", "", Path.of("IMG_2377.jpeg"));
+        assertEquals(3, info.getMappings().size());
+    }
+
+    @Test
+    public void rerunAddMappingNewFileAddedTest() throws Exception {
+        SourceFileMappingOptions options = new SourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalPrefix("test");
+
+        service.addMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        assertMappingPresent(info, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertEquals(2, info.getMappings().size());
+
+        SourceFileMappingOptions options2 = new SourceFileMappingOptions();
+        options2.setBasePath(Path.of("src/test/resources/files"));
+        options2.setExtensions(Collections.singletonList("jpeg"));
+        options2.setOptionalPrefix("test");
+        options2.setForce(true);
+
+        service.addMapping(options2);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        assertMappingPresent(info2, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertMappingPresent(info2, "test-00003", "", Path.of("IMG_2377.jpeg"));
+        assertEquals(3, info2.getMappings().size());
+    }
+
+    @Test
+    public void rerunAddMappingNoFilesAddedTest() throws Exception {
+        SourceFileMappingOptions options = new SourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalPrefix("test");
+
+        service.addMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        assertMappingPresent(info, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertEquals(2, info.getMappings().size());
+
+        SourceFileMappingOptions options2 = new SourceFileMappingOptions();
+        options2.setBasePath(Path.of("src/test/resources/files"));
+        options2.setExtensions(Collections.singletonList("tif"));
+        options2.setOptionalPrefix("test");
+        options2.setForce(true);
+
+        service.addMapping(options2);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        assertMappingPresent(info2, "test-00001", "", Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        assertMappingPresent(info2, "test-00002", "", Path.of("D2_035_Varners_DrugStore_interior.tif"));
+        assertEquals(2, info.getMappings().size());
+    }
+
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
-            Path... potentialPaths) {
+                                      Path... potentialPaths) {
         List<SourceFileMapping> mappings = info.getMappings();
         SourceFileMapping mapping = mappings.stream().filter(m -> m.getCdmId().equals(cdmid)).findFirst().get();
 

@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.options;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import picocli.CommandLine.Option;
 
@@ -84,6 +85,16 @@ public class SourceFileMappingOptions {
                     + " but without attempting to map them to any files")
     private boolean populateBlank;
 
+    @Option(names = {"-e", "--extensions"},
+            description = {"Provide list of file extensions to include in the source mapping file. Defaults to tif"},
+            defaultValue = "tif")
+    private List<String> extensions;
+
+    @Option(names = {"-o", "--optional-prefix"},
+            description = "Provide an optional prefix for IDs within the migration project. " +
+                    "These IDs will only be used for work in chompb.")
+    private String optionalPrefix;
+
     public Path getBasePath() {
         return basePath;
     }
@@ -162,5 +173,21 @@ public class SourceFileMappingOptions {
 
     public void setPopulateBlank(boolean populateBlank) {
         this.populateBlank = populateBlank;
+    }
+
+    public List<String> getExtensions() {
+        return extensions;
+    }
+
+    public void setExtensions(List<String> extensions) {
+        this.extensions = extensions;
+    }
+
+    public String getOptionalPrefix() {
+        return optionalPrefix;
+    }
+
+    public void setOptionalPrefix(String optionalPrefix) {
+        this.optionalPrefix = optionalPrefix;
     }
 }

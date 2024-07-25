@@ -635,6 +635,72 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
+    @Test
+    public void addMappingTest() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "tif",
+                "-o", "test"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+    }
+
+    @Test
+    public void rerunAddMappingOneFileAddedTest() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "tif",
+                "-o", "test"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "jpeg",
+                "-o", "test",
+                "-f"};
+        executeExpectSuccess(args2);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+    }
+
+    @Test
+    public void rerunAddMappingNoFilesAddedTest() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "tif",
+                "-o", "test"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "tif",
+                "-o", "test",
+                "-f"};
+        executeExpectSuccess(args2);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+    }
+
     private void indexExportSamples() throws Exception {
         testHelper.indexExportData("mini_gilmer");
     }
