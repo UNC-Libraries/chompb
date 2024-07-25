@@ -399,7 +399,7 @@ public class SourceFileService {
             }
 
             // Generate source file mapping entry for each file
-            List<String> fileList = gatherFilesystemCandidatePaths(options, new ArrayList<>());
+            List<String> fileList = gatherFilesystemCandidatePaths(options, origSourcePaths);
             Map<Integer, String> fileMap = new HashMap<>();
             for (String file : fileList) {
                 fileMap.put(fileList.indexOf(file) + 1, file);
@@ -428,7 +428,7 @@ public class SourceFileService {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 if (!Files.isDirectory(file) && options.getExtensions().contains(FilenameUtils.getExtension(file.toString()))
-                        && !origSourcePaths.contains(file.toString())) {
+                        && !origSourcePaths.contains(basePath.relativize(file).toString())) {
                     fileList.add(basePath.relativize(file).toString());
                 }
                 return FileVisitResult.CONTINUE;
