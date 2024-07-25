@@ -49,7 +49,6 @@ import java.util.stream.Stream;
 
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -369,13 +368,12 @@ public class SourceFileService {
      * @throws IOException
      */
     public void addMapping(SourceFileMappingOptions options) throws Exception {
-        ensureMappingState(options);
         Path mappingPath = getMappingPath();
 
         // If rerunning addMapping, iterate through the existing mappings
         List<String> origIds = new ArrayList<>();
         List<String> origSourcePaths = new ArrayList<>();
-        if (Files.exists(mappingPath)) {
+        if (Files.exists(mappingPath) || options.getUpdate()) {
             try (var originalParser = openMappingsParser(mappingPath)) {
                 for (CSVRecord originalRecord : originalParser) {
                     origIds.add(originalRecord.get(0));

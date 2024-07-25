@@ -619,7 +619,7 @@ public class SourceFileServiceTest {
         options2.setBasePath(Path.of("src/test/resources/files"));
         options2.setExtensions(Collections.singletonList("jpeg"));
         options2.setOptionalPrefix("test");
-        options2.setForce(true);
+        // Do not include update flag and files are still added
 
         service.addMapping(options2);
 
@@ -648,7 +648,8 @@ public class SourceFileServiceTest {
         options2.setBasePath(Path.of("src/test/resources/files"));
         options2.setExtensions(Collections.singletonList("tif"));
         options2.setOptionalPrefix("test");
-        options2.setForce(true);
+        // Include update flag
+        options2.setUpdate(true);
 
         service.addMapping(options2);
 
