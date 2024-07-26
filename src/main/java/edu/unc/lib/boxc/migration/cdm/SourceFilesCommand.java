@@ -7,13 +7,16 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.options.AddSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.ExportUnmappedSourceFilesOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmExportFilesService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.analysis.function.Add;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -61,7 +64,7 @@ public class SourceFilesCommand {
                     + " and --field-pattern options.",
                     "The resulting will be written to the source_files.csv for this project, unless "
                     + "the --dry-run flag is provided."})
-    public int generate(@Mixin SourceFileMappingOptions options) throws Exception {
+    public int generate(@Mixin GenerateSourceFileMappingOptions options) throws Exception {
         long start = System.nanoTime();
 
         try {
@@ -139,17 +142,17 @@ public class SourceFilesCommand {
     }
 
     @Command(name = "add",
-            description = {"Add the source mapping file for this project.",
+            description = {"Add files from the filesystem to the source mapping file for this project.",
                     "Mappings are produced by listing files from a directory using the --base-path option.",
                     "The user provides a list of file extensions field to include, extensions set using the --extensions option.",
                     "The user can set an optional prefix for chompb ids using the --optional-prefix option.",
                     "The resulting will be written to the source_files.csv for this project, unless "
                             + "the --dry-run flag is provided."})
-    public int add(@Mixin SourceFileMappingOptions options) throws Exception {
+    public int add(@Mixin AddSourceFileMappingOptions options) throws Exception {
         try {
             long start = System.nanoTime();
             initialize(options.getDryRun());
-            sourceService.addMapping(options);
+            sourceService.addToMapping(options);
             outputLogger.info("Source file mapping added for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
@@ -163,7 +166,7 @@ public class SourceFilesCommand {
         }
     }
 
-    private void validateOptions(SourceFileMappingOptions options) {
+    private void validateOptions(GenerateSourceFileMappingOptions options) {
         // If populating a blank mapping then other arguments not needed.
         if (options.isPopulateBlank()) {
             return;

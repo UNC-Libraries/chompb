@@ -7,7 +7,8 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.AddSourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -70,7 +71,7 @@ public class SourceFileService {
      * @param options
      * @throws IOException
      */
-    public void generateMapping(SourceFileMappingOptions options) throws IOException {
+    public void generateMapping(GenerateSourceFileMappingOptions options) throws IOException {
         assertProjectStateValid();
         ensureMappingState(options);
 
@@ -163,7 +164,7 @@ public class SourceFileService {
     }
 
     // Query for all non-compound objects. If the entry type is null, the object is an individual cdm object
-    protected String buildQuery(SourceFileMappingOptions options) {
+    protected String buildQuery(GenerateSourceFileMappingOptions options) {
         var selectStatement = "";
         if (options.isPopulateBlank()) {
             selectStatement = "select " + CdmFieldInfo.CDM_ID;
@@ -176,14 +177,14 @@ public class SourceFileService {
                 + " or " + ENTRY_TYPE_FIELD + " is null";
     }
 
-    private Pattern buildFieldMatchingPattern(SourceFileMappingOptions options) {
+    private Pattern buildFieldMatchingPattern(GenerateSourceFileMappingOptions options) {
         if (options.isPopulateBlank()) {
             return null;
         }
         return Pattern.compile(options.getFieldMatchingPattern());
     }
 
-    private Map<String, List<String>> gatherCandidatePaths(SourceFileMappingOptions options) throws IOException {
+    private Map<String, List<String>> gatherCandidatePaths(GenerateSourceFileMappingOptions options) throws IOException {
         if (options.isPopulateBlank()) {
             return Collections.emptyMap();
         }
@@ -231,7 +232,7 @@ public class SourceFileService {
         return candidatePaths;
     }
 
-    private void ensureMappingState(SourceFileMappingOptions options) {
+    private void ensureMappingState(GenerateSourceFileMappingOptions options) {
         if (options.getDryRun() || options.getUpdate()) {
             return;
         }
@@ -284,7 +285,7 @@ public class SourceFileService {
      * @param options
      * @param updatesPath the temp path containing the newly generated mappings to merge into the original mappings
      */
-    private void mergeUpdates(SourceFileMappingOptions options, Path updatesPath) throws IOException {
+    private void mergeUpdates(GenerateSourceFileMappingOptions options, Path updatesPath) throws IOException {
         Path originalPath = getMappingPath();
         Path mergedPath = originalPath.getParent().resolve("~" + originalPath.getFileName().toString() + "_merged");
         // Cleanup temp merged path if it already exists
@@ -350,7 +351,7 @@ public class SourceFileService {
         }
     }
 
-    protected SourceFileMapping resolveSourcePathConflict(SourceFileMappingOptions options,
+    protected SourceFileMapping resolveSourcePathConflict(GenerateSourceFileMappingOptions options,
                                                           SourceFileMapping origMapping,
                                                           SourceFileMapping updateMapping) {
         if (options.isForce() || origMapping.getSourcePaths() == null) {
@@ -364,22 +365,25 @@ public class SourceFileService {
 
     /**
      * Add the source file mapping (populates the source_files mapping with files from the filesystem)
+     * addToMapping will add to existing mapping files if one is present
      * @param options
      * @throws IOException
      */
-    public void addMapping(SourceFileMappingOptions options) throws Exception {
+    public void addToMapping(AddSourceFileMappingOptions options) throws Exception {
         Path mappingPath = getMappingPath();
 
-        // If rerunning addMapping, iterate through the existing mappings
+        // If rerunning addToMapping, iterate through the existing mappings
+        int lastId = 0;
         List<String> origIds = new ArrayList<>();
         List<String> origSourcePaths = new ArrayList<>();
-        if (Files.exists(mappingPath) || options.getUpdate()) {
+        if (Files.exists(mappingPath)) {
             try (var originalParser = openMappingsParser(mappingPath)) {
                 for (CSVRecord originalRecord : originalParser) {
                     origIds.add(originalRecord.get(0));
                     origSourcePaths.add(originalRecord.get(2));
                 }
             }
+            lastId = findHighestId(origIds);
         }
 
         // Write to temp mappings file if doing a dry run, otherwise write to mappings file
@@ -390,24 +394,18 @@ public class SourceFileService {
 
         try (var csvPrinter = openMappingsPrinter(mappingPath)) {
             // Insert previous mappings and get the previous highest id
-            int lastId = 0;
+
             if (!origIds.isEmpty()) {
                 for (int i = 0; i < origIds.size(); i++) {
                     csvPrinter.printRecord(origIds.get(i), null, origSourcePaths.get(i), null);
                 }
-                lastId = findHighestId(origIds);
             }
 
             // Generate source file mapping entry for each file
             List<String> fileList = gatherFilesystemCandidatePaths(options, origSourcePaths);
-            Map<Integer, String> fileMap = new HashMap<>();
-            for (String file : fileList) {
-                fileMap.put(fileList.indexOf(file) + 1, file);
-            }
-
-            for (Map.Entry<Integer, String> entry : fileMap.entrySet()) {
-                String id = generateFileId(entry.getKey() + lastId, options);
-                csvPrinter.printRecord(id, null, entry.getValue(), null);
+            for (int i = 0; i < fileList.size(); i++) {
+                String id = generateFileId(i + lastId + 1, options);
+                csvPrinter.printRecord(id, null, fileList.get(i), null);
             }
         }
 
@@ -416,7 +414,7 @@ public class SourceFileService {
         }
     }
 
-    private List<String> gatherFilesystemCandidatePaths(SourceFileMappingOptions options, List<String> origSourcePaths)
+    private List<String> gatherFilesystemCandidatePaths(AddSourceFileMappingOptions options, List<String> origSourcePaths)
             throws Exception {
         Path basePath = options.getBasePath();
         if (!Files.isDirectory(basePath)) {
@@ -427,8 +425,8 @@ public class SourceFileService {
         Files.walkFileTree(basePath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                if (!Files.isDirectory(file) && options.getExtensions().contains(FilenameUtils.getExtension(file.toString()))
-                        && !origSourcePaths.contains(basePath.relativize(file).toString())) {
+                if (!Files.isDirectory(file) && !origSourcePaths.contains(FilenameUtils.getName(file.toString()))
+                        && options.getExtensions().contains(FilenameUtils.getExtension(file.toString()).toLowerCase())) {
                     fileList.add(basePath.relativize(file).toString());
                 }
                 return FileVisitResult.CONTINUE;
@@ -438,13 +436,13 @@ public class SourceFileService {
         return fileList;
     }
 
-    private String generateFileId(int number, SourceFileMappingOptions options) {
+    private String generateFileId(int number, AddSourceFileMappingOptions options) {
         String fileId;
         String hexString = Integer.toHexString(number).toUpperCase();
         String formattedHex = String.format("%5s", hexString).replace(' ', '0');
 
-        if (!options.getOptionalPrefix().isEmpty()) {
-            fileId = options.getOptionalPrefix() + "-" + formattedHex;
+        if (!options.getOptionalIdPrefix().isEmpty()) {
+            fileId = options.getOptionalIdPrefix() + "-" + formattedHex;
         } else {
             fileId = formattedHex;
         }
@@ -452,16 +450,16 @@ public class SourceFileService {
         return fileId;
     }
 
-    private int findHighestId(List<String> ids) throws Exception {
-        return ids.stream().map(id -> parseIdValueToInt(id)).max(Integer::compareTo).stream().findFirst().get();
+    private int findHighestId(List<String> ids) {
+        return ids.stream().map(id -> parseIdValueToInt(id)).max(Integer::compareTo).get();
     }
 
     private int parseIdValueToInt(String id) {
         int idToInt;
         if (id.contains("-")) {
-            idToInt = Integer.parseInt(id.split("-")[1]);
+            idToInt = Integer.parseInt(id.split("-")[1], 16);
         } else {
-            idToInt = Integer.parseInt(id);
+            idToInt = Integer.parseInt(id, 16);
         }
         return idToInt;
     }

@@ -2,6 +2,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 
 import java.nio.file.Path;
@@ -33,7 +34,7 @@ public class AggregateFileMappingService extends SourceFileService {
 
     // Query for grouped works or compound objects (no children or single file works)
     @Override
-    protected String buildQuery(SourceFileMappingOptions options) {
+    protected String buildQuery(GenerateSourceFileMappingOptions options) {
         String selectStatement;
         if (options.isPopulateBlank()) {
             selectStatement = "select " + CdmFieldInfo.CDM_ID;
@@ -47,7 +48,7 @@ public class AggregateFileMappingService extends SourceFileService {
     }
 
     @Override
-    protected SourceFilesInfo.SourceFileMapping resolveSourcePathConflict(SourceFileMappingOptions options,
+    protected SourceFilesInfo.SourceFileMapping resolveSourcePathConflict(GenerateSourceFileMappingOptions options,
                                                                           SourceFilesInfo.SourceFileMapping origMapping,
                                                                           SourceFilesInfo.SourceFileMapping updateMapping) {
         if (options.isForce() || origMapping.getSourcePaths() == null) {

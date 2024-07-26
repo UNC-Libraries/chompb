@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.auth.api.UserRole;
+import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
@@ -364,7 +365,7 @@ public class SipServiceHelper {
         return populateSourceFiles(makeSourceFileOptions(sourceFilesBasePath), filenames);
     }
 
-    public List<Path> populateSourceFiles(SourceFileMappingOptions options, String... filenames) throws Exception {
+    public List<Path> populateSourceFiles(GenerateSourceFileMappingOptions options, String... filenames) throws Exception {
         List<Path> sourcePaths = Arrays.stream(filenames).map(this::addSourceFile).collect(Collectors.toList());
         sourceFileService.generateMapping(options);
         return sourcePaths;
@@ -376,8 +377,8 @@ public class SipServiceHelper {
         return sourcePaths;
     }
 
-    public SourceFileMappingOptions makeSourceFileOptions(Path basePath) {
-        SourceFileMappingOptions options = new SourceFileMappingOptions();
+    public GenerateSourceFileMappingOptions makeSourceFileOptions(Path basePath) {
+        GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
         options.setBasePath(basePath);
         options.setExportField("file");
         options.setFieldMatchingPattern("(.+)");
