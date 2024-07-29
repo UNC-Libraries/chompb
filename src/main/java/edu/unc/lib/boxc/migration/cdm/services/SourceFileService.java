@@ -406,7 +406,7 @@ public class SourceFileService {
             List<String> fileList = gatherFilesystemCandidatePaths(options, origSourcePaths);
             for (int i = 0; i < fileList.size(); i++) {
                 String id = generateFileId(i + lastId + 1, options);
-                csvPrinter.printRecord(id, null, basePath.resolve(fileList.get(i)), null);
+                csvPrinter.printRecord(id, null, fileList.get(i), null);
             }
         }
 
@@ -428,7 +428,7 @@ public class SourceFileService {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 if (!Files.isDirectory(file) && !origSourcePaths.contains(file.toString())
                         && options.getExtensions().contains(FilenameUtils.getExtension(file.toString()).toLowerCase())) {
-                    fileList.add(basePath.relativize(file).toString());
+                    fileList.add(file.toString());
                 }
                 return FileVisitResult.CONTINUE;
             }
