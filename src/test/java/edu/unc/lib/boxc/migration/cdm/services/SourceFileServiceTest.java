@@ -696,6 +696,25 @@ public class SourceFileServiceTest {
         assertEquals(3, info.getMappings().size());
     }
 
+    @Test
+    public void addToMappingEmptyCsvTest() throws Exception {
+        writeCsv(mappingBody(""));
+
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalIdPrefix("test");
+
+        service.addToMapping(options);
+
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info = service.loadMappings();
+        assertAddToMappingPresent(info, "test-00001", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-00002", "", testSourcePaths2);
+        assertEquals(2, info.getMappings().size());
+    }
+
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
                                       Path... potentialPaths) {
         List<SourceFileMapping> mappings = info.getMappings();

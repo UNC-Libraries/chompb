@@ -371,7 +371,6 @@ public class SourceFileService {
      */
     public void addToMapping(AddSourceFileMappingOptions options) throws Exception {
         Path mappingPath = getMappingPath();
-        Path basePath = options.getBasePath();
 
         // If rerunning addToMapping, iterate through the existing mappings
         int lastId = 0;
@@ -384,7 +383,10 @@ public class SourceFileService {
                     origSourcePaths.add(originalRecord.get(2));
                 }
             }
-            lastId = findHighestId(origIds);
+            // if existing source_files csv is empty, lastId should be 0
+            if (!origIds.isEmpty()) {
+                lastId = findHighestId(origIds);
+            }
         }
 
         // Write to temp mappings file if doing a dry run, otherwise write to mappings file
@@ -442,7 +444,7 @@ public class SourceFileService {
         String hexString = Integer.toHexString(number).toUpperCase();
         String formattedHex = String.format("%5s", hexString).replace(' ', '0');
 
-        if (!options.getOptionalIdPrefix().isEmpty()) {
+        if (options.getOptionalIdPrefix() != null) {
             fileId = options.getOptionalIdPrefix() + "-" + formattedHex;
         } else {
             fileId = formattedHex;
