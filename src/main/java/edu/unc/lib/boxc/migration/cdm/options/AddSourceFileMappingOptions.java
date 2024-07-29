@@ -4,6 +4,10 @@ import picocli.CommandLine.Option;
 
 import java.util.List;
 
+/**
+ * Options for add to file mapping
+ * @author krwong
+ */
 public class AddSourceFileMappingOptions extends SourceFileMappingOptions {
     @Option(names = {"-e", "--extensions"},
             description = {"Provide list of file extensions to include in the source mapping file. Defaults to tif"},

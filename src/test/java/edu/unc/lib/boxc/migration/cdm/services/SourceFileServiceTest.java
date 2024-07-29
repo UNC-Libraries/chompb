@@ -583,8 +583,8 @@ public class SourceFileServiceTest {
 
         service.addToMapping(options);
 
-        List<Path> testSourcePaths = Arrays.asList(Path.of("D2_035_Varners_DrugStore_interior.tif"),
-                Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        List<Path> testSourcePaths = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         SourceFilesInfo info = service.loadMappings();
         assertAddToMappingPresent(info, "test-00001", "", testSourcePaths);
         assertAddToMappingPresent(info, "test-00002", "", testSourcePaths);
@@ -600,8 +600,9 @@ public class SourceFileServiceTest {
 
         service.addToMapping(options);
 
-        List<Path> testSourcePaths = Arrays.asList(Path.of("D2_035_Varners_DrugStore_interior.tif"),
-                Path.of("IMG_2377.jpeg"), Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        List<Path> testSourcePaths = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("IMG_2377.jpeg"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         SourceFilesInfo info = service.loadMappings();
         assertAddToMappingPresent(info, "test-00001", "", testSourcePaths);
         assertAddToMappingPresent(info, "test-00002", "", testSourcePaths);
@@ -619,8 +620,8 @@ public class SourceFileServiceTest {
         service.addToMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
-        List<Path> testSourcePaths = Arrays.asList(Path.of("D2_035_Varners_DrugStore_interior.tif"),
-                Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        List<Path> testSourcePaths = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         assertAddToMappingPresent(info, "test-00001", "", testSourcePaths);
         assertAddToMappingPresent(info, "test-00002", "", testSourcePaths);
         assertEquals(2, info.getMappings().size());
@@ -633,8 +634,9 @@ public class SourceFileServiceTest {
 
         service.addToMapping(options2);
 
-        List<Path> testSourcePaths2 = Arrays.asList(Path.of("D2_035_Varners_DrugStore_interior.tif"),
-                Path.of("IMG_2377.jpeg"), Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("IMG_2377.jpeg"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         SourceFilesInfo info2 = service.loadMappings();
         assertAddToMappingPresent(info2, "test-00001", "", testSourcePaths2);
         assertAddToMappingPresent(info2, "test-00002", "", testSourcePaths2);
@@ -651,8 +653,8 @@ public class SourceFileServiceTest {
 
         service.addToMapping(options);
 
-        List<Path> testSourcePaths = Arrays.asList(Path.of("D2_035_Varners_DrugStore_interior.tif"),
-                Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        List<Path> testSourcePaths = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         SourceFilesInfo info = service.loadMappings();
         assertAddToMappingPresent(info, "test-00001", "", testSourcePaths);
         assertAddToMappingPresent(info, "test-00002", "", testSourcePaths);
@@ -665,8 +667,8 @@ public class SourceFileServiceTest {
 
         service.addToMapping(options2);
 
-        List<Path> testSourcePaths2 = Arrays.asList(Path.of("D2_035_Varners_DrugStore_interior.tif"),
-                Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
         SourceFilesInfo info2 = service.loadMappings();
         assertAddToMappingPresent(info2, "test-00001", "", testSourcePaths2);
         assertAddToMappingPresent(info2, "test-00002", "", testSourcePaths2);
@@ -675,7 +677,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void addToMappingParseLettersInIdTest() throws Exception {
-        writeCsv(mappingBody("test-0000B,," + Path.of("IMG_2377.jpeg") + ","));
+        writeCsv(mappingBody("test-0000B,," + filesystemSourceFile("IMG_2377.jpeg") + ","));
 
         AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
         options.setBasePath(Path.of("src/test/resources/files"));
@@ -684,13 +686,14 @@ public class SourceFileServiceTest {
 
         service.addToMapping(options);
 
-        List<Path> testSourcePaths2 = Arrays.asList(Path.of("D2_035_Varners_DrugStore_interior.tif"),
-                Path.of("IMG_2377.jpeg"), Path.of("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
-        SourceFilesInfo info2 = service.loadMappings();
-        assertAddToMappingPresent(info2, "test-0000B", "", testSourcePaths2);
-        assertAddToMappingPresent(info2, "test-0000C", "", testSourcePaths2);
-        assertAddToMappingPresent(info2, "test-0000D", "", testSourcePaths2);
-        assertEquals(3, info2.getMappings().size());
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("IMG_2377.jpeg"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info = service.loadMappings();
+        assertAddToMappingPresent(info, "test-0000B", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-0000C", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-0000D", "", testSourcePaths2);
+        assertEquals(3, info.getMappings().size());
     }
 
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
@@ -753,5 +756,10 @@ public class SourceFileServiceTest {
     private void writeCsv(String mappingBody) throws IOException {
         FileUtils.write(project.getSourceFilesMappingPath().toFile(),
                 mappingBody, StandardCharsets.UTF_8);
+    }
+
+    private Path filesystemSourceFile(String relPath) {
+        Path basePath = Path.of("src/test/resources/files");
+        return basePath.resolve(relPath);
     }
 }

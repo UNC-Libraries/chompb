@@ -17,13 +17,6 @@ public class SourceFileMappingOptions {
                     "To change this behavior, use the -g option."})
     private Path basePath;
 
-    @Option(names = {"-u", "--update"},
-            description = {
-                    "If provided, then any source file matches produced will be used to update an existing"
-                            + " source file mapping file, instead of attempting to create a new one.",
-                    "This can be used to build up the mapping in multiple passes"})
-    private boolean update;
-
     @Option(names = {"-d", "--dry-run"},
             description = {
                     "If provided, then the output of the matching will be displayed in the console rather "
@@ -36,14 +29,6 @@ public class SourceFileMappingOptions {
 
     public void setBasePath(Path basePath) {
         this.basePath = basePath;
-    }
-
-    public boolean getUpdate() {
-        return update;
-    }
-
-    public void setUpdate(boolean update) {
-        this.update = update;
     }
 
     public boolean getDryRun() {

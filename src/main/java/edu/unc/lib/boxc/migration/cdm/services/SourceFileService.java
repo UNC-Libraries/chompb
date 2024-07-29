@@ -371,6 +371,7 @@ public class SourceFileService {
      */
     public void addToMapping(AddSourceFileMappingOptions options) throws Exception {
         Path mappingPath = getMappingPath();
+        Path basePath = options.getBasePath();
 
         // If rerunning addToMapping, iterate through the existing mappings
         int lastId = 0;
@@ -405,7 +406,7 @@ public class SourceFileService {
             List<String> fileList = gatherFilesystemCandidatePaths(options, origSourcePaths);
             for (int i = 0; i < fileList.size(); i++) {
                 String id = generateFileId(i + lastId + 1, options);
-                csvPrinter.printRecord(id, null, fileList.get(i), null);
+                csvPrinter.printRecord(id, null, basePath.resolve(fileList.get(i)), null);
             }
         }
 
@@ -425,7 +426,7 @@ public class SourceFileService {
         Files.walkFileTree(basePath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                if (!Files.isDirectory(file) && !origSourcePaths.contains(FilenameUtils.getName(file.toString()))
+                if (!Files.isDirectory(file) && !origSourcePaths.contains(file.toString())
                         && options.getExtensions().contains(FilenameUtils.getExtension(file.toString()).toLowerCase())) {
                     fileList.add(basePath.relativize(file).toString());
                 }

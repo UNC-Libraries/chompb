@@ -2,6 +2,10 @@ package edu.unc.lib.boxc.migration.cdm.options;
 
 import picocli.CommandLine.Option;
 
+/**
+ * Options for generate file mapping
+ * @author krwong
+ */
 public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions {
     @Option(names = {"-g", "--glob-pattern"},
             description = {
@@ -52,6 +56,13 @@ public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions {
                     + " but without attempting to map them to any files")
     private boolean populateBlank;
 
+    @Option(names = {"-u", "--update"},
+            description = {
+                    "If provided, then any source file matches produced will be used to update an existing"
+                            + " source file mapping file, instead of attempting to create a new one.",
+                    "This can be used to build up the mapping in multiple passes"})
+    private boolean update;
+
     @Option(names = { "-f", "--force"},
             description = "Overwrite mapping file if one already exists")
     private boolean force;
@@ -94,6 +105,14 @@ public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions {
 
     public void setLowercaseTemplate(boolean lowercaseTemplate) {
         this.lowercaseTemplate = lowercaseTemplate;
+    }
+
+    public boolean getUpdate() {
+        return update;
+    }
+
+    public void setUpdate(boolean update) {
+        this.update = update;
     }
 
     public boolean isForce() {
