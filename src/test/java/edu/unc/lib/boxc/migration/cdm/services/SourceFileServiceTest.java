@@ -697,6 +697,27 @@ public class SourceFileServiceTest {
     }
 
     @Test
+    public void addToMappingParseManualIdTest() throws Exception {
+        writeCsv(mappingBody("testid,," + filesystemSourceFile("IMG_2377.jpeg") + ","));
+
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalIdPrefix("test");
+
+        service.addToMapping(options);
+
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("IMG_2377.jpeg"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info = service.loadMappings();
+        assertAddToMappingPresent(info, "testid", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-00001", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-00002", "", testSourcePaths2);
+        assertEquals(3, info.getMappings().size());
+    }
+
+    @Test
     public void addToMappingEmptyCsvTest() throws Exception {
         writeCsv(mappingBody(""));
 
@@ -714,6 +735,8 @@ public class SourceFileServiceTest {
         assertAddToMappingPresent(info, "test-00002", "", testSourcePaths2);
         assertEquals(2, info.getMappings().size());
     }
+
+
 
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
                                       Path... potentialPaths) {

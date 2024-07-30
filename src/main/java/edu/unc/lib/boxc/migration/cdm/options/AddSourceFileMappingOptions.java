@@ -10,6 +10,7 @@ import java.util.List;
  */
 public class AddSourceFileMappingOptions extends SourceFileMappingOptions {
     @Option(names = {"-e", "--extensions"},
+            split = ",",
             description = {"Provide list of file extensions to include in the source mapping file. Defaults to tif"},
             defaultValue = "tif",
             converter = LowerCaseConverter.class)

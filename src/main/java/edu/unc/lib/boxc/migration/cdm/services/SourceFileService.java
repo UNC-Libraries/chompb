@@ -459,11 +459,16 @@ public class SourceFileService {
 
     private int parseIdValueToInt(String id) {
         int idToInt;
-        if (id.contains("-")) {
-            idToInt = Integer.parseInt(id.split("-")[1], 16);
-        } else {
-            idToInt = Integer.parseInt(id, 16);
+        try {
+            if (id.contains("-")) {
+                idToInt = Integer.parseInt(id.split("-")[1], 16);
+            } else {
+                idToInt = Integer.parseInt(id, 16);
+            }
+        } catch (NumberFormatException e) {
+            idToInt = 0;
         }
+
         return idToInt;
     }
 
