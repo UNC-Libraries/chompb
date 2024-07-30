@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
@@ -65,7 +66,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
     @Test
     public void withAllFilesMappedTest() throws Exception {
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
-        SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         testHelper.getSourceFileService().generateMapping(opts);
         var sourceMappingPath = project.getSourceFilesMappingPath();
         var originalContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);
@@ -80,7 +81,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
     @Test
     public void withUnmappedFilesTest() throws Exception {
         var localSourcePaths = testHelper.populateSourceFiles("276_183_E.tif");
-        SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         var sourceFileService = testHelper.getSourceFileService();
         sourceFileService.generateMapping(opts);
         var sourceMappingPath = project.getSourceFilesMappingPath();
@@ -105,7 +106,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
     @Test
     public void withMissingUnmappedFilesTest() throws Exception {
         var localSourcePaths = testHelper.populateSourceFiles("276_183_E.tif");
-        SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         var sourceFileService = testHelper.getSourceFileService();
         sourceFileService.generateMapping(opts);
         var sourceMappingPath = project.getSourceFilesMappingPath();
@@ -138,7 +139,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
     @Test
     public void authenticationFailureTest() throws Exception {
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
-        SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         testHelper.getSourceFileService().generateMapping(opts);
         var sourceMappingPath = project.getSourceFilesMappingPath();
         var originalContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);

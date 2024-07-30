@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ public class AccessFilesCommand {
             description = {
                     "Generate the optional access copy mapping file for this project.",
                     "See the source_files command for more details about usage"})
-    public int generate(@Mixin SourceFileMappingOptions options) throws Exception {
+    public int generate(@Mixin GenerateSourceFileMappingOptions options) throws Exception {
         long start = System.nanoTime();
 
         try {
@@ -119,7 +120,7 @@ public class AccessFilesCommand {
         }
     }
 
-    private void validateOptions(SourceFileMappingOptions options) {
+    private void validateOptions(GenerateSourceFileMappingOptions options) {
         if (options.getBasePath() == null) {
             throw new IllegalArgumentException("Must provide a base path");
         }

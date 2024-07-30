@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm;
 
+import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
@@ -207,7 +208,7 @@ public class StatusCommandIT extends AbstractCommandIT {
     public void reportSourceFilesPartiallyMapped() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.addSourceFile("276_182_E.tif");
-        SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
+        GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         testHelper.getSourceFileService().generateMapping(opts);
 
         String[] args = new String[] {
@@ -239,7 +240,7 @@ public class StatusCommandIT extends AbstractCommandIT {
         testHelper.indexExportData("mini_gilmer");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         testHelper.addAccessFile("276_182_E.tif");
-        SourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getAccessFilesBasePath());
+        GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getAccessFilesBasePath());
         testHelper.getAccessFileService().generateMapping(opts);
 
         String[] args = new String[] {

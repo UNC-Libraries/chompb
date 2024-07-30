@@ -7,15 +7,22 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.options.AddSourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -26,7 +33,6 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 
 /**
@@ -62,7 +68,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateNoIndexTest() throws Exception {
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
 
         try {
             service.generateMapping(options);
@@ -76,7 +82,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateBasePathIsNotADirectoryTest() throws Exception {
         setIndexedDate();
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Files.delete(basePath);
         Files.createFile(basePath);
 
@@ -92,7 +98,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateBasePathDoesNotExistTest() throws Exception {
         setIndexedDate();
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Files.delete(basePath);
 
         try {
@@ -107,7 +113,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateNoSourceFilesTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         service.generateMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
@@ -121,7 +127,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateExactMatchTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
         service.generateMapping(options);
@@ -137,7 +143,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateTransformedMatchTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setFieldMatchingPattern("(\\d+)\\_([^_]+)\\_E.tif");
         options.setFilenameTemplate("00$1_op0$2_0001_e.tif");
 
@@ -157,7 +163,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateNestedMatchesTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*.tif");
         Path srcPath1 = testHelper.addSourceFile("nested/path/276_182_E.tif");
         Path srcPath2 = testHelper.addSourceFile("276_183_E.tif");
@@ -175,7 +181,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateTransformedNestedMatchTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setFieldMatchingPattern("(\\d+)\\_([^_]+)\\_E.tif");
         options.setFilenameTemplate("00$1_op0$2_0001_e.tif");
         Path srcPath1 = testHelper.addSourceFile("nested/path/00276_op0182_0001_e.tif");
@@ -195,7 +201,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateMultipleMatchesForSameObjectTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*.tif");
         Path srcPath1 = testHelper.addSourceFile("nested/path/276_182_E.tif");
         Path srcPath1Dupe = testHelper.addSourceFile("nested/276_182_E.tif");
@@ -214,7 +220,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateDryRunSummaryTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setDryRun(true);
         testHelper.addSourceFile("276_182_E.tif");
 
@@ -227,7 +233,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateMappingExistsTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
         service.generateMapping(options);
@@ -266,7 +272,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateMatchesLowercaseTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setLowercaseTemplate(true);
         Path srcPath1 = testHelper.addSourceFile("276_182_e.tif");
         Path srcPath2 = testHelper.addSourceFile("276_183_E.tif");
@@ -284,7 +290,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateNoExistingFileTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setUpdate(true);
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
@@ -301,7 +307,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateExistingNoChangesTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
         service.generateMapping(options);
@@ -325,7 +331,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateAddNewSourceFileTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
         service.generateMapping(options);
@@ -343,7 +349,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateChangeSourceFileTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
@@ -364,7 +370,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateChangeSourceFileWithForceTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
@@ -386,7 +392,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateAddPotentialMatchToExistingMatchTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
@@ -406,7 +412,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateAddPotentialMatchTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
 
         service.generateMapping(options);
@@ -430,7 +436,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateAddPotentialMatchWithExistingPotentialTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setPathPattern("**/*");
 
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
@@ -456,7 +462,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateAddNewRecordsTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
         service.generateMapping(options);
@@ -479,7 +485,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateUpdateDryRunAddNewSourceFileTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Path srcPath1 = testHelper.addSourceFile("276_182_E.tif");
 
         service.generateMapping(options);
@@ -499,7 +505,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateCompoundExactMatchTest() throws Exception {
         testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
-        SourceFileMappingOptions options = makeDefaultOptions();
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
         options.setExportField("filena");
         Path srcPath1 = testHelper.addSourceFile("nccg_ck_09.tif");
         Path srcPath2 = testHelper.addSourceFile("nccg_ck_1042-22_v1.tif");
@@ -524,7 +530,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateBlankTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = new SourceFileMappingOptions();
+        GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
         options.setPopulateBlank(true);
 
         service.generateMapping(options);
@@ -540,7 +546,7 @@ public class SourceFileServiceTest {
     @Test
     public void generateRespectsForceFlagTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        SourceFileMappingOptions options = new SourceFileMappingOptions();
+        GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
         options.setPopulateBlank(true);
 
         service.generateMapping(options);
@@ -568,8 +574,172 @@ public class SourceFileServiceTest {
         assertEquals(3, info2.getMappings().size());
     }
 
+    @Test
+    public void addToMappingTest() throws Exception {
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalIdPrefix("test");
+
+        service.addToMapping(options);
+
+        List<Path> testSourcePaths = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info = service.loadMappings();
+        assertAddToMappingPresent(info, "test-00001", "", testSourcePaths);
+        assertAddToMappingPresent(info, "test-00002", "", testSourcePaths);
+        assertEquals(2, info.getMappings().size());
+    }
+
+    @Test
+    public void addToMappingMultipleExtensionsTest() throws Exception {
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Arrays.asList("tif", "jpeg"));
+        options.setOptionalIdPrefix("test");
+
+        service.addToMapping(options);
+
+        List<Path> testSourcePaths = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("IMG_2377.jpeg"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info = service.loadMappings();
+        assertAddToMappingPresent(info, "test-00001", "", testSourcePaths);
+        assertAddToMappingPresent(info, "test-00002", "", testSourcePaths);
+        assertAddToMappingPresent(info, "test-00003", "", testSourcePaths);
+        assertEquals(3, info.getMappings().size());
+    }
+
+    @Test
+    public void rerunAddToMappingNewFileAddedTest() throws Exception {
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalIdPrefix("test");
+
+        service.addToMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        List<Path> testSourcePaths = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        assertAddToMappingPresent(info, "test-00001", "", testSourcePaths);
+        assertAddToMappingPresent(info, "test-00002", "", testSourcePaths);
+        assertEquals(2, info.getMappings().size());
+
+        AddSourceFileMappingOptions options2 = new AddSourceFileMappingOptions();
+        options2.setBasePath(Path.of("src/test/resources/files"));
+        options2.setExtensions(Collections.singletonList("jpeg"));
+        options2.setOptionalIdPrefix("test");
+        // Do not include update flag and files are still added
+
+        service.addToMapping(options2);
+
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("IMG_2377.jpeg"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info2 = service.loadMappings();
+        assertAddToMappingPresent(info2, "test-00001", "", testSourcePaths2);
+        assertAddToMappingPresent(info2, "test-00002", "", testSourcePaths2);
+        assertAddToMappingPresent(info2, "test-00003", "", testSourcePaths2);
+        assertEquals(3, info2.getMappings().size());
+    }
+
+    @Test
+    public void rerunAddToMappingNoFilesAddedTest() throws Exception {
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalIdPrefix("test");
+
+        service.addToMapping(options);
+
+        List<Path> testSourcePaths = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info = service.loadMappings();
+        assertAddToMappingPresent(info, "test-00001", "", testSourcePaths);
+        assertAddToMappingPresent(info, "test-00002", "", testSourcePaths);
+        assertEquals(2, info.getMappings().size());
+
+        AddSourceFileMappingOptions options2 = new AddSourceFileMappingOptions();
+        options2.setBasePath(Path.of("src/test/resources/files"));
+        options2.setExtensions(Collections.singletonList("tif"));
+        options2.setOptionalIdPrefix("test");
+
+        service.addToMapping(options2);
+
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info2 = service.loadMappings();
+        assertAddToMappingPresent(info2, "test-00001", "", testSourcePaths2);
+        assertAddToMappingPresent(info2, "test-00002", "", testSourcePaths2);
+        assertEquals(2, info2.getMappings().size());
+    }
+
+    @Test
+    public void addToMappingParseLettersInIdTest() throws Exception {
+        writeCsv(mappingBody("test-0000B,," + filesystemSourceFile("IMG_2377.jpeg") + ","));
+
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalIdPrefix("test");
+
+        service.addToMapping(options);
+
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("IMG_2377.jpeg"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info = service.loadMappings();
+        assertAddToMappingPresent(info, "test-0000B", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-0000C", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-0000D", "", testSourcePaths2);
+        assertEquals(3, info.getMappings().size());
+    }
+
+    @Test
+    public void addToMappingParseManualIdTest() throws Exception {
+        writeCsv(mappingBody("testid,," + filesystemSourceFile("IMG_2377.jpeg") + ","));
+
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalIdPrefix("test");
+
+        service.addToMapping(options);
+
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("IMG_2377.jpeg"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info = service.loadMappings();
+        assertAddToMappingPresent(info, "testid", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-00001", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-00002", "", testSourcePaths2);
+        assertEquals(3, info.getMappings().size());
+    }
+
+    @Test
+    public void addToMappingEmptyCsvTest() throws Exception {
+        writeCsv(mappingBody(""));
+
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(Path.of("src/test/resources/files"));
+        options.setExtensions(Collections.singletonList("tif"));
+        options.setOptionalIdPrefix("test");
+
+        service.addToMapping(options);
+
+        List<Path> testSourcePaths2 = Arrays.asList(filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif"),
+                filesystemSourceFile("MJM_7_016_LumberMills_IndianCreekTrestle.tif"));
+        SourceFilesInfo info = service.loadMappings();
+        assertAddToMappingPresent(info, "test-00001", "", testSourcePaths2);
+        assertAddToMappingPresent(info, "test-00002", "", testSourcePaths2);
+        assertEquals(2, info.getMappings().size());
+    }
+
+
+
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
-            Path... potentialPaths) {
+                                      Path... potentialPaths) {
         List<SourceFileMapping> mappings = info.getMappings();
         SourceFileMapping mapping = mappings.stream().filter(m -> m.getCdmId().equals(cdmid)).findFirst().get();
 
@@ -583,8 +753,16 @@ public class SourceFileServiceTest {
         }
     }
 
-    private SourceFileMappingOptions makeDefaultOptions() {
-        SourceFileMappingOptions options = new SourceFileMappingOptions();
+    private void assertAddToMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, List<Path> sourcePaths) {
+        List<SourceFileMapping> mappings = info.getMappings();
+        SourceFileMapping mapping = mappings.stream().filter(m -> m.getCdmId().equals(cdmid)).findFirst().get();
+
+        assertTrue(sourcePaths.contains(mapping.getFirstSourcePath()));
+        assertEquals(matchingVal, mapping.getMatchingValue());
+    }
+
+    private GenerateSourceFileMappingOptions makeDefaultOptions() {
+        GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
         options.setBasePath(basePath);
         options.setExportField("file");
         options.setFieldMatchingPattern("(.+)");
@@ -610,5 +788,20 @@ public class SourceFileServiceTest {
     private void assertMappedDateNotPresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
         assertNull(props.getSourceFilesUpdatedDate());
+    }
+
+    private String mappingBody(String... rows) {
+        return String.join(",", SourceFilesInfo.CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void writeCsv(String mappingBody) throws IOException {
+        FileUtils.write(project.getSourceFilesMappingPath().toFile(),
+                mappingBody, StandardCharsets.UTF_8);
+    }
+
+    private Path filesystemSourceFile(String relPath) {
+        Path basePath = Path.of("src/test/resources/files");
+        return basePath.resolve(relPath);
     }
 }

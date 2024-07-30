@@ -1,5 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -7,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -635,6 +638,75 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Total Files in Project: +3.*");
     }
 
+    @Test
+    public void addMappingTest() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "tif",
+                "-p", "test"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+        assertMappingCount(project.getSourceFilesMappingPath(), 2);
+    }
+
+    @Test
+    public void rerunAddMappingOneFileAddedTest() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "tif",
+                "-p", "test"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+        assertMappingCount(project.getSourceFilesMappingPath(), 2);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "jpeg",
+                "-p", "test"};
+        executeExpectSuccess(args2);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+        assertMappingCount(project.getSourceFilesMappingPath(), 3);
+    }
+
+    @Test
+    public void rerunAddMappingNoFilesAddedTest() throws Exception {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "tif",
+                "-p", "test"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+        assertMappingCount(project.getSourceFilesMappingPath(), 2);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "add",
+                "-b", "src/test/resources/files",
+                "-e", "tif",
+                "-p", "test"};
+        executeExpectSuccess(args2);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputContains("Source file mapping added");
+        assertMappingCount(project.getSourceFilesMappingPath(), 2);
+    }
+
     private void indexExportSamples() throws Exception {
         testHelper.indexExportData("mini_gilmer");
     }
@@ -654,5 +726,15 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
     private Path addSourceFile(String relPath) throws IOException {
         return testHelper.addSourceFile(relPath);
+    }
+
+    private List<SourceFilesInfo.SourceFileMapping> getMappings(Path sourcePath) throws IOException {
+        SourceFilesInfo info = SourceFileService.loadMappings(sourcePath);
+        return info.getMappings();
+    }
+
+    private void assertMappingCount(Path sourcePath, int count) throws IOException {
+        var mappings = getMappings(sourcePath);
+        assertEquals(count, mappings.size());
     }
 }
