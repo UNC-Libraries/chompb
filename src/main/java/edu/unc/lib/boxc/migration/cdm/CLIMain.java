@@ -40,7 +40,8 @@ import java.util.concurrent.Callable;
         MigrationTypeReportCommand.class,
         FilterIndexCommand.class,
         AggregateFilesCommand.class,
-        PermissionsCommand.class
+        PermissionsCommand.class,
+        ExportObjectsCommand.class
     })
 public class CLIMain implements Callable<Integer> {
     @Option(names = { "-w", "--work-dir" },
