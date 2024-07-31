@@ -46,7 +46,8 @@ public class ExportObjectsCommandIT extends AbstractCommandIT {
         };
 
         executeExpectFailure(args);
-        assertOutputContains("Failed to export objects in proj");
+        assertOutputContains("Failed to export objects in proj: InvalidProjectStateException: " +
+                "Source files must be mapped");
     }
 
     @Test
