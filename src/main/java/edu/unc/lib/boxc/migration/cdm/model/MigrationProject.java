@@ -27,6 +27,7 @@ public class MigrationProject {
     public static final String PERMISSIONS_FILENAME = "patron_permissions.csv";
     public static final String PROJECT_SOURCE_CDM = "cdm";
     public static final String PROJECT_SOURCE_FILES = "files";
+    public static final String EXPORT_OBJECTS_FILENAME = "exported_objects.csv";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -171,5 +172,12 @@ public class MigrationProject {
      */
     public Path getPermissionsPath() {
         return projectPath.resolve(PERMISSIONS_FILENAME);
+    }
+
+    /**
+     * @return Path of the exported objects file
+     */
+    public Path getExportObjectsPath() {
+        return projectPath.resolve(EXPORT_OBJECTS_FILENAME);
     }
 }
