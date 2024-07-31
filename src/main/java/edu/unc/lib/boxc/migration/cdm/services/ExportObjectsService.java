@@ -57,7 +57,7 @@ public class ExportObjectsService {
     }
 
     /**
-     * @param mappingPath Path CSV will output to. If null, then will output to temporary CSV
+     * @param mappingPath Path CSV will output to
      * @return CSVPrinter for writing to specified destination
      * @throws IOException
      */
