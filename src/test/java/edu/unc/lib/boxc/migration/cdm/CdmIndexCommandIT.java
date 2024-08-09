@@ -121,6 +121,26 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         assertOutputContains("CPD file referenced by object 604 in desc.all was not found");
     }
 
+    @Test
+    public void indexFromCsvTest() throws Exception {
+        initProject();
+        Files.createDirectories(project.getExportPath());
+
+        Files.copy(Paths.get("src/test/resources/files/cdm_export_fields.csv"), project.getFieldsPath());
+        setExportedDate();
+        Files.copy(Paths.get("src/test/resources/files/exported_objects.csv"), project.getExportObjectsPath());
+        setExportedDate();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "index",
+                "-c", "src/test/resources/files/exported_objects.csv"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getIndexPath()));
+        assertDateIndexedPresent();
+    }
+
     private void setExportedDate() throws Exception {
         project.getProjectProperties().setExportedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);

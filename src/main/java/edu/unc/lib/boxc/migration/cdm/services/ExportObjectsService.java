@@ -5,6 +5,7 @@ import edu.unc.lib.boxc.migration.cdm.model.ExportObjectsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FilenameUtils;
@@ -12,8 +13,10 @@ import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -54,6 +57,53 @@ public class ExportObjectsService {
         if (props.getSourceFilesUpdatedDate() == null) {
             throw new InvalidProjectStateException("Source files must be mapped");
         }
+    }
+
+    /**
+     * @return the export objects mapping info for the configured project
+     * @throws IOException
+     */
+    public ExportObjectsInfo loadExportObjects() throws IOException {
+        return loadExportObjects(getExportedObjectsPath());
+    }
+
+    /**
+     * @return the export objects info for the provided project
+     * @throws IOException
+     */
+    public static ExportObjectsInfo loadExportObjects(Path mappingPath) throws IOException {
+        ExportObjectsInfo info = new ExportObjectsInfo();
+        if (Files.notExists(mappingPath)) {
+            return info;
+        }
+        try (var csvParser = openMappingsParser(mappingPath)) {
+            List<ExportObjectsInfo.ExportedObject> mappings = info.getObjects();
+            for (CSVRecord csvRecord : csvParser) {
+                mappings.add(recordToExportFile(csvRecord));
+            }
+            return info;
+        }
+    }
+
+    public static ExportObjectsInfo.ExportedObject recordToExportFile(CSVRecord csvRecord) {
+        ExportObjectsInfo.ExportedObject exportObject = new ExportObjectsInfo.ExportedObject();
+        exportObject.setRecordId(csvRecord.get(0));
+        exportObject.setFilePath(csvRecord.get(1));
+        exportObject.setFilename(csvRecord.get(2));
+        return exportObject;
+    }
+
+    /**
+     * @param mappingPath Path of the CSV to read from
+     * @return CSVParser for reading from the csv file
+     * @throws IOException
+     */
+    public static CSVParser openMappingsParser(Path mappingPath) throws IOException {
+        Reader reader = Files.newBufferedReader(mappingPath);
+        return new CSVParser(reader, CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withHeader(ExportObjectsInfo.CSV_HEADERS)
+                .withTrim());
     }
 
     /**

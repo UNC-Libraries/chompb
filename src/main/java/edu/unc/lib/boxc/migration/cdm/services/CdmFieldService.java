@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.unc.lib.boxc.migration.cdm.model.ExportObjectsInfo;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -42,6 +43,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 public class CdmFieldService {
     private CloseableHttpClient httpClient;
     private String cdmBaseUri;
+    private MigrationProject project;
 
     private static final String CDM_NICK_FIELD = "nick";
     private static final String CDM_NAME_FIELD = "name";
@@ -69,7 +71,6 @@ public class CdmFieldService {
 
     /**
      * Get the URL for retrieving field info for the given collection
-     * @param cdmBaseUri
      * @param collectionId
      * @return
      */
@@ -129,7 +130,7 @@ public class CdmFieldService {
     }
 
     /**
-     * Persist the field information out to the project project
+     * Persist the field information out to the project
      * @param project
      * @param fieldInfo
      * @throws IOException
@@ -234,6 +235,101 @@ public class CdmFieldService {
         existing.add(field);
     }
 
+    /**
+     * Retrieve field information for the project from exported_objects.csv
+     * @param
+     * @return
+     */
+    public CdmFieldInfo retrieveFieldsFromCsv(Path exportedObjectsPath) throws IOException {
+        CdmFieldInfo fieldInfo = new CdmFieldInfo();
+
+        try (
+            Reader reader = Files.newBufferedReader(exportedObjectsPath);
+            CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT
+                    .withHeader(ExportObjectsInfo.CSV_HEADERS)
+                    .withTrim());
+        ) {
+            List<String> headers = parser.getHeaderNames();
+            for (String header : headers) {
+                CdmFieldEntry fieldEntry = new CdmFieldEntry();
+                fieldEntry.setNickName(header);
+                fieldEntry.setExportAs(header);
+                fieldEntry.setDescription(header);
+                fieldEntry.setSkipExport(false);
+                fieldInfo.getFields().add(fieldEntry);
+            }
+        } catch (Exception e) {
+            throw new MigrationException("Failed to parse exported objects path " + exportedObjectsPath, e);
+        }
+        return fieldInfo;
+    }
+
+    /**
+     * Validate the field file for the given project, throwing InvalidProjectStateException if not.
+     * @param project
+     */
+    public void validateFromCsvFieldsFile(MigrationProject project) {
+        Path fieldsPath = project.getFieldsPath();
+        Set<String> nickFields = new HashSet<>();
+        Set<String> exportFields = new HashSet<>();
+        try (
+                Reader reader = Files.newBufferedReader(fieldsPath);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(EXPORT_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            int line = 2;
+            for (CSVRecord csvRecord : csvParser) {
+                if (csvRecord.size() != 4) {
+                    throw new InvalidProjectStateException(
+                            "Invalid CDM fields entry at line " + line);
+                }
+                validateFieldName(csvRecord.get(0), EXPORT_NICK_FIELD, line, nickFields);
+                validateFieldName(csvRecord.get(1), EXPORT_AS_FIELD, line, exportFields);
+                line++;
+            }
+            if (line == 2) {
+                throw new InvalidProjectStateException("CDM fields file is empty, it must contain at least 1 entry");
+            }
+        } catch (NoSuchFileException e) {
+            throw new InvalidProjectStateException("CDM fields file is missing, expected at path", e);
+        } catch (IOException e) {
+            throw new InvalidProjectStateException("Cannot read fields file", e);
+        }
+    }
+
+    /**
+     * Retrieve field information from the listing captured in the given project
+     * @param project
+     * @return
+     * @throws IOException
+     */
+    public CdmFieldInfo loadFromCsvFieldsFromProject(MigrationProject project) {
+        Path fieldsPath = project.getFieldsPath();
+        try (
+                Reader reader = Files.newBufferedReader(fieldsPath);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(EXPORT_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            CdmFieldInfo fieldInfo = new CdmFieldInfo();
+            List<CdmFieldEntry> fields = fieldInfo.getFields();
+            for (CSVRecord csvRecord : csvParser) {
+                CdmFieldEntry entry = new CdmFieldEntry();
+                entry.setNickName(csvRecord.get(0));
+                entry.setExportAs(csvRecord.get(1));
+                entry.setDescription(csvRecord.get(2));
+                entry.setSkipExport(Boolean.parseBoolean(csvRecord.get(3)));
+                fields.add(entry);
+            }
+            return fieldInfo;
+        } catch (IOException e) {
+            throw new InvalidProjectStateException("Cannot read fields file", e);
+        }
+    }
+
     private String booleanToString(boolean bool) {
         return bool ? "y" : "n";
     }
@@ -244,5 +340,9 @@ public class CdmFieldService {
 
     public void setCdmBaseUri(String cdmBaseUri) {
         this.cdmBaseUri = cdmBaseUri;
+    }
+
+    public void setProject(MigrationProject project) {
+        this.project = project;
     }
 }

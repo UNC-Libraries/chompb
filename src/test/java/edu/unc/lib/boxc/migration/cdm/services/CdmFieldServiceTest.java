@@ -12,9 +12,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
+import edu.unc.lib.boxc.migration.cdm.model.ExportObjectsInfo;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
@@ -63,6 +65,7 @@ public class CdmFieldServiceTest {
         service = new CdmFieldService();
         service.setHttpClient(httpClient);
         service.setCdmBaseUri(CDM_BASE_URL);
+        service.setProject(project);
 
         when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResp);
         when(httpResp.getEntity()).thenReturn(respEntity);
@@ -340,6 +343,57 @@ public class CdmFieldServiceTest {
         assertHasFieldWithValue("digitb", "digitb", "Digital Collection", false,
                 "n", "y", "n", "n",
                 "BLANK", fieldsLoaded);
+    }
+
+    @Test
+    public void retrieveCdmFieldsFromCsvTest() throws Exception {
+        Files.copy(Paths.get("src/test/resources/files/exported_objects.csv"),
+                project.getExportObjectsPath());
+
+        CdmFieldInfo fieldInfo = service.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/exported_objects.csv"));
+        List<CdmFieldEntry> fields = fieldInfo.getFields();
+
+        assertHasFieldWithValue(ExportObjectsInfo.RECORD_ID, ExportObjectsInfo.RECORD_ID, ExportObjectsInfo.RECORD_ID,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(ExportObjectsInfo.FILE_PATH, ExportObjectsInfo.FILE_PATH, ExportObjectsInfo.FILE_PATH,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(ExportObjectsInfo.FILENAME, ExportObjectsInfo.FILENAME, ExportObjectsInfo.FILENAME,
+                false, null, null, null,
+                null, null, fields);
+    }
+
+    @Test
+    public void persistAndLoadFromCsvFieldsTest() throws Exception {
+        CdmFieldInfo fieldInfoOriginal = new CdmFieldInfo();
+        List<CdmFieldEntry> fieldsOriginal = fieldInfoOriginal.getFields();
+        CdmFieldEntry field1 = new CdmFieldEntry();
+        field1.setNickName(ExportObjectsInfo.RECORD_ID);
+        field1.setExportAs(ExportObjectsInfo.RECORD_ID);
+        field1.setDescription(ExportObjectsInfo.RECORD_ID);
+        field1.setSkipExport(false);
+        fieldsOriginal.add(field1);
+
+        CdmFieldEntry field2 = new CdmFieldEntry();
+        field2.setNickName(ExportObjectsInfo.FILE_PATH);
+        field2.setExportAs(ExportObjectsInfo.FILE_PATH);
+        field2.setDescription(ExportObjectsInfo.FILE_PATH);
+        field2.setSkipExport(false);
+        fieldsOriginal.add(field2);
+
+        service.persistFieldsToProject(project, fieldInfoOriginal);
+        assertTrue(Files.size(project.getFieldsPath()) > 0, "Fields file must not be empty");
+
+        CdmFieldInfo fieldInfoLoaded = service.loadFieldsFromProject(project);
+        List<CdmFieldEntry> fieldsLoaded = fieldInfoLoaded.getFields();
+        assertEquals(2, fieldsLoaded.size());
+        assertHasFieldWithValue(ExportObjectsInfo.RECORD_ID, ExportObjectsInfo.RECORD_ID, ExportObjectsInfo.RECORD_ID,
+                false, "", "", "",
+                "", "", fieldsLoaded);
+        assertHasFieldWithValue(ExportObjectsInfo.FILE_PATH, ExportObjectsInfo.FILE_PATH, ExportObjectsInfo.FILE_PATH,
+                false, "", "", "",
+                "", "", fieldsLoaded);
     }
 
     private void assertHasFieldWithValue(String nick, String expectedExport, String expectedDesc,

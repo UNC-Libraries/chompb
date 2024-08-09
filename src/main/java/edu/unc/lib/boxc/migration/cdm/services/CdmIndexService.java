@@ -5,8 +5,11 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.ExportObjectsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -18,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -55,9 +59,18 @@ public class CdmIndexService {
 
     private MigrationProject project;
     private CdmFieldService fieldService;
+    private ExportObjectsService exportObjectsService;
 
     private String recordInsertSqlTemplate;
     private List<String> indexingWarnings = new ArrayList<>();
+
+    public void index(CdmIndexOptions options) throws Exception {
+        if (options.getCsvFile() != null && Files.exists(Path.of(options.getCsvFile()))) {
+            indexAllFromCsv(options);
+        } else {
+            indexAll();
+        }
+    }
 
     /**
      * Indexes all exported CDM records for this project
@@ -295,12 +308,19 @@ public class CdmIndexService {
      * @param force
      * @throws IOException
      */
-    public void createDatabase(boolean force) throws IOException {
+    public void createDatabase(boolean force, CdmIndexOptions options) throws IOException {
         ensureDatabaseState(force);
+        List<String> exportFields;
 
-        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-        List<String> exportFields = new ArrayList<>(fieldInfo.listAllExportFields());
-        exportFields.addAll(MIGRATION_FIELDS);
+        if (options.getCsvFile() != null) {
+            CdmFieldInfo fieldInfo = fieldService.loadFromCsvFieldsFromProject(project);
+            exportFields = fieldInfo.listAllExportFields();
+        } else {
+            CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+            exportFields = fieldInfo.listAllExportFields();
+            exportFields.addAll(MIGRATION_FIELDS);
+        }
+
         StringBuilder queryBuilder = new StringBuilder("CREATE TABLE " + TB_NAME + " (\n");
         for (int i = 0; i < exportFields.size(); i++) {
             String field = exportFields.get(i);
@@ -326,12 +346,49 @@ public class CdmIndexService {
     }
 
     private String indexFieldType(String exportField) {
-        if (CdmFieldInfo.CDM_ID.equals(exportField)) {
+        if (CdmFieldInfo.CDM_ID.equals(exportField) || ExportObjectsInfo.RECORD_ID.equals(exportField)) {
             return "INT PRIMARY KEY NOT NULL";
         } else if (CHILD_ORDER_FIELD.equals(exportField)) {
             return "INT";
         } else {
             return "TEXT";
+        }
+    }
+
+    /**
+     * Indexes all exported objects for this project
+     * @throws IOException
+     */
+    public void indexAllFromCsv(CdmIndexOptions options) throws IOException {
+        assertObjectsExported();
+
+        CdmFieldInfo fieldInfo = fieldService.loadFromCsvFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+        recordInsertSqlTemplate = makeInsertTemplate(exportFields);
+
+        try (
+                var conn = openDbConnection();
+                var csvParser = ExportObjectsService.openMappingsParser(Path.of(options.getCsvFile()));
+        ) {
+            for (CSVRecord csvRecord : csvParser) {
+                if (!csvRecord.get(0).isEmpty()) {
+                    List<String> fieldValues = Arrays.asList(csvRecord.get(0), csvRecord.get(1), csvRecord.get(2));
+                    indexObject(conn, fieldValues);
+                }
+            }
+        } catch (IOException e) {
+            throw new MigrationException("Failed to read export files", e);
+        } catch (SQLException e) {
+            throw new MigrationException("Failed to update database", e);
+        }
+
+        project.getProjectProperties().setIndexedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
+    }
+
+    private void assertObjectsExported() {
+        if (project.getExportObjectsPath() == null) {
+            throw new InvalidProjectStateException("Export objects csv must exist prior to indexing");
         }
     }
 
@@ -352,6 +409,10 @@ public class CdmIndexService {
 
     public void setFieldService(CdmFieldService fieldService) {
         this.fieldService = fieldService;
+    }
+
+    public void setExportObjectsService(ExportObjectsService exportObjectsService) {
+        this.exportObjectsService = exportObjectsService;
     }
 
     public void setProject(MigrationProject project) {
