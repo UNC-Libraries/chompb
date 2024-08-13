@@ -7,8 +7,11 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.ExportObjectsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Document;
@@ -19,6 +22,7 @@ import org.slf4j.Logger;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -37,6 +41,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -65,7 +70,7 @@ public class CdmIndexService {
     private List<String> indexingWarnings = new ArrayList<>();
 
     public void index(CdmIndexOptions options) throws Exception {
-        if (options.getCsvFile() != null && Files.exists(Path.of(options.getCsvFile()))) {
+        if (options.getCsvFile() != null) {
             indexAllFromCsv(options);
         } else {
             indexAll();
@@ -346,7 +351,7 @@ public class CdmIndexService {
     }
 
     private String indexFieldType(String exportField) {
-        if (CdmFieldInfo.CDM_ID.equals(exportField) || ExportObjectsInfo.RECORD_ID.equals(exportField)) {
+        if (CdmFieldInfo.CDM_ID.equals(exportField)) {
             return "INT PRIMARY KEY NOT NULL";
         } else if (CHILD_ORDER_FIELD.equals(exportField)) {
             return "INT";
@@ -357,22 +362,31 @@ public class CdmIndexService {
 
     /**
      * Indexes all exported objects for this project
+     * @param options
      * @throws IOException
      */
     public void indexAllFromCsv(CdmIndexOptions options) throws IOException {
-        assertObjectsExported();
+        assertObjectsExported(options);
 
         CdmFieldInfo fieldInfo = fieldService.loadFromCsvFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
+        outputLogger.info(exportFields.toString());
         recordInsertSqlTemplate = makeInsertTemplate(exportFields);
 
         try (
                 var conn = openDbConnection();
-                var csvParser = ExportObjectsService.openMappingsParser(Path.of(options.getCsvFile()));
+                Reader reader = Files.newBufferedReader(options.getCsvFile());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(String.valueOf(exportFields))
+                        .withTrim());
         ) {
             for (CSVRecord csvRecord : csvParser) {
                 if (!csvRecord.get(0).isEmpty()) {
-                    List<String> fieldValues = Arrays.asList(csvRecord.get(0), csvRecord.get(1), csvRecord.get(2));
+                    List<String> fieldValues = new ArrayList<>();
+                    for (int i = 0; i < csvRecord.size(); i++) {
+                        fieldValues.add(csvRecord.get(i));
+                    }
                     indexObject(conn, fieldValues);
                 }
             }
@@ -386,9 +400,9 @@ public class CdmIndexService {
         ProjectPropertiesSerialization.write(project);
     }
 
-    private void assertObjectsExported() {
-        if (project.getExportObjectsPath() == null) {
-            throw new InvalidProjectStateException("Export objects csv must exist prior to indexing");
+    private void assertObjectsExported(CdmIndexOptions options) {
+        if (Files.notExists(options.getCsvFile())) {
+            throw new InvalidProjectStateException("User provided csv must exist prior to indexing");
         }
     }
 

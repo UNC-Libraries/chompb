@@ -126,8 +126,6 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         initProject();
         Files.createDirectories(project.getExportPath());
 
-        Files.copy(Paths.get("src/test/resources/files/cdm_export_fields.csv"), project.getFieldsPath());
-        setExportedDate();
         Files.copy(Paths.get("src/test/resources/files/exported_objects.csv"), project.getExportObjectsPath());
         setExportedDate();
 
@@ -138,6 +136,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getIndexPath()));
+        assertTrue(Files.exists(project.getFieldsPath()));
         assertDateIndexedPresent();
     }
 

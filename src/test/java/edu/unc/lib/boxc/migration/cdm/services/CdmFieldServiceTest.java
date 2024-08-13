@@ -364,38 +364,6 @@ public class CdmFieldServiceTest {
                 null, null, fields);
     }
 
-    @Test
-    public void persistAndLoadFromCsvFieldsTest() throws Exception {
-        CdmFieldInfo fieldInfoOriginal = new CdmFieldInfo();
-        List<CdmFieldEntry> fieldsOriginal = fieldInfoOriginal.getFields();
-        CdmFieldEntry field1 = new CdmFieldEntry();
-        field1.setNickName(ExportObjectsInfo.RECORD_ID);
-        field1.setExportAs(ExportObjectsInfo.RECORD_ID);
-        field1.setDescription(ExportObjectsInfo.RECORD_ID);
-        field1.setSkipExport(false);
-        fieldsOriginal.add(field1);
-
-        CdmFieldEntry field2 = new CdmFieldEntry();
-        field2.setNickName(ExportObjectsInfo.FILE_PATH);
-        field2.setExportAs(ExportObjectsInfo.FILE_PATH);
-        field2.setDescription(ExportObjectsInfo.FILE_PATH);
-        field2.setSkipExport(false);
-        fieldsOriginal.add(field2);
-
-        service.persistFieldsToProject(project, fieldInfoOriginal);
-        assertTrue(Files.size(project.getFieldsPath()) > 0, "Fields file must not be empty");
-
-        CdmFieldInfo fieldInfoLoaded = service.loadFieldsFromProject(project);
-        List<CdmFieldEntry> fieldsLoaded = fieldInfoLoaded.getFields();
-        assertEquals(2, fieldsLoaded.size());
-        assertHasFieldWithValue(ExportObjectsInfo.RECORD_ID, ExportObjectsInfo.RECORD_ID, ExportObjectsInfo.RECORD_ID,
-                false, "", "", "",
-                "", "", fieldsLoaded);
-        assertHasFieldWithValue(ExportObjectsInfo.FILE_PATH, ExportObjectsInfo.FILE_PATH, ExportObjectsInfo.FILE_PATH,
-                false, "", "", "",
-                "", "", fieldsLoaded);
-    }
-
     private void assertHasFieldWithValue(String nick, String expectedExport, String expectedDesc,
             boolean expectedSkip, String expectedCdmRequired, String expectedCdmSearchable, String expectedCdmHidden,
             String expectedCdmVocab, String expectedCdmDcMapping, List<CdmFieldEntry> fields) {

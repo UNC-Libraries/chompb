@@ -648,10 +648,11 @@ public class CdmIndexServiceTest {
 
     @Test
     public void indexFromCsvTest() throws Exception {
-        Files.copy(Paths.get("src/test/resources/files/cdm_export_fields.csv"), project.getFieldsPath());
+        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/exported_objects.csv"));
+        fieldService.persistCsvFieldsToProject(project, csvExportFields);
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
-        options.setCsvFile("src/test/resources/files/exported_objects.csv");
+        options.setCsvFile(Paths.get("src/test/resources/files/exported_objects.csv"));
 
         service.createDatabase(false, options);
         service.indexAllFromCsv(options);
@@ -683,6 +684,52 @@ public class CdmIndexServiceTest {
             assertEquals("test-00003", rs.getString(ExportObjectsInfo.RECORD_ID));
             assertEquals("src/test/resources/files/IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILE_PATH));
             assertEquals("IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILENAME));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
+    public void indexFromCsvMoreFieldsTest() throws Exception {
+        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/more_fields.csv"));
+        fieldService.persistCsvFieldsToProject(project, csvExportFields);
+        setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setCsvFile(Paths.get("src/test/resources/files/more_fields.csv"));
+
+        service.createDatabase(false, options);
+        service.indexAllFromCsv(options);
+
+        assertDateIndexedPresent();
+        assertRowCount(3);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFromCsvFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+
+        Connection conn = service.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
+                    + " from " + CdmIndexService.TB_NAME + " order by " + ExportObjectsInfo.RECORD_ID + " asc");
+            rs.next();
+            assertEquals("test-00001", rs.getString(ExportObjectsInfo.RECORD_ID));
+            assertEquals("src/test/resources/files/D2_035_Varners_DrugStore_interior.tif",
+                    rs.getString(ExportObjectsInfo.FILE_PATH));
+            assertEquals("D2_035_Varners_DrugStore_interior.tif", rs.getString(ExportObjectsInfo.FILENAME));
+            assertEquals("tif", rs.getString("file_type"));
+
+            rs.next();
+            assertEquals("test-00002", rs.getString(ExportObjectsInfo.RECORD_ID));
+            assertEquals("src/test/resources/files/MJM_7_016_LumberMills_IndianCreekTrestle.tif",
+                    rs.getString(ExportObjectsInfo.FILE_PATH));
+            assertEquals("MJM_7_016_LumberMills_IndianCreekTrestle.tif", rs.getString(ExportObjectsInfo.FILENAME));
+            assertEquals("tif", rs.getString("file_type"));
+
+            rs.next();
+            assertEquals("test-00003", rs.getString(ExportObjectsInfo.RECORD_ID));
+            assertEquals("src/test/resources/files/IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILE_PATH));
+            assertEquals("IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILENAME));
+            assertEquals("jpeg", rs.getString("file_type"));
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }

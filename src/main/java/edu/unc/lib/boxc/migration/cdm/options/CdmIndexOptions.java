@@ -5,19 +5,19 @@ import picocli.CommandLine.Option;
 import java.nio.file.Path;
 
 /**
- * Options for indexing from source_files.csv
+ * Options for indexing object records
  * @author krwong
  */
 public class CdmIndexOptions {
     @Option(names = {"-c", "--from-csv"},
     description = {"Export objects CSV file used as source for populating sqlite database."})
-    private String csvFile;
+    private Path csvFile;
 
-    public String getCsvFile() {
+    public Path getCsvFile() {
         return csvFile;
     }
 
-    public void setCsvFile(String csvFile) {
+    public void setCsvFile(Path csvFile) {
         this.csvFile = csvFile;
     }
 }

@@ -4,9 +4,12 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.services.ExportObjectsService;
 import org.slf4j.Logger;
@@ -25,8 +28,8 @@ import picocli.CommandLine.ParentCommand;
  * @author bbpennel
  */
 @Command(name = "index",
-        description = "Index the exported CDM records for this project. Must be run after a complete export " +
-                "unless indexing from exported_objects.csv (exporting form the filesystem).")
+        description = "Populate the index of object records for this project. Must be run after " +
+                "exporting source metadata or providing a CSV file.")
 public class CdmIndexCommand implements Callable<Integer> {
     private static final Logger log = getLogger(CdmIndexCommand.class);
     @ParentCommand
@@ -50,6 +53,16 @@ public class CdmIndexCommand implements Callable<Integer> {
 
         try {
             initialize();
+
+            // if user provides csv, check that it exists
+            if (options.getCsvFile() != null) {
+                if (Files.exists(options.getCsvFile())) {
+                    CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(options.getCsvFile());
+                    fieldService.persistCsvFieldsToProject(project, csvExportFields);
+                } else {
+                    throw new MigrationException("No csv file exists in " + options.getCsvFile());
+                }
+            }
 
             indexService.createDatabase(force, options);
             indexService.index(options);

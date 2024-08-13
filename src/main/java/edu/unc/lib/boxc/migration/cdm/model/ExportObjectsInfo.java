@@ -8,7 +8,7 @@ import java.util.List;
  * @author krwong
  */
 public class ExportObjectsInfo {
-    public static final String RECORD_ID = "record_id";
+    public static final String RECORD_ID = CdmFieldInfo.CDM_ID;
     public static final String FILE_PATH = "file_path";
     public static final String FILENAME = "filename";
     public static final String[] CSV_HEADERS = new String[] {RECORD_ID, FILE_PATH, FILENAME};
