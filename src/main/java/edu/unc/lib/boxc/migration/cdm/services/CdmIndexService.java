@@ -341,7 +341,7 @@ public class CdmIndexService {
 
     private String indexFieldType(String exportField) {
         if (CdmFieldInfo.CDM_ID.equals(exportField)) {
-            return "INT PRIMARY KEY NOT NULL";
+            return "TEXT PRIMARY KEY NOT NULL";
         } else if (CHILD_ORDER_FIELD.equals(exportField)) {
             return "INT";
         } else {
