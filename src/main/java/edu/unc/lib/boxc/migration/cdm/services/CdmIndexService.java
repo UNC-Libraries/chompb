@@ -313,9 +313,7 @@ public class CdmIndexService {
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
-        if (options.getCsvFile() == null) {
-            exportFields.addAll(MIGRATION_FIELDS);
-        }
+        exportFields.addAll(MIGRATION_FIELDS);
 
         StringBuilder queryBuilder = new StringBuilder("CREATE TABLE " + TB_NAME + " (\n");
         for (int i = 0; i < exportFields.size(); i++) {
@@ -361,6 +359,7 @@ public class CdmIndexService {
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
+        exportFields.addAll(MIGRATION_FIELDS);
         recordInsertSqlTemplate = makeInsertTemplate(exportFields);
 
         try (
