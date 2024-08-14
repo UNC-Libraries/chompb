@@ -319,7 +319,7 @@ public class CdmIndexService {
         for (int i = 0; i < exportFields.size(); i++) {
             String field = exportFields.get(i);
             queryBuilder.append('"').append(field).append("\" ")
-                        .append(indexFieldType(field));
+                        .append(indexFieldType(field, options));
             if (i < exportFields.size() - 1) {
                 queryBuilder.append(',');
             }
@@ -339,9 +339,11 @@ public class CdmIndexService {
         }
     }
 
-    private String indexFieldType(String exportField) {
-        if (CdmFieldInfo.CDM_ID.equals(exportField)) {
+    private String indexFieldType(String exportField, CdmIndexOptions options) {
+        if (CdmFieldInfo.CDM_ID.equals(exportField) && options.getCsvFile() != null) {
             return "TEXT PRIMARY KEY NOT NULL";
+        } else if (CdmFieldInfo.CDM_ID.equals(exportField) && options.getCsvFile() == null) {
+            return "INT PRIMARY KEY NOT NULL";
         } else if (CHILD_ORDER_FIELD.equals(exportField)) {
             return "INT";
         } else {
