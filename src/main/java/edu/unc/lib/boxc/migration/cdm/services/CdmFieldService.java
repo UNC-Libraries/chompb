@@ -262,57 +262,6 @@ public class CdmFieldService {
         return fieldInfo;
     }
 
-    /**
-     * Persist the field information out to the project
-     * @param project
-     * @param fieldInfo
-     * @throws IOException
-     */
-    public void persistCsvFieldsToProject(MigrationProject project, CdmFieldInfo fieldInfo) throws IOException {
-        Path fieldsPath = project.getFieldsPath();
-        try (
-                BufferedWriter writer = Files.newBufferedWriter(fieldsPath);
-                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                        .withHeader(EXPORT_CSV_HEADERS));
-        ) {
-            for (CdmFieldEntry entry : fieldInfo.getFields()) {
-                csvPrinter.printRecord(entry.getNickName(), entry.getExportAs(), entry.getDescription(),
-                        entry.getSkipExport());
-            }
-        }
-    }
-
-    /**
-     * Retrieve field information from the listing captured in the given project
-     * @param project
-     * @return
-     * @throws IOException
-     */
-    public CdmFieldInfo loadFromCsvFieldsFromProject(MigrationProject project) {
-        Path fieldsPath = project.getFieldsPath();
-        try (
-                Reader reader = Files.newBufferedReader(fieldsPath);
-                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                        .withFirstRecordAsHeader()
-                        .withHeader(EXPORT_CSV_HEADERS)
-                        .withTrim());
-        ) {
-            CdmFieldInfo fieldInfo = new CdmFieldInfo();
-            List<CdmFieldEntry> fields = fieldInfo.getFields();
-            for (CSVRecord csvRecord : csvParser) {
-                CdmFieldEntry entry = new CdmFieldEntry();
-                entry.setNickName(csvRecord.get(0));
-                entry.setExportAs(csvRecord.get(1));
-                entry.setDescription(csvRecord.get(2));
-                entry.setSkipExport(Boolean.parseBoolean(csvRecord.get(3)));
-                fields.add(entry);
-            }
-            return fieldInfo;
-        } catch (IOException e) {
-            throw new InvalidProjectStateException("Cannot read fields file", e);
-        }
-    }
-
     private String booleanToString(boolean bool) {
         return bool ? "y" : "n";
     }

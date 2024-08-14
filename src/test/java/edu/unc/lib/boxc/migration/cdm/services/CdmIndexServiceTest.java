@@ -45,7 +45,6 @@ public class CdmIndexServiceTest {
 
     private MigrationProject project;
     private CdmFieldService fieldService;
-    private ExportObjectsService exportObjectsService;
     private CdmIndexService service;
 
     @BeforeEach
@@ -56,11 +55,8 @@ public class CdmIndexServiceTest {
         Files.createDirectories(project.getExportPath());
 
         fieldService = new CdmFieldService();
-        exportObjectsService = new ExportObjectsService();
-        exportObjectsService.setProject(project);
         service = new CdmIndexService();
         service.setFieldService(fieldService);
-        service.setExportObjectsService(exportObjectsService);
         service.setProject(project);
     }
 
@@ -71,8 +67,9 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -124,10 +121,11 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         try {
-            service.createDatabase(false, options);
+            service.createDatabase(options);
             fail();
         } catch (StateAlreadyExistsException e) {
             assertTrue(e.getMessage().contains("Cannot create index, an index file already exists"));
@@ -142,15 +140,17 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAll();
         assertRowCount(3);
 
         // Switch desc to full set and force a reindex
         Files.copy(Paths.get("src/test/resources/descriptions/gilmer/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project), StandardCopyOption.REPLACE_EXISTING);
-        service.createDatabase(true, options);
+        options.setForce(true);
+        service.createDatabase(options);
         service.indexAll();
         assertRowCount(161);
 
@@ -164,8 +164,9 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAll();
         assertRowCount(3);
 
@@ -181,8 +182,9 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         try {
             service.indexAll();
             fail();
@@ -200,8 +202,9 @@ public class CdmIndexServiceTest {
         FileUtils.writeStringToFile(project.getFieldsPath().toFile(), fieldString, ISO_8859_1);
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAll();
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
@@ -233,8 +236,9 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/keepsakes_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -326,8 +330,9 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/keepsakes_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -395,8 +400,9 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/descriptions/plantations/cdm_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -440,8 +446,9 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/monograph_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -503,8 +510,9 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/roy_brown/cdm_fields.csv"), project.getFieldsPath());
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -649,18 +657,19 @@ public class CdmIndexServiceTest {
     @Test
     public void indexFromCsvTest() throws Exception {
         CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/exported_objects.csv"));
-        fieldService.persistCsvFieldsToProject(project, csvExportFields);
+        fieldService.persistFieldsToProject(project, csvExportFields);
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
         options.setCsvFile(Paths.get("src/test/resources/files/exported_objects.csv"));
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAllFromCsv(options);
 
         assertDateIndexedPresent();
         assertRowCount(3);
 
-        CdmFieldInfo fieldInfo = fieldService.loadFromCsvFieldsFromProject(project);
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
 
         Connection conn = service.openDbConnection();
@@ -692,18 +701,19 @@ public class CdmIndexServiceTest {
     @Test
     public void indexFromCsvMoreFieldsTest() throws Exception {
         CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/more_fields.csv"));
-        fieldService.persistCsvFieldsToProject(project, csvExportFields);
+        fieldService.persistFieldsToProject(project, csvExportFields);
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
         options.setCsvFile(Paths.get("src/test/resources/files/more_fields.csv"));
+        options.setForce(false);
 
-        service.createDatabase(false, options);
+        service.createDatabase(options);
         service.indexAllFromCsv(options);
 
         assertDateIndexedPresent();
         assertRowCount(3);
 
-        CdmFieldInfo fieldInfo = fieldService.loadFromCsvFieldsFromProject(project);
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
 
         Connection conn = service.openDbConnection();

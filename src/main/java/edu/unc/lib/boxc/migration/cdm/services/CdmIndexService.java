@@ -5,9 +5,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
-import edu.unc.lib.boxc.migration.cdm.model.ExportObjectsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
@@ -25,7 +23,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -41,7 +38,6 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -64,7 +60,6 @@ public class CdmIndexService {
 
     private MigrationProject project;
     private CdmFieldService fieldService;
-    private ExportObjectsService exportObjectsService;
 
     private String recordInsertSqlTemplate;
     private List<String> indexingWarnings = new ArrayList<>();
@@ -310,19 +305,15 @@ public class CdmIndexService {
 
     /**
      * Create the index database with all cdm and migration fields
-     * @param force
+     * @param options
      * @throws IOException
      */
-    public void createDatabase(boolean force, CdmIndexOptions options) throws IOException {
-        ensureDatabaseState(force);
-        List<String> exportFields;
+    public void createDatabase(CdmIndexOptions options) throws IOException {
+        ensureDatabaseState(options.getForce());
 
-        if (options.getCsvFile() != null) {
-            CdmFieldInfo fieldInfo = fieldService.loadFromCsvFieldsFromProject(project);
-            exportFields = fieldInfo.listAllExportFields();
-        } else {
-            CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-            exportFields = fieldInfo.listAllExportFields();
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+        if (options.getCsvFile() == null) {
             exportFields.addAll(MIGRATION_FIELDS);
         }
 
@@ -366,11 +357,10 @@ public class CdmIndexService {
      * @throws IOException
      */
     public void indexAllFromCsv(CdmIndexOptions options) throws IOException {
-        assertObjectsExported(options);
+        assertCsvImportExists(options);
 
-        CdmFieldInfo fieldInfo = fieldService.loadFromCsvFieldsFromProject(project);
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
-        outputLogger.info(exportFields.toString());
         recordInsertSqlTemplate = makeInsertTemplate(exportFields);
 
         try (
@@ -383,10 +373,7 @@ public class CdmIndexService {
         ) {
             for (CSVRecord csvRecord : csvParser) {
                 if (!csvRecord.get(0).isEmpty()) {
-                    List<String> fieldValues = new ArrayList<>();
-                    for (int i = 0; i < csvRecord.size(); i++) {
-                        fieldValues.add(csvRecord.get(i));
-                    }
+                    List<String> fieldValues = csvRecord.toList();
                     indexObject(conn, fieldValues);
                 }
             }
@@ -400,7 +387,7 @@ public class CdmIndexService {
         ProjectPropertiesSerialization.write(project);
     }
 
-    private void assertObjectsExported(CdmIndexOptions options) {
+    private void assertCsvImportExists(CdmIndexOptions options) {
         if (Files.notExists(options.getCsvFile())) {
             throw new InvalidProjectStateException("User provided csv must exist prior to indexing");
         }
@@ -423,10 +410,6 @@ public class CdmIndexService {
 
     public void setFieldService(CdmFieldService fieldService) {
         this.fieldService = fieldService;
-    }
-
-    public void setExportObjectsService(ExportObjectsService exportObjectsService) {
-        this.exportObjectsService = exportObjectsService;
     }
 
     public void setProject(MigrationProject project) {

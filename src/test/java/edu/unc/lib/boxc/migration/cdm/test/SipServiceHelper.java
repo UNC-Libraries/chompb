@@ -117,7 +117,6 @@ public class SipServiceHelper {
         indexService = new CdmIndexService();
         indexService.setProject(project);
         indexService.setFieldService(fieldService);
-        indexService.setExportObjectsService(exportObjectsService);
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(indexService);
         sourceFileService.setProject(project);
@@ -298,6 +297,7 @@ public class SipServiceHelper {
 
     public void indexExportData(Path fieldsPath, String descPath) throws Exception {
         CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(true);
         Files.copy(fieldsPath, project.getFieldsPath(), REPLACE_EXISTING);
         Files.copy(Paths.get("src/test/resources/descriptions/" + descPath + "/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project), REPLACE_EXISTING);
@@ -315,7 +315,7 @@ public class SipServiceHelper {
             });
         }
         project.getProjectProperties().setExportedDate(Instant.now());
-        indexService.createDatabase(true, options);
+        indexService.createDatabase(options);
         indexService.indexAll();
         ProjectPropertiesSerialization.write(project);
     }

@@ -11,7 +11,6 @@ import java.util.concurrent.Callable;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
-import edu.unc.lib.boxc.migration.cdm.services.ExportObjectsService;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
@@ -21,7 +20,6 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
 /**
@@ -35,13 +33,8 @@ public class CdmIndexCommand implements Callable<Integer> {
     @ParentCommand
     private CLIMain parentCommand;
 
-    @Option(names = { "-f", "--force"},
-            description = "Overwrite index if one already exists")
-    private boolean force;
-
     private CdmFieldService fieldService;
     private CdmIndexService indexService;
-    private ExportObjectsService exportObjectsService;
     private MigrationProject project;
 
     @Mixin
@@ -58,13 +51,13 @@ public class CdmIndexCommand implements Callable<Integer> {
             if (options.getCsvFile() != null) {
                 if (Files.exists(options.getCsvFile())) {
                     CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(options.getCsvFile());
-                    fieldService.persistCsvFieldsToProject(project, csvExportFields);
+                    fieldService.persistFieldsToProject(project, csvExportFields);
                 } else {
                     throw new MigrationException("No csv file exists in " + options.getCsvFile());
                 }
             }
 
-            indexService.createDatabase(force, options);
+            indexService.createDatabase(options);
             indexService.index(options);
             // Display any warning messages to user
             if (!indexService.getIndexingWarnings().isEmpty()) {
@@ -88,11 +81,8 @@ public class CdmIndexCommand implements Callable<Integer> {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         fieldService = new CdmFieldService();
-        exportObjectsService = new ExportObjectsService();
-        exportObjectsService.setProject(project);
         indexService = new CdmIndexService();
         indexService.setFieldService(fieldService);
-        indexService.setExportObjectsService(exportObjectsService);
         indexService.setProject(project);
     }
 }
