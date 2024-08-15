@@ -3,8 +3,10 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.ExportObjectsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
+import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
@@ -64,8 +66,10 @@ public class CdmIndexServiceTest {
                 CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -79,32 +83,35 @@ public class CdmIndexServiceTest {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
                     + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
-            rs.next();
-            assertEquals(25, rs.getInt(CdmFieldInfo.CDM_ID));
-            assertEquals("2005-11-23", rs.getString(CdmFieldInfo.CDM_CREATED));
-            assertEquals("Redoubt C", rs.getString("title"));
-            assertEquals("Paper is discolored.", rs.getString("notes"));
-            assertEquals("276_182_E.tif", rs.getString("file"));
-            try {
-                rs.getString("search");
-                fail("Skipped field must not be indexed");
-            } catch (SQLException e) {
+            while (rs.next()) {
+                int id = rs.getInt(CdmFieldInfo.CDM_ID);
+                if (id == 25) {
+                    assertEquals(25, rs.getInt(CdmFieldInfo.CDM_ID));
+                    assertEquals("2005-11-23", rs.getString(CdmFieldInfo.CDM_CREATED));
+                    assertEquals("Redoubt C", rs.getString("title"));
+                    assertEquals("Paper is discolored.", rs.getString("notes"));
+                    assertEquals("276_182_E.tif", rs.getString("file"));
+                    try {
+                        rs.getString("search");
+                        fail("Skipped field must not be indexed");
+                    } catch (SQLException e) {
+                    }
+                }
+                if (id == 26) {
+                    assertEquals(26, rs.getInt(CdmFieldInfo.CDM_ID));
+                    assertEquals("2005-11-24", rs.getString(CdmFieldInfo.CDM_CREATED));
+                    assertEquals("Plan of Battery McIntosh", rs.getString("title"));
+                    assertEquals("Paper", rs.getString("medium"));
+                    assertEquals("276_183_E.tif", rs.getString("file"));
+                }
+                if (id == 27) {
+                    assertEquals(27, rs.getInt(CdmFieldInfo.CDM_ID));
+                    assertEquals("2005-12-08", rs.getString(CdmFieldInfo.CDM_CREATED));
+                    assertEquals("Fort DeRussy on Red River, Louisiana", rs.getString("title"));
+                    assertEquals("Bill Richards", rs.getString("creatb"));
+                    assertEquals("276_203_E.tif", rs.getString("file"));
+                }
             }
-
-            rs.next();
-            assertEquals(26, rs.getInt(CdmFieldInfo.CDM_ID));
-            assertEquals("2005-11-24", rs.getString(CdmFieldInfo.CDM_CREATED));
-            assertEquals("Plan of Battery McIntosh", rs.getString("title"));
-            assertEquals("Paper", rs.getString("medium"));
-            assertEquals("276_183_E.tif", rs.getString("file"));
-
-            rs.next();
-            assertEquals(27, rs.getInt(CdmFieldInfo.CDM_ID));
-            assertEquals("2005-12-08", rs.getString(CdmFieldInfo.CDM_CREATED));
-            assertEquals("Fort DeRussy on Red River, Louisiana", rs.getString("title"));
-            assertEquals("Bill Richards", rs.getString("creatb"));
-            assertEquals("276_203_E.tif", rs.getString("file"));
-
         } finally {
             CdmIndexService.closeDbConnection(conn);
         }
@@ -116,10 +123,12 @@ public class CdmIndexServiceTest {
                 CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         try {
-            service.createDatabase(false);
+            service.createDatabase(options);
             fail();
         } catch (StateAlreadyExistsException e) {
             assertTrue(e.getMessage().contains("Cannot create index, an index file already exists"));
@@ -133,15 +142,18 @@ public class CdmIndexServiceTest {
                 CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         service.indexAll();
         assertRowCount(3);
 
         // Switch desc to full set and force a reindex
         Files.copy(Paths.get("src/test/resources/descriptions/gilmer/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project), StandardCopyOption.REPLACE_EXISTING);
-        service.createDatabase(true);
+        options.setForce(true);
+        service.createDatabase(options);
         service.indexAll();
         assertRowCount(161);
 
@@ -154,8 +166,10 @@ public class CdmIndexServiceTest {
                 CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         service.indexAll();
         assertRowCount(3);
 
@@ -170,8 +184,10 @@ public class CdmIndexServiceTest {
         FileUtils.write(CdmFileRetrievalService.getDescAllPath(project).toFile(), "uh oh", ISO_8859_1);
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         try {
             service.indexAll();
             fail();
@@ -188,8 +204,10 @@ public class CdmIndexServiceTest {
         fieldString += "\nmystery,mystery,Mysterious,false,0,0,0,0,mystery";
         FileUtils.writeStringToFile(project.getFieldsPath().toFile(), fieldString, ISO_8859_1);
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         service.indexAll();
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
@@ -220,8 +238,10 @@ public class CdmIndexServiceTest {
                 CdmFileRetrievalService.getExportedCpdsPath(project).resolve("620.cpd"));
         Files.copy(Paths.get("src/test/resources/keepsakes_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -312,8 +332,10 @@ public class CdmIndexServiceTest {
                 CdmFileRetrievalService.getExportedCpdsPath(project).resolve("620.cpd"));
         Files.copy(Paths.get("src/test/resources/keepsakes_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -380,8 +402,10 @@ public class CdmIndexServiceTest {
                 CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/descriptions/plantations/cdm_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -424,8 +448,10 @@ public class CdmIndexServiceTest {
                 CdmFileRetrievalService.getExportedCpdsPath(project).resolve("196.cpd"));
         Files.copy(Paths.get("src/test/resources/monograph_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -486,8 +512,10 @@ public class CdmIndexServiceTest {
                 CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/roy_brown/cdm_fields.csv"), project.getFieldsPath());
         setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
 
-        service.createDatabase(false);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent();
@@ -627,6 +655,97 @@ public class CdmIndexServiceTest {
         assertEquals(1844, rootEl.getChildText("full").length());
         assertEquals("Fencing with Fidel", rootEl.getChildText("title"));
         assertEquals("7", rootEl.getChildText("dmrecord"));
+    }
+
+    @Test
+    public void indexFromCsvTest() throws Exception {
+        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/exported_objects.csv"));
+        fieldService.persistFieldsToProject(project, csvExportFields);
+        setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setCsvFile(Paths.get("src/test/resources/files/exported_objects.csv"));
+        options.setForce(false);
+
+        service.createDatabase(options);
+        service.indexAllFromCsv(options);
+
+        assertDateIndexedPresent();
+        assertRowCount(3);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+
+        Connection conn = service.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
+                    + " from " + CdmIndexService.TB_NAME + " order by " + ExportObjectsInfo.RECORD_ID + " asc");
+            rs.next();
+            assertEquals("test-00001", rs.getString(ExportObjectsInfo.RECORD_ID));
+            assertEquals("src/test/resources/files/D2_035_Varners_DrugStore_interior.tif",
+                    rs.getString(ExportObjectsInfo.FILE_PATH));
+            assertEquals("D2_035_Varners_DrugStore_interior.tif", rs.getString(ExportObjectsInfo.FILENAME));
+
+            rs.next();
+            assertEquals("test-00002", rs.getString(ExportObjectsInfo.RECORD_ID));
+            assertEquals("src/test/resources/files/MJM_7_016_LumberMills_IndianCreekTrestle.tif",
+                    rs.getString(ExportObjectsInfo.FILE_PATH));
+            assertEquals("MJM_7_016_LumberMills_IndianCreekTrestle.tif", rs.getString(ExportObjectsInfo.FILENAME));
+
+            rs.next();
+            assertEquals("test-00003", rs.getString(ExportObjectsInfo.RECORD_ID));
+            assertEquals("src/test/resources/files/IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILE_PATH));
+            assertEquals("IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILENAME));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
+    @Test
+    public void indexFromCsvMoreFieldsTest() throws Exception {
+        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/more_fields.csv"));
+        fieldService.persistFieldsToProject(project, csvExportFields);
+        setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setCsvFile(Paths.get("src/test/resources/files/more_fields.csv"));
+        options.setForce(false);
+
+        service.createDatabase(options);
+        service.indexAllFromCsv(options);
+
+        assertDateIndexedPresent();
+        assertRowCount(3);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+
+        Connection conn = service.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
+                    + " from " + CdmIndexService.TB_NAME + " order by " + ExportObjectsInfo.RECORD_ID + " asc");
+            rs.next();
+            assertEquals("test-00001", rs.getString(ExportObjectsInfo.RECORD_ID));
+            assertEquals("src/test/resources/files/D2_035_Varners_DrugStore_interior.tif",
+                    rs.getString(ExportObjectsInfo.FILE_PATH));
+            assertEquals("D2_035_Varners_DrugStore_interior.tif", rs.getString(ExportObjectsInfo.FILENAME));
+            assertEquals("tif", rs.getString("file_type"));
+
+            rs.next();
+            assertEquals("test-00002", rs.getString(ExportObjectsInfo.RECORD_ID));
+            assertEquals("src/test/resources/files/MJM_7_016_LumberMills_IndianCreekTrestle.tif",
+                    rs.getString(ExportObjectsInfo.FILE_PATH));
+            assertEquals("MJM_7_016_LumberMills_IndianCreekTrestle.tif", rs.getString(ExportObjectsInfo.FILENAME));
+            assertEquals("tif", rs.getString("file_type"));
+
+            rs.next();
+            assertEquals("test-00003", rs.getString(ExportObjectsInfo.RECORD_ID));
+            assertEquals("src/test/resources/files/IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILE_PATH));
+            assertEquals("IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILENAME));
+            assertEquals("jpeg", rs.getString("file_type"));
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
     }
 
     private void assertDateIndexedPresent() throws Exception {

@@ -21,12 +21,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.auth.api.UserRole;
+import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
+import edu.unc.lib.boxc.migration.cdm.services.ExportObjectsService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
@@ -97,6 +99,7 @@ public class SipServiceHelper {
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
     private ChompbConfigService.ChompbConfig chompbConfig;
+    private ExportObjectsService exportObjectsService;
 
     public SipServiceHelper(MigrationProject project, Path filesBasePath) throws IOException {
         this.sourceFilesBasePath = new File(filesBasePath.toFile(), "source").toPath();
@@ -109,6 +112,8 @@ public class SipServiceHelper {
         premisLoggerFactory = new PremisLoggerFactoryImpl();
         premisLoggerFactory.setPidMinter(pidMinter);
         fieldService = new CdmFieldService();
+        exportObjectsService = new ExportObjectsService();
+        exportObjectsService.setProject(project);
         indexService = new CdmIndexService();
         indexService.setProject(project);
         indexService.setFieldService(fieldService);
@@ -291,6 +296,8 @@ public class SipServiceHelper {
     }
 
     public void indexExportData(Path fieldsPath, String descPath) throws Exception {
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(true);
         Files.copy(fieldsPath, project.getFieldsPath(), REPLACE_EXISTING);
         Files.copy(Paths.get("src/test/resources/descriptions/" + descPath + "/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project), REPLACE_EXISTING);
@@ -308,7 +315,7 @@ public class SipServiceHelper {
             });
         }
         project.getProjectProperties().setExportedDate(Instant.now());
-        indexService.createDatabase(true);
+        indexService.createDatabase(options);
         indexService.indexAll();
         ProjectPropertiesSerialization.write(project);
     }

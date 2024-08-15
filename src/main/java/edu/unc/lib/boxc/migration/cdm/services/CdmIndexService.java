@@ -6,7 +6,11 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -16,6 +20,7 @@ import org.slf4j.Logger;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.sql.Connection;
@@ -58,6 +63,14 @@ public class CdmIndexService {
 
     private String recordInsertSqlTemplate;
     private List<String> indexingWarnings = new ArrayList<>();
+
+    public void index(CdmIndexOptions options) throws Exception {
+        if (options.getCsvFile() != null) {
+            indexAllFromCsv(options);
+        } else {
+            indexAll();
+        }
+    }
 
     /**
      * Indexes all exported CDM records for this project
@@ -292,15 +305,16 @@ public class CdmIndexService {
 
     /**
      * Create the index database with all cdm and migration fields
-     * @param force
+     * @param options
      * @throws IOException
      */
-    public void createDatabase(boolean force) throws IOException {
-        ensureDatabaseState(force);
+    public void createDatabase(CdmIndexOptions options) throws IOException {
+        ensureDatabaseState(options.getForce());
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-        List<String> exportFields = new ArrayList<>(fieldInfo.listAllExportFields());
+        List<String> exportFields = fieldInfo.listAllExportFields();
         exportFields.addAll(MIGRATION_FIELDS);
+
         StringBuilder queryBuilder = new StringBuilder("CREATE TABLE " + TB_NAME + " (\n");
         for (int i = 0; i < exportFields.size(); i++) {
             String field = exportFields.get(i);
@@ -327,11 +341,54 @@ public class CdmIndexService {
 
     private String indexFieldType(String exportField) {
         if (CdmFieldInfo.CDM_ID.equals(exportField)) {
-            return "INT PRIMARY KEY NOT NULL";
+            return "TEXT PRIMARY KEY NOT NULL";
         } else if (CHILD_ORDER_FIELD.equals(exportField)) {
             return "INT";
         } else {
             return "TEXT";
+        }
+    }
+
+    /**
+     * Indexes all exported objects for this project
+     * @param options
+     * @throws IOException
+     */
+    public void indexAllFromCsv(CdmIndexOptions options) throws IOException {
+        assertCsvImportExists(options);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+        exportFields.addAll(MIGRATION_FIELDS);
+        recordInsertSqlTemplate = makeInsertTemplate(exportFields);
+
+        try (
+                var conn = openDbConnection();
+                Reader reader = Files.newBufferedReader(options.getCsvFile());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(String.valueOf(exportFields))
+                        .withTrim());
+        ) {
+            for (CSVRecord csvRecord : csvParser) {
+                if (!csvRecord.get(0).isEmpty()) {
+                    List<String> fieldValues = csvRecord.toList();
+                    indexObject(conn, fieldValues);
+                }
+            }
+        } catch (IOException e) {
+            throw new MigrationException("Failed to read export files", e);
+        } catch (SQLException e) {
+            throw new MigrationException("Failed to update database", e);
+        }
+
+        project.getProjectProperties().setIndexedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
+    }
+
+    private void assertCsvImportExists(CdmIndexOptions options) {
+        if (Files.notExists(options.getCsvFile())) {
+            throw new InvalidProjectStateException("User provided csv must exist prior to indexing");
         }
     }
 

@@ -1,0 +1,4 @@
+dmrecord,file_path,filename
+test-00001,src/test/resources/files/D2_035_Varners_DrugStore_interior.tif,D2_035_Varners_DrugStore_interior.tif
+test-00002,src/test/resources/files/MJM_7_016_LumberMills_IndianCreekTrestle.tif,MJM_7_016_LumberMills_IndianCreekTrestle.tif
+test-00003,src/test/resources/files/IMG_2377.jpeg,IMG_2377.jpeg

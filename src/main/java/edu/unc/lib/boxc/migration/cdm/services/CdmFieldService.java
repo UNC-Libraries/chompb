@@ -42,6 +42,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 public class CdmFieldService {
     private CloseableHttpClient httpClient;
     private String cdmBaseUri;
+    private MigrationProject project;
 
     private static final String CDM_NICK_FIELD = "nick";
     private static final String CDM_NAME_FIELD = "name";
@@ -69,7 +70,6 @@ public class CdmFieldService {
 
     /**
      * Get the URL for retrieving field info for the given collection
-     * @param cdmBaseUri
      * @param collectionId
      * @return
      */
@@ -129,7 +129,7 @@ public class CdmFieldService {
     }
 
     /**
-     * Persist the field information out to the project project
+     * Persist the field information out to the project
      * @param project
      * @param fieldInfo
      * @throws IOException
@@ -234,6 +234,34 @@ public class CdmFieldService {
         existing.add(field);
     }
 
+    /**
+     * Retrieve field information for the project from the csv
+     * @param
+     * @return
+     */
+    public CdmFieldInfo retrieveFieldsFromCsv(Path exportedObjectsPath) throws IOException {
+        CdmFieldInfo fieldInfo = new CdmFieldInfo();
+
+        try (
+            Reader reader = Files.newBufferedReader(exportedObjectsPath);
+            CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT
+                    .withTrim());
+        ) {
+            List<String> headers = parser.getRecords().get(0).toList();
+            for (String header : headers) {
+                CdmFieldEntry fieldEntry = new CdmFieldEntry();
+                fieldEntry.setNickName(header);
+                fieldEntry.setExportAs(header);
+                fieldEntry.setDescription(header);
+                fieldEntry.setSkipExport(false);
+                fieldInfo.getFields().add(fieldEntry);
+            }
+        } catch (Exception e) {
+            throw new MigrationException("Failed to parse exported objects path " + exportedObjectsPath, e);
+        }
+        return fieldInfo;
+    }
+
     private String booleanToString(boolean bool) {
         return bool ? "y" : "n";
     }
@@ -244,5 +272,9 @@ public class CdmFieldService {
 
     public void setCdmBaseUri(String cdmBaseUri) {
         this.cdmBaseUri = cdmBaseUri;
+    }
+
+    public void setProject(MigrationProject project) {
+        this.project = project;
     }
 }
