@@ -41,7 +41,8 @@ public class ListProjectsCommand implements Callable<Integer> {
             initialize();
             ObjectMapper mapper = new ObjectMapper();
             JsonNode listProjects = listProjectsService.listProjects(parentCommand.getWorkingDirectory());
-            mapper.writerFor(listProjects.getClass()).withDefaultPrettyPrinter();
+            String prettyPrintList = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(listProjects);
+            outputLogger.info(prettyPrintList);
             return 0;
         } catch(MigrationException | IllegalArgumentException e) {
             outputLogger.info("List projects failed: {}", e.getMessage());

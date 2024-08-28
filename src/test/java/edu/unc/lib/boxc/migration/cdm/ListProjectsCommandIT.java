@@ -36,10 +36,10 @@ public class ListProjectsCommandIT extends AbstractCommandIT {
                 "list_projects" };
         executeExpectSuccess(args);
 
-        assertOutputContains("{\"" + ListProjectsService.PROJECT_PATH + "\":\"" + baseDir + "\"");
-        assertOutputContains("\""+ ListProjectsService.STATUS + "\":\"initialized\"");
-        assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\":null");
-        assertOutputContains("{\"name\":\"" + PROJECT_ID + "\"");
+        assertOutputContains("\"" + ListProjectsService.PROJECT_PATH + "\" : \"" + baseDir + "\"");
+        assertOutputContains("\"" + ListProjectsService.STATUS + "\" : \"initialized\"");
+        assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\" : null");
+        assertOutputContains("\"name\" : \"" + PROJECT_ID + "\"");
     }
 
     @Test
@@ -53,10 +53,10 @@ public class ListProjectsCommandIT extends AbstractCommandIT {
                 "list_projects" };
         executeExpectSuccess(args);
 
-        assertOutputContains("{\"" + ListProjectsService.PROJECT_PATH + "\":\"" + baseDir + "\"");
-        assertOutputContains("\""+ ListProjectsService.STATUS + "\":\"initialized\"");
-        assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\":null");
-        assertOutputContains("{\"name\":\"" + PROJECT_ID + "\"");
-        assertOutputContains("{\"name\":\"" + PROJECT_ID_2 + "\"");
+        assertOutputContains("\"" + ListProjectsService.PROJECT_PATH + "\" : \"" + baseDir + "\"");
+        assertOutputContains("\""+ ListProjectsService.STATUS + "\" : \"initialized\"");
+        assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\" : null");
+        assertOutputContains("\"name\" : \"" + PROJECT_ID + "\"");
+        assertOutputContains("\"name\" : \"" + PROJECT_ID_2 + "\"");
     }
 }
