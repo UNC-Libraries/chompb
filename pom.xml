@@ -24,6 +24,7 @@
         <junit.jupiter.version>5.9.2</junit.jupiter.version>
         <solr.solrj.version>8.10.1</solr.solrj.version>
         <embedded-redis.version>0.7.3</embedded-redis.version>
+        <jackson.version>2.17.2</jackson.version>
     </properties>
 
     <build>
@@ -141,10 +142,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
