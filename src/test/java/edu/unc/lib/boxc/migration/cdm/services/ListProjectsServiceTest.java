@@ -1,6 +1,8 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
@@ -17,9 +19,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -86,7 +88,7 @@ public class ListProjectsServiceTest {
 
         assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("sources_mapped", list.findValue(ListProjectsService.STATUS).asText());
-        assertEquals("[\"crop_color_bars\"]", list.findValue(ListProjectsService.ALLOWED_ACTIONS).asText());
+        assertEquals(jsonArray(Arrays.asList("crop_color_bars")), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
     }
 
@@ -96,7 +98,7 @@ public class ListProjectsServiceTest {
 
         assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("initialized", list.findValue(ListProjectsService.STATUS).asText());
-        assertEquals("[]", list.findValue(ListProjectsService.ALLOWED_ACTIONS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
     }
 
@@ -108,7 +110,7 @@ public class ListProjectsServiceTest {
 
         assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("indexed", list.findValue(ListProjectsService.STATUS).asText());
-        assertEquals("[]", list.findValue(ListProjectsService.ALLOWED_ACTIONS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
     }
 
@@ -120,7 +122,7 @@ public class ListProjectsServiceTest {
 
         assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("sources_mapped", list.findValue(ListProjectsService.STATUS).asText());
-        assertEquals("[]", list.findValue(ListProjectsService.ALLOWED_ACTIONS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
     }
 
@@ -133,7 +135,7 @@ public class ListProjectsServiceTest {
 
         assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("sips_generated", list.findValue(ListProjectsService.STATUS).asText());
-        assertEquals("[]", list.findValue(ListProjectsService.ALLOWED_ACTIONS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
     }
 
@@ -146,7 +148,7 @@ public class ListProjectsServiceTest {
 
         assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("ingested", list.findValue(ListProjectsService.STATUS).asText());
-        assertEquals("[]", list.findValue(ListProjectsService.ALLOWED_ACTIONS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
     }
 
@@ -167,7 +169,7 @@ public class ListProjectsServiceTest {
         assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertTrue(list.findValues(ListProjectsService.STATUS).toString().contains("initialized"));
         assertTrue(list.findValues(ListProjectsService.STATUS).toString().contains("ingested"));
-        assertEquals("[]", list.findValue(ListProjectsService.ALLOWED_ACTIONS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertTrue(list.findValues("name").toString().contains(PROJECT_NAME_2));
         assertTrue(list.findValues("name").toString().contains(PROJECT_NAME));
     }
@@ -182,5 +184,11 @@ public class ListProjectsServiceTest {
                 mappingBody, StandardCharsets.UTF_8);
         project.getProjectProperties().setSourceFilesUpdatedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
+    }
+
+    private ArrayNode jsonArray(List<String> values) {
+        ObjectMapper mapper = new ObjectMapper();
+        ArrayNode arrayNode = mapper.valueToTree(values);
+        return arrayNode;
     }
 }

@@ -61,14 +61,14 @@ public class ListProjectsService {
 
                 Path projectPath = directory.toAbsolutePath();
                 String projectStatus = status(project);
-                String allowedActions = mapper.writeValueAsString(allowedActions(project));
+                ArrayNode allowedActions = mapper.valueToTree(allowedActions(project));
                 JsonNode projectProperties = mapper.readTree(project.getProjectPropertiesPath().toFile());
 
                 // add project info to JSON
                 ObjectNode objectNode = mapper.createObjectNode();
                 objectNode.put(PROJECT_PATH, projectPath.toString());
                 objectNode.put(STATUS, projectStatus);
-                objectNode.put(ALLOWED_ACTIONS, allowedActions);
+                objectNode.putArray(ALLOWED_ACTIONS).addAll(allowedActions);
                 objectNode.set("projectProperties", projectProperties);
                 arrayNode.add(objectNode);
             }
