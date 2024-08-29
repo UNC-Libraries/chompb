@@ -86,7 +86,8 @@ public class ListProjectsServiceTest {
         writeSourceFilesCsv(mappingBody("test,," + Path.of("test.tif") + ","));
         JsonNode list = service.listProjects(tmpFolder);
 
-        assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("sources_mapped", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList("crop_color_bars")), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
@@ -96,7 +97,8 @@ public class ListProjectsServiceTest {
     public void listProjectsInitializedTest() throws Exception {
         JsonNode list = service.listProjects(tmpFolder);
 
-        assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("initialized", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
@@ -108,7 +110,8 @@ public class ListProjectsServiceTest {
         ProjectPropertiesSerialization.write(project);
         JsonNode list = service.listProjects(tmpFolder);
 
-        assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("indexed", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
@@ -120,7 +123,8 @@ public class ListProjectsServiceTest {
         ProjectPropertiesSerialization.write(project);
         JsonNode list = service.listProjects(tmpFolder);
 
-        assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("sources_mapped", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
@@ -133,7 +137,8 @@ public class ListProjectsServiceTest {
         ProjectPropertiesSerialization.write(project);
         JsonNode list = service.listProjects(tmpFolder);
 
-        assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("sips_generated", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
@@ -146,7 +151,8 @@ public class ListProjectsServiceTest {
         ProjectPropertiesSerialization.write(project);
         JsonNode list = service.listProjects(tmpFolder);
 
-        assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("ingested", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
@@ -166,7 +172,8 @@ public class ListProjectsServiceTest {
 
         JsonNode list = service.listProjects(tmpFolder);
 
-        assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertTrue(list.findValues(ListProjectsService.PROJECT_PATH).toString().contains(tmpFolder + "/" + PROJECT_NAME_2));
+        assertTrue(list.findValues(ListProjectsService.PROJECT_PATH).toString().contains(tmpFolder + "/" + PROJECT_NAME));
         assertTrue(list.findValues(ListProjectsService.STATUS).toString().contains("initialized"));
         assertTrue(list.findValues(ListProjectsService.STATUS).toString().contains("ingested"));
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
