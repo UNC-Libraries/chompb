@@ -60,7 +60,7 @@ public class ListProjectsService {
                 try {
                     MigrationProject project = initializeProject(file.toPath());
 
-                    Path projectPath = directory.toAbsolutePath();
+                    Path projectPath = file.toPath().toAbsolutePath();
                     String projectStatus = status(project);
                     ArrayNode allowedActions = mapper.valueToTree(allowedActions(project));
                     JsonNode projectProperties = mapper.readTree(project.getProjectPropertiesPath().toFile());
