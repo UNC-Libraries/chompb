@@ -16,8 +16,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Service for listing all chompb projects in a given directory
@@ -34,6 +37,12 @@ public class ListProjectsService {
     public static final String PROJECT_PATH = "projectPath";
     public static final String STATUS = "status";
     public static final String ALLOWED_ACTIONS = "allowedActions";
+    private static final Set<String> IMAGE_FORMATS = new HashSet<>();
+    // accepted file types are listed in imageFormats below
+    static {
+        IMAGE_FORMATS.addAll(Arrays.asList("tif", "tiff", "jpeg", "jpg", "png", "gif", "pict", "bmp",
+                "psd", "jp2", "nef", "crw", "cr2", "dng", "raf"));
+    }
 
     /**
      * List projects in given directory
@@ -56,14 +65,14 @@ public class ListProjectsService {
 
                 Path projectPath = directory.toAbsolutePath();
                 String projectStatus = status(project);
-                String allowedActions = allowedActions(project);
+                List<String> allowedActions = allowedActions(project);
                 JsonNode projectProperties = mapper.readTree(project.getProjectPropertiesPath().toFile());
 
                 // add project info to JSON
                 ObjectNode objectNode = mapper.createObjectNode();
                 objectNode.put(PROJECT_PATH, projectPath.toString());
                 objectNode.put(STATUS, projectStatus);
-                objectNode.put(ALLOWED_ACTIONS, allowedActions);
+                objectNode.put(ALLOWED_ACTIONS, String.valueOf(allowedActions));
                 objectNode.set("projectProperties", projectProperties);
                 arrayNode.add(objectNode);
             }
@@ -105,16 +114,15 @@ public class ListProjectsService {
      * crop_color_bars: populated if source files are mapped and if project contains any images (based off source file extensions)
      * @return allowed_actions
      */
-    private String allowedActions(MigrationProject project) throws Exception {
-        String allowedActions = null;
-        List<String> imageFormats = Arrays.asList("tif", "jpeg", "png", "gif", "pict", "bmp",
-                "psd", "jp2", "nef", "crw", "cr2", "dng", "raf");
+    private List<String> allowedActions(MigrationProject project) throws Exception {
+        List<String> allowedActions = new ArrayList<>();
 
         if (project.getProjectProperties().getSourceFilesUpdatedDate() != null) {
             SourceFilesInfo info = sourceFileService.loadMappings();
             if (info.getMappings().stream().map(entry ->
-                    FilenameUtils.getExtension(entry.getFirstSourcePath().toString())).anyMatch(imageFormats::contains)) {
-                allowedActions = "crop_color_bars";
+                    FilenameUtils.getExtension(entry.getFirstSourcePath().toString().toLowerCase()))
+                    .anyMatch(IMAGE_FORMATS::contains)) {
+                allowedActions.add("crop_color_bars");
             }
         }
         return allowedActions;
