@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -84,7 +86,7 @@ public class ListProjectsServiceTest {
 
         assertEquals(tmpFolder.toString(), list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("sources_mapped", list.findValue(ListProjectsService.STATUS).asText());
-        assertEquals("[crop_color_bars]", list.findValue(ListProjectsService.ALLOWED_ACTIONS).asText());
+        assertEquals("[\"crop_color_bars\"]", list.findValue(ListProjectsService.ALLOWED_ACTIONS).asText());
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
     }
 

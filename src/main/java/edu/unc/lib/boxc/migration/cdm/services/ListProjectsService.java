@@ -37,12 +37,8 @@ public class ListProjectsService {
     public static final String PROJECT_PATH = "projectPath";
     public static final String STATUS = "status";
     public static final String ALLOWED_ACTIONS = "allowedActions";
-    private static final Set<String> IMAGE_FORMATS = new HashSet<>();
-    // accepted file types are listed in imageFormats below
-    static {
-        IMAGE_FORMATS.addAll(Arrays.asList("tif", "tiff", "jpeg", "jpg", "png", "gif", "pict", "bmp",
-                "psd", "jp2", "nef", "crw", "cr2", "dng", "raf"));
-    }
+    private static final Set<String> IMAGE_FORMATS = new HashSet<>(Arrays.asList("tif", "tiff", "jpeg", "jpg", "png",
+            "gif", "pict", "bmp", "psd", "jp2", "nef", "crw", "cr2", "dng", "raf"));
 
     /**
      * List projects in given directory
@@ -65,14 +61,14 @@ public class ListProjectsService {
 
                 Path projectPath = directory.toAbsolutePath();
                 String projectStatus = status(project);
-                List<String> allowedActions = allowedActions(project);
+                String allowedActions = mapper.writeValueAsString(allowedActions(project));
                 JsonNode projectProperties = mapper.readTree(project.getProjectPropertiesPath().toFile());
 
                 // add project info to JSON
                 ObjectNode objectNode = mapper.createObjectNode();
                 objectNode.put(PROJECT_PATH, projectPath.toString());
                 objectNode.put(STATUS, projectStatus);
-                objectNode.put(ALLOWED_ACTIONS, String.valueOf(allowedActions));
+                objectNode.put(ALLOWED_ACTIONS, allowedActions);
                 objectNode.set("projectProperties", projectProperties);
                 arrayNode.add(objectNode);
             }
