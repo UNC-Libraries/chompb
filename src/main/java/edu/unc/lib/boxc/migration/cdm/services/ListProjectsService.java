@@ -57,20 +57,24 @@ public class ListProjectsService {
 
         for (File file : directory.toFile().listFiles()) {
             if (file.isDirectory()) {
-                MigrationProject project = initializeProject(file.toPath());
+                try {
+                    MigrationProject project = initializeProject(file.toPath());
 
-                Path projectPath = directory.toAbsolutePath();
-                String projectStatus = status(project);
-                ArrayNode allowedActions = mapper.valueToTree(allowedActions(project));
-                JsonNode projectProperties = mapper.readTree(project.getProjectPropertiesPath().toFile());
+                    Path projectPath = directory.toAbsolutePath();
+                    String projectStatus = status(project);
+                    ArrayNode allowedActions = mapper.valueToTree(allowedActions(project));
+                    JsonNode projectProperties = mapper.readTree(project.getProjectPropertiesPath().toFile());
 
-                // add project info to JSON
-                ObjectNode objectNode = mapper.createObjectNode();
-                objectNode.put(PROJECT_PATH, projectPath.toString());
-                objectNode.put(STATUS, projectStatus);
-                objectNode.putArray(ALLOWED_ACTIONS).addAll(allowedActions);
-                objectNode.set("projectProperties", projectProperties);
-                arrayNode.add(objectNode);
+                    // add project info to JSON
+                    ObjectNode objectNode = mapper.createObjectNode();
+                    objectNode.put(PROJECT_PATH, projectPath.toString());
+                    objectNode.put(STATUS, projectStatus);
+                    objectNode.putArray(ALLOWED_ACTIONS).addAll(allowedActions);
+                    objectNode.set("projectProperties", projectProperties);
+                    arrayNode.add(objectNode);
+                } catch (Exception e) {
+                    log.error(e.getMessage());
+                }
             }
         }
         log.debug(arrayNode.toString());
