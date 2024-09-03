@@ -15,6 +15,7 @@ import org.apache.sshd.common.util.security.SecurityUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -43,7 +44,7 @@ public class SshClientService {
         if (sshKeyPath != null) {
             try {
                 sshKeyPair = SecurityUtils.loadKeyPairIdentities(
-                        null, new PathResource(sshKeyPath), null, null
+                        null, new PathResource(sshKeyPath), Files.newInputStream(sshKeyPath), null
                 ).iterator().next();
             } catch (IOException | GeneralSecurityException e) {
                 throw new MigrationException("Failed to load ssh key", e);
@@ -75,22 +76,31 @@ public class SshClientService {
      * @return Response output from the command
      */
     public String executeRemoteCommand(String command) {
-        AtomicReference<String> response = null;
+        var response = new AtomicReference<String>();
         executeSshBlock(clientSession -> {
-            try (var responseStream = new ByteArrayOutputStream();
-                     ClientChannel channel = clientSession.createExecChannel(command)) {
-
-                channel.setOut(responseStream);
-                channel.setErr(responseStream);
-                channel.open().verify(5, TimeUnit.SECONDS);
-
-                channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), 5000);
-                response.set(responseStream.toString());
-            } catch (Exception e) {
-                throw new MigrationException("Failed to execute remote command", e);
-            }
+            response.set(executeRemoteCommand(clientSession, command));
         });
         return response.get();
+    }
+
+    /**
+     * Execute a remote command on the server, using the provided session
+     * @param command
+     * @return Response output from the command
+     */
+    public String executeRemoteCommand(ClientSession clientSession, String command) {
+        try (var responseStream = new ByteArrayOutputStream();
+             ClientChannel channel = clientSession.createExecChannel(command)) {
+
+            channel.setOut(responseStream);
+            channel.setErr(responseStream);
+            channel.open().verify(5, TimeUnit.SECONDS);
+
+            channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), 5000);
+            return responseStream.toString();
+        } catch (Exception e) {
+            throw new MigrationException("Failed to execute remote command", e);
+        }
     }
 
     /**
@@ -108,7 +118,7 @@ public class SshClientService {
             sshBlock.accept(sshSession);
         } catch (IOException e) {
             if (e instanceof SshException && e.getMessage().contains("No more authentication methods available")) {
-                throw new MigrationException("Authentication to server failed, check username or password");
+                throw new MigrationException("Authentication to server failed, check username or password", e);
             }
             throw new MigrationException("Failed to establish ssh session", e);
         }
@@ -120,10 +130,19 @@ public class SshClientService {
      */
     public void executeScpBlock(Consumer<ScpClient> scpBlock) {
         executeSshBlock(client -> {
-            var scpClientCreator = ScpClientCreator.instance();
-            var scpClient = scpClientCreator.createScpClient(client);
-            scpBlock.accept(scpClient);
+            executeScpBlock(client, scpBlock);
         });
+    }
+
+    /**
+     * Execute a block of code that requires an SCP client, using the provided ssh session
+     * @param session
+     * @param scpBlock
+     */
+    public void executeScpBlock(ClientSession session, Consumer<ScpClient> scpBlock) {
+        var scpClientCreator = ScpClientCreator.instance();
+        var scpClient = scpClientCreator.createScpClient(session);
+        scpBlock.accept(scpClient);
     }
 
     public void setSshHost(String sshHost) {
