@@ -4,17 +4,13 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmEnvironment;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
-import org.apache.sshd.client.SshClient;
-import org.apache.sshd.common.SshException;
-import org.apache.sshd.common.config.keys.FilePasswordProvider;
+import edu.unc.lib.boxc.migration.cdm.util.SshClientService;
 import org.apache.sshd.scp.client.ScpClient;
-import org.apache.sshd.scp.client.ScpClientCreator;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -89,27 +85,14 @@ public class CdmFileRetrievalService {
      * @param downloadBlock method containing download operations
      */
     public void executeDownloadBlock(Consumer<ScpClient> downloadBlock) {
-        SshClient client = SshClient.setUpDefaultClient();
-        client.setFilePasswordProvider(FilePasswordProvider.of(sshPassword));
-        client.start();
-        var cdmEnvId = project.getProjectProperties().getCdmEnvironmentId();
-        var cdmEnvConfig = chompbConfig.getCdmEnvironments().get(cdmEnvId);
-        try (var sshSession = client.connect(sshUsername, cdmEnvConfig.getSshHost(), cdmEnvConfig.getSshPort())
-                .verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .getSession()) {
-            sshSession.addPasswordIdentity(sshPassword);
+        var cdmEnvConfig = getCdmEnvironment();
+        var sshService = new SshClientService();
+        sshService.setSshHost(cdmEnvConfig.getSshHost());
+        sshService.setSshPort(cdmEnvConfig.getSshPort());
+        sshService.setSshUsername(sshUsername);
+        sshService.setSshPassword(sshPassword);
 
-            sshSession.auth().verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-            var scpClientCreator = ScpClientCreator.instance();
-            var scpClient = scpClientCreator.createScpClient(sshSession);
-            downloadBlock.accept(scpClient);
-        } catch (IOException e) {
-            if (e instanceof SshException && e.getMessage().contains("No more authentication methods available")) {
-                throw new MigrationException("Authentication to server failed, check username or password");
-            }
-            throw new MigrationException("Failed to establish ssh session", e);
-        }
+        sshService.executeScpBlock(downloadBlock);
     }
 
     private CdmEnvironment getCdmEnvironment() {
