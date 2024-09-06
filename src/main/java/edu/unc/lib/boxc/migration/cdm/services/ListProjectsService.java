@@ -57,7 +57,7 @@ public class ListProjectsService {
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         ArrayNode arrayNode = mapper.createArrayNode();
         ArrayNode readable = mapper.createArrayNode();
-        ArrayNode unreadable = mapper.createArrayNode();
+        ObjectNode unreadable = mapper.createObjectNode();
 
         for (File file : directory.toFile().listFiles()) {
             if (file.isDirectory()) {
@@ -77,10 +77,9 @@ public class ListProjectsService {
                     objectNode.set("projectProperties", projectProperties);
                     readable.add(objectNode);
                 } catch (UnrecognizedPropertyException | NullPointerException e) {
-                    Path unreadableProjectPath = file.toPath().toAbsolutePath();
-                    ObjectNode objectNode = mapper.createObjectNode();
-                    objectNode.put("unreadableProjectPath", unreadableProjectPath.toString());
-                    unreadable.add(objectNode);
+                    int number = unreadable.size() + 1;
+                    String unreadableProjectPath = file.toPath().toAbsolutePath().toString();
+                    unreadable.put("unreadableProjectPath" + number, unreadableProjectPath);
                     log.error("Unreadable project {} {}", unreadableProjectPath, e.getMessage());
                 }
             }
