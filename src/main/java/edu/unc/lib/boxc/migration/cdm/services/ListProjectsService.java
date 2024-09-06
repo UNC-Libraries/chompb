@@ -76,7 +76,7 @@ public class ListProjectsService {
                     objectNode.putArray(ALLOWED_ACTIONS).addAll(allowedActions);
                     objectNode.set("projectProperties", projectProperties);
                     readable.add(objectNode);
-                } catch (IOException e) {
+                } catch (IOException | NullPointerException e) {
                     Path unreadableProjectPath = file.toPath().toAbsolutePath();
                     unreadable.put("unreadableProjectPath", unreadableProjectPath.toString());
                     log.error("Unreadable project {} {}", unreadableProjectPath, e.getMessage());
