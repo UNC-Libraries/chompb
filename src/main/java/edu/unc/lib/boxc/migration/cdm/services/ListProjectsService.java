@@ -3,6 +3,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -74,10 +76,10 @@ public class ListProjectsService {
                     objectNode.putArray(ALLOWED_ACTIONS).addAll(allowedActions);
                     objectNode.set("projectProperties", projectProperties);
                     readable.add(objectNode);
-                } catch (Exception e) {
+                } catch (IOException e) {
                     Path unreadableProjectPath = file.toPath().toAbsolutePath();
                     unreadable.put("unreadableProjectPath", unreadableProjectPath.toString());
-                    log.error("Unreadable project {} {}", unreadableProjectPath, e.getMessage());
+                    log.error("Unreadable project {} {}", unreadableProjectPath, e);
                 }
             }
         }
