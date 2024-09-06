@@ -79,7 +79,7 @@ public class ListProjectsService {
                 } catch (IOException e) {
                     Path unreadableProjectPath = file.toPath().toAbsolutePath();
                     unreadable.put("unreadableProjectPath", unreadableProjectPath.toString());
-                    log.error("Unreadable project {} {}", unreadableProjectPath, e);
+                    log.error("Unreadable project {} {}", unreadableProjectPath, e.getMessage());
                 }
             }
         }
@@ -122,7 +122,7 @@ public class ListProjectsService {
      * crop_color_bars: populated if source files are mapped and if project contains any images (based off source file extensions)
      * @return allowed_actions
      */
-    private List<String> allowedActions(MigrationProject project) throws Exception {
+    private List<String> allowedActions(MigrationProject project) throws IOException {
         List<String> allowedActions = new ArrayList<>();
 
         if (project.getProjectProperties().getSourceFilesUpdatedDate() != null) {
@@ -136,7 +136,7 @@ public class ListProjectsService {
         return allowedActions;
     }
 
-    public MigrationProject initializeProject(Path path) throws Exception {
+    public MigrationProject initializeProject(Path path) throws IOException {
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(path);
         propertiesService.setProject(project);
         sourceFileService.setProject(project);
