@@ -75,8 +75,9 @@ public class ListProjectsService {
                     objectNode.set("projectProperties", projectProperties);
                     readable.add(objectNode);
                 } catch (Exception e) {
-                    unreadable.put("unreadableProjectPath", file.toPath().toAbsolutePath().toString());
-                    log.error(e.getMessage());
+                    Path unreadableProjectPath = file.toPath().toAbsolutePath();
+                    unreadable.put("unreadableProjectPath", unreadableProjectPath.toString());
+                    log.error("Unreadable project {} {}", unreadableProjectPath, e.getMessage());
                 }
             }
         }
