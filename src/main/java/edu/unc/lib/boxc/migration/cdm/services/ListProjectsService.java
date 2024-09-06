@@ -54,6 +54,8 @@ public class ListProjectsService {
         mapper.registerModule(new JavaTimeModule());
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         ArrayNode arrayNode = mapper.createArrayNode();
+        ArrayNode readable = mapper.createArrayNode();
+        ObjectNode unreadable = mapper.createObjectNode();
 
         for (File file : directory.toFile().listFiles()) {
             if (file.isDirectory()) {
@@ -71,12 +73,15 @@ public class ListProjectsService {
                     objectNode.put(STATUS, projectStatus);
                     objectNode.putArray(ALLOWED_ACTIONS).addAll(allowedActions);
                     objectNode.set("projectProperties", projectProperties);
-                    arrayNode.add(objectNode);
+                    readable.add(objectNode);
                 } catch (Exception e) {
+                    unreadable.put("unreadableProjectPath", file.toPath().toAbsolutePath().toString());
                     log.error(e.getMessage());
                 }
             }
         }
+        arrayNode.add(readable);
+        arrayNode.add(unreadable);
         log.debug(arrayNode.toString());
 
         return arrayNode;
