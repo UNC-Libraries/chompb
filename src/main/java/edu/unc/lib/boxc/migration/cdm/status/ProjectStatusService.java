@@ -85,7 +85,9 @@ public class ProjectStatusService extends AbstractStatusService {
         sectionDivider();
 
         outputLogger.info("Source File Mappings");
-        reportSourceMappings(totalObjects);
+        // exclude group/compound objects since they don't have source files
+        int totalObjectsOnlyFileObjects = getQueryService().countIndexedFileObjects();
+        reportSourceMappings(totalObjectsOnlyFileObjects);
         sectionDivider();
 
         outputLogger.info("Access File Mappings");
