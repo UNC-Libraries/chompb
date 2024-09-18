@@ -356,7 +356,7 @@ public class StatusCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Destinations: +1\n.*");
 
         assertOutputMatches(".*Source File Mappings\n +Last Updated: +[0-9\\-T:]+.*");
-        assertOutputMatches(".*Source File Mappings\n.*\n +Objects Mapped: +5 \\(71.4%\\).*");
+        assertOutputMatches(".*Source File Mappings\n.*\n +Objects Mapped: +5 \\(100.0%\\).*");
 
         assertOutputMatches(".*Access File Mappings\n +Last Updated: +Not completed.*");
         assertOutputMatches(".*Submission Information Packages\n +Last Generated: +[0-9\\-T:]+.*");
