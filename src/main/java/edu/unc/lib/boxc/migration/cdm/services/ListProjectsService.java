@@ -90,11 +90,9 @@ public class ListProjectsService {
     private String status(MigrationProject project) {
         String status = null;
 
-//        TODO: add archived state
-//        if () {
-//            status = "archived";
-//        }
-        if (!project.getProjectProperties().getSipsSubmitted().isEmpty()) {
+        if (project.getProjectPath().toString().toLowerCase().contains("archived")) {
+            status = "archived";
+        } else if (!project.getProjectProperties().getSipsSubmitted().isEmpty()) {
             status = "ingested";
         } else if (project.getProjectProperties().getSipsGeneratedDate() != null) {
             status = "sips_generated";

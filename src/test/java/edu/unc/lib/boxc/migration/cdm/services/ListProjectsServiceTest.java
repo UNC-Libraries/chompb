@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +43,7 @@ public class ListProjectsServiceTest {
     private CdmIndexService indexService;
     private ProjectPropertiesService projectPropertiesService;
     private SourceFileService sourceFileService;
+    private ArchiveProjectService archiveProjectService;
 
     private AutoCloseable closeable;
 
@@ -59,6 +61,7 @@ public class ListProjectsServiceTest {
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(indexService);
         projectPropertiesService = new ProjectPropertiesService();
+        archiveProjectService = new ArchiveProjectService();
         service = new ListProjectsService();
         service.setFieldService(fieldService);
         service.setIndexService(indexService);
@@ -154,6 +157,20 @@ public class ListProjectsServiceTest {
         assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
                 list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("ingested", list.findValue(ListProjectsService.STATUS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
+        assertEquals(PROJECT_NAME, list.findValue("name").asText());
+    }
+
+    @Test
+    public void listProjectsArchivedTest() throws Exception {
+        List<Path> testProjects = new ArrayList<>();
+        testProjects.add(tmpFolder.resolve(PROJECT_NAME));
+        archiveProjectService.archiveProject(tmpFolder, testProjects);
+        JsonNode list = service.listProjects(tmpFolder.resolve("archived"));
+
+        assertEquals(Path.of(tmpFolder + "/archived/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals("archived", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
     }
