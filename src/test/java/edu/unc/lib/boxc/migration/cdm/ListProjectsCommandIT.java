@@ -40,6 +40,7 @@ public class ListProjectsCommandIT extends AbstractCommandIT {
         assertOutputContains("\"" + ListProjectsService.STATUS + "\" : \"initialized\"");
         assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\" : [ ]");
         assertOutputContains("\"name\" : \"" + PROJECT_ID + "\"");
+        assertOutputContains("\"" + ListProjectsService.ARCHIVED_PROJECTS + "\" : 0");
     }
 
     @Test
@@ -61,5 +62,6 @@ public class ListProjectsCommandIT extends AbstractCommandIT {
         assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\" : [ ]");
         assertOutputContains("\"name\" : \"" + PROJECT_ID + "\"");
         assertOutputContains("\"name\" : \"" + PROJECT_ID_2 + "\"");
+        assertOutputContains("\"" + ListProjectsService.ARCHIVED_PROJECTS + "\" : 0");
     }
 }

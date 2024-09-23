@@ -37,6 +37,7 @@ public class ListProjectsService {
     public static final String PROJECT_PATH = "projectPath";
     public static final String STATUS = "status";
     public static final String ALLOWED_ACTIONS = "allowedActions";
+    public static final String ARCHIVED_PROJECTS = "numberArchivedProjects";
     private static final Set<String> IMAGE_FORMATS = new HashSet<>(Arrays.asList("tif", "tiff", "jpeg", "jpg", "png",
             "gif", "pict", "bmp", "psd", "jp2", "nef", "crw", "cr2", "dng", "raf"));
 
@@ -55,6 +56,7 @@ public class ListProjectsService {
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         ArrayNode arrayNode = mapper.createArrayNode();
 
+        // list projects
         for (File file : directory.toFile().listFiles()) {
             if (file.isDirectory()) {
                 try {
@@ -77,8 +79,14 @@ public class ListProjectsService {
                 }
             }
         }
-        log.debug(arrayNode.toString());
 
+        // count number of archived projects
+        int numberArchivedProjects = countArchivedProjects(directory);
+        ObjectNode objectNode = mapper.createObjectNode();
+        objectNode.put(ARCHIVED_PROJECTS, numberArchivedProjects);
+        arrayNode.add(objectNode);
+
+        log.debug(arrayNode.toString());
         return arrayNode;
     }
 
@@ -124,6 +132,21 @@ public class ListProjectsService {
             }
         }
         return allowedActions;
+    }
+
+    private int countArchivedProjects(Path directory) throws Exception {
+        int numberArchived = 0;
+        if (Files.notExists(directory)) {
+            throw new InvalidProjectStateException("Path " + directory + " does not exist");
+        }
+
+        if (directory.toAbsolutePath().toString().toLowerCase().contains("archived")) {
+            numberArchived = directory.toFile().list().length;
+        } else if (Files.exists(directory.resolve("archived"))) {
+            numberArchived = directory.resolve("archived").toFile().list().length;
+        }
+
+        return numberArchived;
     }
 
     public MigrationProject initializeProject(Path path) throws Exception {

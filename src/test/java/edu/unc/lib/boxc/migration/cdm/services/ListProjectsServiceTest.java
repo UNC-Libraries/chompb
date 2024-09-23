@@ -94,6 +94,7 @@ public class ListProjectsServiceTest {
         assertEquals("sources_mapped", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList("crop_color_bars")), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
+        assertTrue(list.findValues(ListProjectsService.ARCHIVED_PROJECTS).toString().contains("0"));
     }
 
     @Test
@@ -105,6 +106,7 @@ public class ListProjectsServiceTest {
         assertEquals("initialized", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
+        assertTrue(list.findValues(ListProjectsService.ARCHIVED_PROJECTS).toString().contains("0"));
     }
 
     @Test
@@ -118,6 +120,7 @@ public class ListProjectsServiceTest {
         assertEquals("indexed", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
+        assertTrue(list.findValues(ListProjectsService.ARCHIVED_PROJECTS).toString().contains("0"));
     }
 
     @Test
@@ -131,6 +134,7 @@ public class ListProjectsServiceTest {
         assertEquals("sources_mapped", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
+        assertTrue(list.findValues(ListProjectsService.ARCHIVED_PROJECTS).toString().contains("0"));
     }
 
     @Test
@@ -145,6 +149,7 @@ public class ListProjectsServiceTest {
         assertEquals("sips_generated", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
+        assertTrue(list.findValues(ListProjectsService.ARCHIVED_PROJECTS).toString().contains("0"));
     }
 
     @Test
@@ -159,6 +164,7 @@ public class ListProjectsServiceTest {
         assertEquals("ingested", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
+        assertTrue(list.findValues(ListProjectsService.ARCHIVED_PROJECTS).toString().contains("0"));
     }
 
     @Test
@@ -173,6 +179,7 @@ public class ListProjectsServiceTest {
         assertEquals("archived", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
+        assertTrue(list.findValues(ListProjectsService.ARCHIVED_PROJECTS).toString().contains("1"));
     }
 
     @Test
@@ -196,6 +203,17 @@ public class ListProjectsServiceTest {
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertTrue(list.findValues("name").toString().contains(PROJECT_NAME_2));
         assertTrue(list.findValues("name").toString().contains(PROJECT_NAME));
+        assertTrue(list.findValues(ListProjectsService.ARCHIVED_PROJECTS).toString().contains("0"));
+    }
+
+    @Test
+    public void countArchivedProjectsTest() throws Exception {
+        List<Path> testProjects = new ArrayList<>();
+        testProjects.add(tmpFolder.resolve(PROJECT_NAME));
+        archiveProjectService.archiveProject(tmpFolder, testProjects);
+        JsonNode list = service.listProjects(tmpFolder);
+
+        assertTrue(list.findValues(ListProjectsService.ARCHIVED_PROJECTS).toString().contains("1"));
     }
 
     private String mappingBody(String... rows) {
