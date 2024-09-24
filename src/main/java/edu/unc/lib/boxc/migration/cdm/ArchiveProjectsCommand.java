@@ -1,13 +1,12 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
-import edu.unc.lib.boxc.migration.cdm.services.ArchiveProjectService;
+import edu.unc.lib.boxc.migration.cdm.services.ArchiveProjectsService;
 import org.slf4j.Logger;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Command;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -16,24 +15,24 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @Command(name = "archive",
         description = {"Archive a project or list of projects. These projects will be moved to an 'archived' folder."})
-public class ArchiveProjectCommand implements Callable<Integer> {
-    private static final Logger log = getLogger(ArchiveProjectCommand.class);
+public class ArchiveProjectsCommand implements Callable<Integer> {
+    private static final Logger log = getLogger(ArchiveProjectsCommand.class);
 
     @ParentCommand
     private CLIMain parentCommand;
 
-    @Option(names = { "-p", "--project-paths" },
+    @Option(names = { "-p", "--project-names" },
             split = ",",
             description = {"Specify project or list of projects to be archived"})
-    private List<Path> projectPaths;
+    private List<String> projectNames;
 
-    private ArchiveProjectService archiveProjectService;
+    private ArchiveProjectsService archiveProjectsService;
 
     @Override
     public Integer call() throws Exception {
         try {
-            archiveProjectService = new ArchiveProjectService();
-            archiveProjectService.archiveProject(parentCommand.getWorkingDirectory(), projectPaths);
+            archiveProjectsService = new ArchiveProjectsService();
+            archiveProjectsService.archiveProjects(parentCommand.getWorkingDirectory(), projectNames);
             return 0;
         } catch(InvalidProjectStateException e) {
             outputLogger.info("Archiving project(s) failed: {}", e.getMessage());

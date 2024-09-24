@@ -9,6 +9,7 @@ import edu.unc.lib.boxc.migration.cdm.services.ListProjectsService;
 import edu.unc.lib.boxc.migration.cdm.services.ProjectPropertiesService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import org.slf4j.Logger;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
@@ -29,6 +30,10 @@ public class ListProjectsCommand implements Callable<Integer> {
     @ParentCommand
     private CLIMain parentCommand;
 
+    @Option(names = { "-ia", "--include-archived" },
+            description = "")
+    private boolean includeArchived;
+
     private CdmFieldService fieldService;
     private CdmIndexService indexService;
     private ProjectPropertiesService propertiesService;
@@ -40,7 +45,7 @@ public class ListProjectsCommand implements Callable<Integer> {
         try {
             initialize();
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode listProjects = listProjectsService.listProjects(parentCommand.getWorkingDirectory());
+            JsonNode listProjects = listProjectsService.listProjects(parentCommand.getWorkingDirectory(), includeArchived);
             String prettyPrintList = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(listProjects);
             outputLogger.info(prettyPrintList);
             return 0;

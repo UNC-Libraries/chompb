@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class ArchiveProjectServiceTest {
+public class ArchiveProjectsServiceTest {
     private static final String PROJECT_NAME = "proj";
     private static final String PROJECT_NAME_2 = "proj2";
 
@@ -27,7 +27,7 @@ public class ArchiveProjectServiceTest {
 
     private SipServiceHelper testHelper;
     private MigrationProject project;
-    private ArchiveProjectService service;
+    private ArchiveProjectsService service;
 
     private AutoCloseable closeable;
 
@@ -39,7 +39,7 @@ public class ArchiveProjectServiceTest {
                 BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         testHelper = new SipServiceHelper(project, tmpFolder);
 
-        service = new ArchiveProjectService();
+        service = new ArchiveProjectsService();
     }
 
     @AfterEach
@@ -49,23 +49,22 @@ public class ArchiveProjectServiceTest {
 
     @Test
     public void archiveProjectTest() throws Exception {
-        List<Path> testProjects = new ArrayList<>();
-        testProjects.add(tmpFolder.resolve(PROJECT_NAME));
-        service.archiveProject(tmpFolder, testProjects);
+        List<String> testProjects = new ArrayList<>();
+        testProjects.add(PROJECT_NAME);
+        service.archiveProjects(tmpFolder, testProjects);
 
-        assertTrue(Files.exists(tmpFolder.resolve("archived/" + PROJECT_NAME)));
+        assertTrue(Files.exists(tmpFolder.resolve(service.ARCHIVED + "/" + PROJECT_NAME)));
     }
 
     @Test
     public void archiveInvalidProjectTest() throws Exception {
         try {
-            List<Path> testProjects = new ArrayList<>();
-            testProjects.add(tmpFolder.resolve(PROJECT_NAME_2));
-            service.archiveProject(tmpFolder, testProjects);
+            List<String> testProjects = new ArrayList<>();
+            testProjects.add(PROJECT_NAME_2);
+            service.archiveProjects(tmpFolder, testProjects);
             fail();
         } catch (Exception e) {
-            assertTrue(e.getMessage().contains("Migration project " + tmpFolder.resolve(PROJECT_NAME_2)
-                    + " does not exist"));
+            assertTrue(e.getMessage().contains("Migration project " + PROJECT_NAME_2 + " does not exist"));
         }
     }
 
@@ -75,12 +74,12 @@ public class ArchiveProjectServiceTest {
                 tmpFolder, PROJECT_NAME_2, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
                 BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
 
-        List<Path> testProjects = new ArrayList<>();
-        testProjects.add(tmpFolder.resolve(PROJECT_NAME));
-        testProjects.add(tmpFolder.resolve(PROJECT_NAME_2));
-        service.archiveProject(tmpFolder, testProjects);
+        List<String> testProjects = new ArrayList<>();
+        testProjects.add(PROJECT_NAME);
+        testProjects.add(PROJECT_NAME_2);
+        service.archiveProjects(tmpFolder, testProjects);
 
-        assertTrue(Files.exists(tmpFolder.resolve("archived/" + PROJECT_NAME)));
-        assertTrue(Files.exists(tmpFolder.resolve("archived/" + PROJECT_NAME_2)));
+        assertTrue(Files.exists(tmpFolder.resolve(service.ARCHIVED + "/" + PROJECT_NAME)));
+        assertTrue(Files.exists(tmpFolder.resolve(service.ARCHIVED + "/" + PROJECT_NAME_2)));
     }
 }

@@ -45,7 +45,7 @@ public class ListProjectsService {
      * List projects in given directory
      * @return jsonNode of projects
      */
-    public JsonNode listProjects(Path directory) throws Exception {
+    public JsonNode listProjects(Path directory, boolean includeArchived) throws Exception {
         if (Files.notExists(directory)) {
             throw new InvalidProjectStateException("Path " + directory + " does not exist");
         }
@@ -57,6 +57,18 @@ public class ListProjectsService {
         ArrayNode arrayNode = mapper.createArrayNode();
 
         // list projects
+        listProjects(directory, mapper, arrayNode);
+
+        // list archived projects
+        if (includeArchived) {
+            listProjects(directory.resolve(ArchiveProjectsService.ARCHIVED), mapper, arrayNode);
+        }
+
+        log.debug(arrayNode.toString());
+        return arrayNode;
+    }
+
+    private void listProjects(Path directory, ObjectMapper mapper, ArrayNode arrayNode) throws Exception {
         for (File file : directory.toFile().listFiles()) {
             if (file.isDirectory()) {
                 try {
@@ -79,15 +91,6 @@ public class ListProjectsService {
                 }
             }
         }
-
-        // count number of archived projects
-        int numberArchivedProjects = countArchivedProjects(directory);
-        ObjectNode objectNode = mapper.createObjectNode();
-        objectNode.put(ARCHIVED_PROJECTS, numberArchivedProjects);
-        arrayNode.add(objectNode);
-
-        log.debug(arrayNode.toString());
-        return arrayNode;
     }
 
     /**
@@ -98,7 +101,7 @@ public class ListProjectsService {
     private String status(MigrationProject project) {
         String status = null;
 
-        if (project.getProjectPath().toString().toLowerCase().contains("archived")) {
+        if (project.getProjectPath().toString().toLowerCase().contains(ArchiveProjectsService.ARCHIVED)) {
             status = "archived";
         } else if (!project.getProjectProperties().getSipsSubmitted().isEmpty()) {
             status = "ingested";
@@ -132,21 +135,6 @@ public class ListProjectsService {
             }
         }
         return allowedActions;
-    }
-
-    private int countArchivedProjects(Path directory) throws Exception {
-        int numberArchived = 0;
-        if (Files.notExists(directory)) {
-            throw new InvalidProjectStateException("Path " + directory + " does not exist");
-        }
-
-        if (directory.toAbsolutePath().toString().toLowerCase().contains("archived")) {
-            numberArchived = directory.toFile().list().length;
-        } else if (Files.exists(directory.resolve("archived"))) {
-            numberArchived = directory.resolve("archived").toFile().list().length;
-        }
-
-        return numberArchived;
     }
 
     public MigrationProject initializeProject(Path path) throws Exception {
