@@ -23,7 +23,8 @@ public class ArchiveProjectsService {
      */
     public void archiveProjects(Path currentDirectory, List<String> projectNames) throws IOException {
         if (projectNames == null || projectNames.isEmpty()) {
-            throw new InvalidProjectStateException("Project names cannot be empty");
+            throw new InvalidProjectStateException("Project names cannot be empty. " +
+                    "Please specify a valid project name(s).");
         }
 
         Path archiveDirectory = currentDirectory.resolve(ARCHIVED);
