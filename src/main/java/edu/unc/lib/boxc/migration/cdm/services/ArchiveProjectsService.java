@@ -22,6 +22,10 @@ public class ArchiveProjectsService {
      * Archive a list of projects
      */
     public void archiveProjects(Path currentDirectory, List<String> projectNames) throws IOException {
+        if (projectNames == null || projectNames.isEmpty()) {
+            throw new InvalidProjectStateException("Project names cannot be empty");
+        }
+
         Path archiveDirectory = currentDirectory.resolve(ARCHIVED);
         for (String projectName : projectNames) {
             Path projectDirectory = currentDirectory.resolve(projectName);

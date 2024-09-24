@@ -69,6 +69,17 @@ public class ArchiveProjectsServiceTest {
     }
 
     @Test
+    public void archiveEmptyProjectTest() throws Exception {
+        try {
+            List<String> testProjects = new ArrayList<>();;
+            service.archiveProjects(tmpFolder, testProjects);
+            fail();
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("Project names cannot be empty"));
+        }
+    }
+
+    @Test
     public void archiveMultipleProjectsTest() throws Exception {
         project = MigrationProjectFactory.createMigrationProject(
                 tmpFolder, PROJECT_NAME_2, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
