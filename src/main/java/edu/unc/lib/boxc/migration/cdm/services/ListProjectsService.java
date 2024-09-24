@@ -75,7 +75,10 @@ public class ListProjectsService {
 
                     Path projectPath = file.toPath().toAbsolutePath();
                     String projectStatus = status(project);
-                    ArrayNode allowedActions = mapper.valueToTree(allowedActions(project));
+                    ArrayNode allowedActions = mapper.createArrayNode();
+                    if (!projectStatus.equals("archived")) {
+                        allowedActions = mapper.valueToTree(allowedActions(project));
+                    }
                     JsonNode projectProperties = mapper.readTree(project.getProjectPropertiesPath().toFile());
 
                     // add project info to JSON
