@@ -31,7 +31,7 @@ public class ListProjectsCommand implements Callable<Integer> {
     private CLIMain parentCommand;
 
     @Option(names = { "-ia", "--include-archived" },
-            description = "")
+            description = "Include archived projects in list of chompb projects")
     private boolean includeArchived;
 
     private CdmFieldService fieldService;
