@@ -22,9 +22,9 @@ public class ArchiveProjectsService {
      * Archive a list of projects
      */
     public void archiveProjects(Path currentDirectory, List<String> projectNames) throws IOException {
+        Path archiveDirectory = currentDirectory.resolve(ARCHIVED);
         for (String projectName : projectNames) {
             Path projectDirectory = currentDirectory.resolve(projectName);
-            Path archiveDirectory = currentDirectory.resolve(ARCHIVED);
 
             if (Files.notExists(projectDirectory)) {
                 throw new InvalidProjectStateException("Migration project " + projectName + " does not exist");

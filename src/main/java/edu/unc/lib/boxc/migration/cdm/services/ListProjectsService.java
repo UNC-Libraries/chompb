@@ -37,7 +37,6 @@ public class ListProjectsService {
     public static final String PROJECT_PATH = "projectPath";
     public static final String STATUS = "status";
     public static final String ALLOWED_ACTIONS = "allowedActions";
-    public static final String ARCHIVED_PROJECTS = "numberArchivedProjects";
     private static final Set<String> IMAGE_FORMATS = new HashSet<>(Arrays.asList("tif", "tiff", "jpeg", "jpg", "png",
             "gif", "pict", "bmp", "psd", "jp2", "nef", "crw", "cr2", "dng", "raf"));
 
@@ -57,18 +56,18 @@ public class ListProjectsService {
         ArrayNode arrayNode = mapper.createArrayNode();
 
         // list projects
-        listProjects(directory, mapper, arrayNode);
+        listProjectsInDirectory(directory, mapper, arrayNode);
 
         // list archived projects
         if (includeArchived) {
-            listProjects(directory.resolve(ArchiveProjectsService.ARCHIVED), mapper, arrayNode);
+            listProjectsInDirectory(directory.resolve(ArchiveProjectsService.ARCHIVED), mapper, arrayNode);
         }
 
         log.debug(arrayNode.toString());
         return arrayNode;
     }
 
-    private void listProjects(Path directory, ObjectMapper mapper, ArrayNode arrayNode) throws Exception {
+    private void listProjectsInDirectory(Path directory, ObjectMapper mapper, ArrayNode arrayNode) throws Exception {
         for (File file : directory.toFile().listFiles()) {
             if (file.isDirectory()) {
                 try {
@@ -101,7 +100,7 @@ public class ListProjectsService {
     private String status(MigrationProject project) {
         String status = null;
 
-        if (project.getProjectPath().toString().toLowerCase().contains(ArchiveProjectsService.ARCHIVED)) {
+        if (project.getProjectPath().toString().contains("/" + ArchiveProjectsService.ARCHIVED + "/")) {
             status = "archived";
         } else if (!project.getProjectProperties().getSipsSubmitted().isEmpty()) {
             status = "ingested";
