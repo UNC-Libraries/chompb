@@ -44,7 +44,7 @@ public class ListProjectsService {
      * List projects in given directory
      * @return jsonNode of projects
      */
-    public JsonNode listProjects(Path directory) throws Exception {
+    public JsonNode listProjects(Path directory, boolean includeArchived) throws Exception {
         if (Files.notExists(directory)) {
             throw new InvalidProjectStateException("Path " + directory + " does not exist");
         }
@@ -55,6 +55,19 @@ public class ListProjectsService {
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         ArrayNode arrayNode = mapper.createArrayNode();
 
+        // list projects
+        listProjectsInDirectory(directory, mapper, arrayNode);
+
+        // list archived projects
+        if (includeArchived) {
+            listProjectsInDirectory(directory.resolve(ArchiveProjectsService.ARCHIVED), mapper, arrayNode);
+        }
+
+        log.debug(arrayNode.toString());
+        return arrayNode;
+    }
+
+    private void listProjectsInDirectory(Path directory, ObjectMapper mapper, ArrayNode arrayNode) throws Exception {
         for (File file : directory.toFile().listFiles()) {
             if (file.isDirectory()) {
                 try {
@@ -62,7 +75,10 @@ public class ListProjectsService {
 
                     Path projectPath = file.toPath().toAbsolutePath();
                     String projectStatus = status(project);
-                    ArrayNode allowedActions = mapper.valueToTree(allowedActions(project));
+                    ArrayNode allowedActions = mapper.createArrayNode();
+                    if (!projectStatus.equals("archived")) {
+                        allowedActions = mapper.valueToTree(allowedActions(project));
+                    }
                     JsonNode projectProperties = mapper.readTree(project.getProjectPropertiesPath().toFile());
 
                     // add project info to JSON
@@ -77,9 +93,6 @@ public class ListProjectsService {
                 }
             }
         }
-        log.debug(arrayNode.toString());
-
-        return arrayNode;
     }
 
     /**
@@ -90,11 +103,9 @@ public class ListProjectsService {
     private String status(MigrationProject project) {
         String status = null;
 
-//        TODO: add archived state
-//        if () {
-//            status = "archived";
-//        }
-        if (!project.getProjectProperties().getSipsSubmitted().isEmpty()) {
+        if (project.getProjectPath().toString().contains("/" + ArchiveProjectsService.ARCHIVED + "/")) {
+            status = "archived";
+        } else if (!project.getProjectProperties().getSipsSubmitted().isEmpty()) {
             status = "ingested";
         } else if (project.getProjectProperties().getSipsGeneratedDate() != null) {
             status = "sips_generated";

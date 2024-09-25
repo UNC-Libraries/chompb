@@ -42,6 +42,7 @@ public class ListProjectsServiceTest {
     private CdmIndexService indexService;
     private ProjectPropertiesService projectPropertiesService;
     private SourceFileService sourceFileService;
+    private ArchiveProjectsService archiveProjectsService;
 
     private AutoCloseable closeable;
 
@@ -59,6 +60,7 @@ public class ListProjectsServiceTest {
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(indexService);
         projectPropertiesService = new ProjectPropertiesService();
+        archiveProjectsService = new ArchiveProjectsService();
         service = new ListProjectsService();
         service.setFieldService(fieldService);
         service.setIndexService(indexService);
@@ -74,7 +76,7 @@ public class ListProjectsServiceTest {
     @Test
     public void invalidDirectoryTest() throws Exception {
         try {
-            service.listProjects(Path.of("test"));
+            service.listProjects(Path.of("test"), false);
             fail();
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("Path test does not exist"));
@@ -84,7 +86,7 @@ public class ListProjectsServiceTest {
     @Test
     public void allowedActionTest() throws Exception {
         writeSourceFilesCsv(mappingBody("test,," + Path.of("test.tif") + ","));
-        JsonNode list = service.listProjects(tmpFolder);
+        JsonNode list = service.listProjects(tmpFolder, false);
 
         assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
                 list.findValue(ListProjectsService.PROJECT_PATH).asText());
@@ -95,7 +97,7 @@ public class ListProjectsServiceTest {
 
     @Test
     public void listProjectsInitializedTest() throws Exception {
-        JsonNode list = service.listProjects(tmpFolder);
+        JsonNode list = service.listProjects(tmpFolder, false);
 
         assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
                 list.findValue(ListProjectsService.PROJECT_PATH).asText());
@@ -108,7 +110,7 @@ public class ListProjectsServiceTest {
     public void listProjectsIndexedTest() throws Exception {
         project.getProjectProperties().setIndexedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
-        JsonNode list = service.listProjects(tmpFolder);
+        JsonNode list = service.listProjects(tmpFolder, false);
 
         assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
                 list.findValue(ListProjectsService.PROJECT_PATH).asText());
@@ -121,7 +123,7 @@ public class ListProjectsServiceTest {
     public void listProjectsSourcesMappedTest() throws Exception {
         project.getProjectProperties().setSourceFilesUpdatedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
-        JsonNode list = service.listProjects(tmpFolder);
+        JsonNode list = service.listProjects(tmpFolder, false);
 
         assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
                 list.findValue(ListProjectsService.PROJECT_PATH).asText());
@@ -135,7 +137,7 @@ public class ListProjectsServiceTest {
         project.getProjectProperties().setSourceFilesUpdatedDate(Instant.now());
         project.getProjectProperties().setSipsGeneratedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
-        JsonNode list = service.listProjects(tmpFolder);
+        JsonNode list = service.listProjects(tmpFolder, false);
 
         assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
                 list.findValue(ListProjectsService.PROJECT_PATH).asText());
@@ -149,11 +151,24 @@ public class ListProjectsServiceTest {
         project.getProjectProperties().setSipsGeneratedDate(Instant.now());
         project.getProjectProperties().setSipsSubmitted(Collections.singleton("test"));
         ProjectPropertiesSerialization.write(project);
-        JsonNode list = service.listProjects(tmpFolder);
+        JsonNode list = service.listProjects(tmpFolder, false);
 
         assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
                 list.findValue(ListProjectsService.PROJECT_PATH).asText());
         assertEquals("ingested", list.findValue(ListProjectsService.STATUS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
+        assertEquals(PROJECT_NAME, list.findValue("name").asText());
+    }
+
+    @Test
+    public void listProjectsArchivedTest() throws Exception {
+        archiveProjectsService.archiveProjects(tmpFolder, Collections.singletonList(PROJECT_NAME));
+
+        JsonNode list = service.listProjects(tmpFolder, true);
+
+        assertEquals(tmpFolder.resolve(ArchiveProjectsService.ARCHIVED + "/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals("archived", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
     }
@@ -170,7 +185,7 @@ public class ListProjectsServiceTest {
                 tmpFolder, PROJECT_NAME_2, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
                 BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
 
-        JsonNode list = service.listProjects(tmpFolder);
+        JsonNode list = service.listProjects(tmpFolder, false);
 
         assertTrue(list.findValues(ListProjectsService.PROJECT_PATH).toString().contains(tmpFolder + "/" + PROJECT_NAME_2));
         assertTrue(list.findValues(ListProjectsService.PROJECT_PATH).toString().contains(tmpFolder + "/" + PROJECT_NAME));

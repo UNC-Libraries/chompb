@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.services.ArchiveProjectsService;
 import edu.unc.lib.boxc.migration.cdm.services.ListProjectsService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.Collections;
 
 public class ListProjectsCommandIT extends AbstractCommandIT {
     private static final String PROJECT_ID_2 = "proj2";
@@ -30,7 +32,7 @@ public class ListProjectsCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void listProjectsTest() throws Exception {
+    public void listProjectTest() throws Exception {
         String[] args = new String[] {
                 "-w", String.valueOf(baseDir),
                 "list_projects" };
@@ -38,6 +40,24 @@ public class ListProjectsCommandIT extends AbstractCommandIT {
 
         assertOutputContains("\"" + ListProjectsService.PROJECT_PATH + "\" : \"" + Path.of(baseDir + "/" + PROJECT_ID) + "\"");
         assertOutputContains("\"" + ListProjectsService.STATUS + "\" : \"initialized\"");
+        assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\" : [ ]");
+        assertOutputContains("\"name\" : \"" + PROJECT_ID + "\"");
+    }
+
+    @Test
+    public void listArchivedProjectTest() throws Exception {
+        ArchiveProjectsService archiveProjectsService = new ArchiveProjectsService();
+        archiveProjectsService.archiveProjects(tmpFolder, Collections.singletonList(PROJECT_ID));
+
+        String[] args = new String[] {
+                "-w", String.valueOf(baseDir),
+                "list_projects",
+                "--include-archived"};
+        executeExpectSuccess(args);
+
+        assertOutputContains("\"" + ListProjectsService.PROJECT_PATH + "\" : \""
+                + baseDir.resolve(ArchiveProjectsService.ARCHIVED+ "/" + PROJECT_ID) + "\"");
+        assertOutputContains("\"" + ListProjectsService.STATUS + "\" : \"archived\"");
         assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\" : [ ]");
         assertOutputContains("\"name\" : \"" + PROJECT_ID + "\"");
     }
