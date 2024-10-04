@@ -33,7 +33,9 @@ public class PermissionsCommand {
     private PermissionsService permissionsService;
 
     @Command(name = "generate",
-            description = "Generate the permissions mapping file for this project")
+            description = { "Generate the permissions mapping file for this project. " +
+                    "Acceptable input values for patron roles: none, canDiscover, canViewMetadata, " +
+                    "canViewAccessCopies, canViewReducedQuality, canViewOriginals." })
     public int generate(@Mixin PermissionMappingOptions options) throws Exception {
         long start = System.nanoTime();
         try {
