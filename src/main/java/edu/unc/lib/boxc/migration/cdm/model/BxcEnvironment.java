@@ -11,7 +11,8 @@ public class BxcEnvironment {
     private String httpBaseUrl;
     private String solrServerUrl;
 
-    private String boxctronHost;
+    private String boxctronScriptHost;
+    private String boxctronTransferHost;
     private int boxctronPort;
     private String boxctronSshUser;
     private Path boxctronKeyPath;
@@ -37,12 +38,20 @@ public class BxcEnvironment {
         this.solrServerUrl = solrServerUrl;
     }
 
-    public String getBoxctronHost() {
-        return boxctronHost;
+    public String getBoxctronScriptHost() {
+        return boxctronScriptHost;
     }
 
-    public void setBoxctronHost(String boxctronHost) {
-        this.boxctronHost = boxctronHost;
+    public void setBoxctronScriptHost(String boxctronScriptHost) {
+        this.boxctronScriptHost = boxctronScriptHost;
+    }
+
+    public String getBoxctronTransferHost() {
+        return boxctronTransferHost;
+    }
+
+    public void setBoxctronTransferHost(String boxctronTransferHost) {
+        this.boxctronTransferHost = boxctronTransferHost;
     }
 
     public int getBoxctronPort() {

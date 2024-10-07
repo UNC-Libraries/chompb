@@ -5,7 +5,6 @@ import edu.unc.lib.boxc.migration.cdm.jobs.VelocicroptorRemoteJob;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.ProcessSourceFilesOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
-import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFilesToRemoteService;
@@ -70,12 +69,20 @@ public class ProcessSourceFilesCommand implements Callable<Integer> {
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         var config = parentCommand.getChompbConfig();
         var boxcEnv = config.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId());
-        var sshClientService = new SshClientService();
-        sshClientService.setSshHost(boxcEnv.getBoxctronHost());
-        sshClientService.setSshPort(boxcEnv.getBoxctronPort());
-        sshClientService.setSshKeyPath(boxcEnv.getBoxctronKeyPath());
-        sshClientService.setSshUsername(boxcEnv.getBoxctronSshUser());
-        sshClientService.initialize();
+        // Separate service for executing scripts on the remote server
+        var sshClientScriptService = new SshClientService();
+        sshClientScriptService.setSshHost(boxcEnv.getBoxctronScriptHost());
+        sshClientScriptService.setSshPort(boxcEnv.getBoxctronPort());
+        sshClientScriptService.setSshKeyPath(boxcEnv.getBoxctronKeyPath());
+        sshClientScriptService.setSshUsername(boxcEnv.getBoxctronSshUser());
+        sshClientScriptService.initialize();
+        // Separate service for transferring files to the remote server
+        var sshClientTransferService = new SshClientService();
+        sshClientTransferService.setSshHost(boxcEnv.getBoxctronTransferHost());
+        sshClientTransferService.setSshPort(boxcEnv.getBoxctronPort());
+        sshClientTransferService.setSshKeyPath(boxcEnv.getBoxctronKeyPath());
+        sshClientTransferService.setSshUsername(boxcEnv.getBoxctronSshUser());
+        sshClientTransferService.initialize();
         var cdmIndexService = new CdmIndexService();
         cdmIndexService.setProject(project);
         var sourceFileService = new SourceFileService();
@@ -83,10 +90,10 @@ public class ProcessSourceFilesCommand implements Callable<Integer> {
         sourceFileService.setIndexService(cdmIndexService);
         var sourceFilesToRemoteService = new SourceFilesToRemoteService();
         sourceFilesToRemoteService.setSourceFileService(sourceFileService);
-        sourceFilesToRemoteService.setSshClientService(sshClientService);
+        sourceFilesToRemoteService.setSshClientService(sshClientTransferService);
         velocicroptorRemoteJob = new VelocicroptorRemoteJob();
         velocicroptorRemoteJob.setProject(project);
-        velocicroptorRemoteJob.setSshClientService(sshClientService);
+        velocicroptorRemoteJob.setSshClientService(sshClientScriptService);
         velocicroptorRemoteJob.setOutputServer(boxcEnv.getBoxctronOutputServer());
         velocicroptorRemoteJob.setOutputPath(boxcEnv.getBoxctronOutputBasePath());
         velocicroptorRemoteJob.setRemoteProjectsPath(boxcEnv.getBoxctronRemoteProjectsPath());

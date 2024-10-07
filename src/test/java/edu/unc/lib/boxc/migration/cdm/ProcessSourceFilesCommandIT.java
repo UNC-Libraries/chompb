@@ -43,7 +43,8 @@ public class ProcessSourceFilesCommandIT extends AbstractCommandIT {
         var bxcEnvs = BxcEnvironmentHelper.getTestMapping();
         config.setBxcEnvironments(bxcEnvs);
         var bxcEnv = bxcEnvs.get(BxcEnvironmentHelper.DEFAULT_ENV_ID);
-        bxcEnv.setBoxctronHost("127.0.0.1");
+        bxcEnv.setBoxctronScriptHost("127.0.0.1");
+        bxcEnv.setBoxctronTransferHost("127.0.0.1");
         bxcEnv.setBoxctronPort(42222);
         bxcEnv.setBoxctronSshUser("testuser");
         bxcEnv.setBoxctronKeyPath(CLIENT_KEY_PATH);
