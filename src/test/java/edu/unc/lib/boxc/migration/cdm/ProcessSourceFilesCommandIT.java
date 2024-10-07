@@ -51,7 +51,7 @@ public class ProcessSourceFilesCommandIT extends AbstractCommandIT {
         bxcEnv.setBoxctronAdminEmail("chompb@example.com");
         bxcEnv.setBoxctronOutputServer("chompb.example.com");
         bxcEnv.setBoxctronOutputBasePath(tmpFolder);
-        bxcEnv.setBoxctronRemoteJobScriptPath(tmpFolder.resolve("remote_job.sh"));
+        bxcEnv.setBoxctronRemoteJobScriptsPath(tmpFolder.resolve("scripts"));
         bxcEnv.setBoxctronRemoteProjectsPath(tmpFolder.resolve("remote_projects"));
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(Files.newOutputStream(configPath), config);

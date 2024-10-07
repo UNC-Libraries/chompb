@@ -98,7 +98,7 @@ public class ProcessSourceFilesCommand implements Callable<Integer> {
         velocicroptorRemoteJob.setOutputPath(boxcEnv.getBoxctronOutputBasePath());
         velocicroptorRemoteJob.setRemoteProjectsPath(boxcEnv.getBoxctronRemoteProjectsPath());
         velocicroptorRemoteJob.setAdminEmail(boxcEnv.getBoxctronAdminEmail());
-        velocicroptorRemoteJob.setRemoteJobScriptPath(boxcEnv.getBoxctronRemoteJobScriptPath());
+        velocicroptorRemoteJob.setRemoteJobScriptsPath(boxcEnv.getBoxctronRemoteJobScriptsPath());
         velocicroptorRemoteJob.setSourceFilesToRemoteService(sourceFilesToRemoteService);
     }
 }

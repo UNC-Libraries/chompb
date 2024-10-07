@@ -20,7 +20,7 @@ public class BxcEnvironment {
     private String boxctronAdminEmail;
     private String boxctronOutputServer;
     private Path boxctronOutputBasePath;
-    private Path boxctronRemoteJobScriptPath;
+    private Path boxctronRemoteJobScriptsPath;
 
     public String getHttpBaseUrl() {
         return httpBaseUrl;
@@ -110,11 +110,11 @@ public class BxcEnvironment {
         this.boxctronOutputBasePath = boxctronOutputBasePath;
     }
 
-    public Path getBoxctronRemoteJobScriptPath() {
-        return boxctronRemoteJobScriptPath;
+    public Path getBoxctronRemoteJobScriptsPath() {
+        return boxctronRemoteJobScriptsPath;
     }
 
-    public void setBoxctronRemoteJobScriptPath(Path boxctronRemoteJobScriptPath) {
-        this.boxctronRemoteJobScriptPath = boxctronRemoteJobScriptPath;
+    public void setBoxctronRemoteJobScriptsPath(Path boxctronRemoteJobScriptsPath) {
+        this.boxctronRemoteJobScriptsPath = boxctronRemoteJobScriptsPath;
     }
 }
