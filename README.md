@@ -1,4 +1,4 @@
-# CDM to Box-c Migration Utility
+# Chomping Block (chompb)
 A commandline utility which facilitates the migration of collections from a CONTENTdm server to a Box-c repository.
 
 # Building and developing
