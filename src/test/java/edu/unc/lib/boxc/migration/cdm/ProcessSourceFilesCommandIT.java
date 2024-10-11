@@ -46,8 +46,6 @@ public class ProcessSourceFilesCommandIT extends AbstractCommandIT {
         bxcEnv.setBoxctronScriptHost("127.0.0.1");
         bxcEnv.setBoxctronTransferHost("127.0.0.1");
         bxcEnv.setBoxctronPort(42222);
-        bxcEnv.setBoxctronSshUser("testuser");
-        bxcEnv.setBoxctronKeyPath(CLIENT_KEY_PATH);
         bxcEnv.setBoxctronAdminEmail("chompb@example.com");
         bxcEnv.setBoxctronOutputServer("chompb.example.com");
         bxcEnv.setBoxctronOutputBasePath(tmpFolder);
@@ -64,9 +62,28 @@ public class ProcessSourceFilesCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "--env-config", chompbConfigPath,
                 "process_source_files",
+                "-u", "testuser",
+                "-k", CLIENT_KEY_PATH.toString(),
                 "-a", "garbo"};
         executeExpectFailure(args);
         assertOutputContains("Invalid action name provided: garbo");
+    }
+
+    @Test
+    public void testProcessSourceFilesNoKey() {
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
+                "process_source_files",
+                "-u", "testuser",
+                "-a", "velocicroptor"};
+        try {
+            setupError();
+            executeExpectFailure(args);
+        } finally {
+            resetError();
+        }
+        assertOutputContains("Missing required option");
     }
 
     @Test
@@ -75,6 +92,8 @@ public class ProcessSourceFilesCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "--env-config", chompbConfigPath,
                 "process_source_files",
+                "-u", "testuser",
+                "-k", CLIENT_KEY_PATH.toString(),
                 "-a", "velocicroptor"};
         executeExpectSuccess(args);
         assertOutputContains("Completed velocicroptor job to process source files");

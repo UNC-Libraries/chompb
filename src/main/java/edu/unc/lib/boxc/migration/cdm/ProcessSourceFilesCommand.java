@@ -2,6 +2,7 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.jobs.VelocicroptorRemoteJob;
+import edu.unc.lib.boxc.migration.cdm.model.BxcEnvironment;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.ProcessSourceFilesOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
@@ -9,6 +10,7 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFilesToRemoteService;
 import edu.unc.lib.boxc.migration.cdm.util.SshClientService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
@@ -27,12 +29,14 @@ import static org.slf4j.LoggerFactory.getLogger;
                 "Perform a processing job on the source files mapped in this project."})
 public class ProcessSourceFilesCommand implements Callable<Integer> {
     private static final Logger log = getLogger(ProcessSourceFilesCommand.class);
+    private static final String DEFAULT_EMAIL_DOMAIN = "@ad.unc.edu";
 
     @CommandLine.ParentCommand
     private CLIMain parentCommand;
     private VelocicroptorRemoteJob velocicroptorRemoteJob;
 
     private MigrationProject project;
+    private BxcEnvironment boxcEnv;
 
     @CommandLine.Mixin
     private ProcessSourceFilesOptions options;
@@ -42,6 +46,8 @@ public class ProcessSourceFilesCommand implements Callable<Integer> {
         long start = System.nanoTime();
         try {
             validateActionName(options.getActionName());
+            loadProjectEnvironment();
+            setDefaultOptions();
             initialize();
             velocicroptorRemoteJob.run(options);
             outputLogger.info("Completed {} job to process source files for {} in {}s",
@@ -64,24 +70,33 @@ public class ProcessSourceFilesCommand implements Callable<Integer> {
         }
     }
 
-    private void initialize() throws IOException {
+    private void setDefaultOptions() {
+        if (options.getEmailAddress() == null) {
+            options.setEmailAddress(options.getUsername() + DEFAULT_EMAIL_DOMAIN);
+        }
+    }
+
+    private void loadProjectEnvironment() throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         var config = parentCommand.getChompbConfig();
-        var boxcEnv = config.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId());
+        boxcEnv = config.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId());
+    }
+
+    private void initialize() throws IOException {
         // Separate service for executing scripts on the remote server
         var sshClientScriptService = new SshClientService();
         sshClientScriptService.setSshHost(boxcEnv.getBoxctronScriptHost());
         sshClientScriptService.setSshPort(boxcEnv.getBoxctronPort());
-        sshClientScriptService.setSshKeyPath(boxcEnv.getBoxctronKeyPath());
-        sshClientScriptService.setSshUsername(boxcEnv.getBoxctronSshUser());
+        sshClientScriptService.setSshKeyPath(options.getSshKeyPath());
+        sshClientScriptService.setSshUsername(options.getUsername());
         sshClientScriptService.initialize();
         // Separate service for transferring files to the remote server
         var sshClientTransferService = new SshClientService();
         sshClientTransferService.setSshHost(boxcEnv.getBoxctronTransferHost());
         sshClientTransferService.setSshPort(boxcEnv.getBoxctronPort());
-        sshClientTransferService.setSshKeyPath(boxcEnv.getBoxctronKeyPath());
-        sshClientTransferService.setSshUsername(boxcEnv.getBoxctronSshUser());
+        sshClientTransferService.setSshKeyPath(options.getSshKeyPath());
+        sshClientTransferService.setSshUsername(options.getUsername());
         sshClientTransferService.initialize();
         var cdmIndexService = new CdmIndexService();
         cdmIndexService.setProject(project);

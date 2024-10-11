@@ -14,8 +14,6 @@ public class BxcEnvironment {
     private String boxctronScriptHost;
     private String boxctronTransferHost;
     private int boxctronPort;
-    private String boxctronSshUser;
-    private Path boxctronKeyPath;
     private Path boxctronRemoteProjectsPath;
     private String boxctronAdminEmail;
     private String boxctronOutputServer;
@@ -60,22 +58,6 @@ public class BxcEnvironment {
 
     public void setBoxctronPort(int boxctronPort) {
         this.boxctronPort = boxctronPort;
-    }
-
-    public String getBoxctronSshUser() {
-        return boxctronSshUser;
-    }
-
-    public void setBoxctronSshUser(String boxctronSshUser) {
-        this.boxctronSshUser = boxctronSshUser;
-    }
-
-    public Path getBoxctronKeyPath() {
-        return boxctronKeyPath;
-    }
-
-    public void setBoxctronKeyPath(Path boxctronKeyPath) {
-        this.boxctronKeyPath = boxctronKeyPath;
     }
 
     public Path getBoxctronRemoteProjectsPath() {

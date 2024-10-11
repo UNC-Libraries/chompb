@@ -31,6 +31,9 @@ public class AbstractOutputTest {
     protected final ByteArrayOutputStream out = new ByteArrayOutputStream();
     protected String output;
 
+    protected final PrintStream originalErr = System.err;
+    protected ByteArrayOutputStream err;
+
     @AfterEach
     public void resetOut() {
         System.setOut(originalOut);
@@ -45,8 +48,26 @@ public class AbstractOutputTest {
         output = null;
     }
 
+    /**
+     * Setup capture of error output to a stream.
+     * Note: This should be called before the command is executed,
+     * and resetError should be called before making any assertions.
+     */
+    protected void setupError() {
+        err = new ByteArrayOutputStream();
+        err.reset();
+        System.setErr(new PrintStream(err));
+    }
+
+    protected void resetError() {
+        System.setErr(originalErr);
+    }
+
     protected void resetOutput() {
         out.reset();
+        if (err != null) {
+            err.reset();
+        }
         output = null;
     }
 
@@ -99,6 +120,9 @@ public class AbstractOutputTest {
     protected String getOutput() {
         if (output == null) {
             output = out.toString();
+        }
+        if (err != null) {
+            output += err.toString();
         }
         return output;
     }
