@@ -41,7 +41,7 @@ public class SourceFilesToRemoteService {
         Set<String> createdParentsSet = ConcurrentHashMap.newKeySet();
         // Create the remote destination directory
         log.info("Creating remote destination directory {}", destinationBasePath);
-        sshClientService.executeRemoteCommand("mkdir -p " + destinationBasePath);
+        sshClientService.executeRemoteCommand("umask 002 && mkdir -p " + destinationBasePath);
         createdParentsSet.add(destinationBasePath.toString());
 
         var threads = new ArrayList<Thread>(concurrentTransfers);
@@ -80,7 +80,7 @@ public class SourceFilesToRemoteService {
                         if (!createdParentsSet.contains(destParentPath.toString())) {
                             log.debug("Creating missing parent directory {}", destParentPath);
                             createdParentsSet.add(destParentPath.toString());
-                            sshClientService.executeRemoteCommand("mkdir -p " + destPath.getParent());
+                            sshClientService.executeRemoteCommand("umask 002 && mkdir -p " + destPath.getParent());
                         }
                     }
                     // Upload the file to the appropriate path on the remote server
