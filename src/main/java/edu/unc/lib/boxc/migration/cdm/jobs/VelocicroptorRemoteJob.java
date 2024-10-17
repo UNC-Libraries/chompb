@@ -25,12 +25,13 @@ public class VelocicroptorRemoteJob {
     private static final String JOB_ID_PATTERN_FORMAT = "ddMMyyyyHHmmssSSS";
     private static final DateTimeFormatter JOB_ID_FORMATTER = DateTimeFormatter.ofPattern(JOB_ID_PATTERN_FORMAT)
             .withZone(ZoneId.systemDefault());
+    private static final String JOB_FILENAME = "velocicroptor_job.sh";
 
     private SshClientService sshClientService;
     private MigrationProject project;
     private SourceFilesToRemoteService sourceFilesToRemoteService;
     private Path remoteProjectsPath;
-    private Path remoteJobScriptPath;
+    private Path remoteJobScriptsPath;
     private String adminEmail;
     private String outputServer;
     private Path outputPath;
@@ -61,7 +62,8 @@ public class VelocicroptorRemoteJob {
             String configJson = mapper.writeValueAsString(config);
 
             // Trigger remote job, passing config as argument
-            sshClientService.executeRemoteCommand("sbatch " + remoteJobScriptPath.toString() + " '" + configJson + "'");
+            var scriptPath = remoteJobScriptsPath.resolve(JOB_FILENAME).toAbsolutePath();
+            sshClientService.executeRemoteCommand("sbatch " + scriptPath + " '" + configJson + "'");
         } catch (IOException e) {
             throw new MigrationException(e);
         }
@@ -100,8 +102,8 @@ public class VelocicroptorRemoteJob {
         this.remoteProjectsPath = remoteProjectsPath;
     }
 
-    public void setRemoteJobScriptPath(Path remoteJobScriptPath) {
-        this.remoteJobScriptPath = remoteJobScriptPath;
+    public void setRemoteJobScriptsPath(Path remoteJobScriptsPath) {
+        this.remoteJobScriptsPath = remoteJobScriptsPath;
     }
 
     public void setAdminEmail(String adminEmail) {

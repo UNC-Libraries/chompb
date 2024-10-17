@@ -12,6 +12,7 @@ import org.apache.sshd.common.util.io.resource.PathResource;
 import org.apache.sshd.scp.client.ScpClient;
 import org.apache.sshd.scp.client.ScpClientCreator;
 import org.apache.sshd.common.util.security.SecurityUtils;
+import org.slf4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,12 +26,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static java.util.Collections.singletonList;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service for executing remote commands and transfers
  * @author bbpennel
  */
 public class SshClientService {
+    private static final Logger log = getLogger(SshClientService.class);
     private static final int SSH_TIMEOUT_SECONDS = 10;
 
     private String sshHost;
@@ -97,6 +100,12 @@ public class SshClientService {
             channel.open().verify(5, TimeUnit.SECONDS);
 
             channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), 5000);
+            if (channel.getExitStatus() != 0) {
+                throw new MigrationException("Remote command \"" + command + "\" failed with exit status "
+                        + channel.getExitStatus() + ": " + responseStream);
+            }
+            log.debug("Command executed on remote server: {}", command);
+
             return responseStream.toString();
         } catch (Exception e) {
             throw new MigrationException("Failed to execute remote command", e);

@@ -8,7 +8,6 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFilesToRemoteService;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.util.SshClientService;
-import org.apache.solr.client.solrj.SolrQuery;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
@@ -48,7 +46,7 @@ public class VelocicroptorRemoteJobTest {
     @Mock
     private SourceFilesToRemoteService sourceFilesToRemoteService;
     private Path remoteProjectsPath;
-    private Path remoteJobScriptPath;
+    private Path remoteJobScriptsPath;
     private Path projectPath;
     private Path outputPath;
     @Captor
@@ -66,7 +64,7 @@ public class VelocicroptorRemoteJobTest {
                 tmpFolder, PROJECT_NAME, null, USERNAME,
                 null, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         remoteProjectsPath = tmpFolder.resolve("remote_projects");
-        remoteJobScriptPath = tmpFolder.resolve("remote_job_script.sh");
+        remoteJobScriptsPath = tmpFolder.resolve("scripts");
 
         outputPath = projectPath.resolve(VelocicroptorRemoteJob.RESULTS_REL_PATH);
 
@@ -75,7 +73,7 @@ public class VelocicroptorRemoteJobTest {
         job.setProject(project);
         job.setSourceFilesToRemoteService(sourceFilesToRemoteService);
         job.setRemoteProjectsPath(remoteProjectsPath);
-        job.setRemoteJobScriptPath(remoteJobScriptPath);
+        job.setRemoteJobScriptsPath(remoteJobScriptsPath);
         job.setAdminEmail(ADMIN_EMAIL);
         job.setOutputServer(OUTPUT_SERVER);
         job.setOutputPath(outputPath);
@@ -85,9 +83,6 @@ public class VelocicroptorRemoteJobTest {
     void tearDown() throws Exception {
         closeable.close();
     }
-
-    // Successful
-    // IOException
 
     @Test
     public void runSuccessfulTest() throws Exception {
@@ -107,7 +102,7 @@ public class VelocicroptorRemoteJobTest {
 
         var arguments = remoteArgumentCaptor.getValue().split(" ", 3);
         assertEquals("sbatch", arguments[0]);
-        assertEquals(remoteJobScriptPath.toString(), arguments[1]);
+        assertEquals(remoteJobScriptsPath.resolve("velocicroptor_job.sh").toString(), arguments[1]);
 
         // Parse the config (with outer quotes trimmed off)
         ObjectMapper mapper = new ObjectMapper();
