@@ -3,14 +3,18 @@ package edu.unc.lib.boxc.migration.cdm.test;
 import org.apache.sshd.common.util.io.resource.PathResource;
 import org.apache.sshd.common.util.security.SecurityUtils;
 import org.apache.sshd.scp.server.ScpCommandFactory;
+import org.apache.sshd.server.Environment;
+import org.apache.sshd.server.ExitCallback;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.channel.ChannelSession;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.server.command.CommandFactory;
+import org.apache.sshd.server.command.CommandLifecycle;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.shell.ProcessShellFactory;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
@@ -77,9 +81,47 @@ public class TestSshServer {
         public Command createCommand(ChannelSession channel, String command) throws IOException {
             if (command.startsWith("scp")) {
                 return scpCommandFactory.createCommand(channel, command);
+            } else if (command.startsWith("sbatch")) {
+                return new SbatchCommand();
             } else {
                 return shellCommandFactory.createCommand(channel, command);
             }
+        }
+    }
+
+    public class SbatchCommand implements Command, CommandLifecycle {
+        private OutputStream out;
+
+        public SbatchCommand() {
+        }
+
+        @Override
+        public void setInputStream(java.io.InputStream in) { }
+
+        @Override
+        public void setOutputStream(OutputStream out) {
+            this.out = out;
+        }
+
+        @Override
+        public void setErrorStream(java.io.OutputStream err) { }
+
+        @Override
+        public void start(ChannelSession channel, Environment env) throws IOException {
+            // Simulate successful sbatch job submission
+            out.write(("Submitted batch job 123456\n").getBytes());
+            out.flush();
+            out.close();
+        }
+
+        @Override
+        public void destroy(ChannelSession channel) throws Exception {
+        }
+
+        @Override
+        public void setExitCallback(ExitCallback callback) {
+            // Exit callback handling (success)
+            callback.onExit(0);
         }
     }
 }
