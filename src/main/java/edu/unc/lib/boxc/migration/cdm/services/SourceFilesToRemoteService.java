@@ -2,6 +2,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.util.SshClientService;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -11,11 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * Service for transferring source files from the local server to a remote destination.
  * @author bbpennel
  */
 public class SourceFilesToRemoteService {
+    private static final Logger log = getLogger(SourceFilesToRemoteService.class);
     private SourceFileService sourceFileService;
     private SshClientService sshClientService;
     private int concurrentTransfers = 5;
@@ -30,13 +34,13 @@ public class SourceFilesToRemoteService {
         var sourceMappings = sourceFileService.loadMappings();
         final Path destinationBasePath = destinationPath.toAbsolutePath();
         // Get all the source paths as a thread safe queue
-        var sourcePaths = sourceMappings.getMappings().stream()
-                                    .map(SourceFilesInfo.SourceFileMapping::getFirstSourcePath)
-                                    .collect(Collectors.toList());
-        var pathsDeque = new ConcurrentLinkedDeque<Path>(sourcePaths);
+        var pathsDeque = sourceMappings.getMappings().stream()
+                .map(SourceFilesInfo.SourceFileMapping::getFirstSourcePath)
+                .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
         // For tracking if a parent directory has already been created
         Set<String> createdParentsSet = ConcurrentHashMap.newKeySet();
         // Create the remote destination directory
+        log.info("Creating remote destination directory {}", destinationBasePath);
         sshClientService.executeRemoteCommand("mkdir -p " + destinationBasePath);
         createdParentsSet.add(destinationBasePath.toString());
 
@@ -61,7 +65,9 @@ public class SourceFilesToRemoteService {
     private Thread createTransferThread(ConcurrentLinkedDeque<Path> pathsDeque,
                                         Path destinationBasePath,
                                         Set<String> createdParentsSet) {
-        var thread = new Thread(() -> {
+        // Create the parent path if we haven't already done so
+        // Upload the file to the appropriate path on the remote server
+        return new Thread(() -> {
             Path nextPath;
             while ((nextPath = pathsDeque.poll()) != null) {
                 final Path sourcePath = nextPath;
@@ -72,6 +78,7 @@ public class SourceFilesToRemoteService {
                     // Create the parent path if we haven't already done so
                     synchronized (createdParentsSet) {
                         if (!createdParentsSet.contains(destParentPath.toString())) {
+                            log.debug("Creating missing parent directory {}", destParentPath);
                             createdParentsSet.add(destParentPath.toString());
                             sshClientService.executeRemoteCommand("mkdir -p " + destPath.getParent());
                         }
@@ -79,6 +86,7 @@ public class SourceFilesToRemoteService {
                     // Upload the file to the appropriate path on the remote server
                     sshClientService.executeScpBlock(sshClient, (scpClient) -> {
                         try {
+                            log.info("Transferring file {} to {}", sourcePath, destPath);
                             scpClient.upload(sourcePath.toString(), destPath.toString());
                         } catch (IOException e) {
                             throw new RuntimeException("Failed to transfer file " + sourcePath, e);
@@ -87,7 +95,6 @@ public class SourceFilesToRemoteService {
                 });
             }
         });
-        return thread;
     }
 
     public void setSourceFileService(SourceFileService sourceFileService) {
