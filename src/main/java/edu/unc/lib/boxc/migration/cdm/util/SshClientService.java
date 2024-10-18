@@ -99,8 +99,10 @@ public class SshClientService {
             channel.setErr(responseStream);
             channel.open().verify(5, TimeUnit.SECONDS);
 
-            channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), 5000);
-            if (channel.getExitStatus() != 0) {
+            channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), 10000);
+            log.info("Channel is {}", channel);
+            log.info("Channel exist status is {}", channel.getExitStatus());
+            if (channel.getExitStatus() == null || channel.getExitStatus() != 0) {
                 throw new MigrationException("Remote command \"" + command + "\" failed with exit status "
                         + channel.getExitStatus() + ": " + responseStream);
             }
