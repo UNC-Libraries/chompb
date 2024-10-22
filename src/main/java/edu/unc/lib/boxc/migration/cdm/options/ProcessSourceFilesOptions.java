@@ -2,6 +2,8 @@ package edu.unc.lib.boxc.migration.cdm.options;
 
 import picocli.CommandLine;
 
+import java.nio.file.Path;
+
 /**
  * Options for job to process source files
  * @author bbpennel
@@ -15,6 +17,11 @@ public class ProcessSourceFilesOptions {
             description = "Username of the user that started this job. Defaults to current user",
             defaultValue = "${sys:user.name}")
     private String username;
+
+    @CommandLine.Option(names = {"-k", "--ssh-key"},
+            description = "Path to the ssh key to use for the remote server.",
+            required = true)
+    private Path sshKeyPath;
 
     @CommandLine.Option(names = {"-e", "--email"},
             description = "Email of the user that started this job")
@@ -34,6 +41,14 @@ public class ProcessSourceFilesOptions {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public Path getSshKeyPath() {
+        return sshKeyPath;
+    }
+
+    public void setSshKeyPath(Path sshKeyPath) {
+        this.sshKeyPath = sshKeyPath;
     }
 
     public String getEmailAddress() {

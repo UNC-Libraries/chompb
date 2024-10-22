@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.ProcessSourceFilesOptions;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFilesToRemoteService;
 import edu.unc.lib.boxc.migration.cdm.util.SshClientService;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,21 +17,25 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * Job which prepares and executes a remote velocicroptor job to crop color bars from images
  * @author bbpennel
  */
 public class VelocicroptorRemoteJob {
+    private static final Logger log = getLogger(VelocicroptorRemoteJob.class);
     protected static final String RESULTS_REL_PATH = "processing/results/velocicroptor";
     private static final String JOB_ID_PATTERN_FORMAT = "ddMMyyyyHHmmssSSS";
     private static final DateTimeFormatter JOB_ID_FORMATTER = DateTimeFormatter.ofPattern(JOB_ID_PATTERN_FORMAT)
             .withZone(ZoneId.systemDefault());
+    private static final String JOB_FILENAME = "velocicroptor_job.sh";
 
     private SshClientService sshClientService;
     private MigrationProject project;
     private SourceFilesToRemoteService sourceFilesToRemoteService;
     private Path remoteProjectsPath;
-    private Path remoteJobScriptPath;
+    private Path remoteJobScriptsPath;
     private String adminEmail;
     private String outputServer;
     private Path outputPath;
@@ -61,7 +66,11 @@ public class VelocicroptorRemoteJob {
             String configJson = mapper.writeValueAsString(config);
 
             // Trigger remote job, passing config as argument
-            sshClientService.executeRemoteCommand("sbatch " + remoteJobScriptPath.toString() + " '" + configJson + "'");
+            var scriptPath = remoteJobScriptsPath.resolve(JOB_FILENAME).toAbsolutePath();
+            var sbatchCommand = "sbatch " + scriptPath + " '" + configJson + "'";
+            log.info("Executing remote job with command: {}", sbatchCommand);
+            var response = sshClientService.executeRemoteCommand("sbatch " + scriptPath + " '" + configJson + "'");
+            log.info("Job submitted with response: {}", response);
         } catch (IOException e) {
             throw new MigrationException(e);
         }
@@ -73,6 +82,7 @@ public class VelocicroptorRemoteJob {
         config.put("job_id", jobId);
         config.put("job_name", options.getActionName());
         config.put("chompb_proj_name", project.getProjectName());
+        config.put("environment", project.getProjectProperties().getBxcEnvironmentId());
         config.put("admin_address", adminEmail);
         // User that initiated the job
         config.put("username", options.getUsername());
@@ -100,8 +110,8 @@ public class VelocicroptorRemoteJob {
         this.remoteProjectsPath = remoteProjectsPath;
     }
 
-    public void setRemoteJobScriptPath(Path remoteJobScriptPath) {
-        this.remoteJobScriptPath = remoteJobScriptPath;
+    public void setRemoteJobScriptsPath(Path remoteJobScriptsPath) {
+        this.remoteJobScriptsPath = remoteJobScriptsPath;
     }
 
     public void setAdminEmail(String adminEmail) {
