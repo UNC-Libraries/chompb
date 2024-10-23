@@ -9,6 +9,7 @@ import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 
@@ -33,15 +34,24 @@ public class ListProjectsCommandIT extends AbstractCommandIT {
 
     @Test
     public void listProjectTest() throws Exception {
+        File velocicropterFile = new File(project.getProjectPath()
+                + "/processing/results/velocicroptor/job_completed");
+        velocicropterFile.mkdirs();
+
         String[] args = new String[] {
                 "-w", String.valueOf(baseDir),
                 "list_projects" };
         executeExpectSuccess(args);
 
-        assertOutputContains("\"" + ListProjectsService.PROJECT_PATH + "\" : \"" + Path.of(baseDir + "/" + PROJECT_ID) + "\"");
+        assertOutputContains("\"" + ListProjectsService.PROJECT_PATH + "\" : \"" + Path.of(baseDir
+                + "/" + PROJECT_ID) + "\"");
         assertOutputContains("\"" + ListProjectsService.STATUS + "\" : \"initialized\"");
         assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\" : [ ]");
         assertOutputContains("\"name\" : \"" + PROJECT_ID + "\"");
+        assertOutputContains("\"processingJobs\"");
+        assertOutputContains("\"velocicropter\"");
+        assertOutputContains("\"" + ListProjectsService.STATUS + "\" : \""
+                + ListProjectsService.COMPLETED + "\"");
     }
 
     @Test
