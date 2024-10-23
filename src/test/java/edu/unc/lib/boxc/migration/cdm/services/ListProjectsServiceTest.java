@@ -3,6 +3,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
@@ -15,8 +16,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
@@ -171,6 +174,52 @@ public class ListProjectsServiceTest {
         assertEquals("archived", list.findValue(ListProjectsService.STATUS).asText());
         assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
         assertEquals(PROJECT_NAME, list.findValue("name").asText());
+    }
+
+    @Test
+    public void listProjectsWithPendingProjectReportsTest() throws Exception {
+        File velocicropterFile = new File(project.getProjectPath() + "/processing/results/velocicroptor");
+        velocicropterFile.mkdirs();
+
+        JsonNode list = service.listProjects(tmpFolder, false);
+
+        assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals("initialized", list.findValue(ListProjectsService.STATUS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
+        assertEquals(PROJECT_NAME, list.findValue("name").asText());
+
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode testStatus = mapper.createObjectNode();
+        testStatus.put(ListProjectsService.STATUS, ListProjectsService.PENDING);
+        ObjectNode testVelocicropter = mapper.createObjectNode();
+        testVelocicropter.set("velocicropter", testStatus);
+        assertTrue(Files.exists(Path.of(tmpFolder + "/" + PROJECT_NAME + "/processing/results/velocicroptor")));
+        assertEquals(testVelocicropter, list.findValue("processingJobs"));
+    }
+
+    @Test
+    public void listProjectsWithCompletedProjectReportsTest() throws Exception {
+        File velocicropterFile = new File(project.getProjectPath()
+                + "/processing/results/velocicroptor/job_completed");
+        velocicropterFile.mkdirs();
+
+        JsonNode list = service.listProjects(tmpFolder, false);
+
+        assertEquals(Path.of(tmpFolder + "/" + PROJECT_NAME).toString(),
+                list.findValue(ListProjectsService.PROJECT_PATH).asText());
+        assertEquals("initialized", list.findValue(ListProjectsService.STATUS).asText());
+        assertEquals(jsonArray(Arrays.asList()), list.findValue(ListProjectsService.ALLOWED_ACTIONS));
+        assertEquals(PROJECT_NAME, list.findValue("name").asText());
+
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode testStatus = mapper.createObjectNode();
+        testStatus.put(ListProjectsService.STATUS, ListProjectsService.COMPLETED);
+        ObjectNode testVelocicropter = mapper.createObjectNode();
+        testVelocicropter.set("velocicropter", testStatus);
+        assertTrue(Files.exists(Path.of(tmpFolder + "/" + PROJECT_NAME
+                + "/processing/results/velocicroptor/job_completed")));
+        assertEquals(testVelocicropter, list.findValue("processingJobs"));
     }
 
     @Test

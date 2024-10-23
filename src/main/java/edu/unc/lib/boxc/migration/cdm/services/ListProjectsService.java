@@ -37,6 +37,8 @@ public class ListProjectsService {
     public static final String PROJECT_PATH = "projectPath";
     public static final String STATUS = "status";
     public static final String ALLOWED_ACTIONS = "allowedActions";
+    public static final String PENDING = "pending";
+    public static final String COMPLETED = "completed";
     private static final Set<String> IMAGE_FORMATS = new HashSet<>(Arrays.asList("tif", "tiff", "jpeg", "jpg", "png",
             "gif", "pict", "bmp", "psd", "jp2", "nef", "crw", "cr2", "dng", "raf"));
 
@@ -80,6 +82,7 @@ public class ListProjectsService {
                         allowedActions = mapper.valueToTree(allowedActions(project));
                     }
                     JsonNode projectProperties = mapper.readTree(project.getProjectPropertiesPath().toFile());
+                    ObjectNode processingJobs = processingJobs(project, mapper);
 
                     // add project info to JSON
                     ObjectNode objectNode = mapper.createObjectNode();
@@ -87,6 +90,7 @@ public class ListProjectsService {
                     objectNode.put(STATUS, projectStatus);
                     objectNode.putArray(ALLOWED_ACTIONS).addAll(allowedActions);
                     objectNode.set("projectProperties", projectProperties);
+                    objectNode.set("processingJobs", processingJobs);
                     arrayNode.add(objectNode);
                 } catch (Exception e) {
                     log.error(e.getMessage());
@@ -137,6 +141,22 @@ public class ListProjectsService {
             }
         }
         return allowedActions;
+    }
+
+    public ObjectNode processingJobs(MigrationProject project, ObjectMapper mapper) throws Exception {
+        ObjectNode processingJobs = mapper.createObjectNode();
+
+        // velocicropter report status
+        ObjectNode velocicropterStatus = mapper.createObjectNode();
+        if (Files.exists(project.getProjectPath().resolve("processing/results/velocicroptor/job_completed"))) {
+            velocicropterStatus.put(STATUS, COMPLETED);
+            processingJobs.set("velocicropter", velocicropterStatus);
+        } else if (Files.exists(project.getProjectPath().resolve("processing/results/velocicroptor"))) {
+            velocicropterStatus.put(STATUS, PENDING);
+            processingJobs.set("velocicropter", velocicropterStatus);
+        }
+
+        return processingJobs;
     }
 
     public MigrationProject initializeProject(Path path) throws Exception {
