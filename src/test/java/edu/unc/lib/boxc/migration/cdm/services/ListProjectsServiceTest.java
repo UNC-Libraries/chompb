@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import edu.unc.lib.boxc.migration.cdm.jobs.VelocicroptorRemoteJob;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
@@ -178,8 +179,8 @@ public class ListProjectsServiceTest {
 
     @Test
     public void listProjectsWithPendingProjectReportsTest() throws Exception {
-        File velocicropterFile = new File(project.getProjectPath() + "/processing/results/velocicroptor");
-        velocicropterFile.mkdirs();
+        File velocicroptorFile = new File(project.getProjectPath() + "/" + VelocicroptorRemoteJob.RESULTS_REL_PATH);
+        velocicroptorFile.mkdirs();
 
         JsonNode list = service.listProjects(tmpFolder, false);
 
@@ -192,17 +193,18 @@ public class ListProjectsServiceTest {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode testStatus = mapper.createObjectNode();
         testStatus.put(ListProjectsService.STATUS, ListProjectsService.PENDING);
-        ObjectNode testVelocicropter = mapper.createObjectNode();
-        testVelocicropter.set("velocicropter", testStatus);
-        assertTrue(Files.exists(Path.of(tmpFolder + "/" + PROJECT_NAME + "/processing/results/velocicroptor")));
-        assertEquals(testVelocicropter, list.findValue("processingJobs"));
+        ObjectNode testVelocicroptor = mapper.createObjectNode();
+        testVelocicroptor.set(VelocicroptorRemoteJob.JOB_NAME, testStatus);
+        assertTrue(Files.exists(Path.of(tmpFolder + "/" + PROJECT_NAME + "/"
+                + VelocicroptorRemoteJob.RESULTS_REL_PATH)));
+        assertEquals(testVelocicroptor, list.findValue(ListProjectsService.PROCESSING_JOBS));
     }
 
     @Test
     public void listProjectsWithCompletedProjectReportsTest() throws Exception {
-        File velocicropterFile = new File(project.getProjectPath()
-                + "/processing/results/velocicroptor/job_completed");
-        velocicropterFile.mkdirs();
+        File velocicroptorFile = new File(project.getProjectPath() + "/"
+                + VelocicroptorRemoteJob.RESULTS_REL_PATH + "/job_completed");
+        velocicroptorFile.mkdirs();
 
         JsonNode list = service.listProjects(tmpFolder, false);
 
@@ -215,11 +217,11 @@ public class ListProjectsServiceTest {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode testStatus = mapper.createObjectNode();
         testStatus.put(ListProjectsService.STATUS, ListProjectsService.COMPLETED);
-        ObjectNode testVelocicropter = mapper.createObjectNode();
-        testVelocicropter.set("velocicropter", testStatus);
-        assertTrue(Files.exists(Path.of(tmpFolder + "/" + PROJECT_NAME
-                + "/processing/results/velocicroptor/job_completed")));
-        assertEquals(testVelocicropter, list.findValue("processingJobs"));
+        ObjectNode testVelocicroptor = mapper.createObjectNode();
+        testVelocicroptor.set(VelocicroptorRemoteJob.JOB_NAME, testStatus);
+        assertTrue(Files.exists(Path.of(tmpFolder + "/" + PROJECT_NAME + "/"
+                + VelocicroptorRemoteJob.RESULTS_REL_PATH + "/job_completed")));
+        assertEquals(testVelocicroptor, list.findValue(ListProjectsService.PROCESSING_JOBS));
     }
 
     @Test

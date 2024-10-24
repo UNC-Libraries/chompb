@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.jobs.VelocicroptorRemoteJob;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import org.apache.commons.io.FilenameUtils;
@@ -37,6 +38,8 @@ public class ListProjectsService {
     public static final String PROJECT_PATH = "projectPath";
     public static final String STATUS = "status";
     public static final String ALLOWED_ACTIONS = "allowedActions";
+    public static final String PROJECT_PROPERTIES = "projectProperties";
+    public static final String PROCESSING_JOBS = "processingJobs";
     public static final String PENDING = "pending";
     public static final String COMPLETED = "completed";
     private static final Set<String> IMAGE_FORMATS = new HashSet<>(Arrays.asList("tif", "tiff", "jpeg", "jpg", "png",
@@ -89,8 +92,8 @@ public class ListProjectsService {
                     objectNode.put(PROJECT_PATH, projectPath.toString());
                     objectNode.put(STATUS, projectStatus);
                     objectNode.putArray(ALLOWED_ACTIONS).addAll(allowedActions);
-                    objectNode.set("projectProperties", projectProperties);
-                    objectNode.set("processingJobs", processingJobs);
+                    objectNode.set(PROJECT_PROPERTIES, projectProperties);
+                    objectNode.set(PROCESSING_JOBS, processingJobs);
                     arrayNode.add(objectNode);
                 } catch (Exception e) {
                     log.error(e.getMessage());
@@ -148,12 +151,13 @@ public class ListProjectsService {
 
         // velocicropter report status
         ObjectNode velocicropterStatus = mapper.createObjectNode();
-        if (Files.exists(project.getProjectPath().resolve("processing/results/velocicroptor/job_completed"))) {
+        if (Files.exists(project.getProjectPath().resolve(VelocicroptorRemoteJob.RESULTS_REL_PATH
+                + "/job_completed"))) {
             velocicropterStatus.put(STATUS, COMPLETED);
-            processingJobs.set("velocicropter", velocicropterStatus);
-        } else if (Files.exists(project.getProjectPath().resolve("processing/results/velocicroptor"))) {
+            processingJobs.set(VelocicroptorRemoteJob.JOB_NAME, velocicropterStatus);
+        } else if (Files.exists(project.getProjectPath().resolve(VelocicroptorRemoteJob.RESULTS_REL_PATH))) {
             velocicropterStatus.put(STATUS, PENDING);
-            processingJobs.set("velocicropter", velocicropterStatus);
+            processingJobs.set(VelocicroptorRemoteJob.JOB_NAME, velocicropterStatus);
         }
 
         return processingJobs;
