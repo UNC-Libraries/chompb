@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm;
 
+import edu.unc.lib.boxc.migration.cdm.jobs.VelocicroptorRemoteJob;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.ArchiveProjectsService;
 import edu.unc.lib.boxc.migration.cdm.services.ListProjectsService;
@@ -9,6 +10,7 @@ import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 
@@ -33,15 +35,24 @@ public class ListProjectsCommandIT extends AbstractCommandIT {
 
     @Test
     public void listProjectTest() throws Exception {
+        File velocicroptorFile = new File(project.getProjectPath() + "/"
+                + VelocicroptorRemoteJob.RESULTS_REL_PATH + "/job_completed");
+        velocicroptorFile.mkdirs();
+
         String[] args = new String[] {
                 "-w", String.valueOf(baseDir),
                 "list_projects" };
         executeExpectSuccess(args);
 
-        assertOutputContains("\"" + ListProjectsService.PROJECT_PATH + "\" : \"" + Path.of(baseDir + "/" + PROJECT_ID) + "\"");
+        assertOutputContains("\"" + ListProjectsService.PROJECT_PATH + "\" : \"" + Path.of(baseDir
+                + "/" + PROJECT_ID) + "\"");
         assertOutputContains("\"" + ListProjectsService.STATUS + "\" : \"initialized\"");
         assertOutputContains("\"" + ListProjectsService.ALLOWED_ACTIONS + "\" : [ ]");
         assertOutputContains("\"name\" : \"" + PROJECT_ID + "\"");
+        assertOutputContains("\"" + ListProjectsService.PROCESSING_JOBS + "\"");
+        assertOutputContains("\"" + VelocicroptorRemoteJob.JOB_NAME + "\"");
+        assertOutputContains("\"" + ListProjectsService.STATUS + "\" : \""
+                + ListProjectsService.COMPLETED + "\"");
     }
 
     @Test
