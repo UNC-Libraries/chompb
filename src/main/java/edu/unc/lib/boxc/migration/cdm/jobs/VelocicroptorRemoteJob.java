@@ -25,11 +25,12 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class VelocicroptorRemoteJob {
     private static final Logger log = getLogger(VelocicroptorRemoteJob.class);
-    protected static final String RESULTS_REL_PATH = "processing/results/velocicroptor";
+    public static final String RESULTS_REL_PATH = "processing/results/velocicroptor";
     private static final String JOB_ID_PATTERN_FORMAT = "ddMMyyyyHHmmssSSS";
     private static final DateTimeFormatter JOB_ID_FORMATTER = DateTimeFormatter.ofPattern(JOB_ID_PATTERN_FORMAT)
             .withZone(ZoneId.systemDefault());
     private static final String JOB_FILENAME = "velocicroptor_job.sh";
+    public static final String JOB_NAME = "velocicroptor";
 
     private SshClientService sshClientService;
     private MigrationProject project;

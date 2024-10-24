@@ -65,7 +65,7 @@ public class ProcessSourceFilesCommand implements Callable<Integer> {
     }
 
     private void validateActionName(String actionName) {
-        if (!actionName.equals("velocicroptor")) {
+        if (!actionName.equals(VelocicroptorRemoteJob.JOB_NAME)) {
             throw new IllegalArgumentException("Invalid action name provided: " + actionName);
         }
     }
