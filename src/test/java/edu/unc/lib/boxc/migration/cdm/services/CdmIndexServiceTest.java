@@ -522,7 +522,7 @@ public class CdmIndexServiceTest {
         service.indexAll();
 
         assertDateIndexedPresent();
-        assertRowCount(4);
+        assertRowCount(1);
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> allFields = fieldInfo.listAllExportFields();
@@ -534,33 +534,6 @@ public class CdmIndexServiceTest {
             var joinedFields = "\"" + String.join("\",\"", allFields) + "\"";
             ResultSet rs = stmt.executeQuery("select " + joinedFields
                     + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
-            rs.next();
-            assertEquals(17926, rs.getInt(CdmFieldInfo.CDM_ID));
-            assertEquals("2014-04-29", rs.getString(CdmFieldInfo.CDM_CREATED));
-            assertEquals("2014-04-29", rs.getString(CdmFieldInfo.CDM_MODIFIED));
-            assertEquals("Page 1", rs.getString("title"));
-            assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
-            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
-            assertNull(rs.getString(CdmIndexService.CHILD_ORDER_FIELD));
-
-            rs.next();
-            assertEquals(17927, rs.getInt(CdmFieldInfo.CDM_ID));
-            assertEquals("2014-04-29", rs.getString(CdmFieldInfo.CDM_CREATED));
-            assertEquals("2014-04-29", rs.getString(CdmFieldInfo.CDM_MODIFIED));
-            assertEquals("Page 2", rs.getString("title"));
-            assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
-            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
-            assertNull(rs.getString(CdmIndexService.CHILD_ORDER_FIELD));
-
-            rs.next();
-            assertEquals(17928, rs.getInt(CdmFieldInfo.CDM_ID));
-            assertEquals("2014-04-29", rs.getString(CdmFieldInfo.CDM_CREATED));
-            assertEquals("2014-04-29", rs.getString(CdmFieldInfo.CDM_MODIFIED));
-            assertEquals("Page 3", rs.getString("title"));
-            assertNull(rs.getString(CdmIndexService.ENTRY_TYPE_FIELD));
-            assertNull(rs.getString(CdmIndexService.PARENT_ID_FIELD));
-            assertNull(rs.getString(CdmIndexService.CHILD_ORDER_FIELD));
-
             rs.next();
             assertEquals(17940, rs.getInt(CdmFieldInfo.CDM_ID));
             assertEquals("2014-04-29", rs.getString(CdmFieldInfo.CDM_CREATED));

@@ -16,9 +16,14 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -227,6 +232,8 @@ public class CdmIndexService {
                     + PARENT_ID_FIELD + " = ?,"
                     + CHILD_ORDER_FIELD + " = ?"
                     + " where " + CdmFieldInfo.CDM_ID + " = ?";
+    public static final String DELETE_PDF_CHILDREN_TEMPLATE =
+            "delete from " + TB_NAME + " where " + CdmFieldInfo.CDM_ID + " = ?";
     public static final String ASSIGN_PARENT_PDF_TEMPLATE =
             "update " + TB_NAME + " set " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_DOCUMENT_PDF
                     + "' where " + CdmFieldInfo.CDM_ID + " = ?";
@@ -253,9 +260,16 @@ public class CdmIndexService {
                 if (Objects.equals(cpdRoot.getChildTextTrim("type"), "Monograph")) {
                     childRoot = cpdRoot.getChild("node");
                 }
-                // Ignore children of document-pdf objects
+                // Delete children of document-pdf objects
                 if (Objects.equals(cpdRoot.getChildTextTrim("type"), "Document-PDF")) {
                     pdfIds.add(cpdId);
+                    for (var pageEl : childRoot.getChildren("page")) {
+                        var childId = pageEl.getChildTextTrim("pageptr");
+                        try (var deleteStmt = dbConn.prepareStatement(DELETE_PDF_CHILDREN_TEMPLATE)) {
+                            deleteStmt.setString(1, childId);
+                            deleteStmt.executeUpdate();
+                        }
+                    }
                 } else {
                     // Assign each child object to its parent compound
                     int orderId = 0;
