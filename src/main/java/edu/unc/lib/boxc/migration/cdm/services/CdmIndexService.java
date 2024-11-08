@@ -16,9 +16,14 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -32,6 +37,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,6 +60,7 @@ public class CdmIndexService {
     public static final String ENTRY_TYPE_GROUPED_WORK = "grouped_work";
     public static final String ENTRY_TYPE_COMPOUND_OBJECT = "cpd_object";
     public static final String ENTRY_TYPE_COMPOUND_CHILD = "cpd_child";
+    public static final String ENTRY_TYPE_DOCUMENT_PDF = "doc_pdf";
     public static final List<String> MIGRATION_FIELDS = Arrays.asList(
             PARENT_ID_FIELD, ENTRY_TYPE_FIELD, CHILD_ORDER_FIELD);
     private static final Pattern CONTROL_PATTERN = Pattern.compile("[\\p{Cntrl}&&[^\r\n\t]]");
@@ -87,6 +94,7 @@ public class CdmIndexService {
         recordInsertSqlTemplate = makeInsertTemplate(allFields);
 
         var cpdToIdMap = new HashMap<String, String>();
+        var pdfIds = new HashSet<String>();
 
         var descAllPath = CdmFileRetrievalService.getDescAllPath(project);
         try (
@@ -102,7 +110,7 @@ public class CdmIndexService {
                 // reached the end of a record
                 if (line.contains(CLOSE_CDM_ID_TAG)) {
                     Document doc = buildDocument(recordBuilder.toString());
-                    // Store details about where info about compound children can be found
+                    // Store details about where info about compound children and pdf objects can be found
                     recordIfCompoundObject(doc, cpdToIdMap);
                     indexDocument(doc, conn, fieldInfo);
                     // reset the record builder for the next record
@@ -114,8 +122,9 @@ public class CdmIndexService {
                 throw new MigrationException("Failed to parse desc.all file, incomplete record with body:\n" +
                         recordBuilder);
             }
-            // Assign type information to objects, based on compound object status
-            assignObjectTypeDetails(conn, cpdToIdMap);
+            // Assign type information to objects, based on compound/pdf object status
+            assignObjectTypeDetails(conn, cpdToIdMap, pdfIds);
+            assignPdfObjectTypeDetails(conn, pdfIds);
         } catch (IOException e) {
             throw new MigrationException("Failed to read export files", e);
         } catch (SQLException e) {
@@ -223,13 +232,18 @@ public class CdmIndexService {
                     + PARENT_ID_FIELD + " = ?,"
                     + CHILD_ORDER_FIELD + " = ?"
                     + " where " + CdmFieldInfo.CDM_ID + " = ?";
+    public static final String DELETE_PDF_CHILDREN_TEMPLATE =
+            "delete from " + TB_NAME + " where " + CdmFieldInfo.CDM_ID + " = ?";
+    public static final String ASSIGN_PARENT_PDF_TEMPLATE =
+            "update " + TB_NAME + " set " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_DOCUMENT_PDF
+                    + "' where " + CdmFieldInfo.CDM_ID + " = ?";
 
     /**
      * Add additional information to records to indicate if they are compound objects or children of one.
      * @param dbConn
      * @param cpdToIdMap
      */
-    private void assignObjectTypeDetails(Connection dbConn, Map<String, String> cpdToIdMap) {
+    private void assignObjectTypeDetails(Connection dbConn, Map<String, String> cpdToIdMap, HashSet<String> pdfIds) {
         SAXBuilder builder = SecureXMLFactory.createSAXBuilder();
         var cpdsPath = CdmFileRetrievalService.getExportedCpdsPath(project);
         cpdToIdMap.forEach((cpdFilename, cpdId) -> {
@@ -246,17 +260,29 @@ public class CdmIndexService {
                 if (Objects.equals(cpdRoot.getChildTextTrim("type"), "Monograph")) {
                     childRoot = cpdRoot.getChild("node");
                 }
-                // Assign each child object to its parent compound
-                int orderId = 0;
-                for (var pageEl : childRoot.getChildren("page")) {
-                    var childId = pageEl.getChildTextTrim("pageptr");
-                    try (var childStmt = dbConn.prepareStatement(ASSIGN_CHILD_INFO_TEMPLATE)) {
-                        childStmt.setString(1, cpdId);
-                        childStmt.setInt(2, orderId);
-                        childStmt.setString(3, childId);
-                        childStmt.executeUpdate();
+                // Delete children of document-pdf objects
+                if (Objects.equals(cpdRoot.getChildTextTrim("type"), "Document-PDF")) {
+                    pdfIds.add(cpdId);
+                    for (var pageEl : childRoot.getChildren("page")) {
+                        var childId = pageEl.getChildTextTrim("pageptr");
+                        try (var deleteStmt = dbConn.prepareStatement(DELETE_PDF_CHILDREN_TEMPLATE)) {
+                            deleteStmt.setString(1, childId);
+                            deleteStmt.executeUpdate();
+                        }
                     }
-                    orderId++;
+                } else {
+                    // Assign each child object to its parent compound
+                    int orderId = 0;
+                    for (var pageEl : childRoot.getChildren("page")) {
+                        var childId = pageEl.getChildTextTrim("pageptr");
+                        try (var childStmt = dbConn.prepareStatement(ASSIGN_CHILD_INFO_TEMPLATE)) {
+                            childStmt.setString(1, cpdId);
+                            childStmt.setInt(2, orderId);
+                            childStmt.setString(3, childId);
+                            childStmt.executeUpdate();
+                        }
+                        orderId++;
+                    }
                 }
 
             } catch (FileNotFoundException e) {
@@ -267,6 +293,23 @@ public class CdmIndexService {
                 throw new MigrationException("Failed to parse CPD file " + cpdPath, e);
             } catch (SQLException e) {
                 throw new MigrationException("Failed to update type information for " + cpdId, e);
+            }
+        });
+    }
+
+    /**
+     * Add additional information to records to indicate if they are document-pdf objects
+     * @param dbConn
+     * @param pdfIds
+     */
+    private void assignPdfObjectTypeDetails(Connection dbConn, HashSet<String> pdfIds) {
+        pdfIds.forEach(pdfId -> {
+            try (var parentTypeStmt = dbConn.prepareStatement(ASSIGN_PARENT_PDF_TEMPLATE)) {
+                // Assign document-pdf object type to parent object
+                parentTypeStmt.setString(1, pdfId);
+                parentTypeStmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new MigrationException("Failed to update type information for " + pdfId, e);
             }
         });
     }

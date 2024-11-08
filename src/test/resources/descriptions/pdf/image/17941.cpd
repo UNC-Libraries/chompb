@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cpd>
+  <type>Document-PDF</type>
+  <page>
+    <pagetitle>Page 1</pagetitle>
+    <pagefile>17927.pdfpage</pagefile>
+    <pageptr>17926</pageptr>
+  </page>
+  <page>
+    <pagetitle>Page 2</pagetitle>
+    <pagefile>17928.pdfpage</pagefile>
+    <pageptr>17927</pageptr>
+  </page>
+  <page>
+    <pagetitle>Page 3</pagetitle>
+    <pagefile>17929.pdfpage</pagefile>
+    <pageptr>17928</pageptr>
+  </page>
+</cpd>
