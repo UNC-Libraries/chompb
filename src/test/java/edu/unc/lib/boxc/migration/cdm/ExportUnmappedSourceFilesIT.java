@@ -1,20 +1,24 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -34,8 +38,6 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         testSshServer = new TestSshServer();
         testSshServer.startServer();
         setupChompbConfig();
-        initProjectAndHelper();
-        testHelper.indexExportData("mini_gilmer");
         basePath = tmpFolder;
     }
 
@@ -55,6 +57,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
 
     @Test
     public void sourceMappingNotGeneratedTest() throws Exception {
+        initMiniGilmer();
         String[] args = exportArgs();
         executeExpectFailure(args);
 
@@ -65,6 +68,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
 
     @Test
     public void withAllFilesMappedTest() throws Exception {
+        initMiniGilmer();
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         testHelper.getSourceFileService().generateMapping(opts);
@@ -80,6 +84,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
 
     @Test
     public void withUnmappedFilesTest() throws Exception {
+        initMiniGilmer();
         var localSourcePaths = testHelper.populateSourceFiles("276_183_E.tif");
         GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         var sourceFileService = testHelper.getSourceFileService();
@@ -104,7 +109,32 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
     }
 
     @Test
+    public void withUnmappedPdfFilesTest() throws Exception {
+        defaultCollectionId = "pdf";
+        initProjectAndHelper();
+        testHelper.indexPdfExportData("pdf");
+        writeSourceCsv(sourceMappingBody("17940,,,"));
+        project.getProjectProperties().setSourceFilesUpdatedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
+        var sourceMappingPath = project.getSourceFilesMappingPath();
+        var originalContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);
+
+        String[] args = exportArgs();
+        executeExpectSuccess(args);
+
+        var updatedContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);
+        assertNotEquals("Mapping contents must be changed", originalContents, updatedContents);
+
+        var exportedSourceFilesPath = CdmFileRetrievalService.getExportedSourceFilesPath(project);
+        var sourceFileService = testHelper.getSourceFileService();
+        var mappingInfo = sourceFileService.loadMappings();
+        var mapping1 = mappingInfo.getMappingByCdmId("17940");
+        assertEquals(exportedSourceFilesPath.resolve("17941.cpd"), mapping1.getFirstSourcePath());
+    }
+
+    @Test
     public void withMissingUnmappedFilesTest() throws Exception {
+        initMiniGilmer();
         var localSourcePaths = testHelper.populateSourceFiles("276_183_E.tif");
         GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         var sourceFileService = testHelper.getSourceFileService();
@@ -138,6 +168,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
 
     @Test
     public void authenticationFailureTest() throws Exception {
+        initMiniGilmer();
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         GenerateSourceFileMappingOptions opts = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         testHelper.getSourceFileService().generateMapping(opts);
@@ -152,5 +183,20 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
 
         var updatedContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);
         assertEquals(originalContents, updatedContents, "Mapping contents must be unchanged");
+    }
+
+    private void initMiniGilmer() throws Exception {
+        initProjectAndHelper();
+        testHelper.indexExportData("mini_gilmer");
+    }
+
+    private String sourceMappingBody(String... rows) {
+        return String.join(",", SourceFilesInfo.CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void writeSourceCsv(String mappingBody) throws IOException {
+        FileUtils.write(project.getSourceFilesMappingPath().toFile(),
+                mappingBody, StandardCharsets.UTF_8);
     }
 }

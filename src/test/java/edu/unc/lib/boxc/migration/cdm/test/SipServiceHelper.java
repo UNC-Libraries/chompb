@@ -295,6 +295,10 @@ public class SipServiceHelper {
         indexExportData(Paths.get("src/test/resources/gilmer_fields.csv"), descPath);
     }
 
+    public void indexPdfExportData(String descPath) throws Exception {
+        indexExportData(Paths.get("src/test/resources/pdf_fields.csv"), descPath);
+    }
+
     public void indexExportData(Path fieldsPath, String descPath) throws Exception {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(true);
