@@ -19,6 +19,7 @@ public class ExportState {
         STARTING,
         DOWNLOADING_DESC,
         DOWNLOADING_CPD,
+        DOWNLOADING_PDF,
         EXPORT_COMPLETED;
     }
 
