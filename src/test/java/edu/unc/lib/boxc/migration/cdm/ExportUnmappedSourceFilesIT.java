@@ -3,7 +3,6 @@ package edu.unc.lib.boxc.migration.cdm;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;

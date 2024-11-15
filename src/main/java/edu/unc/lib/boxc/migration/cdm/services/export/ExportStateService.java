@@ -139,7 +139,6 @@ public class ExportStateService {
      * @throws IOException
      */
     public void exportingCompleted() throws IOException {
-        //assertState(ProgressState.DOWNLOADING_CPD);
         assertState(ProgressState.DOWNLOADING_PDF);
         state.setProgressState(ProgressState.EXPORT_COMPLETED);
         writeState();
