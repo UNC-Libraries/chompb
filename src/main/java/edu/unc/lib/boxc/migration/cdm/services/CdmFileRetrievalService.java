@@ -28,6 +28,8 @@ public class CdmFileRetrievalService {
     private static final String CPD_SUBPATH = IMAGE_SUBPATH + "/*.cpd";
     public static final String CPD_EXPORT_PATH = "cpds";
     public static final String EXPORTED_SOURCE_FILES_DIR = "source_files";
+    public static final String PDF_SUBPATH = "supp";
+    public static final String PDF_EXPORT_SUBPATH = PDF_SUBPATH + "/*/index.pdf";
 
     private String sshUsername;
     private String sshPassword;
@@ -78,6 +80,31 @@ public class CdmFileRetrievalService {
 
     public static Path getExportedCpdsPath(MigrationProject project) {
         return project.getExportPath().resolve(CPD_EXPORT_PATH);
+    }
+
+    /**
+     * Download all pdf cpd files
+     */
+    public void downloadPdfFiles() {
+        var pdfsPath = getExportedPdfsPath(project);
+        try {
+            // Ensure that the PDF folder exists
+            Files.createDirectories(pdfsPath);
+        } catch (IOException e) {
+            throw new MigrationException("Failed to create PDF export directory", e);
+        }
+        executeDownloadBlock((scpClient) -> {
+            var remotePath = getSshCollectionPath().resolve(PDF_EXPORT_SUBPATH).toString();
+            try {
+                scpClient.download(remotePath, pdfsPath);
+            } catch (IOException e) {
+                throw new MigrationException("Failed to download PDF files", e);
+            }
+        });
+    }
+
+    public static Path getExportedPdfsPath(MigrationProject project) {
+        return project.getExportPath().resolve(PDF_EXPORT_SUBPATH);
     }
 
     /**

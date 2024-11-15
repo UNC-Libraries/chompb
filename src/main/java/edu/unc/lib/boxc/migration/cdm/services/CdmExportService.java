@@ -52,6 +52,13 @@ public class CdmExportService {
             fileRetrievalService.downloadCpdFiles();
             project.getProjectProperties().setExportedDate(Instant.now());
             ProjectPropertiesSerialization.write(project);
+            exportStateService.transitionToDownloadingPdf();
+        }
+
+        if (exportStateService.inStateOrNotResuming(ProgressState.DOWNLOADING_PDF)) {
+            fileRetrievalService.downloadPdfFiles();
+            project.getProjectProperties().setExportedDate(Instant.now());
+            ProjectPropertiesSerialization.write(project);
         }
 
         exportStateService.exportingCompleted();
