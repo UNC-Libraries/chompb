@@ -59,6 +59,7 @@ public class CdmExportFilesService {
             // Have to make reference to connection final so it can be used inside the download block
             final var dbConn = conn;
             var imageDir = fileRetrievalService.getSshCollectionPath().resolve(CdmFileRetrievalService.IMAGE_SUBPATH);
+            var pdfDir = fileRetrievalService.getSshCollectionPath().resolve(CdmFileRetrievalService.PDF_SUBPATH);
 
             fileRetrievalService.executeDownloadBlock((scpClient -> {
                 try {
@@ -76,8 +77,17 @@ public class CdmExportFilesService {
                         currentUnmapped++;
                         // Figure out name of associated file and download it
                         var filename = retrieveSourceFileName(dbConn, origMapping);
-                        var filePath = imageDir.resolve(filename).toString();
+                        String filePath;
+                        // Pdf and image cpd objects are located in different places
+                        if (retrieveEntryTypeField(dbConn, origMapping) != null
+                                && retrieveEntryTypeField(dbConn, origMapping)
+                                .equals(CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF)) {
+                            filePath = pdfDir.resolve(origMapping.getCdmId() + "/index.pdf").toString();
+                        } else {
+                            filePath = imageDir.resolve(filename).toString();
+                        }
                         var destPath = exportSourceFilesPath.resolve(filename);
+
                         try {
                             scpClient.download(filePath, destPath);
                         }  catch (IOException e) {
@@ -130,6 +140,22 @@ public class CdmExportFilesService {
 
     private String retrieveSourceFileName(Connection conn, SourceFileMapping mapping) throws SQLException {
         try (var filenameStmt = conn.prepareStatement(FILENAME_QUERY)) {
+            filenameStmt.setString(1, mapping.getCdmId());
+            var resultSet = filenameStmt.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getString(1);
+            } else {
+                throw new MigrationException("No record found in index for mapped id " + mapping.getCdmId());
+            }
+        }
+    }
+
+    private static final String ENTRY_TYPE_QUERY =
+            "select " + CdmIndexService.ENTRY_TYPE_FIELD + " from " + CdmIndexService.TB_NAME
+                    + " where " + CdmFieldInfo.CDM_ID + " = ?";
+
+    private String retrieveEntryTypeField(Connection conn, SourceFileMapping mapping) throws SQLException {
+        try (var filenameStmt = conn.prepareStatement(ENTRY_TYPE_QUERY)) {
             filenameStmt.setString(1, mapping.getCdmId());
             var resultSet = filenameStmt.executeQuery();
             if (resultSet.next()) {
