@@ -590,11 +590,12 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         executeExpectSuccess(args2);
 
         assertOutputMatches(".*Last Updated: +[0-9\\-T:]+.*");
-        assertOutputMatches(".*Previous Files Mapped: +0.*");
-        assertOutputMatches(".*New Files Mapped: +0.*");
         assertOutputMatches(".*Total Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files in Project: +0.*");
+        assertOutputMatches(".*Total Files in Project: +1.*");
         assertOutputContains("Sample unavailable. No new files mapped.");
+        assertOutputMatches(".*Objects Mapped: +0.*");
+        assertOutputMatches(".*Unmapped Objects: +1.*");
+        assertOutputMatches(".*Unmapped Objects:.*\n + \\* 17940.*");
     }
 
     @Test
