@@ -86,7 +86,7 @@ public class CdmFileRetrievalService {
      * Download all pdf cpd files
      */
     public void downloadPdfFiles() {
-        var pdfsPath = getExportedPdfsPath(project);
+        var pdfsPath = getExportedCpdsPath(project);
         try {
             // Ensure that the PDF folder exists
             Files.createDirectories(pdfsPath);
@@ -101,10 +101,6 @@ public class CdmFileRetrievalService {
                 throw new MigrationException("Failed to download PDF files", e);
             }
         });
-    }
-
-    public static Path getExportedPdfsPath(MigrationProject project) {
-        return project.getExportPath().resolve(PDF_EXPORT_SUBPATH);
     }
 
     /**
