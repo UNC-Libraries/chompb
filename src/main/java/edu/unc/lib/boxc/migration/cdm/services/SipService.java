@@ -329,6 +329,7 @@ public class SipService {
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + " ("+ CdmIndexService.ENTRY_TYPE_FIELD + " != '"
                     + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'" +
+                    " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'" +
                     " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " is null)" +
                     " AND " + idField + " = '" + idValue + "'");
             while (rs.next()) {

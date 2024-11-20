@@ -47,6 +47,7 @@ public class PermissionsService {
             + " from " + CdmIndexService.TB_NAME
             + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
             + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+            + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
             + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
             + " and " + CdmIndexService.PARENT_ID_FIELD + " is null";
 
@@ -236,10 +237,11 @@ public class PermissionsService {
         // files
         if (options.isWithFiles()) {
             // for every file in the project (compound children and grouped children)
-            // If the entry type is null, the object is a individual cdm object
+            // If the entry type is doc_pdf or null, the object is a individual cdm object
             String fileQuery = "select " + CdmFieldInfo.CDM_ID +
                     " from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
                     + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
                     + " and " + CdmIndexService.PARENT_ID_FIELD + " is not null";
             mappedIds = getIds(fileQuery);

@@ -1,8 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import static edu.unc.lib.boxc.common.xml.SecureXMLFactory.createXMLInputFactory;
-import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
-import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_GROUPED_WORK;
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
 
 import java.io.ByteArrayInputStream;
