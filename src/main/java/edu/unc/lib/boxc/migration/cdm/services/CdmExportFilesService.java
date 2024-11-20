@@ -84,7 +84,8 @@ public class CdmExportFilesService {
                         String filePath;
                         // Pdf and image cpd objects are located in different places
                         if (CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF.equals(entryTypeField)) {
-                            filename = "index.pdf";
+                            // add cdmid to filename to prevent overwriting
+                            filename = origMapping.getCdmId() + "_index.pdf";
                             filePath = pdfDir.resolve(origMapping.getCdmId() + "/index.pdf").toString();
                         } else {
                             filename = fileInfo.get(0);

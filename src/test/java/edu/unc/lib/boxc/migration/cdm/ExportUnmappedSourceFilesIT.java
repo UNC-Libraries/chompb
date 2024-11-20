@@ -128,7 +128,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         var sourceFileService = testHelper.getSourceFileService();
         var mappingInfo = sourceFileService.loadMappings();
         var mapping1 = mappingInfo.getMappingByCdmId("17940");
-        assertEquals(exportedSourceFilesPath.resolve("index.pdf"), mapping1.getFirstSourcePath());
+        assertEquals(exportedSourceFilesPath.resolve("17940_index.pdf"), mapping1.getFirstSourcePath());
     }
 
     @Test
