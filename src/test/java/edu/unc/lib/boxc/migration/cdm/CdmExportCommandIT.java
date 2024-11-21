@@ -168,6 +168,21 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         assertCpdFilePresent(project, "196.cpd", "/descriptions/monograph/image/196.cpd");
     }
 
+    @Test
+    public void exportValidProjectWithPdfCompoundsTest() throws Exception {
+        Path projPath = createProject("pdf");
+
+        String[] args = exportArgs(projPath);
+        executeExpectSuccess(args);
+
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
+
+        assertTrue(Files.exists(project.getExportPath()), "Export folder not created");
+        assertDescAllFilePresent(project, "/descriptions/pdf/index/description/desc.all");
+
+        assertCpdFilePresent(project, "17941.cpd", "/descriptions/pdf/image/17941.cpd");
+    }
+
     private void assertDescAllFilePresent(MigrationProject project, String expectedContentPath) throws Exception {
         assertEquals(IOUtils.toString(getClass().getResourceAsStream(expectedContentPath), StandardCharsets.UTF_8),
                 FileUtils.readFileToString(CdmFileRetrievalService.getDescAllPath(project).toFile(), StandardCharsets.UTF_8));

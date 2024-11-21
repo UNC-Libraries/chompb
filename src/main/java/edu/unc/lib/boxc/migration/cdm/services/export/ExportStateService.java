@@ -125,11 +125,21 @@ public class ExportStateService {
     }
 
     /**
+     * Transition to downloading PDF files
+     * @throws IOException
+     */
+    public void transitionToDownloadingPdf() throws IOException {
+        assertState(ProgressState.DOWNLOADING_CPD);
+        state.setProgressState(ProgressState.DOWNLOADING_PDF);
+        writeState();
+    }
+
+    /**
      * Indicate that the export step has completed
      * @throws IOException
      */
     public void exportingCompleted() throws IOException {
-        assertState(ProgressState.DOWNLOADING_CPD);
+        assertState(ProgressState.DOWNLOADING_PDF);
         state.setProgressState(ProgressState.EXPORT_COMPLETED);
         writeState();
     }

@@ -103,6 +103,12 @@ public class ExportProgressService {
                 outputLogger.info("Retrieving compound object files for collection...");
             }
         }
+        if (ProgressState.DOWNLOADING_PDF.equals(currentProgress)) {
+            // Transitioning into download pdfs
+            if (!ProgressState.DOWNLOADING_PDF.equals(lastUpdateState)) {
+                outputLogger.info("Retrieving pdf object files for collection...");
+            }
+        }
         if (ProgressState.EXPORT_COMPLETED.equals(currentProgress)) {
             // Transitioning into completed state
             if (!ProgressState.EXPORT_COMPLETED.equals(lastUpdateState)) {

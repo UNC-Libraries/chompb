@@ -73,6 +73,7 @@ public class ArchivalDestinationsService {
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + " ("+ CdmIndexService.ENTRY_TYPE_FIELD + " != '"
                     + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'" +
+                    " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'" +
                     " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " is null)");
             while (rs.next()) {
                 if (!rs.getString(1).isEmpty()) {

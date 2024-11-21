@@ -574,6 +574,31 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void statusUnmappedPdfTest() throws Exception {
+        testHelper.indexExportData("pdf");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString()};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "status",
+                "-v" };
+        executeExpectSuccess(args2);
+
+        assertOutputMatches(".*Last Updated: +[0-9\\-T:]+.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +1.*");
+        assertOutputContains("Sample unavailable. No new files mapped.");
+        assertOutputMatches(".*Objects Mapped: +0.*");
+        assertOutputMatches(".*Unmapped Objects: +1.*");
+        assertOutputMatches(".*Unmapped Objects:.*\n + \\* 17940.*");
+    }
+
+    @Test
     public void statusUnmappedDoesNotContainGroupObjectsTest() throws Exception {
         indexGroupExportSamples();
         addSourceFile("276_185_E.tif");

@@ -113,6 +113,7 @@ public class GroupMappingService {
         ResultSet groupRs = stmt.executeQuery("select " + multipleGroups
                 + " from " + CdmIndexService.TB_NAME
                 + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
                 + " group by " + multipleGroups
                 + " having count(*) > 1");
         while (groupRs.next()) {
@@ -128,6 +129,7 @@ public class GroupMappingService {
         ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + ", " + multipleGroups
                 + " from " + CdmIndexService.TB_NAME
                 + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
                 + " order by " + CdmFieldInfo.CDM_ID + " ASC");
         while (rs.next()) {
             String cdmId = rs.getString(1);

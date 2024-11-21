@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.PARENT_ID_FIELD;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -64,6 +65,7 @@ public class IndexFilteringService {
         return "select count(*) from ( " +
                     "select dmrecord from " + CdmIndexService.TB_NAME + " where " +
                         " (" + ENTRY_TYPE_FIELD + " != '" + ENTRY_TYPE_COMPOUND_CHILD + "'" +
+                        " OR " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_DOCUMENT_PDF + "'" +
                         " OR " + ENTRY_TYPE_FIELD + " is null)" +
                         " AND " + queryFilters +
                     " UNION " +
@@ -142,6 +144,7 @@ public class IndexFilteringService {
         var queryFilters = buildQueryFilters(true, options);
         return "delete from " + CdmIndexService.TB_NAME + " where " +
                 " (" + ENTRY_TYPE_FIELD + " != '" + ENTRY_TYPE_COMPOUND_CHILD + "'" +
+                " OR " + ENTRY_TYPE_FIELD + " = '" + ENTRY_TYPE_DOCUMENT_PDF + "'" +
                 " OR " + ENTRY_TYPE_FIELD + " is null)" +
                 " AND " + queryFilters;
     }

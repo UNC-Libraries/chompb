@@ -77,6 +77,7 @@ public class ExportStateServiceTest {
         exportStateService.startOrResumeExport(false);
         exportStateService.transitionToDownloadingDesc();
         exportStateService.transitionToDownloadingCpd();
+        exportStateService.transitionToDownloadingPdf();
         exportStateService.exportingCompleted();
 
         try {
@@ -95,6 +96,7 @@ public class ExportStateServiceTest {
         exportStateService.startOrResumeExport(false);
         exportStateService.transitionToDownloadingDesc();
         exportStateService.transitionToDownloadingCpd();
+        exportStateService.transitionToDownloadingPdf();
         exportStateService.exportingCompleted();
 
         exportStateService.startOrResumeExport(true);
@@ -226,8 +228,7 @@ public class ExportStateServiceTest {
     @Test
     public void exportingCompletedTest() throws Exception {
         exportStateService.startOrResumeExport(false);
-        exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_CPD);
-
+        exportStateService.getState().setProgressState(ProgressState.DOWNLOADING_PDF);
         exportStateService.exportingCompleted();
 
         ExportState state = exportStateService.readState();

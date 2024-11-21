@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
@@ -59,6 +61,7 @@ public class CdmExportFilesService {
             // Have to make reference to connection final so it can be used inside the download block
             final var dbConn = conn;
             var imageDir = fileRetrievalService.getSshCollectionPath().resolve(CdmFileRetrievalService.IMAGE_SUBPATH);
+            var pdfDir = fileRetrievalService.getSshCollectionPath().resolve(CdmFileRetrievalService.PDF_SUBPATH);
 
             fileRetrievalService.executeDownloadBlock((scpClient -> {
                 try {
@@ -75,9 +78,21 @@ public class CdmExportFilesService {
 
                         currentUnmapped++;
                         // Figure out name of associated file and download it
-                        var filename = retrieveSourceFileName(dbConn, origMapping);
-                        var filePath = imageDir.resolve(filename).toString();
+                        var fileInfo = retrieveSourceFileNameAndEntryTypeField(dbConn, origMapping);
+                        var entryTypeField = fileInfo.get(1);
+                        String filename;
+                        String filePath;
+                        // Pdf and image cpd objects are located in different places
+                        if (CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF.equals(entryTypeField)) {
+                            // add cdmid to filename to prevent overwriting
+                            filename = origMapping.getCdmId() + "_index.pdf";
+                            filePath = pdfDir.resolve(origMapping.getCdmId() + "/index.pdf").toString();
+                        } else {
+                            filename = fileInfo.get(0);
+                            filePath = imageDir.resolve(filename).toString();
+                        }
                         var destPath = exportSourceFilesPath.resolve(filename);
+
                         try {
                             scpClient.download(filePath, destPath);
                         }  catch (IOException e) {
@@ -126,14 +141,18 @@ public class CdmExportFilesService {
     }
 
     private static final String FILENAME_QUERY =
-            "select find from " + CdmIndexService.TB_NAME + " where " + CdmFieldInfo.CDM_ID + " = ?";
+            "select find, " + CdmIndexService.ENTRY_TYPE_FIELD + " from "
+                    + CdmIndexService.TB_NAME + " where " + CdmFieldInfo.CDM_ID + " = ?";
 
-    private String retrieveSourceFileName(Connection conn, SourceFileMapping mapping) throws SQLException {
+    private List<String> retrieveSourceFileNameAndEntryTypeField(Connection conn, SourceFileMapping mapping)
+            throws SQLException {
         try (var filenameStmt = conn.prepareStatement(FILENAME_QUERY)) {
             filenameStmt.setString(1, mapping.getCdmId());
             var resultSet = filenameStmt.executeQuery();
             if (resultSet.next()) {
-                return resultSet.getString(1);
+                String sourceFilename = resultSet.getString(1);
+                String entryTypeField = resultSet.getString(2);
+                return Arrays.asList(sourceFilename, entryTypeField);
             } else {
                 throw new MigrationException("No record found in index for mapped id " + mapping.getCdmId());
             }
