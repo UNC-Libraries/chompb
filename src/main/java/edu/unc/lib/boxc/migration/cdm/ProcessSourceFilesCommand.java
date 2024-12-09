@@ -10,7 +10,6 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFilesToRemoteService;
 import edu.unc.lib.boxc.migration.cdm.util.SshClientService;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 

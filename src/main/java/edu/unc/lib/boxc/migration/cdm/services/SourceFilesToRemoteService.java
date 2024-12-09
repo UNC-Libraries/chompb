@@ -7,9 +7,15 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -23,6 +29,7 @@ public class SourceFilesToRemoteService {
     private SourceFileService sourceFileService;
     private SshClientService sshClientService;
     private int concurrentTransfers = 5;
+    private ExecutorService executor;
 
     /**
      * Transfer files from the source CDM server to the remote destination.
@@ -31,58 +38,90 @@ public class SourceFilesToRemoteService {
      * @throws IOException
      */
     public void transferFiles(Path destinationPath) throws IOException {
-        var sourceMappings = sourceFileService.loadMappings();
-        final Path destinationBasePath = destinationPath.toAbsolutePath();
-        // Get all the source paths as a thread safe queue
-        var pathsDeque = sourceMappings.getMappings().stream()
-                .map(SourceFilesInfo.SourceFileMapping::getFirstSourcePath)
-                .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
-        // For tracking if a parent directory has already been created
-        Set<String> createdParentsSet = ConcurrentHashMap.newKeySet();
-        // Create the remote destination directory
-        log.info("Creating remote destination directory {}", destinationBasePath);
-        sshClientService.executeRemoteCommand("mkdir -p " + destinationBasePath);
-        createdParentsSet.add(destinationBasePath.toString());
+        executor = Executors.newFixedThreadPool(concurrentTransfers);
 
-        var threads = new ArrayList<Thread>(concurrentTransfers);
-        // Start threads for parallel transfer of files
-        for (int i = 0; i < concurrentTransfers; i++) {
-            var thread = createTransferThread(pathsDeque, destinationBasePath, createdParentsSet);
-            thread.start();
-            threads.add(thread);
+        try {
+            var sourceMappings = sourceFileService.loadMappings();
+            final Path destinationBasePath = destinationPath.toAbsolutePath();
+            var pathsList = sourceMappings.getMappings().stream()
+                    .map(SourceFilesInfo.SourceFileMapping::getFirstSourcePath)
+                    .collect(Collectors.toList());
+            var pathsDeque = new ConcurrentLinkedDeque<>(pathsList);
+            // Create the parent path structure before we start transfers
+            var parentPaths = listMostSpecificParents(pathsList);
+            createParentPaths(parentPaths, destinationBasePath);
+
+            // Capture futures for transfer threads so we can receive errors
+            var futures = new ArrayList<Future<?>>();
+            for (int i = 0; i < concurrentTransfers; i++) {
+                futures.add(executor.submit(createTransferTask(pathsDeque, destinationBasePath)));
+            }
+            for (Future<?> future : futures) {
+                try {
+                    future.get();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e.getCause());
+                }
+            }
+        } finally {
+            executor.shutdown();
         }
+    }
 
-        // Wait for all threads to finish
-        threads.forEach(t -> {
-            try {
-                t.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Thread interrupted", e);
+    /**
+     * @param paths list of paths to get parent directories from
+     * @return list of parent directories, deduplicated so that if a directory is a parent of another
+     *  then the parent will be removed. So if we have paths:
+     *      * /a/b
+     *      * /a/b/c
+     *      * /d/e/f
+     * then just the paths /a/b/c and /d/e/f would be returned
+     */
+    private List<Path> listMostSpecificParents(List<Path> paths) {
+        var parents = paths.stream().map(Path::getParent)
+                                    .sorted()
+                                    .collect(Collectors.toList());
+        List<Path> result = new ArrayList<>();
+        for (int i = 0; i < parents.size(); i++) {
+            Path current = parents.get(i);
+            boolean isParent = false;
+            // Check if the current path is a parent of any subsequent path
+            for (int j = i + 1; j < parents.size(); j++) {
+                if (parents.get(j).startsWith(current)) {
+                    isParent = true;
+                    break;
+                }
+            }
+            // If not a parent, add to result
+            if (!isParent) {
+                result.add(current);
+            }
+        }
+        return result;
+    }
+
+    private void createParentPaths(List<Path> paths, Path destinationBasePath) {
+        sshClientService.executeSshBlock((sshClient) -> {
+            for (Path path : paths) {
+                var pathRelative = path.toAbsolutePath().toString().substring(1);
+                var destPath = destinationBasePath.resolve(pathRelative);
+                log.info("Creating parent path {}", destPath);
+                sshClientService.executeRemoteCommand(sshClient, "mkdir -p " + destPath);
             }
         });
     }
 
-    private Thread createTransferThread(ConcurrentLinkedDeque<Path> pathsDeque,
-                                        Path destinationBasePath,
-                                        Set<String> createdParentsSet) {
-        // Create the parent path if we haven't already done so
-        // Upload the file to the appropriate path on the remote server
-        return new Thread(() -> {
-            Path nextPath;
-            while ((nextPath = pathsDeque.poll()) != null) {
-                final Path sourcePath = nextPath;
-                sshClientService.executeSshBlock((sshClient) -> {
+    private Runnable createTransferTask(ConcurrentLinkedDeque<Path> pathsDeque, Path destinationBasePath) {
+        return () -> {
+            sshClientService.executeSshBlock((sshClient) -> {
+                Path nextPath;
+                while ((nextPath = pathsDeque.poll()) != null) {
+                    final Path sourcePath = nextPath;
+
                     var sourceRelative = sourcePath.toAbsolutePath().toString().substring(1);
                     var destPath = destinationBasePath.resolve(sourceRelative);
-                    var destParentPath = destPath.getParent();
-                    // Create the parent path if we haven't already done so
-                    synchronized (createdParentsSet) {
-                        if (!createdParentsSet.contains(destParentPath.toString())) {
-                            log.debug("Creating missing parent directory {}", destParentPath);
-                            createdParentsSet.add(destParentPath.toString());
-                            sshClientService.executeRemoteCommand("mkdir -p " + destPath.getParent());
-                        }
-                    }
                     // Upload the file to the appropriate path on the remote server
                     sshClientService.executeScpBlock(sshClient, (scpClient) -> {
                         try {
@@ -92,9 +131,9 @@ public class SourceFilesToRemoteService {
                             throw new RuntimeException("Failed to transfer file " + sourcePath, e);
                         }
                     });
-                });
-            }
-        });
+                }
+            });
+        };
     }
 
     public void setSourceFileService(SourceFileService sourceFileService) {
