@@ -34,7 +34,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class SshClientService {
     private static final Logger log = getLogger(SshClientService.class);
-    private static final int SSH_TIMEOUT_SECONDS = 10;
+    private static final int SSH_TIMEOUT_SECONDS = 60 * 5;
+    private static final int AUTH_TIMEOUT_SECONDS = 10;
 
     private String sshHost;
     private int sshPort;
@@ -125,7 +126,7 @@ public class SshClientService {
                 .verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .getSession()) {
             setupSessionAuthentication(sshSession);
-            sshSession.auth().verify(SSH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            sshSession.auth().verify(AUTH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             sshBlock.accept(sshSession);
         } catch (IOException e) {
             if (e instanceof SshException && e.getMessage().contains("No more authentication methods available")) {
