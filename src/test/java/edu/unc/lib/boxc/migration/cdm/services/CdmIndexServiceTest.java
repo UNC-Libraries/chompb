@@ -789,6 +789,56 @@ public class CdmIndexServiceTest {
         }
     }
 
+    @Test
+    public void indexExportNestedXmlTest() throws Exception {
+        Files.copy(Paths.get("src/test/resources/descriptions/gilmer_nested_xml/index/description/desc.all"),
+                CdmFileRetrievalService.getDescAllPath(project));
+        Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
+        setExportedDate();
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setForce(false);
+
+        service.createDatabase(options);
+        service.indexAll();
+
+        assertDateIndexedPresent();
+        assertRowCount(2);
+
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+
+        Connection conn = service.openDbConnection();
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
+                    + " from " + CdmIndexService.TB_NAME + " order by " + CdmFieldInfo.CDM_ID + " asc");
+            while (rs.next()) {
+                int id = rs.getInt(CdmFieldInfo.CDM_ID);
+                if (id == 25) {
+                    assertEquals(25, rs.getInt(CdmFieldInfo.CDM_ID));
+                    assertEquals("2005-11-23", rs.getString(CdmFieldInfo.CDM_CREATED));
+                    assertEquals("Redoubt C", rs.getString("title"));
+                    assertEquals("Paper is discolored.", rs.getString("notes"));
+                    assertEquals("276_182_E.tif", rs.getString("file"));
+                    try {
+                        rs.getString("search");
+                        fail("Skipped field must not be indexed");
+                    } catch (SQLException e) {
+                    }
+                }
+                if (id == 26) {
+                    assertEquals(26, rs.getInt(CdmFieldInfo.CDM_ID));
+                    assertEquals("2005-11-24", rs.getString(CdmFieldInfo.CDM_CREATED));
+                    assertEquals("Plan of Battery McIntosh", rs.getString("title"));
+                    assertEquals("Paper", rs.getString("medium"));
+                    assertEquals("276_183_E.tif", rs.getString("file"));
+                }
+            }
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
     private void assertDateIndexedPresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
         assertNotNull(props.getIndexedDate());

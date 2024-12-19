@@ -64,6 +64,8 @@ public class CdmIndexService {
     public static final List<String> MIGRATION_FIELDS = Arrays.asList(
             PARENT_ID_FIELD, ENTRY_TYPE_FIELD, CHILD_ORDER_FIELD);
     private static final Pattern CONTROL_PATTERN = Pattern.compile("[\\p{Cntrl}&&[^\r\n\t]]");
+    private static final Pattern IGNORE_CLOSING_PATTERN = Pattern.compile(
+            "(a|span|div|img|ul|li|ol|h\\d|input|label|html|table|tr|td|th)");
 
     private MigrationProject project;
     private CdmFieldService fieldService;
@@ -147,6 +149,7 @@ public class CdmIndexService {
         var state = DescState.OUTSIDE;
         var elementName = new StringBuilder();
         var content = new StringBuilder();
+        var closingTag = new StringBuilder();
         // Extract elements from body using a state machine since a regex caused stackoverflow errors.
         // Reconstituting the document using jdom components to handle XML escaping, which CDM does not do.
         for (int i = 0; i < body.length(); i++) {
@@ -185,10 +188,19 @@ public class CdmIndexService {
                 break;
             case CLOSING:
                 if (c == '>') {
-                    state = DescState.OUTSIDE;
-                    rootEl.addContent(new Element(elementName.toString()).setText(content.toString()));
-                    elementName = new StringBuilder();
-                    content = new StringBuilder();
+                    if (IGNORE_CLOSING_PATTERN.matcher(closingTag.toString()).matches()) {
+                        log.debug("Ignoring an html closing '{}' tag in field '{}' value", closingTag, elementName);
+                        state = DescState.CONTENT;
+                        content.append("</").append(closingTag).append('>');
+                    } else {
+                        state = DescState.OUTSIDE;
+                        rootEl.addContent(new Element(elementName.toString()).setText(content.toString()));
+                        elementName = new StringBuilder();
+                        content = new StringBuilder();
+                    }
+                    closingTag = new StringBuilder();
+                } else {
+                    closingTag.append(c);
                 }
                 break;
             }
