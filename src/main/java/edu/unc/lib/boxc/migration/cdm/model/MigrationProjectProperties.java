@@ -19,6 +19,7 @@ public class MigrationProjectProperties {
     private Instant destinationsGeneratedDate;
     private Instant sourceFilesUpdatedDate;
     private Instant accessFilesUpdatedDate;
+    private Instant altTextFilesUpdatedDate;
     private Instant groupMappingsUpdatedDate;
     private Instant groupMappingsSyncedDate;
     private Instant descriptionsExpandedDate;
@@ -131,6 +132,17 @@ public class MigrationProjectProperties {
 
     public void setAccessFilesUpdatedDate(Instant accessFilesUpdatedDate) {
         this.accessFilesUpdatedDate = accessFilesUpdatedDate;
+    }
+
+    /**
+     * @return timestamp the alt-text files mapping was last updated
+     */
+    public Instant getAltTextFilesUpdatedDate() {
+        return altTextFilesUpdatedDate;
+    }
+
+    public void setAltTextFilesUpdatedDate(Instant altTextFilesUpdatedDate) {
+        this.altTextFilesUpdatedDate = altTextFilesUpdatedDate;
     }
 
     /**

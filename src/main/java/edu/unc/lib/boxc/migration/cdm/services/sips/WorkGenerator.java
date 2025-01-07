@@ -8,6 +8,7 @@ import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
+import edu.unc.lib.boxc.migration.cdm.services.AltTextFileService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
@@ -18,7 +19,6 @@ import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
-import edu.unc.lib.boxc.search.api.SearchFieldKey;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -58,6 +58,7 @@ public class WorkGenerator {
     protected RedirectMappingService redirectMappingService;
     protected SourceFilesInfo sourceFilesInfo;
     protected SourceFilesInfo accessFilesInfo;
+    protected SourceFilesInfo altTextFilesInfo;
     protected Connection conn;
     protected SipGenerationOptions options;
     protected Model model;
@@ -65,6 +66,7 @@ public class WorkGenerator {
     protected SipPremisLogger sipPremisLogger;
     protected DescriptionsService descriptionsService;
     protected AccessFileService accessFileService;
+    protected AltTextFileService altTextFileService;
     protected PostMigrationReportService postMigrationReportService;
     protected PermissionsInfo permissionsInfo;
     protected StreamingMetadataService streamingMetadataService;
@@ -202,6 +204,17 @@ public class WorkGenerator {
                         accessMapping.getFirstSourcePath().toUri().toString());
                 String mimetype = accessFileService.getMimetype(accessMapping.getFirstSourcePath());
                 accessResc.addLiteral(CdrDeposit.mimetype, mimetype);
+            }
+        }
+
+        // Link alt text file
+        if (altTextFilesInfo != null) {
+            SourceFilesInfo.SourceFileMapping altTextMapping = altTextFilesInfo.getMappingByCdmId(cdmId);
+            if (altTextMapping != null && altTextMapping.getSourcePaths() != null) {
+                Resource altTextResc = DepositModelHelpers.addDatastream(fileObjResc, DatastreamType.ALT_TEXT);
+                altTextResc.addLiteral(CdrDeposit.stagingLocation, altTextMapping.getFirstSourcePath().toUri().toString());
+                String mimetype = altTextFileService.getMimetype(altTextMapping.getFirstSourcePath());
+                altTextResc.addLiteral(CdrDeposit.mimetype, mimetype);
             }
         }
 

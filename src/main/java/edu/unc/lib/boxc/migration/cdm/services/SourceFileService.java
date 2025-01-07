@@ -234,7 +234,7 @@ public class SourceFileService {
         return candidatePaths;
     }
 
-    private void ensureMappingState(GenerateSourceFileMappingOptions options) {
+    protected void ensureMappingState(GenerateSourceFileMappingOptions options) {
         if (options.getDryRun() || options.getUpdate()) {
             return;
         }
@@ -276,7 +276,7 @@ public class SourceFileService {
         return mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
     }
 
-    private void assertProjectStateValid() {
+    protected void assertProjectStateValid() {
         if (project.getProjectProperties().getIndexedDate() == null) {
             throw new InvalidProjectStateException("Project must be indexed prior to generating source mappings");
         }
@@ -287,7 +287,7 @@ public class SourceFileService {
      * @param options
      * @param updatesPath the temp path containing the newly generated mappings to merge into the original mappings
      */
-    private void mergeUpdates(GenerateSourceFileMappingOptions options, Path updatesPath) throws IOException {
+    protected void mergeUpdates(GenerateSourceFileMappingOptions options, Path updatesPath) throws IOException {
         Path originalPath = getMappingPath();
         Path mergedPath = originalPath.getParent().resolve("~" + originalPath.getFileName().toString() + "_merged");
         // Cleanup temp merged path if it already exists

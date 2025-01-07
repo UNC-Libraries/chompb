@@ -5,6 +5,7 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
+import edu.unc.lib.boxc.migration.cdm.services.AltTextFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
@@ -24,6 +25,8 @@ public class WorkGeneratorFactory {
     private SourceFilesInfo sourceFilesInfo;
     private SourceFilesInfo accessFilesInfo;
     private AccessFileService accessFileService;
+    private SourceFilesInfo altTextFilesInfo;
+    private AltTextFileService altTextFileService;
     private Connection conn;
     private SipGenerationOptions options;
     private CdmToDestMapper cdmToDestMapper;
@@ -49,6 +52,8 @@ public class WorkGeneratorFactory {
         gen.accessFilesInfo = accessFilesInfo;
         gen.accessFileService = accessFileService;
         gen.sourceFilesInfo = sourceFilesInfo;
+        gen.altTextFilesInfo = altTextFilesInfo;
+        gen.altTextFileService = altTextFileService;
         gen.descriptionsService = descriptionsService;
         gen.conn = conn;
         gen.options = options;
@@ -72,6 +77,10 @@ public class WorkGeneratorFactory {
         this.accessFilesInfo = accessFilesInfo;
     }
 
+    public void setAltTextFilesInfo(SourceFilesInfo altTextFilesInfo) {
+        this.altTextFilesInfo = altTextFilesInfo;
+    }
+
     public void setConn(Connection conn) {
         this.conn = conn;
     }
@@ -90,6 +99,10 @@ public class WorkGeneratorFactory {
 
     public void setAccessFileService(AccessFileService accessFileService) {
         this.accessFileService = accessFileService;
+    }
+
+    public void setAltTextFileService(AltTextFileService altTextFileService) {
+        this.altTextFileService = altTextFileService;
     }
 
     public void setDescriptionsService(DescriptionsService descriptionsService) {

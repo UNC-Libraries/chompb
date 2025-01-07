@@ -25,6 +25,8 @@ import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
+import edu.unc.lib.boxc.migration.cdm.services.AltTextFileService;
+import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
@@ -47,7 +49,6 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
@@ -83,10 +84,13 @@ public class SipServiceHelper {
 
     private Path sourceFilesBasePath;
     private Path accessFilesBasePath;
+    private Path altTextFilesBasePath;
     private MigrationProject project;
     private CdmFieldService fieldService;
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
+    private AltTextService altTextService;
+    private AltTextFileService altTextFileService;
     private AggregateFileMappingService aggregateFileMappingService;
     private AggregateFileMappingService aggregateBottomMappingService;
     private DescriptionsService descriptionsService;
@@ -104,6 +108,7 @@ public class SipServiceHelper {
     public SipServiceHelper(MigrationProject project, Path filesBasePath) throws IOException {
         this.sourceFilesBasePath = new File(filesBasePath.toFile(), "source").toPath();
         this.accessFilesBasePath = new File(filesBasePath.toFile(), "access").toPath();
+        this.altTextFilesBasePath = new File(filesBasePath.toFile(), "alt_text").toPath();
         this.project = project;
         chompbConfig = new ChompbConfigService.ChompbConfig();
         chompbConfig.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
@@ -123,6 +128,12 @@ public class SipServiceHelper {
         accessFileService = new AccessFileService();
         accessFileService.setIndexService(indexService);
         accessFileService.setProject(project);
+        altTextService = new AltTextService();
+        altTextService.setIndexService(indexService);
+        altTextService.setProject(project);
+        altTextFileService = new AltTextFileService();
+        altTextFileService.setIndexService(indexService);
+        altTextFileService.setProject(project);
         descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
@@ -145,6 +156,7 @@ public class SipServiceHelper {
         SipService service = new SipService();
         service.setIndexService(indexService);
         service.setAccessFileService(accessFileService);
+        service.setAltTextFileService(altTextFileService);
         service.setSourceFileService(sourceFileService);
         service.setPidMinter(pidMinter);
         service.setDescriptionsService(descriptionsService);
@@ -518,6 +530,14 @@ public class SipServiceHelper {
 
     public AccessFileService getAccessFileService() {
         return accessFileService;
+    }
+
+    public AltTextService getAltTextService() {
+        return altTextService;
+    }
+
+    public AltTextFileService getAltTextFilesService() {
+        return altTextFileService;
     }
 
     public AggregateFileMappingService getAggregateFileMappingService() {
