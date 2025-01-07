@@ -79,9 +79,9 @@ public class SipsCommandIT extends AbstractCommandIT {
         assertEquals(2, depBagChildrenF.size());
 
         Resource workResc2F = testHelper.getResourceByCreateTime(depBagChildrenF, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2F, dirManagerF, modelF, stagingLocs.get(0), null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2F, dirManagerF, modelF, stagingLocs.get(0), null, null, "26");
         Resource workResc3F = testHelper.getResourceByCreateTime(depBagChildrenF, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3F, dirManagerF, modelF, stagingLocs.get(1), null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3F, dirManagerF, modelF, stagingLocs.get(1), null, null, "27");
 
         // Add missing file and rerun without force
         List<Path> stagingLocs2 = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
@@ -98,11 +98,11 @@ public class SipsCommandIT extends AbstractCommandIT {
         assertEquals(3, depBagChildrenR.size());
 
         Resource workResc1R = testHelper.getResourceByCreateTime(depBagChildrenR, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1R, dirManagerR, modelR, stagingLocs2.get(0), null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1R, dirManagerR, modelR, stagingLocs2.get(0), null, null, "25");
         Resource workResc2R = testHelper.getResourceByCreateTime(depBagChildrenR, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2R, dirManagerR, modelR, stagingLocs2.get(1), null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2R, dirManagerR, modelR, stagingLocs2.get(1), null, null, "26");
         Resource workResc3R = testHelper.getResourceByCreateTime(depBagChildrenR, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3R, dirManagerR, modelR, stagingLocs2.get(2), null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3R, dirManagerR, modelR, stagingLocs2.get(2), null, null, "27");
     }
 
     @Test
@@ -127,11 +127,11 @@ public class SipsCommandIT extends AbstractCommandIT {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
 
         String[] argsList = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -173,11 +173,11 @@ public class SipsCommandIT extends AbstractCommandIT {
         List<RDFNode> collChildren = collBag.iterator().toList();
 
         Resource workResc1 = testHelper.getResourceByCreateTime(collChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
         Resource workResc2 = testHelper.getResourceByCreateTime(collChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(collChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
 
         String[] argsList = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -212,16 +212,16 @@ public class SipsCommandIT extends AbstractCommandIT {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
         assertChildFileModsPopulated(dirManager, workResc1, "25/original_file");
 
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
         var work2ChildPid = retrieveOnlyWorkChildPid(workResc2);
         assertFalse(Files.exists(dirManager.getModsPath(work2ChildPid)), "No mods should be mapped for child");
 
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
         assertChildFileModsPopulated(dirManager, workResc3, "27/original_file");
     }
 
@@ -247,7 +247,7 @@ public class SipsCommandIT extends AbstractCommandIT {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
         Bag workResc1Bag = model.getBag(workResc1);
         List<RDFNode> workResc1Children = workResc1Bag.iterator().toList();
         assertEquals(1, workResc1Children.size());
@@ -257,7 +257,7 @@ public class SipsCommandIT extends AbstractCommandIT {
 
         // mp4 file extension
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
         Bag workResc2Bag = model.getBag(workResc2);
         List<RDFNode> workResc2Children = workResc2Bag.iterator().toList();
         assertEquals(1, workResc2Children.size());
@@ -268,7 +268,7 @@ public class SipsCommandIT extends AbstractCommandIT {
 
         // mp3 file extension
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
         Bag workResc3Bag = model.getBag(workResc3);
         List<RDFNode> workResc3Children = workResc3Bag.iterator().toList();
         assertEquals(1, workResc3Children.size());
@@ -313,11 +313,11 @@ public class SipsCommandIT extends AbstractCommandIT {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
 
         String[] argsList = new String[] {
                 "-w", project.getProjectPath().toString(),

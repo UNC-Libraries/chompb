@@ -183,7 +183,7 @@ public class SipServiceHelper {
     }
 
     public void assertObjectPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager, Model depModel,
-            Path stagingPath, Path accessPath, String cdmId) throws Exception {
+            Path stagingPath, Path accessPath, Path altTextPath, String cdmId) throws Exception {
         Resource fileObjResc = getFirstSipFileInWork(objResc, dirManager, depModel);
         assertTrue(fileObjResc.hasProperty(RDF.type, Cdr.FileObject));
 
@@ -203,6 +203,14 @@ public class SipServiceHelper {
             accessResc.hasLiteral(CdrDeposit.mimetype, "image/tiff");
         }
 
+        if (altTextPath == null) {
+            // Verify no altText copy
+            assertFalse(fileObjResc.hasProperty(CdrDeposit.hasDatastreamAccessSurrogate));
+        } else {
+            Resource altTextResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamAccessSurrogate).getResource();
+            altTextResc.hasLiteral(CdrDeposit.stagingLocation, accessPath.toUri().toString());
+            altTextResc.hasLiteral(CdrDeposit.mimetype, "text/plain");
+        }
 
         PID workPid = PIDs.get(objResc.getURI());
         assertMigrationEventPresent(dirManager, workPid);
@@ -400,6 +408,12 @@ public class SipServiceHelper {
         return sourcePaths;
     }
 
+    public List<Path> populateAltTextFiles(String... filenames) throws Exception {
+        List<Path> sourcePaths = Arrays.stream(filenames).map(this::addAltTextFile).collect(Collectors.toList());
+        altTextFileService.generateMapping(makeSourceFileOptions(altTextFilesBasePath));
+        return sourcePaths;
+    }
+
     public GenerateSourceFileMappingOptions makeSourceFileOptions(Path basePath) {
         GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
         options.setBasePath(basePath);
@@ -416,6 +430,10 @@ public class SipServiceHelper {
 
     public Path addAccessFile(String relPath) {
         return addSourceFile(accessFilesBasePath, relPath);
+    }
+
+    public Path addAltTextFile(String relPath) {
+        return addSourceFile(altTextFilesBasePath, relPath);
     }
 
     public Path addSourceFile(Path basePath, String relPath) {
@@ -514,6 +532,10 @@ public class SipServiceHelper {
 
     public Path getAccessFilesBasePath() {
         return accessFilesBasePath;
+    }
+
+    public Path getAltTextFilesBasePath() {
+        return altTextFilesBasePath;
     }
 
     public MigrationProject getProject() {
