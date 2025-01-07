@@ -89,16 +89,4 @@ public class AltTextServiceTest {
         assertFalse(Files.exists(project.getAltTextPath().resolve("26.txt")));
         assertTrue(Files.exists(project.getAltTextPath().resolve("27.txt")));
     }
-
-    @Test
-    public void uploadTxtFilesTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        List<String> txtFiles = Arrays.asList("src/test/resources/alt_text/26_alttext.txt");
-        var options = new AltTextOptions();
-        options.setAltTextTxtFiles(txtFiles);
-
-        service.uploadTxtFiles(options);
-        assertTrue(Files.exists(project.getAltTextPath()));
-        assertTrue(Files.exists(project.getAltTextPath().resolve("26.txt")));
-    }
 }

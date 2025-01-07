@@ -14,24 +14,11 @@ public class AltTextOptions {
             description = {"Alt-text CSV file to upload"})
     private Path altTextCsvFile;
 
-    @Option(names = {"-ft", "--from-txt"},
-            split = ",",
-            description = {"Alt-text txt files to upload"})
-    private List<String> altTextTxtFiles;
-
     public Path getAltTextCsvFile() {
         return altTextCsvFile;
     }
 
     public void setAltTextCsvFile(Path altTextCsvFile) {
         this.altTextCsvFile = altTextCsvFile;
-    }
-
-    public List<String> getAltTextTxtFiles() {
-        return altTextTxtFiles;
-    }
-
-    public void setAltTextTxtFiles(List<String> altTextTxtFiles) {
-        this.altTextTxtFiles = altTextTxtFiles;
     }
 }

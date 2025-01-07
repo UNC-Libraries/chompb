@@ -87,34 +87,6 @@ public class AltTextService {
         }
     }
 
-    /**
-     * Copy alt-text files to alt_text directory
-     */
-    public void uploadTxtFiles(AltTextOptions options) throws IOException {
-        initializeAltTextDir(project);
-        for (var txtFile : options.getAltTextTxtFiles()) {
-            Path txtFilePath = Path.of(txtFile);
-            if (Files.exists(txtFilePath)) {
-                // Get the dmrecord id from the filename
-                String fileId = (txtFilePath.getFileName().toString()).split("_")[0];
-
-                // Check that the collection contains fileId
-                for (String id : getIds()) {
-                    if (fileId.matches(id)) {
-                        // Copy the file to the altText directory
-                        Path destination = project.getAltTextPath().resolve(fileId + ".txt");
-                        try {
-                            Files.copy(txtFilePath, destination);
-                        } catch (IOException e) {
-                            log.debug("Failed to copy alt-text file " + txtFile + " to " + destination, e);
-                        }
-                        break; // No need to check further ids once the file is copied
-                    }
-                }
-            }
-        }
-    }
-
     private List<String> getIds() {
         if (ids == null) {
             ids = new ArrayList<>();

@@ -34,19 +34,14 @@ public class AltTextCommand {
     private AltTextService altTextService;
 
     @Command(name = "upload",
-            description = {"Upload a CSV or txt files to the alt_text folder.",
-                    "Txt files will be copied to the alt_text folder.",
+            description = {"Upload a CSV to the alt_text folder.",
                     "Alt-text txt files will be created from each row of the CSV, excluding the header row. " +
                     "CSV file must contain a header row and all following rows should have comma-separated" +
                     "dmrecord and alt-text values."})
     public int upload(@Mixin AltTextOptions options) throws Exception {
         initialize();
         try {
-            if (options.getAltTextCsvFile() != null) {
-                altTextService.uploadCsv(options);
-            } else if (options.getAltTextTxtFiles() != null) {
-                altTextService.uploadTxtFiles(options);
-            }
+            altTextService.uploadCsv(options);
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("Cannot upload alt-text file(s): {}", e.getMessage());

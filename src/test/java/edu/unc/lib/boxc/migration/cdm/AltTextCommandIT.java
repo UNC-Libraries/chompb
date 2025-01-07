@@ -38,21 +38,6 @@ public class AltTextCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void uploadTxtFiles() throws Exception {
-        indexExportSamples();
-
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "alt_text", "upload",
-                "-ft", "src/test/resources/alt_text/25_alt_text.txt,src/test/resources/alt_text/26_alttext.txt"};
-        executeExpectSuccess(args);
-
-        assertTrue(Files.exists(project.getAltTextPath()));
-        assertTrue(Files.exists(project.getAltTextPath().resolve("25.txt")));
-        assertTrue(Files.exists(project.getAltTextPath().resolve("26.txt")));
-    }
-
-    @Test
     public void generateTemplate() throws Exception {
         indexExportSamples();
         String[] args = new String[] {
