@@ -234,7 +234,7 @@ public class SourceFileService {
         return candidatePaths;
     }
 
-    protected void ensureMappingState(GenerateSourceFileMappingOptions options) {
+    private void ensureMappingState(GenerateSourceFileMappingOptions options) {
         if (options.getDryRun() || options.getUpdate()) {
             return;
         }
@@ -287,7 +287,7 @@ public class SourceFileService {
      * @param options
      * @param updatesPath the temp path containing the newly generated mappings to merge into the original mappings
      */
-    protected void mergeUpdates(GenerateSourceFileMappingOptions options, Path updatesPath) throws IOException {
+    private void mergeUpdates(GenerateSourceFileMappingOptions options, Path updatesPath) throws IOException {
         Path originalPath = getMappingPath();
         Path mergedPath = originalPath.getParent().resolve("~" + originalPath.getFileName().toString() + "_merged");
         // Cleanup temp merged path if it already exists

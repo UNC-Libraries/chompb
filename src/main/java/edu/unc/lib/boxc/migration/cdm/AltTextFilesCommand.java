@@ -40,7 +40,7 @@ public class AltTextFilesCommand {
     @Command(name="generate",
             description = {"Generate the optional alt-text mapping file for this project.",
                     "A blank alt_text_files.csv template will be created for this project, " +
-                            "with only cdm dmrecords populated."})
+                    "with only cdm dmrecords populated."})
     public int generate() throws Exception {
         long start = System.nanoTime();
 
