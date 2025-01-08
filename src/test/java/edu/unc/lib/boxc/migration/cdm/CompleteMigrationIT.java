@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
@@ -13,6 +14,7 @@ import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 import edu.unc.lib.boxc.persist.api.PackagingType;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -158,11 +160,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         executeExpectSuccess(argsAccess);
 
         Path altTextPath1 = testHelper.addAltTextFile("25.txt");
-        String[] argsAltText = new String[] {
-                "-w", projPath.toString(),
-                "alt_text_files", "generate",
-                "-b", testHelper.getAltTextFilesBasePath().toString()};
-        executeExpectSuccess(argsAltText);
+        writeAltTextCsv(altTextMappingBody("25,," + altTextPath1 + ","));
 
         Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
                 project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
@@ -440,5 +438,15 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         assertEquals(USERNAME + "@ad.unc.edu", status.get(DepositField.depositorEmail.name()));
         assertEquals("unc:onyen:theuser;my:admin:group", status.get(DepositField.permissionGroups.name()));
         assertEquals(PackagingType.BAG_WITH_N3.getUri(), status.get(DepositField.packagingType.name()));
+    }
+
+    private String altTextMappingBody(String... rows) {
+        return String.join(",", SourceFilesInfo.CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void writeAltTextCsv(String mappingBody) throws IOException {
+        FileUtils.write(project.getAltTextFilesMappingPath().toFile(),
+                mappingBody, StandardCharsets.UTF_8);
     }
 }
