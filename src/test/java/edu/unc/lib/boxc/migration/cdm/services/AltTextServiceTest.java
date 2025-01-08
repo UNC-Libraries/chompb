@@ -17,7 +17,6 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,7 +65,7 @@ public class AltTextServiceTest {
                 Reader reader = Files.newBufferedReader(project.getAltTextCsvPath());
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
-                        .withHeader(AltTextService.ALT_TEXT_CSV_HEADERS)
+                        .withHeader(AltTextService.CSV_HEADERS)
                         .withTrim());
         ) {
             List<CSVRecord> rows = csvParser.getRecords();

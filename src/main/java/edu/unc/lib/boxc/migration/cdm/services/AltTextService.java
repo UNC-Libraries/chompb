@@ -21,7 +21,9 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for adding alt-text
@@ -35,7 +37,7 @@ public class AltTextService {
     private List<String> ids;
 
     public static final String ALT_TEXT = "alt-text";
-    public static final String[] ALT_TEXT_CSV_HEADERS = new String[] {
+    public static final String[] CSV_HEADERS = new String[] {
             CdmFieldInfo.CDM_ID, ALT_TEXT };
 
     /**
@@ -44,7 +46,7 @@ public class AltTextService {
     public void generateTemplate() throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(project.getAltTextCsvPath());
         CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                .withHeader(ALT_TEXT_CSV_HEADERS));
+                .withHeader(CSV_HEADERS));
 
         for (var id : getIds()) {
             csvPrinter.printRecord(id);
@@ -59,13 +61,7 @@ public class AltTextService {
         if (Files.exists(options.getAltTextCsvFile())) {
             initializeAltTextDir(project);
             Path csvPath = options.getAltTextCsvFile();
-            try (
-                Reader reader = Files.newBufferedReader(csvPath);
-                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                        .withFirstRecordAsHeader()
-                        .withHeader(ALT_TEXT_CSV_HEADERS)
-                        .withTrim());
-            ) {
+            try (var csvParser = openCsvParser(csvPath)) {
                 for (CSVRecord csvRecord : csvParser) {
                     String fileId = csvRecord.get(0);
                     String fileContent = csvRecord.get(1);
@@ -111,6 +107,34 @@ public class AltTextService {
 
     private void initializeAltTextDir(MigrationProject project) throws IOException {
         Files.createDirectories(project.getAltTextPath());
+    }
+
+    public Map<String, String> loadCsvRecords(Path csvPath) throws IOException {
+        Map<String, String> csvRecords = new HashMap<>();
+        if (Files.notExists(csvPath)) {
+            return csvRecords;
+        }
+        try (var csvParser = openCsvParser(csvPath)) {
+            for (CSVRecord csvRecord : csvParser) {
+                if (!csvRecord.get(1).matches("")) {
+                    csvRecords.put(csvRecord.get(0), csvRecord.get(1));
+                }
+            }
+            return csvRecords;
+        }
+    }
+
+    /**
+     * @param csvPath Path of the CSV to read from
+     * @return CSVParser for reading from the csv file
+     * @throws IOException
+     */
+    public static CSVParser openCsvParser(Path csvPath) throws IOException {
+        Reader reader = Files.newBufferedReader(csvPath);
+        return new CSVParser(reader, CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withHeader(CSV_HEADERS)
+                .withTrim());
     }
 
     private CdmIndexService getIndexService() {
