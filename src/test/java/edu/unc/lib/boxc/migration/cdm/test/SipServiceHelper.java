@@ -26,7 +26,6 @@ import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextFileService;
-import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
@@ -89,7 +88,6 @@ public class SipServiceHelper {
     private CdmFieldService fieldService;
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
-    private AltTextService altTextService;
     private AltTextFileService altTextFileService;
     private AggregateFileMappingService aggregateFileMappingService;
     private AggregateFileMappingService aggregateBottomMappingService;
@@ -128,9 +126,6 @@ public class SipServiceHelper {
         accessFileService = new AccessFileService();
         accessFileService.setIndexService(indexService);
         accessFileService.setProject(project);
-        altTextService = new AltTextService();
-        altTextService.setIndexService(indexService);
-        altTextService.setProject(project);
         altTextFileService = new AltTextFileService();
         altTextFileService.setIndexService(indexService);
         altTextFileService.setProject(project);
@@ -549,10 +544,6 @@ public class SipServiceHelper {
 
     public AccessFileService getAccessFileService() {
         return accessFileService;
-    }
-
-    public AltTextService getAltTextService() {
-        return altTextService;
     }
 
     public AltTextFileService getAltTextFilesService() {

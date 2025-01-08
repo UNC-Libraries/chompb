@@ -45,7 +45,6 @@ import java.util.concurrent.Callable;
         ListProjectsCommand.class,
         ArchiveProjectsCommand.class,
         ProcessSourceFilesCommand.class,
-        AltTextCommand.class,
         AltTextFilesCommand.class
     })
 public class CLIMain implements Callable<Integer> {

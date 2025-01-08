@@ -33,6 +33,10 @@ public class AltTextFileService extends SourceFileService {
     private CdmIndexService indexService;
     private List<String> ids;
 
+    public static final String ALT_TEXT = "alt-text";
+    public static final String[] CSV_HEADERS = new String[] {
+            CdmFieldInfo.CDM_ID, ALT_TEXT };
+
     public AltTextFileService() {
     }
 
@@ -45,7 +49,7 @@ public class AltTextFileService extends SourceFileService {
         assertProjectStateValid();
         ensureMappingState(options);
 
-        // Gather listing of all potential source file paths to match against
+        // Gather listing of all potential alt-text file paths to match against
         Map<String, String> candidatePaths = gatherAltTextCandidatePaths(options);
 
         Path mappingPath = getMappingPath();

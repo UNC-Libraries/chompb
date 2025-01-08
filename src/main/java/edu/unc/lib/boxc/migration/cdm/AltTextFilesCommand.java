@@ -29,7 +29,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Command(name = "alt_text_files",
         description = "Commands related to alt-text file mappings")
 public class AltTextFilesCommand {
-    private static final Logger log = getLogger(AltTextCommand.class);
+    private static final Logger log = getLogger(AltTextFilesCommand.class);
 
     @ParentCommand
     private CLIMain parentCommand;
@@ -42,7 +42,7 @@ public class AltTextFilesCommand {
     @Command(name="generate",
             description = {"Generate the optional alt-text mapping file for this project.",
                     "Mappings are produced by listing files from a directory using the --base-path option, "
-                    + "then searching for matches between the dmrecord in the filenames and the dmrecord field"
+                    + "then searching for matches between the dmrecord in the filenames ([dmrecord]_alttext.txt) and the dmrecord field"
                     + " in the exported CDM records.",
                     "The resulting will be written to the alt_text_files.csv for this project, unless "
                     + "the --dry-run flag is provided."})
