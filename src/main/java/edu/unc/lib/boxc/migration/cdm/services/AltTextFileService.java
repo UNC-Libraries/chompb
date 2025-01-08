@@ -2,12 +2,16 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.AltTextFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.URLConnection;
 import java.nio.file.FileVisitResult;
@@ -23,6 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.EXPORT_MATCHING_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.ID_FIELD;
+
 /**
  * Service for interacting with alt-text files
  * @author krwong
@@ -33,79 +40,24 @@ public class AltTextFileService extends SourceFileService {
     private CdmIndexService indexService;
     private List<String> ids;
 
-    public static final String ALT_TEXT = "alt-text";
-    public static final String[] CSV_HEADERS = new String[] {
-            CdmFieldInfo.CDM_ID, ALT_TEXT };
-
     public AltTextFileService() {
     }
 
     /**
-     * Add the alt-text file mapping (populates the alt_text mapping with files from the filesystem)
-     * @param options
+     * Generate the alt-text file mapping template
      * @throws Exception
      */
-    public void generateAltTextMapping(AltTextFileMappingOptions options) throws Exception {
+    public void generateAltTextMapping() throws Exception {
         assertProjectStateValid();
-        ensureMappingState(options);
-
-        // Gather listing of all potential alt-text file paths to match against
-        Map<String, String> candidatePaths = gatherAltTextCandidatePaths(options);
-
         Path mappingPath = getMappingPath();
-        boolean needsMerge = options.getUpdate() && Files.exists(mappingPath);
-        // Write to temp mappings file if doing a dry run, otherwise write to mappings file
-        if (needsMerge || options.getDryRun()) {
-            mappingPath = getTempMappingPath();
-            ids = null;
-        }
-        Files.deleteIfExists(mappingPath);
 
-        // Generate alt-text file mapping entry for each file
         try (var csvPrinter = openMappingsPrinter(mappingPath)) {
-            for (Map.Entry<String, String> candidate : candidatePaths.entrySet()) {
-                if (getIds().contains(candidate.getKey())) {
-                    csvPrinter.printRecord(candidate.getKey(), null, candidate.getValue(), null);
-                }
+            for (var id : getIds()) {
+                csvPrinter.printRecord(id, null, null, null);
             }
         }
 
-        // Performing update operation with existing mapping, need to merge values
-        if (needsMerge) {
-            mergeUpdates(options, mappingPath);
-        }
-
-        if (!options.getDryRun()) {
-            setUpdatedDate(Instant.now());
-        }
-    }
-
-    protected Map<String, String> gatherAltTextCandidatePaths(AltTextFileMappingOptions options)
-            throws Exception {
-        Path basePath = options.getBasePath();
-        if (!Files.isDirectory(basePath)) {
-            throw new IllegalArgumentException("Base path must be a directory");
-        }
-
-        Map<String, String> candidatePaths = new HashMap<>();
-        Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-                String fileId = path.getFileName().toString().split("_")[0];
-                if (!Files.isDirectory(path)
-                        && options.getExtensions().contains(FilenameUtils.getExtension(path.toString()).toLowerCase())) {
-                    candidatePaths.put(fileId, path.toString());
-                }
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc)
-                    throws IOException {
-                return FileVisitResult.CONTINUE;
-            }
-        });
-        return candidatePaths;
+        setUpdatedDate(Instant.now());
     }
 
     @Override

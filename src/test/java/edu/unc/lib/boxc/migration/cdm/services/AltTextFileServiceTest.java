@@ -8,12 +8,15 @@ import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
-import org.apache.solr.client.solrj.io.eval.GTestDataSetEvaluator;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -59,94 +62,23 @@ public class AltTextFileServiceTest {
     }
 
     @Test
-    public void generateAltTextMappingTest() throws Exception {
+    public void generateTemplateTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        AltTextFileMappingOptions options = makeDefaultOptions();
+        service.generateAltTextMapping();
 
-        service.generateAltTextMapping(options);
+        assertTrue(Files.exists(project.getAltTextFilesMappingPath()));
 
-        SourceFilesInfo info = service.loadMappings();
-        assertMappingPresent(info, "25", "", filesystemAltTextFile("25_alt_text.txt"));
-        assertMappingPresent(info, "26", "", filesystemAltTextFile("26_alttext.txt"));
-        assertEquals(2, info.getMappings().size());
-
-        assertUpdatedDatePresent();
-    }
-
-    @Test
-    public void generateAltTextMappingDryRunTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        AltTextFileMappingOptions options = makeDefaultOptions();
-        options.setDryRun(true);
-
-        service.generateAltTextMapping(options);
-
-        SourceFilesInfo info = service.loadMappings();
-        assertEquals(0, info.getMappings().size());
-
-        assertUpdatedDateNotPresent();
-    }
-
-    @Test
-    public void updateAltTextMappingTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        AltTextFileMappingOptions options = makeDefaultOptions();
-
-        service.generateAltTextMapping(options);
-
-        // Add more exported objects
-        testHelper.indexExportData("gilmer");
-
-        AltTextFileMappingOptions options2 = makeDefaultOptions();
-        options2.setUpdate(true);
-        service.generateAltTextMapping(options2);
-
-        SourceFilesInfo info2 = service.loadMappings();
-        assertMappingPresent(info2, "25", "", filesystemAltTextFile("25_alt_text.txt"));
-        assertMappingPresent(info2, "26", "", filesystemAltTextFile("26_alttext.txt"));
-        assertMappingPresent(info2, "28", "", filesystemAltTextFile("28_alt_text.txt"));
-        assertEquals(3, info2.getMappings().size());
-
-        assertUpdatedDatePresent();
-    }
-
-    private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
-                                      Path... potentialPaths) {
-        List<SourceFilesInfo.SourceFileMapping> mappings = info.getMappings();
-        SourceFilesInfo.SourceFileMapping mapping = mappings.stream().filter(m -> m.getCdmId().equals(cdmid)).findFirst().get();
-
-        assertEquals(sourcePath, mapping.getFirstSourcePath());
-        assertEquals(matchingVal, mapping.getMatchingValue());
-        if (potentialPaths.length > 0) {
-            for (Path potentialPath : potentialPaths) {
-                assertTrue(mapping.getPotentialMatches().contains(potentialPath.toString()),
-                        "Mapping did not contain expected potential path: " + potentialPath);
-            }
+        try (
+                Reader reader = Files.newBufferedReader(project.getAltTextFilesMappingPath());
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(SourceFilesInfo.CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals("25", rows.get(0).get(SourceFilesInfo.ID_FIELD));
+            assertEquals("26", rows.get(1).get(SourceFilesInfo.ID_FIELD));
+            assertEquals("27", rows.get(2).get(SourceFilesInfo.ID_FIELD));
         }
-    }
-
-    private AltTextFileMappingOptions makeDefaultOptions() {
-        AltTextFileMappingOptions options = new AltTextFileMappingOptions();
-        options.setBasePath(Path.of("src/test/resources/alt_text"));
-        options.setExtensions(Collections.singletonList("txt"));
-
-        return options;
-    }
-
-    private void assertUpdatedDatePresent() throws Exception {
-        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
-        assertNotNull(props.getAltTextFilesUpdatedDate(), "Updated timestamp must be set");
-        assertNull(props.getSourceFilesUpdatedDate(), "Source mapping timestamp must not be set");
-    }
-
-    private void assertUpdatedDateNotPresent() throws Exception {
-        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
-        assertNull(props.getAltTextFilesUpdatedDate(), "Updated timestamp must not be set");
-        assertNull(props.getSourceFilesUpdatedDate(), "Source mapping timestamp must not be set");
-    }
-
-    private Path filesystemAltTextFile(String relPath) {
-        Path basePath = Path.of("src/test/resources/alt_text");
-        return basePath.resolve(relPath);
     }
 }

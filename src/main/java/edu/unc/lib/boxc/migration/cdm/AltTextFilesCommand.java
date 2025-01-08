@@ -41,21 +41,15 @@ public class AltTextFilesCommand {
 
     @Command(name="generate",
             description = {"Generate the optional alt-text mapping file for this project.",
-                    "Mappings are produced by listing files from a directory using the --base-path option, "
-                    + "then searching for matches between the dmrecord in the filenames ([dmrecord]_alttext.txt) and the dmrecord field"
-                    + " in the exported CDM records.",
-                    "The resulting will be written to the alt_text_files.csv for this project, unless "
-                    + "the --dry-run flag is provided."})
-    public int generate(@Mixin AltTextFileMappingOptions options) throws Exception {
+                    "A blank alt_text_files.csv template will be created for this project, " +
+                            "with only cdm dmrecords populated."})
+    public int generate() throws Exception {
         long start = System.nanoTime();
 
         try {
-            validateOptions(options);
-            initialize(options.getDryRun());
+            initialize(false);
 
-            summaryService.capturePreviousState();
-            altTextFileService.generateAltTextMapping(options);
-            summaryService.summary(parentCommand.getVerbosity());
+            altTextFileService.generateAltTextMapping();
             outputLogger.info("Alt-text mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
@@ -63,8 +57,8 @@ public class AltTextFilesCommand {
             outputLogger.info("Cannot generate alt-text mapping: {}", e.getMessage());
             return 1;
         } catch (Exception e) {
-            log.error("Failed to map alt-text files", e);
-            outputLogger.info("Failed to map alt-text files: {}", e.getMessage(), e);
+            log.error("Failed to generate alt-text file template", e);
+            outputLogger.info("Failed to generate alt-text file template: {}", e.getMessage(), e);
             return 1;
         }
     }
@@ -118,12 +112,6 @@ public class AltTextFilesCommand {
             log.error("Status failed", e);
             outputLogger.info("Status failed: {}", e.getMessage(), e);
             return 1;
-        }
-    }
-
-    private void validateOptions(AltTextFileMappingOptions options) {
-        if (options.getBasePath() == null) {
-            throw new IllegalArgumentException("Must provide a base path");
         }
     }
 
