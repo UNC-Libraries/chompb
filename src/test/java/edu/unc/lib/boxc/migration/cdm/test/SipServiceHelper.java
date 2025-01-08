@@ -203,12 +203,9 @@ public class SipServiceHelper {
             accessResc.hasLiteral(CdrDeposit.mimetype, "image/tiff");
         }
 
-        if (altTextPath == null) {
-            // Verify no altText copy
-            assertFalse(fileObjResc.hasProperty(CdrDeposit.hasDatastreamAccessSurrogate));
-        } else {
+        if (altTextPath != null) {
             Resource altTextResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamAccessSurrogate).getResource();
-            altTextResc.hasLiteral(CdrDeposit.stagingLocation, accessPath.toUri().toString());
+            altTextResc.hasLiteral(CdrDeposit.stagingLocation, altTextPath.toUri().toString());
             altTextResc.hasLiteral(CdrDeposit.mimetype, "text/plain");
         }
 
