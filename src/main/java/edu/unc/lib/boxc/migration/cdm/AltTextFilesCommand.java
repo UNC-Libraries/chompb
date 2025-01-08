@@ -2,7 +2,6 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.AltTextFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
@@ -12,7 +11,6 @@ import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import edu.unc.lib.boxc.migration.cdm.validators.AltTextFilesValidator;
 import org.slf4j.Logger;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
@@ -47,8 +45,7 @@ public class AltTextFilesCommand {
         long start = System.nanoTime();
 
         try {
-            initialize(false);
-
+            initialize();
             altTextFileService.generateAltTextMapping();
             outputLogger.info("Alt-text mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
@@ -68,7 +65,7 @@ public class AltTextFilesCommand {
     public int validate(@Option(names = { "-f", "--force"},
             description = "Ignore incomplete mappings") boolean force) throws Exception {
         try {
-            initialize(false);
+            initialize();
             AltTextFilesValidator validator = new AltTextFilesValidator();
             validator.setProject(project);
             List<String> errors = validator.validateMappings(force);
@@ -99,7 +96,7 @@ public class AltTextFilesCommand {
             description = "Display status of the alt-text file mappings for this project")
     public int status() throws Exception {
         try {
-            initialize(false);
+            initialize();
             AltTextFilesStatusService statusService = new AltTextFilesStatusService();
             statusService.setProject(project);
             statusService.report(parentCommand.getVerbosity());
@@ -115,7 +112,7 @@ public class AltTextFilesCommand {
         }
     }
 
-    private void initialize(boolean dryRun) throws IOException {
+    private void initialize() throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         indexService = new CdmIndexService();
@@ -125,7 +122,7 @@ public class AltTextFilesCommand {
         altTextFileService.setIndexService(indexService);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
-        summaryService.setDryRun(dryRun);
+        summaryService.setDryRun(false);
         summaryService.setSourceFileService(altTextFileService);
     }
 }
