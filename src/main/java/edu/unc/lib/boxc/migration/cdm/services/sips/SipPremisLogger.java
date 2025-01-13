@@ -20,7 +20,7 @@ public class SipPremisLogger {
     private PremisLoggerFactory premisLoggerFactory;
 
     public void addPremisEvent(DestinationSipEntry destEntry, PID pid, SipGenerationOptions options) {
-        Path premisPath = destEntry.getDepositDirManager().getPremisPath(pid);
+        Path premisPath = destEntry.getDepositDirManager().getPremisPath(pid, true);
         PremisLogger premisLogger = premisLoggerFactory.createPremisLogger(pid, premisPath.toFile());
         premisLogger.buildEvent(Premis.Ingestion)
                 .addEventDetail("Object migrated as a part of the CONTENTdm to Box-c 5 migration")

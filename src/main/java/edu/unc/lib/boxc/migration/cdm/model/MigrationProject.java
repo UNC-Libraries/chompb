@@ -28,7 +28,8 @@ public class MigrationProject {
     public static final String PROJECT_SOURCE_CDM = "cdm";
     public static final String PROJECT_SOURCE_FILES = "files";
     public static final String EXPORT_OBJECTS_FILENAME = "exported_objects.csv";
-    public static final String ALT_TEXT_FILENAME = "alt_text_files.csv";
+    public static final String ALT_TEXT_FILENAME = "alt_text.csv";
+    public static final String ALT_TEXT_DIRNAME = "alt_text";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -185,7 +186,14 @@ public class MigrationProject {
     /**
      * @return Path of the alt-text mapping file
      */
-    public Path getAltTextFilesMappingPath() {
+    public Path getAltTextMappingPath() {
         return projectPath.resolve(ALT_TEXT_FILENAME);
+    }
+
+    /**
+     * @return Path of the alt-text directory
+     */
+    public Path getAltTextPath() {
+        return projectPath.resolve(ALT_TEXT_DIRNAME);
     }
 }

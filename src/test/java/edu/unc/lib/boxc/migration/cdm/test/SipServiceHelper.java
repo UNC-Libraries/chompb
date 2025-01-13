@@ -25,7 +25,7 @@ import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
-import edu.unc.lib.boxc.migration.cdm.services.AltTextFileService;
+import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
@@ -88,7 +88,7 @@ public class SipServiceHelper {
     private CdmFieldService fieldService;
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
-    private AltTextFileService altTextFileService;
+    private AltTextService altTextService;
     private AggregateFileMappingService aggregateFileMappingService;
     private AggregateFileMappingService aggregateBottomMappingService;
     private DescriptionsService descriptionsService;
@@ -126,9 +126,9 @@ public class SipServiceHelper {
         accessFileService = new AccessFileService();
         accessFileService.setIndexService(indexService);
         accessFileService.setProject(project);
-        altTextFileService = new AltTextFileService();
-        altTextFileService.setIndexService(indexService);
-        altTextFileService.setProject(project);
+        altTextService = new AltTextService();
+        altTextService.setIndexService(indexService);
+        altTextService.setProject(project);
         descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
@@ -151,7 +151,7 @@ public class SipServiceHelper {
         SipService service = new SipService();
         service.setIndexService(indexService);
         service.setAccessFileService(accessFileService);
-        service.setAltTextFileService(altTextFileService);
+        service.setAltTextService(altTextService);
         service.setSourceFileService(sourceFileService);
         service.setPidMinter(pidMinter);
         service.setDescriptionsService(descriptionsService);
@@ -178,7 +178,7 @@ public class SipServiceHelper {
     }
 
     public void assertObjectPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager, Model depModel,
-            Path stagingPath, Path accessPath, Path altTextPath, String cdmId) throws Exception {
+            Path stagingPath, Path accessPath, String cdmId) throws Exception {
         Resource fileObjResc = getFirstSipFileInWork(objResc, dirManager, depModel);
         assertTrue(fileObjResc.hasProperty(RDF.type, Cdr.FileObject));
 
@@ -196,12 +196,6 @@ public class SipServiceHelper {
             Resource accessResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamAccessSurrogate).getResource();
             accessResc.hasLiteral(CdrDeposit.stagingLocation, accessPath.toUri().toString());
             accessResc.hasLiteral(CdrDeposit.mimetype, "image/tiff");
-        }
-
-        if (altTextPath != null) {
-            Resource altTextResc = fileObjResc.getProperty(CdrDeposit.hasDatastreamAccessSurrogate).getResource();
-            altTextResc.hasLiteral(CdrDeposit.stagingLocation, altTextPath.toUri().toString());
-            altTextResc.hasLiteral(CdrDeposit.mimetype, "text/plain");
         }
 
         PID workPid = PIDs.get(objResc.getURI());
@@ -400,10 +394,9 @@ public class SipServiceHelper {
         return sourcePaths;
     }
 
-    public List<Path> populateAltTextFiles(String... filenames) throws Exception {
-        List<Path> sourcePaths = Arrays.stream(filenames).map(this::addAltTextFile).collect(Collectors.toList());
-        altTextFileService.generateMapping(makeSourceFileOptions(altTextFilesBasePath));
-        return sourcePaths;
+    public Path populateAltTextFile(String cdmId, String altTextBody) throws Exception {
+        Files.createDirectories(project.getAltTextPath());
+        return altTextService.getAltTextFilePath(cdmId, altTextBody);
     }
 
     public GenerateSourceFileMappingOptions makeSourceFileOptions(Path basePath) {
@@ -422,10 +415,6 @@ public class SipServiceHelper {
 
     public Path addAccessFile(String relPath) {
         return addSourceFile(accessFilesBasePath, relPath);
-    }
-
-    public Path addAltTextFile(String relPath) {
-        return addSourceFile(altTextFilesBasePath, relPath);
     }
 
     public Path addSourceFile(Path basePath, String relPath) {
@@ -526,10 +515,6 @@ public class SipServiceHelper {
         return accessFilesBasePath;
     }
 
-    public Path getAltTextFilesBasePath() {
-        return altTextFilesBasePath;
-    }
-
     public MigrationProject getProject() {
         return project;
     }
@@ -546,8 +531,8 @@ public class SipServiceHelper {
         return accessFileService;
     }
 
-    public AltTextFileService getAltTextFilesService() {
-        return altTextFileService;
+    public AltTextService getAltTextService() {
+        return altTextService;
     }
 
     public AggregateFileMappingService getAggregateFileMappingService() {

@@ -6,7 +6,6 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
@@ -14,7 +13,6 @@ import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 import edu.unc.lib.boxc.persist.api.PackagingType;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -159,9 +157,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 "-n", "file"};
         executeExpectSuccess(argsAccess);
 
-        Path altTextPath1 = testHelper.addAltTextFile("25.txt");
-        writeAltTextCsv(altTextMappingBody("25,," + altTextPath1 + ","));
-
         Files.copy(Paths.get("src/test/resources/mods_collections/gilmer_mods1.xml"),
                 project.getDescriptionsPath().resolve("gilmer_mods1.xml"));
         String[] argsDesc = new String[] {
@@ -184,11 +179,11 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, sourcePath1, accessPath1, altTextPath1, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, sourcePath1, accessPath1, "25");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath2, null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath2, null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, sourcePath3, null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, sourcePath3, null, "27");
 
         String[] argsSubmit = new String[] {
                 "-w", projPath.toString(),
@@ -319,11 +314,11 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         var work1Members = String.join("|", work1OrderList);
         assertTrue(workResc1.hasProperty(Cdr.memberOrder, work1Members));
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath3, null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath3, null, "27");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, sourcePath4, null, null, "28");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, sourcePath4, null, "28");
         Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-10");
-        testHelper.assertObjectPopulatedInSip(workResc4, dirManager, model, sourcePath5, null, null, "29");
+        testHelper.assertObjectPopulatedInSip(workResc4, dirManager, model, sourcePath5, null, "29");
 
         String[] argsSubmit = new String[] {
                 "-w", projPath.toString(),
@@ -402,16 +397,16 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, sourcePath1, null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, sourcePath1, null, "25");
         // Work 2 has a source file and a streaming url
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath2, null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, sourcePath2, null, "26");
         Resource fileResc2 = testHelper.getFirstSipFileInWork(workResc2, dirManager, model);
         assertTrue(fileResc2.hasProperty(STREAMING_URL));
         assertTrue(fileResc2.hasProperty(STREAMING_TYPE));
         // Work 3 has no source file, but does have a streaming url
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, null, null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, null, null, "27");
         Resource fileResc3 = testHelper.getFirstSipFileInWork(workResc3, dirManager, model);
         assertTrue(fileResc3.hasProperty(STREAMING_URL));
         assertTrue(fileResc3.hasProperty(STREAMING_TYPE));
@@ -438,15 +433,5 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         assertEquals(USERNAME + "@ad.unc.edu", status.get(DepositField.depositorEmail.name()));
         assertEquals("unc:onyen:theuser;my:admin:group", status.get(DepositField.permissionGroups.name()));
         assertEquals(PackagingType.BAG_WITH_N3.getUri(), status.get(DepositField.packagingType.name()));
-    }
-
-    private String altTextMappingBody(String... rows) {
-        return String.join(",", SourceFilesInfo.CSV_HEADERS) + "\n"
-                + String.join("\n", rows);
-    }
-
-    private void writeAltTextCsv(String mappingBody) throws IOException {
-        FileUtils.write(project.getAltTextFilesMappingPath().toFile(),
-                mappingBody, StandardCharsets.UTF_8);
     }
 }

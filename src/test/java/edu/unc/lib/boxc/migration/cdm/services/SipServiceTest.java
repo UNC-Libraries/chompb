@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.AggregateFileMappingOptions;
@@ -194,11 +195,11 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -234,11 +235,11 @@ public class SipServiceTest {
         List<RDFNode> collChildren = collBag.iterator().toList();
 
         Resource workResc1 = testHelper.getResourceByCreateTime(collChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         Resource workResc2 = testHelper.getResourceByCreateTime(collChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(collChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         assertEquals(3, collChildren.size());
 
         assertPersistedSipInfoMatches(sip);
@@ -314,11 +315,11 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), accessLocs.get(0), null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), accessLocs.get(0), "25");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), accessLocs.get(1), null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), accessLocs.get(1), "27");
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -365,9 +366,9 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(1), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(1), null, "27");
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -416,9 +417,9 @@ public class SipServiceTest {
         assertEquals(2, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -449,9 +450,9 @@ public class SipServiceTest {
         assertEquals(2, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
 
         assertPersistedSipInfoMatches(sip1);
 
@@ -467,7 +468,7 @@ public class SipServiceTest {
         assertEquals(1, depBagChildren2.size());
 
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren2, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager2, model2, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager2, model2, stagingLocs.get(1), null, "26");
 
         assertPersistedSipInfoMatches(sip2);
 
@@ -510,7 +511,7 @@ public class SipServiceTest {
         String work1Members = PIDs.get(work1File2Resc.getURI()).getId() + "|" + PIDs.get(work1File1Resc.getURI()).getId();
         assertTrue(workResc1.hasProperty(Cdr.memberOrder, work1Members));
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
         assertFalse(workResc2.hasProperty(Cdr.memberOrder), "Work with group field but only one file should not have order");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
         assertFalse(workResc3.hasProperty(Cdr.memberOrder), "Regular work should not have order");
@@ -578,7 +579,7 @@ public class SipServiceTest {
         assertTrue(workResc1.hasProperty(Cdr.memberOrder, work1Members));
 
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
         assertFalse(workResc2.hasProperty(Cdr.memberOrder), "Work with group field but only one file should not have order");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
         assertFalse(workResc3.hasProperty(Cdr.memberOrder), "Regular work should not have order");
@@ -626,7 +627,7 @@ public class SipServiceTest {
 
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model,
-                stagingLocs.get(2), accessLocs.get(1), null, "27");
+                stagingLocs.get(2), accessLocs.get(1), "27");
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -656,7 +657,7 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "216");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
         assertFalse(workResc1.hasProperty(Cdr.memberOrder), "Single file work should not have order");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-17");
         Bag work2Bag = model.getBag(workResc2);
@@ -1030,13 +1031,13 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         assertHasPermission(workResc1, CdrAcl.canViewMetadata);
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         assertHasPermission(workResc2, CdrAcl.canViewMetadata);
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         assertHasPermission(workResc3, CdrAcl.canViewMetadata);
 
         Resource work1FileResc = getOnlyChildOf(workResc1);
@@ -1072,13 +1073,13 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         assertDoesNotHavePermission(workResc1, CdrAcl.canViewMetadata);
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         assertDoesNotHavePermission(workResc2, CdrAcl.canViewMetadata);
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         assertDoesNotHavePermission(workResc3, CdrAcl.canViewMetadata);
 
         Resource work1FileResc = getOnlyChildOf(workResc1);
@@ -1114,13 +1115,13 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         assertHasPermission(workResc1, CdrAcl.canViewMetadata);
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         assertHasPermission(workResc2, CdrAcl.canViewMetadata);
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         assertHasPermission(workResc3, CdrAcl.canViewMetadata);
 
         Resource work1FileResc = getOnlyChildOf(workResc1);
@@ -1159,7 +1160,7 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "216");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
         assertHasPermission(workResc1, CdrAcl.canViewMetadata);
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-17");
         Bag work2Bag = model.getBag(workResc2);
@@ -1217,7 +1218,7 @@ public class SipServiceTest {
         Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
         assertHasPermission(work1File2Resc, CdrAcl.canViewMetadata);
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
         assertHasPermission(workResc2, CdrAcl.canViewMetadata);
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
         assertHasPermission(workResc3, CdrAcl.canViewMetadata);
@@ -1254,7 +1255,7 @@ public class SipServiceTest {
 
         // Verify that compound object works do not have permissions
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "216");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
         assertDoesNotHavePermission(workResc1, CdrAcl.canViewMetadata);
 
         // Verify that the children of the compound object have permissions
@@ -1313,7 +1314,7 @@ public class SipServiceTest {
         assertHasPermission(work1File2Resc, CdrAcl.canViewMetadata);
         // Assert that grouped works do not have permissions
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
         assertDoesNotHavePermission(workResc2, CdrAcl.canViewMetadata);
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
         assertDoesNotHavePermission(workResc3, CdrAcl.canViewMetadata);
@@ -1349,7 +1350,7 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-05-18");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "216");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "216");
         assertHasPermission(workResc1, CdrAcl.canViewMetadata);
 
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2014-01-17");
@@ -1412,7 +1413,7 @@ public class SipServiceTest {
 
         // Assert that grouped worked have permissions
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
         assertHasPermission(workResc2, CdrAcl.canViewMetadata);
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
         assertHasPermission(workResc3, CdrAcl.canViewMetadata);
@@ -1444,7 +1445,7 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, null, "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
         Bag workResc1Bag = model.getBag(workResc1);
         List<RDFNode> workResc1Children = workResc1Bag.iterator().toList();
         assertEquals(1, workResc1Children.size());
@@ -1453,7 +1454,7 @@ public class SipServiceTest {
                 "spaceId=open-hls&filename=gilmer_recording-playlist.m3u8"));
 
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Bag workResc2Bag = model.getBag(workResc2);
         List<RDFNode> workResc2Children = workResc2Bag.iterator().toList();
         assertEquals(1, workResc2Children.size());
@@ -1463,7 +1464,7 @@ public class SipServiceTest {
         assertTrue(workResc2FileObj.hasProperty(STREAMING_TYPE, "video"));
 
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, null, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
         Bag workResc3Bag = model.getBag(workResc3);
         List<RDFNode> workResc3Children = workResc3Bag.iterator().toList();
         assertEquals(1, workResc3Children.size());
@@ -1476,13 +1477,14 @@ public class SipServiceTest {
     }
 
     @Test
-    public void generateSipsWithAltTextFiles() throws Exception {
+    public void generateSipsWithAltText() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         List<Path> accessLocs = testHelper.populateAccessFiles("276_182_E.tif", "276_203_E.tif");
-        List<Path> altTextLocs = testHelper.populateAltTextFiles("25.txt", "27.txt");
+        writeAltTextCsv(mappingBody("25,alt text"));
+        testHelper.populateAltTextFile("25", "alt text");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1499,11 +1501,12 @@ public class SipServiceTest {
         assertEquals(3, depBagChildren.size());
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), accessLocs.get(0), altTextLocs.get(0), "25");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), accessLocs.get(0), "25");
+        Path altTextPath = dirManager.getAltTextPath(PIDs.get(depBagChildren.get(0).toString()));
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, null, "26");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), accessLocs.get(1), altTextLocs.get(1), "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), accessLocs.get(1),  "27");
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -1629,5 +1632,15 @@ public class SipServiceTest {
         return resource.listProperties().toList().stream()
                 .map(Statement::toString)
                 .collect(Collectors.joining("\n"));
+    }
+
+    private String mappingBody(String... rows) {
+        return String.join(",", AltTextInfo.CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void writeAltTextCsv(String mappingBody) throws IOException {
+        FileUtils.write(project.getAltTextMappingPath().toFile(),
+                mappingBody, StandardCharsets.UTF_8);
     }
 }

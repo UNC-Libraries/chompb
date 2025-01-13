@@ -3,12 +3,11 @@ package edu.unc.lib.boxc.migration.cdm;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
-import edu.unc.lib.boxc.migration.cdm.services.AltTextFileService;
+import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.status.AltTextFilesStatusService;
-import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
-import edu.unc.lib.boxc.migration.cdm.validators.AltTextFilesValidator;
+import edu.unc.lib.boxc.migration.cdm.status.AltTextStatusService;
+import edu.unc.lib.boxc.migration.cdm.validators.AltTextValidator;
 import org.slf4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -24,18 +23,17 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * @author krwong
  */
-@Command(name = "alt_text_files",
-        description = "Commands related to alt-text file mappings")
-public class AltTextFilesCommand {
-    private static final Logger log = getLogger(AltTextFilesCommand.class);
+@Command(name = "alt_text",
+        description = "Commands related to alt-text mappings")
+public class AltTextCommand {
+    private static final Logger log = getLogger(AltTextCommand.class);
 
     @ParentCommand
     private CLIMain parentCommand;
 
     private MigrationProject project;
     private CdmIndexService indexService;
-    private SourceFilesSummaryService summaryService;
-    private AltTextFileService altTextFileService;
+    private AltTextService altTextService;
 
     @Command(name="generate",
             description = {"Generate the optional alt-text mapping file for this project.",
@@ -46,7 +44,7 @@ public class AltTextFilesCommand {
 
         try {
             initialize();
-            altTextFileService.generateAltTextMapping();
+            altTextService.generateAltTextMapping();
             outputLogger.info("Alt-text mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
@@ -54,31 +52,31 @@ public class AltTextFilesCommand {
             outputLogger.info("Cannot generate alt-text mapping: {}", e.getMessage());
             return 1;
         } catch (Exception e) {
-            log.error("Failed to generate alt-text file template", e);
-            outputLogger.info("Failed to generate alt-text file template: {}", e.getMessage(), e);
+            log.error("Failed to generate alt-text template", e);
+            outputLogger.info("Failed to generate alt-text template: {}", e.getMessage(), e);
             return 1;
         }
     }
 
     @Command(name = "validate",
-            description = "Validate the alt-text file mappings for this project")
+            description = "Validate the alt-text mappings for this project")
     public int validate(@Option(names = { "-f", "--force"},
             description = "Ignore incomplete mappings") boolean force) throws Exception {
         try {
             initialize();
-            AltTextFilesValidator validator = new AltTextFilesValidator();
+            AltTextValidator validator = new AltTextValidator();
             validator.setProject(project);
             List<String> errors = validator.validateMappings(force);
             if (errors.isEmpty()) {
-                outputLogger.info("PASS: Alt-text file mapping at path {} is valid",
-                        project.getSourceFilesMappingPath());
+                outputLogger.info("PASS: Alt-text mapping at path {} is valid",
+                        project.getAltTextMappingPath());
                 return 0;
             } else {
                 if (parentCommand.getVerbosity().equals(Verbosity.QUIET)) {
-                    outputLogger.info("FAIL: Alt-text file mapping is invalid with {} errors", errors.size());
+                    outputLogger.info("FAIL: Alt-text mapping is invalid with {} errors", errors.size());
                 } else {
-                    outputLogger.info("FAIL: Alt-text file mapping at path {} is invalid due to the following issues:",
-                            project.getSourceFilesMappingPath());
+                    outputLogger.info("FAIL: Alt-text mapping at path {} is invalid due to the following issues:",
+                            project.getAltTextMappingPath());
                     for (String error : errors) {
                         outputLogger.info("    - " + error);
                     }
@@ -86,18 +84,18 @@ public class AltTextFilesCommand {
                 return 1;
             }
         } catch (MigrationException e) {
-            log.error("Failed to validate alt-text file mappings", e);
-            outputLogger.info("FAIL: Failed to validate alt-text file mappings: {}", e.getMessage());
+            log.error("Failed to validate alt-text mappings", e);
+            outputLogger.info("FAIL: Failed to validate alt-text mappings: {}", e.getMessage());
             return 1;
         }
     }
 
     @Command(name = "status",
-            description = "Display status of the alt-text file mappings for this project")
+            description = "Display status of the alt-text mappings for this project")
     public int status() throws Exception {
         try {
             initialize();
-            AltTextFilesStatusService statusService = new AltTextFilesStatusService();
+            AltTextStatusService statusService = new AltTextStatusService();
             statusService.setProject(project);
             statusService.report(parentCommand.getVerbosity());
 
@@ -117,12 +115,8 @@ public class AltTextFilesCommand {
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         indexService = new CdmIndexService();
         indexService.setProject(project);
-        altTextFileService = new AltTextFileService();
-        altTextFileService.setProject(project);
-        altTextFileService.setIndexService(indexService);
-        summaryService = new SourceFilesSummaryService();
-        summaryService.setProject(project);
-        summaryService.setDryRun(false);
-        summaryService.setSourceFileService(altTextFileService);
+        altTextService = new AltTextService();
+        altTextService.setProject(project);
+        altTextService.setIndexService(indexService);
     }
 }

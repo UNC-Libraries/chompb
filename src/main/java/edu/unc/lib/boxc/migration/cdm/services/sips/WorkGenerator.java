@@ -3,12 +3,13 @@ package edu.unc.lib.boxc.migration.cdm.services.sips;
 import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationSipEntry;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
-import edu.unc.lib.boxc.migration.cdm.services.AltTextFileService;
+import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
@@ -58,7 +59,7 @@ public class WorkGenerator {
     protected RedirectMappingService redirectMappingService;
     protected SourceFilesInfo sourceFilesInfo;
     protected SourceFilesInfo accessFilesInfo;
-    protected SourceFilesInfo altTextFilesInfo;
+    protected AltTextInfo altTextInfo;
     protected Connection conn;
     protected SipGenerationOptions options;
     protected Model model;
@@ -66,7 +67,7 @@ public class WorkGenerator {
     protected SipPremisLogger sipPremisLogger;
     protected DescriptionsService descriptionsService;
     protected AccessFileService accessFileService;
-    protected AltTextFileService altTextFileService;
+    protected AltTextService altTextService;
     protected PostMigrationReportService postMigrationReportService;
     protected PermissionsInfo permissionsInfo;
     protected StreamingMetadataService streamingMetadataService;
@@ -129,7 +130,7 @@ public class WorkGenerator {
             return;
         }
         // Copy description to SIP
-        Path sipDescPath = destEntry.getDepositDirManager().getModsPath(pid);
+        Path sipDescPath = destEntry.getDepositDirManager().getModsPath(pid, true);
         Files.copy(descPath, sipDescPath);
     }
 
@@ -207,16 +208,8 @@ public class WorkGenerator {
             }
         }
 
-        // Link alt text file
-        if (altTextFilesInfo != null) {
-            SourceFilesInfo.SourceFileMapping altTextMapping = altTextFilesInfo.getMappingByCdmId(cdmId);
-            if (altTextMapping != null && altTextMapping.getSourcePaths() != null) {
-                Resource altTextResc = DepositModelHelpers.addDatastream(fileObjResc, DatastreamType.ALT_TEXT);
-                altTextResc.addLiteral(CdrDeposit.stagingLocation, altTextMapping.getFirstSourcePath().toUri().toString());
-                String mimetype = altTextFileService.getMimetype(altTextMapping.getFirstSourcePath());
-                altTextResc.addLiteral(CdrDeposit.mimetype, mimetype);
-            }
-        }
+        // copy alt text to SIP
+        addAltText(cdmId, fileObjPid);
 
         // add redirect mapping for this file
         redirectMappingService.addRow(cdmId, workPid.getId(), fileObjPid.getId());
@@ -274,6 +267,21 @@ public class WorkGenerator {
                 resource.addProperty(STREAMING_TYPE, "sound");
             } else {
                 resource.addProperty(STREAMING_TYPE, "video");
+            }
+        }
+    }
+
+    protected void addAltText(String cdmId, PID pid) throws IOException {
+        if (altTextInfo != null) {
+            AltTextInfo.AltTextMapping altTextMapping = altTextInfo.getMappingByCdmId(cdmId);
+            if (altTextMapping != null
+                    && altTextMapping.getAltTextBody() != null && !altTextMapping.getAltTextBody().matches("")) {
+                Path altTextFilePath = altTextService.getAltTextFilePath(cdmId, altTextMapping.getAltTextBody());
+                if (altTextFilePath != null && Files.exists(altTextFilePath)) {
+                    // Copy alt text to SIP
+                    Path sipAltTextPath = destEntry.getDepositDirManager().getAltTextPath(pid, true);
+                    Files.copy(altTextFilePath, sipAltTextPath);
+                }
             }
         }
     }
