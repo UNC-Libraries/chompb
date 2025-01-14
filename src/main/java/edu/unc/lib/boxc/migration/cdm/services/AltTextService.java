@@ -15,10 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -37,6 +36,7 @@ public class AltTextService {
     private MigrationProject project;
     private CdmIndexService indexService;
     private List<String> ids;
+    private AltTextInfo altTextInfo;
 
     public AltTextService() {
     }
@@ -74,9 +74,9 @@ public class AltTextService {
             ids = new ArrayList<>();
             // for all file objects in the project (exclude grouped objects, compound objects, pdf objects)
             String query = "select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
-                    + " or (" + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'"
-                    + " and " + CdmIndexService.PARENT_ID_FIELD + " is not null)";
+                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null";
 
             getIndexService();
             try (Connection conn = indexService.openDbConnection()) {
@@ -95,14 +95,12 @@ public class AltTextService {
         return ids;
     }
 
-    public Path getAltTextFilePath(String cdmId, String altTextBody) throws IOException {
-        Path altTextFile = project.getAltTextPath().resolve(cdmId + ".txt");
-        File textFile = new File(String.valueOf(altTextFile));
-        try (var writer = new FileWriter(textFile)) {
-            writer.write(altTextBody);
-        }
+    public void writeAltTextToFile(String cdmId, Path sipAltTextPath) throws IOException {
+        var altTextInfo = getAltTextInfo();
+        AltTextInfo.AltTextMapping altTextMapping = altTextInfo.getMappingByCdmId(cdmId);
+        String altTextBody = altTextMapping.getAltTextBody();
 
-        return altTextFile;
+        Files.writeString(sipAltTextPath, altTextBody, StandardCharsets.ISO_8859_1);
     }
 
     /**
@@ -151,6 +149,13 @@ public class AltTextService {
         if (project.getProjectProperties().getIndexedDate() == null) {
             throw new InvalidProjectStateException("Project must be indexed prior to generating source mappings");
         }
+    }
+
+    private AltTextInfo getAltTextInfo() throws IOException {
+        if (altTextInfo == null) {
+            altTextInfo = loadMappings();
+        }
+        return altTextInfo;
     }
 
     private CdmIndexService getIndexService() {

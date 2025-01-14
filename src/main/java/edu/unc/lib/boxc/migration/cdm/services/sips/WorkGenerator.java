@@ -21,6 +21,7 @@ import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -274,14 +275,9 @@ public class WorkGenerator {
     protected void addAltText(String cdmId, PID pid) throws IOException {
         if (altTextInfo != null) {
             AltTextInfo.AltTextMapping altTextMapping = altTextInfo.getMappingByCdmId(cdmId);
-            if (altTextMapping != null
-                    && altTextMapping.getAltTextBody() != null && !altTextMapping.getAltTextBody().matches("")) {
-                Path altTextFilePath = altTextService.getAltTextFilePath(cdmId, altTextMapping.getAltTextBody());
-                if (altTextFilePath != null && Files.exists(altTextFilePath)) {
-                    // Copy alt text to SIP
-                    Path sipAltTextPath = destEntry.getDepositDirManager().getAltTextPath(pid, true);
-                    Files.copy(altTextFilePath, sipAltTextPath);
-                }
+            if (altTextMapping != null && !StringUtils.isBlank(altTextMapping.getAltTextBody())) {
+                Path sipAltTextPath = destEntry.getDepositDirManager().getAltTextPath(pid, true);
+                altTextService.writeAltTextToFile(cdmId, sipAltTextPath);
             }
         }
     }

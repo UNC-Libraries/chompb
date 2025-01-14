@@ -63,7 +63,6 @@ public class AltTextStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Unmapped Objects: +2 \\(66.7%\\).*");
         assertOutputNotMatches(".*Unmapped Objects:.*\n + \\* 26.*");
         assertOutputMatches(".*Mappings Valid: +Yes.*");
-        assertOutputMatches(".*Potential Matches: +0.*");
     }
 
     @Test
@@ -80,7 +79,6 @@ public class AltTextStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Unmapped Objects:.* + \\* 26.*");
         assertOutputMatches(".*Unmapped Objects:.* + \\* 27.*");
         assertOutputMatches(".*Mappings Valid: +Yes.*");
-        assertOutputMatches(".*Potential Matches: +0.*");
     }
 
     @Test
@@ -99,7 +97,6 @@ public class AltTextStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Unmapped Objects:.* + \\* 26.*");
         assertOutputMatches(".*Unmapped Objects:.* + \\* 27.*");
         assertOutputMatches(".*Mappings Valid: +Yes.*");
-        assertOutputMatches(".*Potential Matches: +0.*");
     }
 
     @Test
@@ -116,7 +113,6 @@ public class AltTextStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Unmapped Objects: +1 \\(33.3%\\).*");
         assertOutputMatches(".*Unknown Objects: +1.*");
         assertOutputMatches(".*Mappings Valid: +Yes.*");
-        assertOutputMatches(".*Potential Matches: +0.*");
     }
 
     @Test
@@ -134,7 +130,6 @@ public class AltTextStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Unknown Objects: +1.*");
         assertOutputMatches(".*Unknown Objects:.* + \\* 55.*");
         assertOutputMatches(".*Mappings Valid: +Yes.*");
-        assertOutputMatches(".*Potential Matches: +0.*");
     }
 
     private String mappingBody(String... rows) {

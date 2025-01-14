@@ -7,9 +7,11 @@ import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,8 +19,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -122,8 +126,19 @@ public class AltTextServiceTest {
 
         try (CSVParser csvParser = parser()) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals(0, rows.size());
+            assertEquals("17940", rows.get(0).get(AltTextInfo.CDM_ID_FIELD));
+            assertEquals(1, rows.size());
         }
+    }
+
+    @Test
+    public void writeAltTextToFileTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        writeCsv(mappingBody("25,alt text"));
+        Path sipAltTextPath = basePath.resolve("sipAltText");
+
+        service.writeAltTextToFile("25", sipAltTextPath);
+        assertTrue(Files.exists(sipAltTextPath));
     }
 
     private CSVParser parser() throws IOException {
@@ -147,5 +162,17 @@ public class AltTextServiceTest {
         GroupMappingService groupService = testHelper.getGroupMappingService();
         groupService.generateMapping(groupOptions);
         groupService.syncMappings(makeDefaultSyncOptions());
+    }
+
+    private String mappingBody(String... rows) {
+        return String.join(",", AltTextInfo.CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void writeCsv(String mappingBody) throws IOException {
+        FileUtils.write(project.getAltTextMappingPath().toFile(),
+                mappingBody, StandardCharsets.UTF_8);
+        project.getProjectProperties().setAltTextFilesUpdatedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
     }
 }

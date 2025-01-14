@@ -1483,8 +1483,7 @@ public class SipServiceTest {
         testHelper.populateDescriptions("gilmer_mods1.xml");
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         List<Path> accessLocs = testHelper.populateAccessFiles("276_182_E.tif", "276_203_E.tif");
-        writeAltTextCsv(mappingBody("25,alt text"));
-        testHelper.populateAltTextFile("25", "alt text");
+        writeAltTextCsv(altTextMappingBody("25,alt text"));
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1502,7 +1501,7 @@ public class SipServiceTest {
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), accessLocs.get(0), "25");
-        Path altTextPath = dirManager.getAltTextPath(PIDs.get(depBagChildren.get(0).toString()));
+        testHelper.assertAltTextPresent(dirManager, PIDs.get(workResc1.getURI()), "alt text");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
@@ -1634,7 +1633,7 @@ public class SipServiceTest {
                 .collect(Collectors.joining("\n"));
     }
 
-    private String mappingBody(String... rows) {
+    private String altTextMappingBody(String... rows) {
         return String.join(",", AltTextInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
     }

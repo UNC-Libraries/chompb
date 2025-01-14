@@ -5,6 +5,7 @@ import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.validators.AltTextValidator;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ public class AltTextStatusService extends AbstractStatusService {
     private static final Logger log = getLogger(AltTextStatusService.class);
 
     private CdmIndexService indexService;
+    private AltTextService altTextService;
 
     /**
      * Display a stand alone report of the alt-text mapping status
@@ -61,14 +63,12 @@ public class AltTextStatusService extends AbstractStatusService {
         Set<String> indexedIds = getQueryService().getObjectIdSet();
         Set<String> mappedIds = new HashSet<>();
         Set<String> unknownIds = new HashSet<>();
-        int cntPotential = 0;
-        AltTextService altTextService = getMappingService();
-        altTextService.setProject(project);
-        altTextService.setIndexService(indexService);
+        getMappingService();
+
         try {
             AltTextInfo info = altTextService.loadMappings();
             for (AltTextInfo.AltTextMapping mapping : info.getMappings()) {
-                if (mapping.getAltTextBody() != null && !mapping.getAltTextBody().matches("")) {
+                if (!StringUtils.isBlank(mapping.getAltTextBody())) {
                     if (indexedIds.contains(mapping.getCdmId())) {
                         mappedIds.add(mapping.getCdmId());
                     } else {
@@ -90,9 +90,6 @@ public class AltTextStatusService extends AbstractStatusService {
             if (verbosity.isVerbose()) {
                 showFieldListValues(unknownIds);
             }
-            if (verbosity.isNormal()) {
-                showField("Potential Matches", cntPotential);
-            }
         } catch (IOException e) {
             log.error("Failed to load mappings", e);
             outputLogger.info("Failed to load mappings: {}", e.getMessage());
@@ -108,7 +105,12 @@ public class AltTextStatusService extends AbstractStatusService {
     }
 
     protected AltTextService getMappingService() {
-        return new AltTextService();
+        if (altTextService == null) {
+            altTextService = new AltTextService();
+            altTextService.setProject(project);
+            altTextService.setIndexService(indexService);
+        }
+        return altTextService;
     }
 
     protected boolean forceValidation() {

@@ -83,7 +83,6 @@ public class SipServiceHelper {
 
     private Path sourceFilesBasePath;
     private Path accessFilesBasePath;
-    private Path altTextFilesBasePath;
     private MigrationProject project;
     private CdmFieldService fieldService;
     private SourceFileService sourceFileService;
@@ -106,7 +105,6 @@ public class SipServiceHelper {
     public SipServiceHelper(MigrationProject project, Path filesBasePath) throws IOException {
         this.sourceFilesBasePath = new File(filesBasePath.toFile(), "source").toPath();
         this.accessFilesBasePath = new File(filesBasePath.toFile(), "access").toPath();
-        this.altTextFilesBasePath = new File(filesBasePath.toFile(), "alt_text").toPath();
         this.project = project;
         chompbConfig = new ChompbConfigService.ChompbConfig();
         chompbConfig.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
@@ -394,11 +392,6 @@ public class SipServiceHelper {
         return sourcePaths;
     }
 
-    public Path populateAltTextFile(String cdmId, String altTextBody) throws Exception {
-        Files.createDirectories(project.getAltTextPath());
-        return altTextService.getAltTextFilePath(cdmId, altTextBody);
-    }
-
     public GenerateSourceFileMappingOptions makeSourceFileOptions(Path basePath) {
         GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
         options.setBasePath(basePath);
@@ -470,6 +463,13 @@ public class SipServiceHelper {
         assertEquals(cdmId, cdmIdEl.getText());
     }
 
+    public void assertAltTextPresent(DepositDirectoryManager dirManager, PID pid, String altTextBody)
+            throws Exception {
+        Path path = dirManager.getAltTextPath(pid);
+        assertTrue(Files.exists(path));
+        assertEquals(altTextBody, Files.readString(path));
+    }
+
     public Model getSipModel(MigrationSip sip) throws IOException {
         return RDFModelUtil.createModel(Files.newInputStream(sip.getModelPath()), "N3");
     }
@@ -532,7 +532,12 @@ public class SipServiceHelper {
     }
 
     public AltTextService getAltTextService() {
-        return altTextService;
+        if (this.altTextService == null) {
+            this.altTextService = new AltTextService();
+            this.altTextService.setProject(project);
+            this.altTextService.setIndexService(indexService);
+        }
+        return this.altTextService;
     }
 
     public AggregateFileMappingService getAggregateFileMappingService() {

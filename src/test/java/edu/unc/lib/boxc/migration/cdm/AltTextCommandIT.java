@@ -97,7 +97,6 @@ public class AltTextCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Objects Mapped: +3 \\(100.0%\\).*");
         assertOutputMatches(".*Unmapped Objects: +0.*");
         assertOutputMatches(".*Mappings Valid: +Yes\n.*");
-        assertOutputMatches(".*Potential Matches: +0.*");
     }
 
     @Test
@@ -117,7 +116,6 @@ public class AltTextCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*Unmapped Objects: +1.*");
         assertOutputMatches(".*Unmapped Objects:.*\n + \\* 26.*");
         assertOutputMatches(".*Mappings Valid: +Yes.*");
-        assertOutputMatches(".*Potential Matches: +0.*");
     }
 
     private void indexExportSamples() throws Exception {
