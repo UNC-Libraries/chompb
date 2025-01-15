@@ -1501,7 +1501,8 @@ public class SipServiceTest {
 
         Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
         testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), accessLocs.get(0), "25");
-        testHelper.assertAltTextPresent(dirManager, PIDs.get(workResc1.getURI()), "alt text");
+        Resource work1FileResc = getOnlyChildOf(workResc1);
+        testHelper.assertAltTextPresent(dirManager, PIDs.get(work1FileResc.getURI()), "alt text");
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
