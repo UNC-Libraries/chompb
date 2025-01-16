@@ -25,6 +25,7 @@ import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
+import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
@@ -47,7 +48,6 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.DestinationMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
@@ -87,6 +87,7 @@ public class SipServiceHelper {
     private CdmFieldService fieldService;
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
+    private AltTextService altTextService;
     private AggregateFileMappingService aggregateFileMappingService;
     private AggregateFileMappingService aggregateBottomMappingService;
     private DescriptionsService descriptionsService;
@@ -123,6 +124,9 @@ public class SipServiceHelper {
         accessFileService = new AccessFileService();
         accessFileService.setIndexService(indexService);
         accessFileService.setProject(project);
+        altTextService = new AltTextService();
+        altTextService.setIndexService(indexService);
+        altTextService.setProject(project);
         descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
@@ -145,6 +149,7 @@ public class SipServiceHelper {
         SipService service = new SipService();
         service.setIndexService(indexService);
         service.setAccessFileService(accessFileService);
+        service.setAltTextService(altTextService);
         service.setSourceFileService(sourceFileService);
         service.setPidMinter(pidMinter);
         service.setDescriptionsService(descriptionsService);
@@ -190,7 +195,6 @@ public class SipServiceHelper {
             accessResc.hasLiteral(CdrDeposit.stagingLocation, accessPath.toUri().toString());
             accessResc.hasLiteral(CdrDeposit.mimetype, "image/tiff");
         }
-
 
         PID workPid = PIDs.get(objResc.getURI());
         assertMigrationEventPresent(dirManager, workPid);
@@ -459,6 +463,13 @@ public class SipServiceHelper {
         assertEquals(cdmId, cdmIdEl.getText());
     }
 
+    public void assertAltTextPresent(DepositDirectoryManager dirManager, PID pid, String altTextBody)
+            throws Exception {
+        Path path = dirManager.getAltTextPath(pid);
+        assertTrue(Files.exists(path));
+        assertEquals(altTextBody, Files.readString(path));
+    }
+
     public Model getSipModel(MigrationSip sip) throws IOException {
         return RDFModelUtil.createModel(Files.newInputStream(sip.getModelPath()), "N3");
     }
@@ -518,6 +529,15 @@ public class SipServiceHelper {
 
     public AccessFileService getAccessFileService() {
         return accessFileService;
+    }
+
+    public AltTextService getAltTextService() {
+        if (this.altTextService == null) {
+            this.altTextService = new AltTextService();
+            this.altTextService.setProject(project);
+            this.altTextService.setIndexService(indexService);
+        }
+        return this.altTextService;
     }
 
     public AggregateFileMappingService getAggregateFileMappingService() {

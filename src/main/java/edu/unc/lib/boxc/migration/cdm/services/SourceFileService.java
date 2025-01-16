@@ -276,7 +276,7 @@ public class SourceFileService {
         return mappingPath.getParent().resolve("~" + mappingPath.getFileName().toString() + "_new");
     }
 
-    private void assertProjectStateValid() {
+    protected void assertProjectStateValid() {
         if (project.getProjectProperties().getIndexedDate() == null) {
             throw new InvalidProjectStateException("Project must be indexed prior to generating source mappings");
         }

@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
+import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.AggregateFileMappingOptions;
@@ -1475,6 +1476,41 @@ public class SipServiceTest {
         assertPersistedSipInfoMatches(sip);
     }
 
+    @Test
+    public void generateSipsWithAltText() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        List<Path> accessLocs = testHelper.populateAccessFiles("276_182_E.tif", "276_203_E.tif");
+        writeAltTextCsv(altTextMappingBody("25,alt text"));
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), accessLocs.get(0), "25");
+        Resource work1FileResc = getOnlyChildOf(workResc1);
+        testHelper.assertAltTextPresent(dirManager, PIDs.get(work1FileResc.getURI()), "alt text");
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), accessLocs.get(1),  "27");
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
     private void solrResponseWithPid() throws Exception {
         QueryResponse testResponse1 = new QueryResponse();
         SolrDocument testDocument1 = new SolrDocument();
@@ -1596,5 +1632,15 @@ public class SipServiceTest {
         return resource.listProperties().toList().stream()
                 .map(Statement::toString)
                 .collect(Collectors.joining("\n"));
+    }
+
+    private String altTextMappingBody(String... rows) {
+        return String.join(",", AltTextInfo.CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void writeAltTextCsv(String mappingBody) throws IOException {
+        FileUtils.write(project.getAltTextMappingPath().toFile(),
+                mappingBody, StandardCharsets.UTF_8);
     }
 }

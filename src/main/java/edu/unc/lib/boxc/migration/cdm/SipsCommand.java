@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
+import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import org.slf4j.Logger;
@@ -43,6 +44,7 @@ public class SipsCommand {
     private MigrationProject project;
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
+    private AltTextService altTextService;
     private DescriptionsService descriptionsService;
     private DestinationsService destinationsService;
     private CdmIndexService indexService;
@@ -134,6 +136,9 @@ public class SipsCommand {
         accessFileService = new AccessFileService();
         accessFileService.setIndexService(indexService);
         accessFileService.setProject(project);
+        altTextService = new AltTextService();
+        altTextService.setIndexService(indexService);
+        altTextService.setProject(project);
         descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
@@ -153,6 +158,7 @@ public class SipsCommand {
         sipService = new SipService();
         sipService.setIndexService(indexService);
         sipService.setAccessFileService(accessFileService);
+        sipService.setAltTextService(altTextService);
         sipService.setSourceFileService(sourceFileService);
         sipService.setPidMinter(pidMinter);
         sipService.setDescriptionsService(descriptionsService);

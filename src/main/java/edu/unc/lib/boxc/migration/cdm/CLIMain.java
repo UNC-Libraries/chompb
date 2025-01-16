@@ -44,7 +44,8 @@ import java.util.concurrent.Callable;
         ExportObjectsCommand.class,
         ListProjectsCommand.class,
         ArchiveProjectsCommand.class,
-        ProcessSourceFilesCommand.class
+        ProcessSourceFilesCommand.class,
+        AltTextCommand.class
     })
 public class CLIMain implements Callable<Integer> {
     @Option(names = { "-w", "--work-dir" },

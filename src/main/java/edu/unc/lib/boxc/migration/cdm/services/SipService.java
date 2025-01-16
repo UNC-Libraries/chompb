@@ -63,6 +63,7 @@ public class SipService {
     private CdmIndexService indexService;
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
+    private AltTextService altTextService;
     private DescriptionsService descriptionsService;
     private RedirectMappingService redirectMappingService;
     private PremisLoggerFactory premisLoggerFactory;
@@ -102,6 +103,7 @@ public class SipService {
         workGeneratorFactory.setSipPremisLogger(sipPremisLogger);
         workGeneratorFactory.setDescriptionsService(descriptionsService);
         workGeneratorFactory.setAccessFileService(accessFileService);
+        workGeneratorFactory.setAltTextService(altTextService);
         workGeneratorFactory.setRedirectMappingService(redirectMappingService);
         workGeneratorFactory.setPidMinter(pidMinter);
         workGeneratorFactory.setPostMigrationReportService(postMigrationReportService);
@@ -117,6 +119,11 @@ public class SipService {
             workGeneratorFactory.setAccessFilesInfo(accessFileService.loadMappings());
         } catch (NoSuchFileException e) {
             log.debug("No access mappings file, no access files will be added to the SIP");
+        }
+        try {
+            workGeneratorFactory.setAltTextInfo(altTextService.loadMappings());
+        } catch (NoSuchFileException e) {
+            log.debug("No alt text mappings file, no alt text files will be added to the SIP");
         }
         workGeneratorFactory.setConn(conn);
         initializeDestinations(options);
@@ -280,7 +287,7 @@ public class SipService {
                     if (entry.getNewCollectionPid() != null) {
                         Path descPath = descriptionsService.getNewCollectionDescriptionPath(k);
                         if (Files.exists(descPath)) {
-                            Path sipDescPath = entry.getDepositDirManager().getModsPath(entry.getNewCollectionPid());
+                            Path sipDescPath = entry.getDepositDirManager().getModsPath(entry.getNewCollectionPid(), true);
                             try {
                                 Files.copy(descPath, sipDescPath);
                             } catch (IOException e) {
@@ -391,6 +398,10 @@ public class SipService {
 
     public void setAccessFileService(AccessFileService accessFileService) {
         this.accessFileService = accessFileService;
+    }
+
+    public void setAltTextService(AltTextService altTextService) {
+        this.altTextService = altTextService;
     }
 
     public void setDescriptionsService(DescriptionsService descriptionsService) {
