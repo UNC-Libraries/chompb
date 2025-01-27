@@ -30,6 +30,7 @@ public class MigrationProject {
     public static final String EXPORT_OBJECTS_FILENAME = "exported_objects.csv";
     public static final String ALT_TEXT_FILENAME = "alt_text.csv";
     public static final String ALT_TEXT_DIRNAME = "alt_text";
+    public static final String BOXCTRON_DATA_FILENAME = "processing/results/velocicroptor/output/data.csv";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -195,5 +196,12 @@ public class MigrationProject {
      */
     public Path getAltTextPath() {
         return projectPath.resolve(ALT_TEXT_DIRNAME);
+    }
+
+    /**
+     * @return Path of the boxctron data.csv results
+     */
+    public Path getBoxctronDataPath() {
+        return projectPath.resolve(BOXCTRON_DATA_FILENAME);
     }
 }
