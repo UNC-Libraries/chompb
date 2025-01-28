@@ -156,7 +156,6 @@ public class SipServiceHelper {
         service.setIndexService(indexService);
         service.setAccessFileService(accessFileService);
         service.setAltTextService(altTextService);
-        service.setBoxctronFileService(boxctronFileService);
         service.setSourceFileService(sourceFileService);
         service.setPidMinter(pidMinter);
         service.setDescriptionsService(descriptionsService);

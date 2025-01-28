@@ -64,7 +64,6 @@ public class SipService {
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
     private AltTextService altTextService;
-    private BoxctronFileService boxctronFileService;
     private DescriptionsService descriptionsService;
     private RedirectMappingService redirectMappingService;
     private PremisLoggerFactory premisLoggerFactory;
@@ -105,7 +104,6 @@ public class SipService {
         workGeneratorFactory.setDescriptionsService(descriptionsService);
         workGeneratorFactory.setAccessFileService(accessFileService);
         workGeneratorFactory.setAltTextService(altTextService);
-        workGeneratorFactory.setBoxctronFileService(boxctronFileService);
         workGeneratorFactory.setRedirectMappingService(redirectMappingService);
         workGeneratorFactory.setPidMinter(pidMinter);
         workGeneratorFactory.setPostMigrationReportService(postMigrationReportService);
@@ -121,11 +119,6 @@ public class SipService {
             workGeneratorFactory.setAccessFilesInfo(accessFileService.loadMappings());
         } catch (NoSuchFileException e) {
             log.debug("No access mappings file, no access files will be added to the SIP");
-        }
-        try {
-            workGeneratorFactory.setAccessFilesInfo(boxctronFileService.loadMappings());
-        } catch (NoSuchFileException e) {
-            log.debug("No boxctron access mappings file, no boxctron access files will be added to the SIP");
         }
         try {
             workGeneratorFactory.setAltTextInfo(altTextService.loadMappings());
@@ -409,10 +402,6 @@ public class SipService {
 
     public void setAltTextService(AltTextService altTextService) {
         this.altTextService = altTextService;
-    }
-
-    public void setBoxctronFileService(BoxctronFileService boxctronFileService) {
-        this.boxctronFileService = boxctronFileService;
     }
 
     public void setDescriptionsService(DescriptionsService descriptionsService) {
