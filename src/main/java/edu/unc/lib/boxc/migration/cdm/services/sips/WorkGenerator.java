@@ -10,6 +10,7 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
+import edu.unc.lib.boxc.migration.cdm.services.BoxctronFileService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
@@ -69,6 +70,7 @@ public class WorkGenerator {
     protected DescriptionsService descriptionsService;
     protected AccessFileService accessFileService;
     protected AltTextService altTextService;
+    protected BoxctronFileService boxctronFileService;
     protected PostMigrationReportService postMigrationReportService;
     protected PermissionsInfo permissionsInfo;
     protected StreamingMetadataService streamingMetadataService;

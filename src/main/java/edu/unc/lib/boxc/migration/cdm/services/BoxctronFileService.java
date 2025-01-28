@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
@@ -30,7 +31,7 @@ import java.util.stream.Stream;
 
 /**
  * Service for interacting with boxctron access copy files
- * Alternate method for popupating access surrogate mappings
+ * Alternate method for populating access surrogate mappings
  * @author krwong
  */
 public class BoxctronFileService extends AccessFileService {
@@ -50,6 +51,7 @@ public class BoxctronFileService extends AccessFileService {
      */
     public void generateMapping(BoxctronFileMappingOptions options) throws IOException {
         assertProjectStateValid();
+        ensureMappingState(options);
 
         // Gather listing of all potential source file paths to match against
         Map<String, String> candidatePaths = gatherCandidatePaths(project.getBoxctronDataPath());
@@ -217,6 +219,24 @@ public class BoxctronFileService extends AccessFileService {
         } else {
             // retain original source path
             return origMapping;
+        }
+    }
+
+    private void ensureMappingState(BoxctronFileMappingOptions options) {
+        if (options.getDryRun() || options.getUpdate()) {
+            return;
+        }
+        if (Files.exists(getMappingPath())) {
+            if (options.isForce()) {
+                try {
+                    removeMappings();
+                } catch (IOException e) {
+                    throw new MigrationException("Failed to overwrite mapping file", e);
+                }
+            } else {
+                throw new StateAlreadyExistsException("Cannot create mapping, a file already exists."
+                        + " Use the force flag to overwrite.");
+            }
         }
     }
 }

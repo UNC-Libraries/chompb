@@ -58,11 +58,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author bbpennel
  */
 public class SourceFileService {
-    private static final Logger log = getLogger(SourceFileService.class);
+    protected static final Logger log = getLogger(SourceFileService.class);
     private static final int FETCH_SIZE = 1000;
 
     protected MigrationProject project;
-    private CdmIndexService indexService;
+    protected CdmIndexService indexService;
 
     public SourceFileService() {
     }

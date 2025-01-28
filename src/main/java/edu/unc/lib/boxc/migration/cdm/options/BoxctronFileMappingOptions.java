@@ -15,8 +15,8 @@ public class BoxctronFileMappingOptions {
 
     @Option(names = {"-u", "--update"},
             description = {
-                    "If provided, then any source file matches produced will be used to update an existing"
-                            + " source file mapping file, instead of attempting to create a new one.",
+                    "If provided, then any boxctron access file matches produced will be used to update an existing"
+                            + " access file mapping file, instead of attempting to create a new one.",
                     "This can be used to build up the mapping in multiple passes"})
     private boolean update;
 
