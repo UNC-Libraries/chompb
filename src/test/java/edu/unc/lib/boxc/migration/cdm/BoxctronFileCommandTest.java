@@ -1,11 +1,14 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
+import edu.unc.lib.boxc.migration.cdm.services.BoxctronFileService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -14,10 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * @author bbpennel
- */
-public class AccessFilesCommandIT extends AbstractCommandIT {
+public class BoxctronFileCommandTest extends AbstractCommandIT {
     private Path basePath;
 
     @BeforeEach
@@ -30,9 +30,7 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     public void generateNotIndexedTest() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
-                "access_files", "generate",
-                "-b", basePath.toString(),
-                "-n", "file"};
+                "boxctron_files", "generate"};
         executeExpectFailure(args);
 
         assertOutputContains("Project must be indexed");
@@ -41,49 +39,24 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateNoExportFieldTest() throws Exception {
-        indexExportSamples();
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "access_files", "generate",
-                "-b", basePath.toString(),
-                "-n", ""};
-        executeExpectFailure(args);
-
-        assertOutputContains("Must provide an export field");
-
-        assertUpdatedDateNotPresent();
-    }
-
-    @Test
-    public void generateNoBasePathTest() throws Exception {
-        indexExportSamples();
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "access_files", "generate",
-                "-n", "file"};
-        executeExpectFailure(args);
-
-        assertOutputContains("Must provide a base path");
-
-        assertUpdatedDateNotPresent();
-    }
-
-    @Test
     public void generateBasicMatchSucceedsTest() throws Exception {
         indexExportSamples();
+        String boxctronPath1 = "/mnt/projects/test_staging/mini_gilmer/276_182_E.tif";
+        boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
+
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
-                "access_files", "generate",
-                "-b", basePath.toString(),
-                "-n", "file"};
+                "boxctron_files", "generate"};
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getAccessFilesMappingPath()));
         assertOutputMatches(".*Previous Files Mapped: +0.*");
-        assertOutputMatches(".*New Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*New Files Mapped: +1.*");
+        assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
+        Path accessPath1 = project.getProjectPath().resolve("processing/results/velocicroptor/output"
+                + boxctronPath1 + ".jpg");
+        assertOutputContains("25,276_182_E.tif," + accessPath1);
 
         assertUpdatedDatePresent();
     }
@@ -91,13 +64,13 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
-        Path srcPath1 = addSourceFile("276_182_E.tif");
+        String boxctronPath1 = "/mnt/projects/test_staging/mini_gilmer/276_182_E.tif";
+        boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
-                "access_files", "generate",
-                "--dry-run",
-                "-b", basePath.toString()};
+                "boxctron_files", "generate",
+                "--dry-run"};
         executeExpectSuccess(args);
 
         assertFalse(Files.exists(project.getAccessFilesMappingPath()));
@@ -105,33 +78,9 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         assertOutputMatches(".*New Files Mapped: +1.*");
         assertOutputMatches(".*Total Files Mapped: +1.*");
         assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25,276_182_E.tif," + srcPath1);
-
-        assertUpdatedDateNotPresent();
-    }
-
-    @Test
-    public void generateNestedPatternMatchDryRunTest() throws Exception {
-        indexExportSamples();
-        Path srcPath1 = addSourceFile("path/to/00276_op0182_0001_e.tif");
-        Path srcPath2 = addSourceFile("00276_op0203_0001_e.tif");
-
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "access_files", "generate",
-                "--dry-run",
-                "-b", basePath.toString(),
-                "-p", "(\\d+)\\_(\\d+)_E.tif",
-                "-t", "00$1_op0$2_0001_e.tif" };
-        executeExpectSuccess(args);
-
-        assertFalse(Files.exists(project.getAccessFilesMappingPath()));
-        assertOutputMatches(".*Previous Files Mapped: +0.*");
-        assertOutputMatches(".*New Files Mapped: +2.*");
-        assertOutputMatches(".*Total Files Mapped: +2.*");
-        assertOutputMatches(".*Total Files in Project: +3.*");
-        assertOutputContains("25,276_182_E.tif," + srcPath1);
-        assertOutputContains("27,276_203_E.tif," + srcPath2);
+        Path accessPath1 = project.getProjectPath().resolve("processing/results/velocicroptor/output"
+                + boxctronPath1 + ".jpg");
+        assertOutputContains("25,276_182_E.tif," + accessPath1);
 
         assertUpdatedDateNotPresent();
     }
@@ -140,12 +89,14 @@ public class AccessFilesCommandIT extends AbstractCommandIT {
         testHelper.indexExportData("mini_gilmer");
     }
 
-    private Path addSourceFile(String relPath) throws IOException {
-        Path srcPath = basePath.resolve(relPath);
-        // Create parent directories in case they don't exist
-        Files.createDirectories(srcPath.getParent());
-        Files.createFile(srcPath);
-        return srcPath;
+    private String boxctronMappingBody(String... rows) {
+        return String.join(",", BoxctronFileService.DATA_CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void boxctronWriteCsv(String boxctronMappingBody) throws IOException {
+        FileUtils.write(project.getBoxctronDataPath().toFile(),
+                boxctronMappingBody, StandardCharsets.UTF_8);
     }
 
     private void assertUpdatedDatePresent() throws Exception {

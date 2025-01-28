@@ -736,8 +736,6 @@ public class SourceFileServiceTest {
         assertEquals(2, info.getMappings().size());
     }
 
-
-
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
                                       Path... potentialPaths) {
         List<SourceFileMapping> mappings = info.getMappings();
