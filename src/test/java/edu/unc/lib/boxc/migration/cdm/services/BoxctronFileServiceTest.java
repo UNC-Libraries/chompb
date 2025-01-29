@@ -83,6 +83,7 @@ public class BoxctronFileServiceTest {
     @Test
     public void generateNoSourceFilesTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         boxctronWriteCsv(boxctronMappingBody("/mnt/projects/test_staging/mini_gilmer/276_182_E.tif,0,0.0000,,"));
         BoxctronFileMappingOptions options = new BoxctronFileMappingOptions();
         service.generateMapping(options);
@@ -98,7 +99,8 @@ public class BoxctronFileServiceTest {
     @Test
     public void generateExactMatchTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        String boxctronPath1 = "/mnt/projects/test_staging/mini_gilmer/276_182_E.tif";
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        Path boxctronPath1 = tmpFolder.resolve("source/276_182_E.tif");
         boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
         BoxctronFileMappingOptions options = new BoxctronFileMappingOptions();
 
@@ -116,21 +118,23 @@ public class BoxctronFileServiceTest {
     @Test
     public void generateDryRunSummaryTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        String boxctronPath1 = "/mnt/projects/test_staging/mini_gilmer/276_182_E.tif";
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        Path boxctronPath1 = tmpFolder.resolve("source/276_182_E.tif");
         boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
         BoxctronFileMappingOptions options = new BoxctronFileMappingOptions();
         options.setDryRun(true);
 
         service.generateMapping(options);
 
-        assertFalse(Files.exists(project.getSourceFilesMappingPath()));
+        assertFalse(Files.exists(project.getAccessFilesMappingPath()));
         assertMappedDateNotPresent();
     }
 
     @Test
     public void generateUpdateNoExistingFileTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        String boxctronPath1 = "/mnt/projects/test_staging/mini_gilmer/276_182_E.tif";
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        Path boxctronPath1 = tmpFolder.resolve("source/276_182_E.tif");
         boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
         BoxctronFileMappingOptions options = new BoxctronFileMappingOptions();
         options.setUpdate(true);
@@ -149,7 +153,8 @@ public class BoxctronFileServiceTest {
     @Test
     public void generateUpdateExistingNoChangesTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        String boxctronPath1 = "/mnt/projects/test_staging/mini_gilmer/276_182_E.tif";
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        Path boxctronPath1 = tmpFolder.resolve("source/276_182_E.tif");
         boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
         BoxctronFileMappingOptions options = new BoxctronFileMappingOptions();
         service.generateMapping(options);
@@ -170,6 +175,31 @@ public class BoxctronFileServiceTest {
         assertMappingPresent(info, "25", "276_182_E.tif", accessPath2);
         assertMappingPresent(info2, "26", "276_183_E.tif", null);
         assertMappingPresent(info2, "27", "276_203_E.tif", null);
+    }
+
+    @Test
+    public void updateWithExistingAccessMappingTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        List<Path> accessLocs = testHelper.populateAccessFiles("276_182_E.tif");
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "276_182_E.tif", accessLocs.get(0));
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+        assertMappedDatePresent();
+
+        Path boxctronPath1 = tmpFolder.resolve("source/276_203_E.tif");
+        boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
+        BoxctronFileMappingOptions options = new BoxctronFileMappingOptions();
+        options.setUpdate(true);
+        service.generateMapping(options);
+
+        SourceFilesInfo info2 = service.loadMappings();
+        Path accessPath2 = project.getProjectPath().resolve("processing/results/velocicroptor/output" + boxctronPath1 + ".jpg");
+        assertMappingPresent(info, "25", "276_182_E.tif", accessLocs.get(0));
+        assertMappingPresent(info2, "26", "276_183_E.tif", null);
+        assertMappingPresent(info2, "27", "276_203_E.tif", accessPath2);
     }
 
     private void setIndexedDate() throws Exception {
@@ -213,7 +243,7 @@ public class BoxctronFileServiceTest {
     }
 
     private void boxctronWriteCsv(String boxctronMappingBody) throws IOException {
-        FileUtils.write(project.getBoxctronDataPath().toFile(),
+        FileUtils.write(project.getVelocicroptorDataPath().toFile(),
                 boxctronMappingBody, StandardCharsets.UTF_8);
     }
 }

@@ -35,13 +35,16 @@ public class BoxctronFileCommandTest extends AbstractCommandIT {
 
         assertOutputContains("Project must be indexed");
 
-        assertUpdatedDateNotPresent();
+        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
+        assertNull(props.getAccessFilesUpdatedDate(), "Updated timestamp must not be set");
+        assertNull(props.getSourceFilesUpdatedDate(), "Source mapping timestamp must be set");
     }
 
     @Test
     public void generateBasicMatchSucceedsTest() throws Exception {
         indexExportSamples();
-        String boxctronPath1 = "/mnt/projects/test_staging/mini_gilmer/276_182_E.tif";
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        Path boxctronPath1 = tmpFolder.resolve("source/276_182_E.tif");
         boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
 
         String[] args = new String[] {
@@ -64,7 +67,8 @@ public class BoxctronFileCommandTest extends AbstractCommandIT {
     @Test
     public void generateBasicMatchDryRunTest() throws Exception {
         indexExportSamples();
-        String boxctronPath1 = "/mnt/projects/test_staging/mini_gilmer/276_182_E.tif";
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        Path boxctronPath1 = tmpFolder.resolve("source/276_182_E.tif");
         boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
 
         String[] args = new String[] {
@@ -95,19 +99,19 @@ public class BoxctronFileCommandTest extends AbstractCommandIT {
     }
 
     private void boxctronWriteCsv(String boxctronMappingBody) throws IOException {
-        FileUtils.write(project.getBoxctronDataPath().toFile(),
+        FileUtils.write(project.getVelocicroptorDataPath().toFile(),
                 boxctronMappingBody, StandardCharsets.UTF_8);
     }
 
     private void assertUpdatedDatePresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
         assertNotNull(props.getAccessFilesUpdatedDate(), "Updated timestamp must be set");
-        assertNull(props.getSourceFilesUpdatedDate(), "Source mapping timestamp must not be set");
+        assertNotNull(props.getSourceFilesUpdatedDate(), "Source mapping timestamp must be set");
     }
 
     private void assertUpdatedDateNotPresent() throws Exception {
         MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
         assertNull(props.getAccessFilesUpdatedDate(), "Updated timestamp must not be set");
-        assertNull(props.getSourceFilesUpdatedDate(), "Source mapping timestamp must not be set");
+        assertNotNull(props.getSourceFilesUpdatedDate(), "Source mapping timestamp must be set");
     }
 }

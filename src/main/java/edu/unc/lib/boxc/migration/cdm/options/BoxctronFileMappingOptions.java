@@ -6,7 +6,7 @@ import picocli.CommandLine.Option;
  * Options for boxctron file mapping
  * @author krwong
  */
-public class BoxctronFileMappingOptions {
+public class BoxctronFileMappingOptions implements GenerateFileMappingOptions {
     @Option(names = {"-d", "--dry-run"},
             description = {
                     "If provided, then the output of the matching will be displayed in the console rather "
@@ -24,6 +24,7 @@ public class BoxctronFileMappingOptions {
             description = "Overwrite mapping file if one already exists")
     private boolean force;
 
+    @Override
     public boolean getDryRun() {
         return dryRun;
     }
@@ -32,6 +33,7 @@ public class BoxctronFileMappingOptions {
         this.dryRun = dryRun;
     }
 
+    @Override
     public boolean getUpdate() {
         return update;
     }
@@ -40,6 +42,7 @@ public class BoxctronFileMappingOptions {
         this.update = update;
     }
 
+    @Override
     public boolean isForce() {
         return force;
     }

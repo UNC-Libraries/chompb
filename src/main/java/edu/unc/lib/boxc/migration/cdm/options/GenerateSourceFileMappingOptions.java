@@ -6,7 +6,7 @@ import picocli.CommandLine.Option;
  * Options for generate file mapping
  * @author krwong
  */
-public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions {
+public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions implements GenerateFileMappingOptions {
     @Option(names = {"-g", "--glob-pattern"},
             description = {
                     "Optional pattern for adjusting which files within the base path to search.",
@@ -107,6 +107,7 @@ public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions {
         this.lowercaseTemplate = lowercaseTemplate;
     }
 
+    @Override
     public boolean getUpdate() {
         return update;
     }
@@ -115,6 +116,7 @@ public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions {
         this.update = update;
     }
 
+    @Override
     public boolean isForce() {
         return force;
     }
