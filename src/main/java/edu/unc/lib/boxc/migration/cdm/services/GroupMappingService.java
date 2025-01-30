@@ -387,7 +387,7 @@ public class GroupMappingService {
                 + " select " + joinedFields
                 + ",'" + groupId + "','" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
                 + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmFieldInfo.CDM_ID + " = " + firstChild);
+                + " where " + CdmFieldInfo.CDM_ID + " = '" + firstChild + "'");
     }
 
     private void assignChildrenToGroups(Statement stmt, String groupId, List<String> childrenIds) throws SQLException {

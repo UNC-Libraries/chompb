@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.auth.api.UserRole;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
@@ -325,6 +326,20 @@ public class SipServiceHelper {
         project.getProjectProperties().setExportedDate(Instant.now());
         indexService.createDatabase(options);
         indexService.indexAll();
+        ProjectPropertiesSerialization.write(project);
+    }
+
+    public void indexFromCsv(Path csvPath) throws Exception {
+        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(csvPath);
+        fieldService.persistFieldsToProject(project, csvExportFields);
+        project.getProjectProperties().setExportedDate(Instant.now());
+
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setCsvFile(csvPath);
+        options.setForce(false);
+
+        indexService.createDatabase(options);
+        indexService.indexAllFromCsv(options);
         ProjectPropertiesSerialization.write(project);
     }
 

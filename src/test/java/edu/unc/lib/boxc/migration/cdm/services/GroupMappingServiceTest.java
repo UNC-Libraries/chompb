@@ -482,6 +482,34 @@ public class GroupMappingServiceTest {
         }
     }
 
+    @Test
+    public void syncGroupsFromFilesystemTest() throws Exception {
+        testHelper.indexFromCsv(Path.of("src/test/resources/files/more_fields.csv"));
+
+        GroupMappingOptions options = new GroupMappingOptions();
+        options.setGroupFields(Arrays.asList("file_type"));
+        service.generateMapping(options);
+
+        var syncOptions = new GroupMappingSyncOptions();
+        syncOptions.setSortField("filename");
+        service.syncMappings(syncOptions);
+
+        Connection conn = null;
+        try {
+            GroupMappingInfo info = service.loadMappings();
+            conn = indexService.openDbConnection();
+            assertFilesGrouped(conn, "file_type:tif", "test-00001", "test-00002");
+            assertFileHasOrder(conn, "test-00001", 0);
+            assertFileHasOrder(conn, "test-00002", 1);
+            // Group key with a single child should not be grouped
+            assertNumberOfGroups(conn, 1);
+            assertParentIdsPresent(conn, "file_type:tif", null);
+            assertSyncedDatePresent();
+        } finally {
+            CdmIndexService.closeDbConnection(conn);
+        }
+    }
+
     private void assertWorkSynced(Connection conn, String workId, String expectedTitle, String expectedCreated)
             throws Exception {
         String groupKey = asGroupKey(workId);
