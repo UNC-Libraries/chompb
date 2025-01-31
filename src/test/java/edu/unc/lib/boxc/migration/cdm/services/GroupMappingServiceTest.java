@@ -7,6 +7,7 @@ import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo.GroupMapping;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
+import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
@@ -24,6 +25,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -484,7 +486,7 @@ public class GroupMappingServiceTest {
 
     @Test
     public void syncGroupsFromFilesystemTest() throws Exception {
-        testHelper.indexFromCsv(Path.of("src/test/resources/files/more_fields.csv"));
+        indexFromCsv(Path.of("src/test/resources/files/more_fields.csv"));
 
         GroupMappingOptions options = new GroupMappingOptions();
         options.setGroupFields(Arrays.asList("file_type"));
@@ -662,5 +664,19 @@ public class GroupMappingServiceTest {
 
     private void indexExportSamples() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
+    }
+
+    public void indexFromCsv(Path csvPath) throws Exception {
+        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(csvPath);
+        fieldService.persistFieldsToProject(project, csvExportFields);
+        project.getProjectProperties().setExportedDate(Instant.now());
+
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setCsvFile(csvPath);
+        options.setForce(false);
+
+        indexService.createDatabase(options);
+        indexService.indexAllFromCsv(options);
+        ProjectPropertiesSerialization.write(project);
     }
 }

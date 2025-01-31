@@ -329,20 +329,6 @@ public class SipServiceHelper {
         ProjectPropertiesSerialization.write(project);
     }
 
-    public void indexFromCsv(Path csvPath) throws Exception {
-        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(csvPath);
-        fieldService.persistFieldsToProject(project, csvExportFields);
-        project.getProjectProperties().setExportedDate(Instant.now());
-
-        CdmIndexOptions options = new CdmIndexOptions();
-        options.setCsvFile(csvPath);
-        options.setForce(false);
-
-        indexService.createDatabase(options);
-        indexService.indexAllFromCsv(options);
-        ProjectPropertiesSerialization.write(project);
-    }
-
     public void generateDefaultDestinationsMapping(String defDest, String defColl) throws Exception {
         DestinationMappingOptions options = new DestinationMappingOptions();
         options.setDefaultDestination(defDest);
