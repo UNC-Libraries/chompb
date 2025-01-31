@@ -204,10 +204,14 @@ public class SipService {
         } catch (SQLException | IOException e) {
             throw new MigrationException("Failed to generate SIP", e);
         } finally {
-            CdmIndexService.closeDbConnection(conn);
-            destEntries.stream().forEach(DestinationSipEntry::close);
-            redirectMappingService.closeCsv();
-            postMigrationReportService.closeCsv();
+            try {
+                CdmIndexService.closeDbConnection(conn);
+                destEntries.stream().forEach(DestinationSipEntry::close);
+                redirectMappingService.closeCsv();
+                postMigrationReportService.closeCsv();
+            } catch (Exception e) {
+                log.error("Failed to close resources", e);
+            }
         }
     }
 
