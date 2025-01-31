@@ -21,7 +21,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.auth.api.UserRole;
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
