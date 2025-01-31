@@ -9,7 +9,7 @@ import picocli.CommandLine.Option;
  *
  * @author bbpennel
  */
-public class SourceFileMappingOptions {
+public class SourceFileMappingOptions implements GenerateFileMappingOptions {
     @Option(names = {"-b", "--base-path"},
             description = {
                     "Required. Base file path to search in for source files to match with.",
@@ -31,11 +31,22 @@ public class SourceFileMappingOptions {
         this.basePath = basePath;
     }
 
+    @Override
     public boolean getDryRun() {
         return dryRun;
     }
 
     public void setDryRun(boolean dryRun) {
         this.dryRun = dryRun;
+    }
+
+    @Override
+    public boolean getUpdate() {
+        return false;
+    }
+
+    @Override
+    public boolean isForce() {
+        return false;
     }
 }

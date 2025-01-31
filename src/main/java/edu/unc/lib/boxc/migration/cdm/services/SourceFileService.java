@@ -8,6 +8,7 @@ import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.options.AddSourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.GenerateFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
@@ -62,7 +63,7 @@ public class SourceFileService {
     private static final int FETCH_SIZE = 1000;
 
     protected MigrationProject project;
-    private CdmIndexService indexService;
+    protected CdmIndexService indexService;
 
     public SourceFileService() {
     }
@@ -234,7 +235,7 @@ public class SourceFileService {
         return candidatePaths;
     }
 
-    private void ensureMappingState(GenerateSourceFileMappingOptions options) {
+    protected void ensureMappingState(GenerateFileMappingOptions options) {
         if (options.getDryRun() || options.getUpdate()) {
             return;
         }
@@ -287,7 +288,7 @@ public class SourceFileService {
      * @param options
      * @param updatesPath the temp path containing the newly generated mappings to merge into the original mappings
      */
-    private void mergeUpdates(GenerateSourceFileMappingOptions options, Path updatesPath) throws IOException {
+    protected void mergeUpdates(GenerateFileMappingOptions options, Path updatesPath) throws IOException {
         Path originalPath = getMappingPath();
         Path mergedPath = originalPath.getParent().resolve("~" + originalPath.getFileName().toString() + "_merged");
         // Cleanup temp merged path if it already exists
@@ -353,7 +354,7 @@ public class SourceFileService {
         }
     }
 
-    protected SourceFileMapping resolveSourcePathConflict(GenerateSourceFileMappingOptions options,
+    protected SourceFileMapping resolveSourcePathConflict(GenerateFileMappingOptions options,
                                                           SourceFileMapping origMapping,
                                                           SourceFileMapping updateMapping) {
         if (options.isForce() || origMapping.getSourcePaths() == null) {

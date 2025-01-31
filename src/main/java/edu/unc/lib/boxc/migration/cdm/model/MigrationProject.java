@@ -1,5 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.model;
 
+import edu.unc.lib.boxc.migration.cdm.jobs.VelocicroptorRemoteJob;
+
 import java.nio.file.Path;
 
 /**
