@@ -12,6 +12,7 @@ import edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants;
 import edu.unc.lib.boxc.model.api.ResourceType;
 import edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.slf4j.Logger;
@@ -45,11 +46,19 @@ public class PostMigrationReportService {
     private static final int CACHE_SIZE = 16;
     private Map<String, String> parentTitleCache;
     private SourceFilesInfo sourceFilesInfo;
+    private boolean enabled;
 
     /**
      * Initialize the service
      */
     public void init() {
+        if (StringUtils.isBlank(project.getProjectProperties().getCdmEnvironmentId())) {
+            log.info("Project is not exported from CDM, skipping post migration report generation");
+            enabled = false;
+            return;
+        } else {
+            enabled = true;
+        }
         var cdmEnv = chompbConfig.getCdmEnvironments().get(project.getProjectProperties().getCdmEnvironmentId());
         var baseWithoutPort = cdmEnv.getHttpBaseUrl().replaceFirst(":\\d+", "");
         var collId = project.getProjectProperties().getCdmCollectionId();
@@ -82,6 +91,9 @@ public class PostMigrationReportService {
      * Closes report CSV
      */
     public void closeCsv() {
+        if (!enabled) {
+            return;
+        }
         try {
             csvPrinter.close();
         } catch (IOException e) {
@@ -99,6 +111,9 @@ public class PostMigrationReportService {
      */
     public void addWorkRow(String cdmObjectId, String boxcWorkId, int childCount, boolean isSingleItem)
             throws IOException {
+        if (!enabled) {
+            return;
+        }
         String cdmUrl = buildCdmUrl(cdmObjectId, true, isSingleItem);
         String boxcTitle = getParentTitle(cdmObjectId);
         String boxcUrl = this.bxcBaseUrl + boxcWorkId;
@@ -129,6 +144,9 @@ public class PostMigrationReportService {
     public void addFileRow(String fileCdmId, String parentCdmId, String boxcWorkId, String boxcFileId,
                            boolean isSingleItem)
             throws IOException {
+        if (!enabled) {
+            return;
+        }
         String cdmUrl = buildCdmUrl(fileCdmId, false, isSingleItem);
         String boxcTitle = extractTitle(fileCdmId);
         String boxcUrl = this.bxcBaseUrl + boxcFileId;

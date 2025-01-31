@@ -8,18 +8,19 @@ import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
@@ -40,18 +41,15 @@ public class PostMigrationReportServiceTest {
     private MigrationProject project;
     private SipServiceHelper testHelper;
     private DescriptionsService descriptionsService;
-    private SourceFileService sourceFileService;
     private PostMigrationReportService service;
 
-    @BeforeEach
-    public void setup() throws Exception {
+    public void setup(String cdmEnvId, String projectSource) throws Exception {
         closeable = openMocks(this);
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, "proj", null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
-                BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
+                tmpFolder, "proj", null, "user", cdmEnvId,
+                BxcEnvironmentHelper.DEFAULT_ENV_ID, projectSource);
         testHelper = new SipServiceHelper(project, tmpFolder);
         descriptionsService = testHelper.getDescriptionsService();
-        sourceFileService = testHelper.getSourceFileService();
 
         service = new PostMigrationReportService();
         service.setProject(project);
@@ -68,6 +66,7 @@ public class PostMigrationReportServiceTest {
 
     @Test
     public void addSingleItemTest() throws Exception {
+        setup(CdmEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         testHelper.indexExportData("mini_gilmer");
         Path srcPath1 = testHelper.addSourceFile("25.txt");
         writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
@@ -104,6 +103,7 @@ public class PostMigrationReportServiceTest {
 
     @Test
     public void addSingleItemWithFileDescTest() throws Exception {
+        setup(CdmEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         testHelper.indexExportData("mini_gilmer");
         Path srcPath1 = testHelper.addSourceFile("25.txt");
         writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
@@ -140,6 +140,7 @@ public class PostMigrationReportServiceTest {
 
     @Test
     public void addGroupedTest() throws Exception {
+        setup(CdmEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         testHelper.indexExportData("grouped_gilmer");
         Path srcPath1 = testHelper.addSourceFile("26.txt");
         Path srcPath2 = testHelper.addSourceFile("27.txt");
@@ -189,6 +190,7 @@ public class PostMigrationReportServiceTest {
 
     @Test
     public void addCompoundTest() throws Exception {
+        setup(CdmEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         Path srcPath1 = testHelper.addSourceFile("nccg_ck_1042-22_v1.tif");
         Path srcPath2 = testHelper.addSourceFile("nccg_ck_1042-22_v2.tif");
@@ -235,6 +237,26 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
                 "");
+    }
+
+    @Test
+    public void addSingleItemNonCdmProjectTest() throws Exception {
+        setup(null, MigrationProject.PROJECT_SOURCE_FILES);
+        project.getProjectProperties().setCdmEnvironmentId(null);
+        project.getProjectProperties().setProjectSource(MigrationProject.PROJECT_SOURCE_FILES);
+        ProjectPropertiesSerialization.write(project);
+        project = MigrationProjectFactory.loadMigrationProject(project.getProjectPath());
+
+        testHelper.indexExportData("mini_gilmer");
+        Path srcPath1 = testHelper.addSourceFile("25.txt");
+        writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+
+        service.addWorkRow("25", BOXC_ID_1, 1, true);
+        service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true);
+        service.closeCsv();
+
+        assertFalse(Files.exists(project.getPostMigrationReportPath()));
     }
 
     private String mappingBody(String... rows) {
