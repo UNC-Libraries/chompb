@@ -6,7 +6,7 @@ import picocli.CommandLine.Option;
  * Options for generate file mapping
  * @author krwong
  */
-public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions implements GenerateFileMappingOptions {
+public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions {
     @Option(names = {"-g", "--glob-pattern"},
             description = {
                     "Optional pattern for adjusting which files within the base path to search.",

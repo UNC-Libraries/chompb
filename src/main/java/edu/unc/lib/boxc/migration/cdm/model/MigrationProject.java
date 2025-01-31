@@ -198,11 +198,4 @@ public class MigrationProject {
     public Path getAltTextPath() {
         return projectPath.resolve(ALT_TEXT_DIRNAME);
     }
-
-    /**
-     * @return Path of the velocicroptor data.csv results
-     */
-    public Path getVelocicroptorDataPath() {
-        return projectPath.resolve(VelocicroptorRemoteJob.VELOCICROPTOR_FILENAME);
-    }
 }

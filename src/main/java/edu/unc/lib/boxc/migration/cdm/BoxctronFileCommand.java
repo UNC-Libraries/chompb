@@ -67,58 +67,6 @@ public class BoxctronFileCommand {
         }
     }
 
-    @Command(name = "validate",
-            description = "Validate the boxctron access file mappings for this project")
-    public int validate(@Option(names = { "-f", "--force"},
-            description = "Ignore incomplete mappings") boolean force) throws Exception {
-        try {
-            initialize(false);
-            AccessFilesValidator validator = new AccessFilesValidator();
-            validator.setProject(project);
-            List<String> errors = validator.validateMappings(force);
-            if (errors.isEmpty()) {
-                outputLogger.info("PASS: Boxctron access file mapping at path {} is valid",
-                        project.getAccessFilesMappingPath());
-                return 0;
-            } else {
-                if (parentCommand.getVerbosity().equals(Verbosity.QUIET)) {
-                    outputLogger.info("FAIL: Boxctron access file mapping is invalid with {} errors", errors.size());
-                } else {
-                    outputLogger.info("FAIL: Boxctron access file mapping at path {} is invalid due to the following issues:",
-                            project.getAccessFilesMappingPath());
-                    for (String error : errors) {
-                        outputLogger.info("    - " + error);
-                    }
-                }
-                return 1;
-            }
-        } catch (MigrationException e) {
-            log.error("Failed to validate boxctron access file mappings", e);
-            outputLogger.info("FAIL: Failed to validate boxctron access file mappings: {}", e.getMessage());
-            return 1;
-        }
-    }
-
-    @Command(name = "status",
-            description = "Display status of the boxctron access file mappings for this project")
-    public int status() throws Exception {
-        try {
-            initialize(false);
-            AccessFilesStatusService statusService = new AccessFilesStatusService();
-            statusService.setProject(project);
-            statusService.report(parentCommand.getVerbosity());
-
-            return 0;
-        } catch (MigrationException | IllegalArgumentException e) {
-            outputLogger.info("Status failed: {}", e.getMessage());
-            return 1;
-        } catch (Exception e) {
-            log.error("Status failed", e);
-            outputLogger.info("Status failed: {}", e.getMessage(), e);
-            return 1;
-        }
-    }
-
     private void initialize(boolean dryRun) throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);

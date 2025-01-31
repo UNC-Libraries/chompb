@@ -99,7 +99,7 @@ public class BoxctronFileCommandTest extends AbstractCommandIT {
     }
 
     private void boxctronWriteCsv(String boxctronMappingBody) throws IOException {
-        FileUtils.write(project.getVelocicroptorDataPath().toFile(),
+        FileUtils.write(testHelper.getBoxctronFileService().getVelocicroptorDataPath(project.getProjectPath()).toFile(),
                 boxctronMappingBody, StandardCharsets.UTF_8);
     }
 

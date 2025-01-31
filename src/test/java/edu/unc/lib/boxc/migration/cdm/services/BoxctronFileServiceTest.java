@@ -243,7 +243,7 @@ public class BoxctronFileServiceTest {
     }
 
     private void boxctronWriteCsv(String boxctronMappingBody) throws IOException {
-        FileUtils.write(project.getVelocicroptorDataPath().toFile(),
+        FileUtils.write(service.getVelocicroptorDataPath(project.getProjectPath()).toFile(),
                 boxctronMappingBody, StandardCharsets.UTF_8);
     }
 }

@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.jobs.VelocicroptorRemoteJob;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.BoxctronFileMappingOptions;
 import org.apache.commons.csv.CSVFormat;
@@ -17,8 +18,6 @@ import java.sql.Connection;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -49,7 +48,7 @@ public class BoxctronFileService extends AccessFileService {
         ensureMappingState(options);
 
         // Gather listing of all potential source file paths to match against
-        List<String> candidatePaths = gatherCandidatePaths(project.getVelocicroptorDataPath());
+        List<String> candidatePaths = gatherCandidatePaths(getVelocicroptorDataPath(project.getProjectPath()));
 
         Path mappingPath = getMappingPath();
         boolean needsMerge = options.getUpdate() && Files.exists(mappingPath);
@@ -65,13 +64,9 @@ public class BoxctronFileService extends AccessFileService {
         Connection conn = null;
         try (var csvPrinter = openMappingsPrinter(mappingPath)) {
             // cdm ids and original file paths from source file mappings
-            var idsAndFilePaths = sourceFilesInfo.getMappings().stream()
-                    .collect(Collectors.toMap(SourceFilesInfo.SourceFileMapping::getCdmId,
-                            SourceFilesInfo.SourceFileMapping::getSourcePaths));
-
-            for (Entry<String, List<Path>> idAndFilePath : idsAndFilePaths.entrySet()) {
-                String cdmId = idAndFilePath.getKey();
-                List<Path> filePaths = idAndFilePath.getValue();
+            for (SourceFilesInfo.SourceFileMapping fileMapping : sourceFilesInfo.getMappings()) {
+                String cdmId = fileMapping.getCdmId();
+                List<Path> filePaths = fileMapping.getSourcePaths();
 
                 for (Path filePath : filePaths) {
                     if (candidatePaths.contains(filePath.toString())) {
@@ -132,5 +127,12 @@ public class BoxctronFileService extends AccessFileService {
 
     private Path computeAccessPath(Path originalPath) {
         return project.getProjectPath().resolve("processing/results/velocicroptor/output" + originalPath + ".jpg");
+    }
+
+    /**
+     * @return Path of the velocicroptor data.csv results
+     */
+    public Path getVelocicroptorDataPath(Path projectPath) {
+        return projectPath.resolve(VelocicroptorRemoteJob.VELOCICROPTOR_FILENAME);
     }
 }

@@ -412,7 +412,7 @@ public class SipServiceHelper {
     }
 
     private void boxctronWriteCsv(String mappingBody) throws IOException {
-        FileUtils.write(project.getVelocicroptorDataPath().toFile(),
+        FileUtils.write(boxctronFileService.getVelocicroptorDataPath(project.getProjectPath()).toFile(),
                 mappingBody, StandardCharsets.UTF_8);
     }
 
