@@ -107,6 +107,7 @@ public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions {
         this.lowercaseTemplate = lowercaseTemplate;
     }
 
+    @Override
     public boolean getUpdate() {
         return update;
     }
@@ -115,6 +116,7 @@ public class GenerateSourceFileMappingOptions extends SourceFileMappingOptions {
         this.update = update;
     }
 
+    @Override
     public boolean isForce() {
         return force;
     }

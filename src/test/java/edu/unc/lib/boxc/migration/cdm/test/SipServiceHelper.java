@@ -21,12 +21,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.auth.api.UserRole;
+import edu.unc.lib.boxc.migration.cdm.options.BoxctronFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
+import edu.unc.lib.boxc.migration.cdm.services.BoxctronFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.ExportObjectsService;
@@ -90,6 +92,7 @@ public class SipServiceHelper {
     private AltTextService altTextService;
     private AggregateFileMappingService aggregateFileMappingService;
     private AggregateFileMappingService aggregateBottomMappingService;
+    private BoxctronFileService boxctronFileService;
     private DescriptionsService descriptionsService;
     private DestinationsService destinationsService;
     private ArchivalDestinationsService archivalDestinationsService;
@@ -135,6 +138,9 @@ public class SipServiceHelper {
         archivalDestinationsService.setProject(project);
         archivalDestinationsService.setIndexService(indexService);
         archivalDestinationsService.setDestinationsService(destinationsService);
+        boxctronFileService = new BoxctronFileService();
+        boxctronFileService.setProject(project);
+        boxctronFileService.setIndexService(indexService);
         permissionsService = new PermissionsService();
         permissionsService.setProject(project);
         streamingMetadataService = new StreamingMetadataService();
@@ -392,6 +398,24 @@ public class SipServiceHelper {
         return sourcePaths;
     }
 
+    public void populateBoxctronFiles(String boxctronPath1, String boxctronPath2) throws Exception {
+        boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\",",
+                boxctronPath2 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
+        BoxctronFileMappingOptions options = new BoxctronFileMappingOptions();
+        options.setUpdate(true);
+        boxctronFileService.generateMapping(options);
+    }
+
+    private String boxctronMappingBody(String... rows) {
+        return String.join(",", BoxctronFileService.DATA_CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void boxctronWriteCsv(String mappingBody) throws IOException {
+        FileUtils.write(boxctronFileService.getVelocicroptorDataPath(project.getProjectPath()).toFile(),
+                mappingBody, StandardCharsets.UTF_8);
+    }
+
     public GenerateSourceFileMappingOptions makeSourceFileOptions(Path basePath) {
         GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
         options.setBasePath(basePath);
@@ -556,6 +580,15 @@ public class SipServiceHelper {
             this.aggregateBottomMappingService.setIndexService(indexService);
         }
         return this.aggregateBottomMappingService;
+    }
+
+    public BoxctronFileService getBoxctronFileService() {
+        if (this.boxctronFileService == null) {
+            this.boxctronFileService = new BoxctronFileService();
+            this.boxctronFileService.setProject(project);
+            this.boxctronFileService.setIndexService(indexService);
+        }
+        return this.boxctronFileService;
     }
 
     public GroupMappingService getGroupMappingService() {

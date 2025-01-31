@@ -18,8 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author bbpennel
  */
 public class AccessFilesCommandIT extends AbstractCommandIT {
-
-
     private Path basePath;
 
     @BeforeEach

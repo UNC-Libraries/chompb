@@ -31,6 +31,7 @@ public class VelocicroptorRemoteJob {
             .withZone(ZoneId.systemDefault());
     private static final String JOB_FILENAME = "velocicroptor_job.sh";
     public static final String JOB_NAME = "velocicroptor";
+    public static final String VELOCICROPTOR_FILENAME = RESULTS_REL_PATH + "/output/data.csv";
 
     private SshClientService sshClientService;
     private MigrationProject project;

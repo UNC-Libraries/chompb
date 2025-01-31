@@ -2,8 +2,8 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.options.GenerateFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -48,7 +48,7 @@ public class AggregateFileMappingService extends SourceFileService {
     }
 
     @Override
-    protected SourceFilesInfo.SourceFileMapping resolveSourcePathConflict(GenerateSourceFileMappingOptions options,
+    protected SourceFilesInfo.SourceFileMapping resolveSourcePathConflict(GenerateFileMappingOptions options,
                                                                           SourceFilesInfo.SourceFileMapping origMapping,
                                                                           SourceFilesInfo.SourceFileMapping updateMapping) {
         if (options.isForce() || origMapping.getSourcePaths() == null) {
