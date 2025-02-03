@@ -149,7 +149,7 @@ public class SipService {
             System.out.println("Work Generation Progress:");
             DisplayProgressUtil.displayProgress(workCount, total);
 
-            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + queryDateField()
                         + "," + CdmIndexService.ENTRY_TYPE_FIELD
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
@@ -212,6 +212,15 @@ public class SipService {
             } catch (Exception e) {
                 log.error("Failed to close resources", e);
             }
+        }
+    }
+
+    // Returns the CDM created date field for CDM projects, or the current date for other types of projects
+    private String queryDateField() {
+        if (MigrationProject.PROJECT_SOURCE_CDM.equals(project.getProjectProperties().getProjectSource())) {
+            return CdmFieldInfo.CDM_CREATED;
+        } else {
+            return "date('now')";
         }
     }
 
