@@ -98,6 +98,7 @@ public class SipService {
 
         workGeneratorFactory = new WorkGeneratorFactory();
         workGeneratorFactory.setOptions(options);
+        workGeneratorFactory.setProject(project);
         workGeneratorFactory.setSourceFilesInfo(sourceFileService.loadMappings());
         workGeneratorFactory.setCdmToDestMapper(cdmToDestMapper);
         workGeneratorFactory.setSipPremisLogger(sipPremisLogger);
