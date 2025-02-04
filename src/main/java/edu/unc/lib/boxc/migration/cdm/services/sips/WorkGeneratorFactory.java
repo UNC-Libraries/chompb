@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.services.sips;
 
 import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
@@ -40,6 +41,7 @@ public class WorkGeneratorFactory {
     private PIDMinter pidMinter;
     private PermissionsInfo permissionsInfo;
     private StreamingMetadataService streamingMetadataService;
+    private MigrationProject project;
 
     public WorkGenerator create(String cdmId, String cdmCreated, String entryType) throws IOException {
         WorkGenerator gen;
@@ -67,6 +69,7 @@ public class WorkGeneratorFactory {
         gen.postMigrationReportService = postMigrationReportService;
         gen.permissionsInfo = permissionsInfo;
         gen.streamingMetadataService = streamingMetadataService;
+        gen.project = project;
         return gen;
     }
 
@@ -136,5 +139,9 @@ public class WorkGeneratorFactory {
 
     public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
         this.streamingMetadataService = streamingMetadataService;
+    }
+
+    public void setProject(MigrationProject project) {
+        this.project = project;
     }
 }

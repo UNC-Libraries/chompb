@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -81,7 +82,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateBasePathIsNotADirectoryTest() throws Exception {
-        setIndexedDate();
+        testHelper.indexExportData("mini_gilmer");
         GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Files.delete(basePath);
         Files.createFile(basePath);
@@ -97,7 +98,7 @@ public class SourceFileServiceTest {
 
     @Test
     public void generateBasePathDoesNotExistTest() throws Exception {
-        setIndexedDate();
+        testHelper.indexExportData("mini_gilmer");
         GenerateSourceFileMappingOptions options = makeDefaultOptions();
         Files.delete(basePath);
 
@@ -122,6 +123,19 @@ public class SourceFileServiceTest {
         assertMappingPresent(info, "27", "276_203_E.tif", null);
 
         assertMappedDatePresent();
+    }
+
+    @Test
+    public void generateWithInvalidFieldTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
+        options.setExportField("invalidField");
+
+        var thrown = assertThrows(IllegalArgumentException.class, () -> {
+            service.generateMapping(options);
+        });
+        assertTrue(thrown.getMessage().contains("Export field 'invalidField' is not a valid field in this project"),
+                "Unexpected exception message: " + thrown.getMessage());
     }
 
     @Test

@@ -76,6 +76,7 @@ public class SourceFileService {
     public void generateMapping(GenerateSourceFileMappingOptions options) throws IOException {
         assertProjectStateValid();
         ensureMappingState(options);
+        validateExportField(options);
 
         // Gather listing of all potential source file paths to match against
         Map<String, List<String>> candidatePaths = gatherCandidatePaths(options);
@@ -233,6 +234,18 @@ public class SourceFileService {
             }
         });
         return candidatePaths;
+    }
+
+    private void validateExportField(GenerateSourceFileMappingOptions options) {
+        if (StringUtils.isBlank(options.getExportField())) {
+            return;
+        }
+        var fieldService = new CdmFieldService();
+        var fieldInfo = fieldService.loadFieldsFromProject(project);
+        if (!fieldInfo.listAllExportFields().contains(options.getExportField())) {
+            throw new IllegalArgumentException("Export field '" + options.getExportField()
+                    + "' is not a valid field in this project");
+        }
     }
 
     protected void ensureMappingState(GenerateFileMappingOptions options) {

@@ -5,6 +5,7 @@ import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationSipEntry;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
@@ -72,6 +73,7 @@ public class WorkGenerator {
     protected PostMigrationReportService postMigrationReportService;
     protected PermissionsInfo permissionsInfo;
     protected StreamingMetadataService streamingMetadataService;
+    protected MigrationProject project;
 
     protected String cdmId;
     protected String cdmCreated;

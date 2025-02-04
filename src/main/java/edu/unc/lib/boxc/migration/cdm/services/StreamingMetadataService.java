@@ -102,7 +102,7 @@ public class StreamingMetadataService {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + STREAMING_FILE_FIELD + ", " + DURACLOUD_SPACE_FIELD
                     + " from " + CdmIndexService.TB_NAME
-                    + " where " + CdmFieldInfo.CDM_ID + " = " + cdmId);
+                    + " where " + CdmFieldInfo.CDM_ID + " = '" + cdmId + "'");
             while (rs.next()) {
                 if (!rs.getString(1).isEmpty()) {
                     streamingFile = rs.getString(1);

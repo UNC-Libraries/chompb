@@ -98,6 +98,7 @@ public class SipService {
 
         workGeneratorFactory = new WorkGeneratorFactory();
         workGeneratorFactory.setOptions(options);
+        workGeneratorFactory.setProject(project);
         workGeneratorFactory.setSourceFilesInfo(sourceFileService.loadMappings());
         workGeneratorFactory.setCdmToDestMapper(cdmToDestMapper);
         workGeneratorFactory.setSipPremisLogger(sipPremisLogger);
@@ -149,7 +150,7 @@ public class SipService {
             System.out.println("Work Generation Progress:");
             DisplayProgressUtil.displayProgress(workCount, total);
 
-            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + queryDateField()
                         + "," + CdmIndexService.ENTRY_TYPE_FIELD
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
@@ -204,10 +205,23 @@ public class SipService {
         } catch (SQLException | IOException e) {
             throw new MigrationException("Failed to generate SIP", e);
         } finally {
-            CdmIndexService.closeDbConnection(conn);
-            destEntries.stream().forEach(DestinationSipEntry::close);
-            redirectMappingService.closeCsv();
-            postMigrationReportService.closeCsv();
+            try {
+                CdmIndexService.closeDbConnection(conn);
+                destEntries.stream().forEach(DestinationSipEntry::close);
+                redirectMappingService.closeCsv();
+                postMigrationReportService.closeCsv();
+            } catch (Exception e) {
+                log.error("Failed to close resources", e);
+            }
+        }
+    }
+
+    // Returns the CDM created date field for CDM projects, or the current date for other types of projects
+    private String queryDateField() {
+        if (MigrationProject.PROJECT_SOURCE_CDM.equals(project.getProjectProperties().getProjectSource())) {
+            return CdmFieldInfo.CDM_CREATED;
+        } else {
+            return "date('now')";
         }
     }
 

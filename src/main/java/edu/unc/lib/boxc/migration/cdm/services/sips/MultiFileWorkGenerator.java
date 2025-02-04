@@ -3,6 +3,7 @@ package edu.unc.lib.boxc.migration.cdm.services.sips;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.model.api.ids.PID;
@@ -36,7 +37,7 @@ public class MultiFileWorkGenerator extends WorkGenerator {
     protected List<PID> addChildObjects() throws IOException {
         try {
             Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + CdmFieldInfo.CDM_CREATED
+            ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID + "," + queryDateField()
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + CdmIndexService.PARENT_ID_FIELD + " = '" + cdmId + "'"
                     + " order by " + CdmIndexService.CHILD_ORDER_FIELD + " ASC, " + CdmFieldInfo.CDM_ID + " ASC");
@@ -57,6 +58,15 @@ public class MultiFileWorkGenerator extends WorkGenerator {
             return childPids;
         } catch (SQLException e) {
             throw new MigrationException(e);
+        }
+    }
+
+    // Returns the CDM created date field for CDM projects, or the current date for other types of projects
+    private String queryDateField() {
+        if (MigrationProject.PROJECT_SOURCE_CDM.equals(project.getProjectProperties().getProjectSource())) {
+            return CdmFieldInfo.CDM_CREATED;
+        } else {
+            return "date('now')";
         }
     }
 

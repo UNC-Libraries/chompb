@@ -5,9 +5,11 @@ import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.AggregateFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
@@ -15,6 +17,7 @@ import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
@@ -54,6 +57,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -102,9 +108,15 @@ public class SipServiceTest {
     @BeforeEach
     public void setup() throws Exception {
         closeable = openMocks(this);
+        setupProject(CdmEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
+    }
+
+    private void setupProject(String cdmEnvId, String projectSource) throws Exception {
+        FileUtils.deleteQuietly(tmpFolder.resolve(PROJECT_NAME).toFile());
+
         project = MigrationProjectFactory.createMigrationProject(
-                tmpFolder, PROJECT_NAME, null, USERNAME, CdmEnvironmentHelper.DEFAULT_ENV_ID,
-                BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
+                tmpFolder, PROJECT_NAME, null, USERNAME, cdmEnvId,
+                BxcEnvironmentHelper.DEFAULT_ENV_ID, projectSource);
 
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = testHelper.createSipsService();
@@ -1509,6 +1521,62 @@ public class SipServiceTest {
         testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), accessLocs.get(1),  "27");
 
         assertPersistedSipInfoMatches(sip);
+    }
+
+    @Test
+    public void generateSipWithFileSystemSourceTest() throws Exception {
+        setupProject(null, MigrationProject.PROJECT_SOURCE_FILES);
+
+        indexFromCsv(Path.of("src/test/resources/files/more_fields.csv"));
+        testHelper.getDescriptionsService().generateDocuments(false);
+        testHelper.getDescriptionsService().expandDescriptions();
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+
+        var sourceOptions = testHelper.makeSourceFileOptions(Paths.get("src/test/resources/files/"));
+        sourceOptions.setExportField("filename");
+        testHelper.getSourceFileService().generateMapping(sourceOptions);
+
+        var currentDate = Instant.now().atZone(ZoneOffset.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE);
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+        System.out.println(model);
+
+        // Verify that all the works were generated and given a timestamp of today
+        for (var childNode : depBagChildren) {
+            var childResc = childNode.asResource();
+            assertTrue(childResc.hasLiteral(CdrDeposit.createTime, currentDate + "T00:00:00.000Z"));
+            var childBag = model.getBag(childResc);
+            var childBagChildren = childBag.iterator().toList();
+            assertEquals(1, childBagChildren.size());
+            var fileResc = childBagChildren.get(0).asResource();
+            assertTrue(fileResc.hasProperty(RDF.type, Cdr.FileObject));
+        }
+    }
+
+    public void indexFromCsv(Path csvPath) throws Exception {
+        CdmFieldInfo csvExportFields = testHelper.getFieldService().retrieveFieldsFromCsv(csvPath);
+        testHelper.getFieldService().persistFieldsToProject(project, csvExportFields);
+        project.getProjectProperties().setExportedDate(Instant.now());
+
+        CdmIndexOptions options = new CdmIndexOptions();
+        options.setCsvFile(csvPath);
+        options.setForce(false);
+
+        testHelper.getIndexService().createDatabase(options);
+        testHelper.getIndexService().indexAllFromCsv(options);
+        ProjectPropertiesSerialization.write(project);
     }
 
     private void solrResponseWithPid() throws Exception {

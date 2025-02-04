@@ -72,6 +72,7 @@ public class AggregateFilesCommand {
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("Cannot generate aggregate mapping: {}", e.getMessage());
+            log.warn("Cannot generate aggregate mapping", e);
             return 1;
         } catch (Exception e) {
             log.error("Failed to map aggregate files", e);
