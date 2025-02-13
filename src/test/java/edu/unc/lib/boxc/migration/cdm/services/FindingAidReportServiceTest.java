@@ -66,7 +66,7 @@ public class FindingAidReportServiceTest {
         try (CSVParser csvParser = parser(service.getFieldValuesReportPath(options))) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertIterableEquals(Arrays.asList("descri_value", "count"), rows.get(0));
-            assertIterableEquals(Arrays.asList("03883", "2"), rows.get(1));
+            assertIterableEquals(Arrays.asList("03883", "3"), rows.get(1));
             assertEquals(2, rows.size());
         }
     }
@@ -99,8 +99,9 @@ public class FindingAidReportServiceTest {
         try (CSVParser csvParser = parser(service.getHookIdReportPath())) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertIterableEquals(Arrays.asList("hookid", "count"), rows.get(0));
-            assertIterableEquals(Arrays.asList("03883_folder_5", "2"), rows.get(1));
-            assertEquals(2, rows.size());
+            assertIterableEquals(Arrays.asList("03883_folder_9", "2"), rows.get(1));
+            assertIterableEquals(Arrays.asList("03883_folder_5", "1"), rows.get(2));
+            assertEquals(3, rows.size());
         }
     }
 
