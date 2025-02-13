@@ -83,7 +83,9 @@ public class FindingAidReportService {
             var stmt = conn.createStatement();
             var rs = stmt.executeQuery(query);
             while (rs.next()) {
-                csvPrinter.printRecord(rs.getString(1) + "_" + rs.getString(2), rs.getString(3));
+                if (!rs.getString(1).isBlank() && !rs.getString(2).isBlank()) {
+                    csvPrinter.printRecord(rs.getString(1) + "_" + rs.getString(2), rs.getString(3));
+                }
             }
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
