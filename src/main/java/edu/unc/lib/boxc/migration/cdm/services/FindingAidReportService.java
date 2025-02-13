@@ -71,6 +71,7 @@ public class FindingAidReportService {
                 + " from " + CdmIndexService.TB_NAME
                 + " where " + FindingAidService.DESCRI_FIELD + " is not null "
                 + " and " + FindingAidService.CONTRI_FIELD + " is not null "
+                + " group by " + FindingAidService.DESCRI_FIELD + ", " + FindingAidService.CONTRI_FIELD
                 + " order by count(*) desc";
 
         assertProjectStateValid();
