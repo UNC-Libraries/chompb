@@ -32,6 +32,7 @@ import edu.unc.lib.boxc.migration.cdm.services.BoxctronFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.ExportObjectsService;
+import edu.unc.lib.boxc.migration.cdm.services.FindingAidReportService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
@@ -97,6 +98,7 @@ public class SipServiceHelper {
     private DestinationsService destinationsService;
     private ArchivalDestinationsService archivalDestinationsService;
     private CdmIndexService indexService;
+    private FindingAidReportService findingAidReportService;
     private GroupMappingService groupMappingService;
     private PermissionsService permissionsService;
     private StreamingMetadataService streamingMetadataService;
@@ -141,6 +143,9 @@ public class SipServiceHelper {
         boxctronFileService = new BoxctronFileService();
         boxctronFileService.setProject(project);
         boxctronFileService.setIndexService(indexService);
+        findingAidReportService = new FindingAidReportService();
+        findingAidReportService.setProject(project);
+        findingAidReportService.setIndexService(indexService);
         permissionsService = new PermissionsService();
         permissionsService.setProject(project);
         streamingMetadataService = new StreamingMetadataService();
@@ -611,6 +616,10 @@ public class SipServiceHelper {
 
     public ArchivalDestinationsService getArchivalDestinationsService() {
         return archivalDestinationsService;
+    }
+
+    public FindingAidReportService getFindingAidReportService() {
+        return findingAidReportService;
     }
 
     public CdmIndexService getIndexService() {

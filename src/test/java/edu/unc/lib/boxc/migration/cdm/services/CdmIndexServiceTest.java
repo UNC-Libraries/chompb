@@ -560,7 +560,7 @@ public class CdmIndexServiceTest {
         service.indexAll();
 
         assertDateIndexedPresent();
-        assertRowCount(2);
+        assertRowCount(3);
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
@@ -577,6 +577,11 @@ public class CdmIndexServiceTest {
 
             rs.next();
             assertEquals(548, rs.getInt(CdmFieldInfo.CDM_ID));
+            assertEquals("Folder 9: Reports and writings on social work: Scan 51", rs.getString("title"));
+
+
+            rs.next();
+            assertEquals(549, rs.getInt(CdmFieldInfo.CDM_ID));
             assertEquals("Folder 9: Reports and writings on social work: Scan 51", rs.getString("title"));
 
         } finally {
