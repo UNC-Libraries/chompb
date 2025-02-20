@@ -14,6 +14,7 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import org.slf4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
+import picocli.CommandLine.Option;
 
 /**
  * @author bbpennel
@@ -72,7 +73,8 @@ public class CdmFieldsCommand {
 
     @Command(name = "generate_field_url_report",
             description = "Generate an informational list of CDM fields with URLs")
-    public int generateFieldsAndUrlsReport() throws Exception {
+    public int generateFieldsAndUrlsReport(@Option(names = { "-fa", "--finding-aids" },
+            description = "Generate finding aid url report") boolean findingAid) throws Exception {
         try {
             MigrationProject project = MigrationProjectFactory
                     .loadMigrationProject(parentCommand.getWorkingDirectory());
@@ -80,7 +82,7 @@ public class CdmFieldsCommand {
             fieldUrlAssessmentService.setIndexService(indexService);
             fieldUrlAssessmentService.setCdmFieldService(fieldService);
             indexService.setProject(project);
-            fieldUrlAssessmentService.generateReport();
+            fieldUrlAssessmentService.generateReport(findingAid);
             outputLogger.info("Fields with URLs report generated!");
             return 0;
         } catch (MigrationException | IllegalArgumentException e) {
