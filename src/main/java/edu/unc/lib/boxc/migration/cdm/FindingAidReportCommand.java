@@ -78,7 +78,12 @@ public class FindingAidReportCommand {
     }
 
     @Command(name = "collection_report",
-            description = {"Generate the report of finding aid hookids and lists counts"})
+            description = {"Generate the collection report to assess collection for associations with finding aids",
+                "Lists current collection number and hook id. If collection number is set," +
+                        " displays a list of unique collection numbers.",
+                "If collection number is not set, scan other fields for potential collection ids and list several.",
+                "Also displays percentage of records with the following fields populated: collec, descri, findin, " +
+                        "locati, title, prefer, creato, contri, relatid"})
     public int collectionReport() throws Exception {
         long start = System.nanoTime();
 
