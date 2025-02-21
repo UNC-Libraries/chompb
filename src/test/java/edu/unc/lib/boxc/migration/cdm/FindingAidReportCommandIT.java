@@ -55,13 +55,12 @@ public class FindingAidReportCommandIT extends AbstractCommandIT {
 
     @Test
     public void collectionReportTest() throws Exception {
-        Files.copy(Paths.get("src/test/resources/roy_brown/cdm_fields.csv"), project.getFieldsPath());
+        testHelper.indexExportData(Paths.get("src/test/resources/roy_brown/cdm_fields.csv"), "03883");
         CdmFieldService fieldService = new CdmFieldService();
         FindingAidService findingAidService = new FindingAidService();
         findingAidService.setCdmFieldService(fieldService);
         findingAidService.setProject(project);
         findingAidService.recordFindingAid();
-        testHelper.indexExportData("03883");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
