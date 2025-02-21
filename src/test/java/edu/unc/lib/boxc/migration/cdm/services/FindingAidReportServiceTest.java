@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.migration.cdm.options.FindingAidReportOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
+import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -19,6 +20,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -115,13 +117,12 @@ public class FindingAidReportServiceTest extends AbstractOutputTest {
 
     @Test
     public void assessCollectionReportWithFindingAidTest() throws Exception {
-        Files.copy(Paths.get("src/test/resources/roy_brown/cdm_fields.csv"), project.getFieldsPath());
+        testHelper.indexExportData(Paths.get("src/test/resources/roy_brown/cdm_fields.csv"), "03883");
         CdmFieldService fieldService = new CdmFieldService();
         FindingAidService findingAidService = new FindingAidService();
         findingAidService.setCdmFieldService(fieldService);
         findingAidService.setProject(project);
         findingAidService.recordFindingAid();
-        testHelper.indexExportData("03883");
 
         service.collectionReport();
 
@@ -149,15 +150,15 @@ public class FindingAidReportServiceTest extends AbstractOutputTest {
 
         assertOutputMatches(".*Collection number is not set..*");
         assertOutputMatches(".*Possible collection numbers:.*");
-        assertOutputMatches(".*collec:.*0\\/3.*100%.*");
+        assertOutputMatches(".*collec:.*0\\/3.*0%.*");
         assertOutputMatches(".*descri:.*3\\/3.*100%.*");
-        assertOutputMatches(".*findin:.*0\\/3.*100%.*");
-        assertOutputMatches(".*locati:.*0\\/3.*100%.*");
+        assertOutputMatches(".*findin:.*0\\/3.*0%.*");
+        assertOutputMatches(".*locati:.*0\\/3.*0%.*");
         assertOutputMatches(".*title:.*3\\/3.*100%.*");
-        assertOutputMatches(".*prefer:.*0\\/3.*100%.*");
+        assertOutputMatches(".*prefer:.*0\\/3.*0%.*");
         assertOutputMatches(".*creato:.*3\\/3.*100%.*");
-        assertOutputMatches(".*contri:.*2\\/3.*100%.*");
-        assertOutputMatches(".*relatid:.*0\\/3.*100%.*");
+        assertOutputMatches(".*contri:.*2\\/3.*67%.*");
+        assertOutputMatches(".*relatid:.*0\\/3.*0%.*");
     }
 
     private CSVParser parser(Path csvPath) throws IOException {

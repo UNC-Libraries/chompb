@@ -83,8 +83,8 @@ public class FindingAidReportService {
     public void hookIdReport() throws Exception {
         String query = "select " + FindingAidService.DESCRI_FIELD + "," + FindingAidService.CONTRI_FIELD + ", count(*)"
                 + " from " + CdmIndexService.TB_NAME
-                + " where " + FindingAidService.DESCRI_FIELD + " is not null "
-                + " and " + FindingAidService.CONTRI_FIELD + " is not null "
+                + " where " + FindingAidService.DESCRI_FIELD + " != ''"
+                + " and " + FindingAidService.CONTRI_FIELD + " != ''"
                 + " group by " + FindingAidService.DESCRI_FIELD + ", " + FindingAidService.CONTRI_FIELD
                 + " order by count(*) desc";
 
@@ -129,10 +129,10 @@ public class FindingAidReportService {
             String collectionNumber = project.getProjectProperties().getCollectionNumber();
 
             List<String> uniqueCollectionIds = listCollectionIds();
-            int collectionIdRecords = countRecords("select count('" + FindingAidService.CONTRI_FIELD
-                    + "')" + " from " + CdmIndexService.TB_NAME);
-            int hookIdRecords = countRecords("select count('" + FindingAidService.DESCRI_FIELD
-                    + "')" + " from " + CdmIndexService.TB_NAME);
+            int collectionIdRecords = countRecords("select count(" + FindingAidService.CONTRI_FIELD
+                    + ")" + " from " + CdmIndexService.TB_NAME);
+            int hookIdRecords = countRecords("select count(" + FindingAidService.DESCRI_FIELD
+                    + ")" + " from " + CdmIndexService.TB_NAME);
 
             showField("Hook id", hookId);
             showField("Collection number", collectionNumber);
@@ -149,14 +149,17 @@ public class FindingAidReportService {
         outputLogger.info("{}{}", INDENT, "Fields populated:");
         List<String> fieldsToReport = Arrays.asList("collec", "descri", "findin", "locati", "title", "prefer",
                 "creato", "contri", "relatid");
+        // check project's list of fields and make sure field to report exists in project before querying database
+        fieldService.validateFieldsFile(project);
+        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+        List<String> exportFields = fieldInfo.listAllExportFields();
+
         for (String field : fieldsToReport) {
-            String query = "select count(*)" + " from (select '" + field + "' from " + CdmIndexService.TB_NAME
-                    + " where '" + field + "' is not null or trim('" + field + "') != '')";
-//            String query = "select count('" + field + "')" + " from " + CdmIndexService.TB_NAME;
-//            + " where " + field + " is not null
-//             or trim('" + field + "') != ''
-//             or length(trim('" + field + "')) != 0";
-            int fieldRecords = countRecords(query);
+            int fieldRecords = 0;
+            if (exportFields.contains(field)) {
+                String query = "select count(*) from " + CdmIndexService.TB_NAME + " where " + field + " != ''";
+                fieldRecords = countRecords(query);
+            }
             displayProgressWithLabel(field, fieldRecords, totalRecords);
         }
     }
@@ -248,7 +251,7 @@ public class FindingAidReportService {
                 value, format("%.1f", percent));
     }
 
-    protected void displayProgressWithLabel(String label, long current, long total) {
+    protected void displayProgressWithLabel(String label, int current, int total) {
         int padding = 10 - label.length();
         long percent = Math.round(((float) current / total) * 100);
         int progressBars = (int) Math.round(percent / PROGRESS_BAR_DIVISOR);
