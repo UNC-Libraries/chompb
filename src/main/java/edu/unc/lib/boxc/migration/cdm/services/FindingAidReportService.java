@@ -143,8 +143,12 @@ public class FindingAidReportService {
         } else {
             outputLogger.info("{}{}", INDENT, "Collection number is not set.");
             outputLogger.info("{}{}", INDENT, "Possible collection numbers:");
-            Map<String, String> potentialCollectionIds = listPotentialCollectionIds();
-            showFieldMapValues(potentialCollectionIds);
+            Map<String, List<String>> potentialCollectionIds = listPotentialCollectionIds();
+            if (potentialCollectionIds.isEmpty()) {
+                outputLogger.info("no potential collection ids found");
+            } else {
+                showFieldMapValues(potentialCollectionIds);
+            }
         }
 
         outputLogger.info("{}{}", INDENT, "Fields populated:");
@@ -204,29 +208,28 @@ public class FindingAidReportService {
     /**
      * Map of potential collection id values and the fields they come from
      */
-    private Map<String, String> listPotentialCollectionIds() {
+    private Map<String, List<String>> listPotentialCollectionIds() {
         fieldService.validateFieldsFile(project);
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
 
-        Map<String, String> potentialCollectionIds = new HashMap<>();
+        Map<String, List<String>> potentialCollectionIds = new HashMap<>();
         // only collect the first 10 potential ids
         try (Connection conn = indexService.openDbConnection()) {
             var stmt = conn.createStatement();
             for (String field : exportFields) {
+                List<String> ids = new ArrayList<>();
                 ResultSet rs = stmt.executeQuery(" select " + field + " from " + CdmIndexService.TB_NAME
                         + " where " + field + " like " + "'^[A-Za-z0-9]{5}-?z?$' limit 10");
                 while (rs.next()) {
-                    potentialCollectionIds.put(field, rs.getString(1));
+                    ids.add(rs.getString(1));
                 }
+                potentialCollectionIds.put(field, ids);
             }
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
         }
 
-        if (potentialCollectionIds.isEmpty()) {
-            potentialCollectionIds.put("no potential collection ids found", "");
-        }
         return potentialCollectionIds;
     }
 
@@ -241,8 +244,8 @@ public class FindingAidReportService {
         }
     }
 
-    protected void showFieldMapValues(Map<String, String> values) {
-        for (Map.Entry<String, String> value : values.entrySet()) {
+    protected void showFieldMapValues(Map<String, List<String>> values) {
+        for (Map.Entry<String, List<String>> value : values.entrySet()) {
             outputLogger.info("{}{}* {}: {}", INDENT, INDENT, value.getKey(), value.getValue());
         }
     }
