@@ -131,9 +131,9 @@ public class FindingAidReportService {
 
             List<String> uniqueCollectionIds = listCollectionIds();
             int collectionIdRecords = countRecords("select count(*)"
-                    + " from " + CdmIndexService.TB_NAME + " where " + FindingAidService.CONTRI_FIELD + " != ''");
-            int hookIdRecords = countRecords("select count(*)"
                     + " from " + CdmIndexService.TB_NAME + " where " + FindingAidService.DESCRI_FIELD + " != ''");
+            int hookIdRecords = countRecords("select count(*)"
+                    + " from " + CdmIndexService.TB_NAME + " where " + FindingAidService.CONTRI_FIELD + " != ''");
 
             showField("Hook id", hookId);
             showField("Collection number", collectionNumber);
