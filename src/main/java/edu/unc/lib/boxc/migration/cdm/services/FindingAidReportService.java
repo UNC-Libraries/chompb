@@ -5,6 +5,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.FindingAidReportOptions;
+import edu.unc.lib.boxc.migration.cdm.util.DisplayProgressUtil;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;
@@ -18,7 +19,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static java.lang.String.format;
@@ -33,8 +36,6 @@ public class FindingAidReportService {
     private static final Logger log = getLogger(FindingAidReportService.class);
     protected static final String INDENT = "    ";
     private static final int MIN_LABEL_WIDTH = 20;
-    private static final int PROGRESS_BAR_UNITS = 40;
-    private static final double PROGRESS_BAR_DIVISOR = (double) 100 / PROGRESS_BAR_UNITS;
     public static final String FIELD_VALUES_REPORT = "_report.csv";
     public static final String HOOK_ID_REPORT = "hookid_report.csv";
     public static final String[] HOOKID_CSV_HEADERS = new String[] {FindingAidService.HOOK_ID_FIELD_DESC, "count"};
@@ -142,8 +143,8 @@ public class FindingAidReportService {
         } else {
             outputLogger.info("{}{}", INDENT, "Collection number is not set.");
             outputLogger.info("{}{}", INDENT, "Possible collection numbers:");
-            List<String> potentialCollectionIds = listPotentialCollectionIds();
-            showFieldListValues(potentialCollectionIds);
+            Map<String, String> potentialCollectionIds = listPotentialCollectionIds();
+            showFieldMapValues(potentialCollectionIds);
         }
 
         outputLogger.info("{}{}", INDENT, "Fields populated:");
@@ -160,7 +161,7 @@ public class FindingAidReportService {
                 String query = "select count(*) from " + CdmIndexService.TB_NAME + " where " + field + " != ''";
                 fieldRecords = countRecords(query);
             }
-            displayProgressWithLabel(field, fieldRecords, totalRecords);
+            outputLogger.info(DisplayProgressUtil.displayProgressWithLabel(field, fieldRecords, totalRecords));
         }
     }
 
@@ -201,26 +202,22 @@ public class FindingAidReportService {
     }
 
     /**
-     * List of potential collection id values
+     * Map of potential collection id values and the fields they come from
      */
-    private List<String> listPotentialCollectionIds() {
+    private Map<String, String> listPotentialCollectionIds() {
         fieldService.validateFieldsFile(project);
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
 
-        List<String> potentialCollectionIds = new ArrayList<>();
+        Map<String, String> potentialCollectionIds = new HashMap<>();
         // only collect the first 10 potential ids
-        int i = 0;
         try (Connection conn = indexService.openDbConnection()) {
             var stmt = conn.createStatement();
             for (String field : exportFields) {
-                ResultSet rs = stmt.executeQuery(" select '" + field + "' from " + CdmIndexService.TB_NAME
-                        + " where '" + field + "' like " + "'^[A-Za-z0-9]{5}-?z?$'");
+                ResultSet rs = stmt.executeQuery(" select " + field + " from " + CdmIndexService.TB_NAME
+                        + " where " + field + " like " + "'^[A-Za-z0-9]{5}-?z?$' limit 10");
                 while (rs.next()) {
-                    if (!rs.getString(1).isBlank() && i < 10) {
-                        potentialCollectionIds.add(rs.getString(1));
-                        i++;
-                    }
+                    potentialCollectionIds.put(field, rs.getString(1));
                 }
             }
         } catch (SQLException e) {
@@ -228,7 +225,7 @@ public class FindingAidReportService {
         }
 
         if (potentialCollectionIds.isEmpty()) {
-            potentialCollectionIds.add("no potential collection ids found");
+            potentialCollectionIds.put("no potential collection ids found", "");
         }
         return potentialCollectionIds;
     }
@@ -244,29 +241,17 @@ public class FindingAidReportService {
         }
     }
 
+    protected void showFieldMapValues(Map<String, String> values) {
+        for (Map.Entry<String, String> value : values.entrySet()) {
+            outputLogger.info("{}{}* {}: {}", INDENT, INDENT, value.getKey(), value.getValue());
+        }
+    }
+
     protected void showFieldWithPercent(String label, int value, int total) {
         int padding = MIN_LABEL_WIDTH - label.length();
         double percent = (double) value / total * 100;
         outputLogger.info("{}{}: {}{} ({}%)", INDENT, label, repeat(' ', padding),
                 value, format("%.1f", percent));
-    }
-
-    protected void displayProgressWithLabel(String label, int current, int total) {
-        int padding = 10 - label.length();
-        long percent = Math.round(((float) current / total) * 100);
-        int progressBars = (int) Math.round(percent / PROGRESS_BAR_DIVISOR);
-
-        StringBuilder sb = new StringBuilder("\r");
-        sb.append(INDENT).append(INDENT).append(label).append(":").append(repeat(' ', padding)).append("|");
-        sb.append(repeat("=", progressBars));
-        sb.append(repeat(" ", PROGRESS_BAR_UNITS - progressBars));
-        sb.append("|  ").append(current).append("/").append(total).append("  |  ");
-        sb.append(format("%1$3s", percent)).append("%");;
-        // Append spaces to clear rest of line
-        sb.append(repeat(" ", 40));
-        sb.append("\r");
-
-        outputLogger.info(sb.toString());
     }
 
     protected void assertProjectStateValid() {

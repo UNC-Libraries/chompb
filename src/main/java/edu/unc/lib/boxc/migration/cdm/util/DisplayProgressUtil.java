@@ -11,6 +11,7 @@ import static org.apache.commons.lang3.StringUtils.repeat;
 public class DisplayProgressUtil {
     private static final int PROGRESS_BAR_UNITS = 40;
     private static final double PROGRESS_BAR_DIVISOR = (double) 100 / PROGRESS_BAR_UNITS;
+    protected static final String INDENT = "    ";
 
     /**
      * Render a progress bar, percent, and total.
@@ -36,6 +37,24 @@ public class DisplayProgressUtil {
 
         System.out.print(sb.toString());
         System.out.flush();
+    }
+
+    public static String displayProgressWithLabel(String label, int current, int total) {
+        int padding = 10 - label.length();
+        long percent = Math.round(((float) current / total) * 100);
+        int progressBars = (int) Math.round(percent / PROGRESS_BAR_DIVISOR);
+
+        StringBuilder sb = new StringBuilder("\r");
+        sb.append(INDENT).append(INDENT).append(label).append(":").append(repeat(' ', padding)).append("|");
+        sb.append(repeat("=", progressBars));
+        sb.append(repeat(" ", PROGRESS_BAR_UNITS - progressBars));
+        sb.append("|  ").append(current).append("/").append(total).append("  |  ");
+        sb.append(format("%1$3s", percent)).append("%");;
+        // Append spaces to clear rest of line
+        sb.append(repeat(" ", 40));
+        sb.append("\r");
+
+        return sb.toString();
     }
 
     public static void finishProgress() {
