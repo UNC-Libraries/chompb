@@ -222,9 +222,13 @@ public class FindingAidReportService {
                 ResultSet rs = stmt.executeQuery(" select " + field + " from " + CdmIndexService.TB_NAME
                         + " where " + field + " like " + "'^[A-Za-z0-9]{5}-?z?$' limit 10");
                 while (rs.next()) {
-                    ids.add(rs.getString(1));
+                    if (!rs.getString(1).isBlank()) {
+                        ids.add(rs.getString(1));
+                    }
                 }
-                potentialCollectionIds.put(field, ids);
+                if (!ids.isEmpty()) {
+                    potentialCollectionIds.put(field, ids);
+                }
             }
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
