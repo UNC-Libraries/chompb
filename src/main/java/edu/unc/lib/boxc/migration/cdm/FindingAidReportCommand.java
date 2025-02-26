@@ -3,6 +3,7 @@ package edu.unc.lib.boxc.migration.cdm;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.FindingAidReportOptions;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.FindingAidReportService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
@@ -29,6 +30,7 @@ public class FindingAidReportCommand {
     private CLIMain parentCommand;
 
     private MigrationProject project;
+    private CdmFieldService fieldService;
     private CdmIndexService indexService;
     private FindingAidReportService reportService;
 
@@ -75,13 +77,42 @@ public class FindingAidReportCommand {
         }
     }
 
+    @Command(name = "collection_report",
+            description = {"Generate the collection report to assess collection for associations with finding aids",
+                "Lists current collection number and hook id. If collection number is set," +
+                        " displays a list of unique collection numbers.",
+                "If collection number is not set, scan other fields for potential collection ids and list several.",
+                "Also displays percentage of records with the following fields populated: collec, descri, findin, " +
+                        "locati, title, prefer, creato, contri, relatid"})
+    public int collectionReport() throws Exception {
+        long start = System.nanoTime();
+
+        try {
+            initialize();
+            reportService.collectionReport();
+            outputLogger.info("Generated collection report for {} in {}s", project.getProjectName(),
+                    (System.nanoTime() - start) / 1e9);
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Cannot generate collection report: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Failed to generate collection report", e);
+            outputLogger.info("Failed to generate collection report: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
     private void initialize() throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
+        fieldService = new CdmFieldService();
+        fieldService.setProject(project);
         indexService = new CdmIndexService();
         indexService.setProject(project);
         reportService = new FindingAidReportService();
         reportService.setProject(project);
+        reportService.setFieldService(fieldService);
         reportService.setIndexService(indexService);
     }
 }

@@ -2,12 +2,8 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.FieldAssessmentTemplateService;
-import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
-import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -102,6 +98,22 @@ public class CdmFieldsCommandIT extends AbstractCommandIT {
         String[] cmdArgs = new String[] {
                 "-w", projectPath.toString(),
                 "fields", "generate_field_url_report"};
+        executeExpectSuccess(cmdArgs);
+
+        assertTrue(Files.exists(reportPath));
+    }
+
+    @Test
+    public void generateFindingAidUrlReportTest() throws Exception {
+        initProjectAndHelper();
+        testHelper.indexExportData("03883");
+
+        Path projectPath = project.getProjectPath();
+        Path reportPath = projectPath.resolve("my_proj_finding_aid_urls.csv");
+
+        String[] cmdArgs = new String[] {
+                "-w", projectPath.toString(),
+                "fields", "generate_field_url_report", "-fa"};
         executeExpectSuccess(cmdArgs);
 
         assertTrue(Files.exists(reportPath));

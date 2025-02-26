@@ -50,11 +50,18 @@ public class FieldUrlAssessmentService {
     public static final String URL_REGEX = "\\b((https?):" + "//[-a-zA-Z0-9+&@#/%?=" + "~_|!:,.;]*[-a-zA-Z0-9+"
             + "&@#/%=~_|])";
     public static final Pattern URL_PATTERN = Pattern.compile(URL_REGEX, Pattern.CASE_INSENSITIVE);
+    public static final String URL_QUERY = "'%http%'";
+    public static final String FINDING_AID_URL_QUERY = "'%finding-aids.lib.unc.edu/%'";
 
     /**
      * Generates a List of FieldUrlEntries that have the CDM field and associated URLs as attributes
      */
-    protected List<FieldUrlEntry> dbFieldAndUrls() throws IOException {
+    protected List<FieldUrlEntry> dbFieldAndUrls(boolean findingAid) throws IOException {
+        String urlRegex = URL_QUERY;
+        if (findingAid) {
+            urlRegex = FINDING_AID_URL_QUERY;
+        }
+
         cdmFieldService.validateFieldsFile(project);
         CdmFieldInfo fieldInfo = cdmFieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
@@ -72,7 +79,7 @@ public class FieldUrlAssessmentService {
                 }
                 ResultSet rs = stmt.executeQuery(" select distinct \"" + field
                         + "\" from " + CdmIndexService.TB_NAME
-                        + " where \"" + field + "\" like " + "'%http%'");
+                        + " where \"" + field + "\" like " + urlRegex);
                 while (rs.next()) {
                     var url = extractUrl(rs.getString(1));
                     if (url != null) {
@@ -107,11 +114,14 @@ public class FieldUrlAssessmentService {
     /**
      * Validate urls, list redirect urls, and write to csv file
      */
-    public void generateReport() throws IOException {
-        var fieldsAndUrls = dbFieldAndUrls();
+    public void generateReport(boolean findingAid) throws IOException {
+        var fieldsAndUrls = dbFieldAndUrls(findingAid);
 
         Path projPath = project.getProjectPath();
         String filename = project.getProjectProperties().getName() + "_field_urls.csv";
+        if (findingAid) {
+            filename = project.getProjectProperties().getName() + "_finding_aid_urls.csv";
+        }
         BufferedWriter writer = Files.newBufferedWriter(projPath.resolve(filename));
         CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
                 .withHeader(URL_CSV_HEADERS));

@@ -49,6 +49,7 @@ public class FieldUrlAssessmentServiceTest {
     private FieldUrlAssessmentService service;
     private CdmFieldService fieldService;
     private CdmIndexService indexService;
+    private SipServiceHelper testHelper;
     private String cdmBaseUrl;
 
     @BeforeEach
@@ -58,7 +59,7 @@ public class FieldUrlAssessmentServiceTest {
                 CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getExportPath());
 
-        var testHelper = new SipServiceHelper(project, tmpFolder);
+        testHelper = new SipServiceHelper(project, tmpFolder);
         testHelper.indexExportData("gilmer");
 
         fieldService = new CdmFieldService();
@@ -77,7 +78,7 @@ public class FieldUrlAssessmentServiceTest {
 
     @Test
     public void retrieveCdmUrlsTest() throws Exception {
-        List<FieldUrlAssessmentService.FieldUrlEntry> fieldsAndUrls = service.dbFieldAndUrls();
+        List<FieldUrlAssessmentService.FieldUrlEntry> fieldsAndUrls = service.dbFieldAndUrls(false);
 
         assertEquals(5,fieldsAndUrls.size());
     }
@@ -85,7 +86,7 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void successfulUrlsTest() throws Exception {
         stubUrls(200);
-        service.generateReport();
+        service.generateReport(false);
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -105,7 +106,7 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void redirectUrlsTest() throws Exception {
         stubRedirectUrls();
-        service.generateReport();
+        service.generateReport(false);
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -126,7 +127,7 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void errorUrlsTest() throws Exception {
         stubUrls(400);
-        service.generateReport();
+        service.generateReport(false);
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -146,7 +147,7 @@ public class FieldUrlAssessmentServiceTest {
     @Test
     public void regenerateCsv() throws Exception {
         stubUrls(HttpStatus.SC_OK);
-        service.generateReport();
+        service.generateReport(false);
 
         Path projPath = project.getProjectPath();
         Path newPath = projPath.resolve("gilmer_field_urls.csv");
@@ -162,7 +163,7 @@ public class FieldUrlAssessmentServiceTest {
         stubFor(get(urlEqualTo( "/wrong"))
                 .willReturn(aResponse()
                         .withStatus(400)));
-        service.generateReport();
+        service.generateReport(false);
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -189,7 +190,7 @@ public class FieldUrlAssessmentServiceTest {
         var invalidUrl = cdmBaseUrl + "&";
         addProblematicUrlToDb(invalidUrl);
         stubUrls(200);
-        service.generateReport();
+        service.generateReport(false);
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -216,7 +217,7 @@ public class FieldUrlAssessmentServiceTest {
         var invalidUrl = "http ://example.com";
         addProblematicUrlToDb(invalidUrl);
         stubUrls(200);
-        service.generateReport();
+        service.generateReport(false);
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -243,7 +244,7 @@ public class FieldUrlAssessmentServiceTest {
         var invalidUrl = "http:// example.com";
         addProblematicUrlToDb(invalidUrl);
         stubUrls(200);
-        service.generateReport();
+        service.generateReport(false);
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -270,7 +271,7 @@ public class FieldUrlAssessmentServiceTest {
         var invalidUrl = "https://e xample.com";
         addProblematicUrlToDb(invalidUrl);
         stubUrls(200);
-        service.generateReport();
+        service.generateReport(false);
 
         try (
                 Reader reader = Files.newBufferedReader(project.getProjectPath().resolve("gilmer_field_urls.csv"));
@@ -288,6 +289,35 @@ public class FieldUrlAssessmentServiceTest {
                             cdmBaseUrl + "/new_url_caption_again",
                             cdmBaseUrl + "/new_url_notes",
                             cdmBaseUrl + "/00276/"),
+                    urlValues);
+        }
+    }
+
+    @Test
+    public void retrieveFindingAidUrlsTest() throws Exception {
+        addFindingAidUrlsToDb();
+        List<FieldUrlAssessmentService.FieldUrlEntry> fieldsAndUrls = service.dbFieldAndUrls(true);
+
+        assertEquals(1,fieldsAndUrls.size());
+    }
+
+    @Test
+    public void successfulFindingAidUrlsTest() throws Exception {
+        addFindingAidUrlsToDb();
+        stubFindingAidUrls(200);
+        service.generateReport(true);
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getProjectPath()
+                        .resolve("gilmer_finding_aid_urls.csv"));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withHeader(FieldUrlAssessmentService.URL_CSV_HEADERS)
+                        .withTrim());
+        ) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            var urlValues = listUrlValues(rows);
+            assertIterableEquals(List.of("http://finding-aids.lib.unc.edu/03883/"),
                     urlValues);
         }
     }
@@ -355,6 +385,20 @@ public class FieldUrlAssessmentServiceTest {
         Statement stmt = conn.createStatement();
         stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET descri = descri || '" +
                 url + "' WHERE " + CdmFieldInfo.CDM_ID + " = 100");
+        CdmIndexService.closeDbConnection(conn);
+    }
+
+    private void stubFindingAidUrls(int statusCode) {
+        stubFor(get(urlEqualTo( "http://finding-aids.lib.unc.edu/03883/"))
+                .willReturn(aResponse()
+                        .withStatus(statusCode)));
+    }
+
+    private void addFindingAidUrlsToDb() throws SQLException {
+        Connection conn = indexService.openDbConnection();
+        Statement stmt = conn.createStatement();
+        stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET descri = descri || " +
+                " 'http://finding-aids.lib.unc.edu/03883/' WHERE " + CdmFieldInfo.CDM_ID + " = 100");
         CdmIndexService.closeDbConnection(conn);
     }
 
