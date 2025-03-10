@@ -2,6 +2,8 @@ package edu.unc.lib.boxc.migration.cdm.options;
 
 import picocli.CommandLine.Option;
 
+import java.nio.file.Path;
+
 /**
  * Options for boxctron file mapping
  * @author krwong
@@ -23,6 +25,10 @@ public class BoxctronFileMappingOptions implements GenerateFileMappingOptions {
     @Option(names = { "-f", "--force"},
             description = "Overwrite mapping file if one already exists")
     private boolean force;
+
+    @Option(names = {"-e", "--exclusions-csv"},
+    description = {"Provide a csv with exclusions. Access file mappings will be skipped for these items."})
+    private Path exclusionsCsv;
 
     @Override
     public boolean getDryRun() {
@@ -49,5 +55,13 @@ public class BoxctronFileMappingOptions implements GenerateFileMappingOptions {
 
     public void setForce(boolean force) {
         this.force = force;
+    }
+
+    public Path getExclusionsCsv() {
+        return exclusionsCsv;
+    }
+
+    public void setExclusionsCsv(Path exclusionsCsv) {
+        this.exclusionsCsv = exclusionsCsv;
     }
 }
