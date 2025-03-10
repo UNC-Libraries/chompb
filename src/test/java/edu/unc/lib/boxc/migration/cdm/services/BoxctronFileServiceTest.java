@@ -131,7 +131,7 @@ public class BoxctronFileServiceTest {
     }
 
     @Test
-    public void geneerateWithExclusionsTest() throws Exception {
+    public void generateWithExclusionsTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         Path boxctronPath1 = tmpFolder.resolve("source/276_182_E.tif");

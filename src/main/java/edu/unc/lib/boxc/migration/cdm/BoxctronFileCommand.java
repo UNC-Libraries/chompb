@@ -3,26 +3,18 @@ package edu.unc.lib.boxc.migration.cdm;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.BoxctronFileMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
-import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
-import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.BoxctronFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.status.AccessFilesStatusService;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
-import edu.unc.lib.boxc.migration.cdm.validators.AccessFilesValidator;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
