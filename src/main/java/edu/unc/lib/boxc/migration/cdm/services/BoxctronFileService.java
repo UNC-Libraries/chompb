@@ -17,7 +17,9 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -50,10 +52,10 @@ public class BoxctronFileService extends AccessFileService {
         ensureMappingState(options);
 
         // Gather list of all potential source file paths to match against
-        List<String> candidatePaths = gatherCandidatePaths(getVelocicroptorDataPath(project.getProjectPath()));
+        Set<String> candidatePaths = gatherCandidatePaths(getVelocicroptorDataPath(project.getProjectPath()));
         // Gather list of all source file paths to exclude
-        List<String> exclusionPaths = new ArrayList<>();
-        if (options.getExclusionsCsv() != null && Files.exists(options.getExclusionsCsv())) {
+        Set<String> exclusionPaths = Set.of();
+        if (options.getExclusionsCsv() != null) {
             exclusionPaths = gatherExclusionPaths(options.getExclusionsCsv());
         }
 
@@ -106,12 +108,12 @@ public class BoxctronFileService extends AccessFileService {
      * gather original file paths if the predicted_class value is 1 (color bar detected)
      * @throws Exception
      */
-    private List<String> gatherCandidatePaths(Path dataPath) throws IOException {
+    private Set<String> gatherCandidatePaths(Path dataPath) throws IOException {
         if (Files.notExists(dataPath)) {
             throw new NoSuchFileException(dataPath + " does not exist");
         }
 
-        List<String> candidatePaths = new ArrayList<>();
+        Set<String> candidatePaths = new HashSet<>();
         try (Reader reader = Files.newBufferedReader(dataPath);
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                 .withFirstRecordAsHeader()
@@ -137,12 +139,12 @@ public class BoxctronFileService extends AccessFileService {
      * gather original file paths if the corrected_class value is 0 (skip access file)
      * @throws Exception
      */
-    private List<String> gatherExclusionPaths(Path dataPath) throws IOException {
+    private Set<String> gatherExclusionPaths(Path dataPath) throws IOException {
         if (Files.notExists(dataPath)) {
             throw new NoSuchFileException(dataPath + " does not exist");
         }
 
-        List<String> exclusionPaths = new ArrayList<>();
+        Set<String> exclusionPaths = new HashSet<>();
         try (Reader reader = Files.newBufferedReader(dataPath);
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                      .withFirstRecordAsHeader()
