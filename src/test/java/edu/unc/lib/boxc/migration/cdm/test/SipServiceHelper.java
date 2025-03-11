@@ -412,7 +412,7 @@ public class SipServiceHelper {
     }
 
     private String boxctronMappingBody(String... rows) {
-        return String.join(",", BoxctronFileService.DATA_CSV_HEADERS) + "\n"
+        return String.join(",", BoxctronFileService.BOXCTRON_CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
     }
 

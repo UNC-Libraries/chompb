@@ -17,7 +17,9 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -34,8 +36,10 @@ public class BoxctronFileService extends AccessFileService {
     public static final String PREDICTED_CONF = "predicted_conf";
     public static final String BOUNDING_BOX = "bounding_box";
     public static final String EXTENDED_BOX = "extended_box";
-    public static final String[] DATA_CSV_HEADERS = new String[] { ORIGINAL_PATH, PREDICTED_CLASS, PREDICTED_CONF,
-            BOUNDING_BOX, EXTENDED_BOX };
+    public static final String CORRECTED_CLASS = "corrected_class";
+    public static final String[] BOXCTRON_CSV_HEADERS = new String[] {ORIGINAL_PATH, PREDICTED_CLASS,
+            PREDICTED_CONF, BOUNDING_BOX, EXTENDED_BOX};
+    public static final String[] EXCUSIONS_CSV_HEADERS = new String[] {ORIGINAL_PATH, PREDICTED_CLASS, CORRECTED_CLASS};
 
     public BoxctronFileService() {}
 
@@ -47,8 +51,13 @@ public class BoxctronFileService extends AccessFileService {
         assertProjectStateValid();
         ensureMappingState(options);
 
-        // Gather listing of all potential source file paths to match against
-        List<String> candidatePaths = gatherCandidatePaths(getVelocicroptorDataPath(project.getProjectPath()));
+        // Gather list of all potential source file paths to match against
+        Set<String> candidatePaths = gatherCandidatePaths(getVelocicroptorDataPath(project.getProjectPath()));
+        // Gather list of all source file paths to exclude
+        Set<String> exclusionPaths = Set.of();
+        if (options.getExclusionsCsv() != null) {
+            exclusionPaths = gatherExclusionPaths(options.getExclusionsCsv());
+        }
 
         Path mappingPath = getMappingPath();
         boolean needsMerge = options.getUpdate() && Files.exists(mappingPath);
@@ -69,7 +78,7 @@ public class BoxctronFileService extends AccessFileService {
                 List<Path> filePaths = fileMapping.getSourcePaths();
 
                 for (Path filePath : filePaths) {
-                    if (candidatePaths.contains(filePath.toString())) {
+                    if (candidatePaths.contains(filePath.toString()) && !exclusionPaths.contains(filePath.toString())) {
                         log.debug("Found match for {} from field {}", cdmId, filePath);
                         csvPrinter.printRecord(cdmId, filePath.getFileName(),
                                 computeAccessPath(filePath), null);
@@ -99,16 +108,16 @@ public class BoxctronFileService extends AccessFileService {
      * gather original file paths if the predicted_class value is 1 (color bar detected)
      * @throws Exception
      */
-    private List<String> gatherCandidatePaths(Path dataPath) throws IOException {
+    private Set<String> gatherCandidatePaths(Path dataPath) throws IOException {
         if (Files.notExists(dataPath)) {
             throw new NoSuchFileException(dataPath + " does not exist");
         }
 
-        List<String> candidatePaths = new ArrayList<>();
+        Set<String> candidatePaths = new HashSet<>();
         try (Reader reader = Files.newBufferedReader(dataPath);
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                 .withFirstRecordAsHeader()
-                .withHeader(DATA_CSV_HEADERS)
+                .withHeader(BOXCTRON_CSV_HEADERS)
                 .withTrim());
         ) {
             for (CSVRecord csvRecord : csvParser) {
@@ -123,6 +132,37 @@ public class BoxctronFileService extends AccessFileService {
             throw new MigrationException("Failed to read boxctron data file", e);
         }
         return candidatePaths;
+    }
+
+    /**
+     * Read the exclusions csv produced by boxctron and
+     * gather original file paths if the corrected_class value is 0 (skip access file)
+     * @throws Exception
+     */
+    private Set<String> gatherExclusionPaths(Path dataPath) throws IOException {
+        if (Files.notExists(dataPath)) {
+            throw new NoSuchFileException(dataPath + " does not exist");
+        }
+
+        Set<String> exclusionPaths = new HashSet<>();
+        try (Reader reader = Files.newBufferedReader(dataPath);
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                     .withFirstRecordAsHeader()
+                     .withHeader(EXCUSIONS_CSV_HEADERS)
+                     .withTrim());
+        ) {
+            for (CSVRecord csvRecord : csvParser) {
+                String originalPath = csvRecord.get(0);
+                String correctedClass = csvRecord.get(2);
+
+                if (correctedClass.equals("0")) {
+                    exclusionPaths.add(originalPath);
+                }
+            }
+        } catch (IOException e) {
+            throw new MigrationException("Failed to read exclusion data file", e);
+        }
+        return exclusionPaths;
     }
 
     private Path computeAccessPath(Path originalPath) {

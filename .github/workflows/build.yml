@@ -21,7 +21,7 @@ jobs:
 
     steps:
     - name: Checkout boxc repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: UNC-Libraries/Carolina-Digital-Repository.git
         path: boxc
@@ -30,7 +30,7 @@ jobs:
       run: git submodule update --init --recursive
       working-directory: boxc
     - name: Checkout cdm2bxc repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: cdm2bxc
     - name: Set up JDK 11
@@ -38,7 +38,7 @@ jobs:
       with:
         java-version: 11
     - name: Cache Maven packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}

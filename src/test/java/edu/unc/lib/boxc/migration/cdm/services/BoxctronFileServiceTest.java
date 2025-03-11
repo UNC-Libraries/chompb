@@ -131,6 +131,29 @@ public class BoxctronFileServiceTest {
     }
 
     @Test
+    public void generateWithExclusionsTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        Path boxctronPath1 = tmpFolder.resolve("source/276_182_E.tif");
+        Path boxctronPath2 = tmpFolder.resolve("source/276_183_E.tif");
+        boxctronWriteCsv(boxctronMappingBody(boxctronPath1 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\",",
+                boxctronPath2 + ",1,0.9,\"[0.0, 0.9, 1.0, 1.0]\","));
+        exclusionWriteCsv(exclusionMappingBody(boxctronPath1 + ",1,1", boxctronPath2 + ",1,0"));
+        BoxctronFileMappingOptions options = new BoxctronFileMappingOptions();
+        options.setExclusionsCsv(tmpFolder.resolve("exclusions.csv"));
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        Path accessPath1 = project.getProjectPath().resolve("processing/results/velocicroptor/output" + boxctronPath1 + ".jpg");
+        assertMappingPresent(info, "25", "276_182_E.tif", accessPath1);
+        assertMappingPresent(info, "26", "276_183_E.tif", null);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
+    }
+
+    @Test
     public void generateUpdateNoExistingFileTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
@@ -238,12 +261,22 @@ public class BoxctronFileServiceTest {
     }
 
     private String boxctronMappingBody(String... rows) {
-        return String.join(",", BoxctronFileService.DATA_CSV_HEADERS) + "\n"
+        return String.join(",", BoxctronFileService.BOXCTRON_CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
     }
 
     private void boxctronWriteCsv(String boxctronMappingBody) throws IOException {
         FileUtils.write(service.getVelocicroptorDataPath(project.getProjectPath()).toFile(),
                 boxctronMappingBody, StandardCharsets.UTF_8);
+    }
+
+    private String exclusionMappingBody(String... rows) {
+        return String.join(",", BoxctronFileService.EXCUSIONS_CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void exclusionWriteCsv(String exclusionMappingBody) throws IOException {
+        FileUtils.write(tmpFolder.resolve("exclusions.csv").toFile(),
+                exclusionMappingBody, StandardCharsets.UTF_8);
     }
 }
