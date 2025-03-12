@@ -107,10 +107,16 @@ public class SourceFilesToRemoteService {
             for (Path path : paths) {
                 var pathRelative = path.toAbsolutePath().toString().substring(1);
                 var destPath = destinationBasePath.resolve(pathRelative);
+                var escapedPath = destPath.toString().replace("\"", "\\\"");
                 log.info("Creating parent path {}", destPath);
-                sshClientService.executeRemoteCommand(sshClient, "mkdir -p " + destPath);
+                sshClientService.executeRemoteCommand(sshClient, "mkdir -p \"" + escapedPath + "\"");
             }
         });
+    }
+
+    private String escapeFilePath(String path) {
+        // Escaping reserved linux characters in file paths
+        return path.replaceAll("([ &()\\[\\]{}*?!\"'<>|;\\\\$`^#])", "\\\\$1");
     }
 
     private Runnable createTransferTask(ConcurrentLinkedDeque<Path> pathsDeque, Path destinationBasePath) {
@@ -121,12 +127,12 @@ public class SourceFilesToRemoteService {
                     final Path sourcePath = nextPath;
 
                     var sourceRelative = sourcePath.toAbsolutePath().toString().substring(1);
-                    var destPath = destinationBasePath.resolve(sourceRelative);
+                    var destPath = escapeFilePath(destinationBasePath.resolve(sourceRelative).toString());
                     // Upload the file to the appropriate path on the remote server
                     sshClientService.executeScpBlock(sshClient, (scpClient) -> {
                         try {
                             log.info("Transferring file {} to {}", sourcePath, destPath);
-                            scpClient.upload(sourcePath.toString(), destPath.toString());
+                            scpClient.upload(sourcePath, destPath);
                         } catch (IOException e) {
                             throw new RuntimeException("Failed to transfer file " + sourcePath, e);
                         }
