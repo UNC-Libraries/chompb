@@ -203,7 +203,7 @@ public class ListProjectsServiceTest {
     @Test
     public void listProjectsWithCompletedProjectReportsTest() throws Exception {
         File velocicroptorFile = new File(project.getProjectPath() + "/"
-                + VelocicroptorRemoteJob.RESULTS_REL_PATH + "/job_complete");
+                + VelocicroptorRemoteJob.RESULTS_REL_PATH + "/job_completed");
         velocicroptorFile.mkdirs();
 
         JsonNode list = service.listProjects(tmpFolder, false);
@@ -220,7 +220,7 @@ public class ListProjectsServiceTest {
         ObjectNode testVelocicroptor = mapper.createObjectNode();
         testVelocicroptor.set(VelocicroptorRemoteJob.JOB_NAME, testStatus);
         assertTrue(Files.exists(Path.of(tmpFolder + "/" + PROJECT_NAME + "/"
-                + VelocicroptorRemoteJob.RESULTS_REL_PATH + "/job_complete")));
+                + VelocicroptorRemoteJob.RESULTS_REL_PATH + "/job_completed")));
         assertEquals(testVelocicroptor, list.findValue(ListProjectsService.PROCESSING_JOBS));
     }
 

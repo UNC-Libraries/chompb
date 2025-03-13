@@ -152,7 +152,7 @@ public class ListProjectsService {
         // velocicropter report status
         ObjectNode velocicropterStatus = mapper.createObjectNode();
         if (Files.exists(project.getProjectPath().resolve(VelocicroptorRemoteJob.RESULTS_REL_PATH
-                + "/job_complete"))) {
+                + "/job_completed"))) {
             velocicropterStatus.put(STATUS, COMPLETED);
             processingJobs.set(VelocicroptorRemoteJob.JOB_NAME, velocicropterStatus);
         } else if (Files.exists(project.getProjectPath().resolve(VelocicroptorRemoteJob.RESULTS_REL_PATH))) {
