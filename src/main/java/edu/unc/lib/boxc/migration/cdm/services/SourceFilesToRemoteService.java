@@ -2,15 +2,19 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.util.SshClientService;
+import org.apache.poi.util.IOUtils;
+import org.apache.sshd.sftp.client.SftpClient;
+import org.apache.sshd.sftp.client.SftpClientFactory;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -102,13 +106,39 @@ public class SourceFilesToRemoteService {
         return result;
     }
 
+    private boolean remoteDirectoryExists(SftpClient sftpClient, Path path) {
+        try {
+            sftpClient.stat(path.toString());
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     private void createParentPaths(List<Path> paths, Path destinationBasePath) {
         sshClientService.executeSshBlock((sshClient) -> {
-            for (Path path : paths) {
-                var pathRelative = path.toAbsolutePath().toString().substring(1);
-                var destPath = destinationBasePath.resolve(pathRelative);
-                log.info("Creating parent path {}", destPath);
-                sshClientService.executeRemoteCommand(sshClient, "mkdir -p " + destPath);
+            var previousPaths = new HashSet<String>();
+            SftpClientFactory factory = SftpClientFactory.instance();
+            try (SftpClient sftpClient = factory.createSftpClient(sshClient)) {
+
+                for (Path path : paths) {
+                    var pathRelative = path.toAbsolutePath().toString().substring(1);
+                    var destPath = destinationBasePath.resolve(pathRelative).toString();
+                    var pathParts = destPath.split("/");
+                    var progressivePath = Path.of("/");
+                    for (var pathPart: pathParts) {
+                        progressivePath = progressivePath.resolve(pathPart);
+                        var stringPath = progressivePath.toString();
+                        if (previousPaths.contains(stringPath) || remoteDirectoryExists(sftpClient, progressivePath)) {
+                            continue;
+                        }
+                        log.info("Creating parent path {}", stringPath);
+                        sftpClient.mkdir(stringPath);
+                        previousPaths.add(stringPath);
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         });
     }
@@ -116,21 +146,23 @@ public class SourceFilesToRemoteService {
     private Runnable createTransferTask(ConcurrentLinkedDeque<Path> pathsDeque, Path destinationBasePath) {
         return () -> {
             sshClientService.executeSshBlock((sshClient) -> {
-                Path nextPath;
-                while ((nextPath = pathsDeque.poll()) != null) {
-                    final Path sourcePath = nextPath;
+                SftpClientFactory factory = SftpClientFactory.instance();
+                try (SftpClient sftpClient = factory.createSftpClient(sshClient)) {
+                    Path nextPath;
+                    while ((nextPath = pathsDeque.poll()) != null) {
+                        final Path sourcePath = nextPath;
 
-                    var sourceRelative = sourcePath.toAbsolutePath().toString().substring(1);
-                    var destPath = destinationBasePath.resolve(sourceRelative);
-                    // Upload the file to the appropriate path on the remote server
-                    sshClientService.executeScpBlock(sshClient, (scpClient) -> {
-                        try {
-                            log.info("Transferring file {} to {}", sourcePath, destPath);
-                            scpClient.upload(sourcePath.toString(), destPath.toString());
-                        } catch (IOException e) {
-                            throw new RuntimeException("Failed to transfer file " + sourcePath, e);
+                        var sourceRelative = sourcePath.toAbsolutePath().toString().substring(1);
+                        var destPath = destinationBasePath.resolve(sourceRelative).toString();
+                        try (InputStream in = Files.newInputStream(sourcePath)) {
+                            // Open output stream to the remote file
+                            try (OutputStream out = sftpClient.write(destPath)) {
+                                IOUtils.copy(in, out);
+                            }
                         }
-                    });
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             });
         };

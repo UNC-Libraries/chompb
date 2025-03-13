@@ -12,6 +12,7 @@ import org.apache.sshd.server.command.CommandFactory;
 import org.apache.sshd.server.command.CommandLifecycle;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.shell.ProcessShellFactory;
+import org.apache.sshd.sftp.server.SftpSubsystemFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
+import java.util.Collections;
 
 /**
  * SSH server used for testing
@@ -36,6 +38,8 @@ public class TestSshServer {
         sshServer.setPort(42222);
         sshServer.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
         sshServer.setCommandFactory(new DelegatingCommandFactory());
+        SftpSubsystemFactory factory = new SftpSubsystemFactory();
+        sshServer.setSubsystemFactories(Collections.singletonList(factory));
         sshServer.setPasswordAuthenticator((username, password, serverSession) -> {
             return username != null && PASSWORD.equals(password);
         });

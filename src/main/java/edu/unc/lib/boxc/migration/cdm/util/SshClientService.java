@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ClientChannel;
 import org.apache.sshd.client.channel.ClientChannelEvent;
+import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
@@ -43,6 +44,7 @@ public class SshClientService {
     private String sshPassword;
     private Path sshKeyPath;
     private KeyPair sshKeyPair;
+    private boolean checkHostConfig = false;
 
     public void initialize() {
         if (sshKeyPath != null) {
@@ -58,6 +60,9 @@ public class SshClientService {
 
     private SshClient buildSshClient() {
         SshClient client = SshClient.setUpDefaultClient();
+        if (!checkHostConfig) {
+            client.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
+        }
         if (sshKeyPair != null) {
             client.setKeyIdentityProvider(KeyPairProvider.wrap(singletonList(sshKeyPair)));
         } else if (sshPassword != null) {
@@ -175,5 +180,9 @@ public class SshClientService {
 
     public void setSshKeyPath(Path sshKeyPath) {
         this.sshKeyPath = sshKeyPath;
+    }
+
+    public void setCheckHostConfig(boolean checkHostConfig) {
+        this.checkHostConfig = checkHostConfig;
     }
 }
