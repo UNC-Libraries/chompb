@@ -113,6 +113,28 @@ public class SourceFilesToRemoteServiceTest {
         assertFalse(Files.exists(remotePath));
     }
 
+    @Test
+    public void testTransferFilesReservedCharacters() throws Exception {
+        var filePath1 = createTestFile("sources/fil e1.jpg", "file1");
+        var filePath2 = createTestFile("sources/space path/file2.jpg", "file2");
+        var filePath3 = createTestFile("sources/nest/pa'th/fi&l;e3.jpg", "file3");
+        var filePath4 = createTestFile("sources/ne(st/file)4.jpg", "file4");
+        var filePath5 = createTestFile("sources/anot!her/f*i\"le'5.jpg", "file5");
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(tmpFolder.resolve("sources"));
+        options.setExtensions(Arrays.asList("jpg"));
+        sourceFileService.addToMapping(options);
+
+        service.transferFiles(remotePath);
+
+        // Verify that the files were transferred
+        assertTransferred(filePath1);
+        assertTransferred(filePath2);
+        assertTransferred(filePath3);
+        assertTransferred(filePath4);
+        assertTransferred(filePath5);
+    }
+
     private Path createTestFile(String relativePath, String content) throws Exception {
         Path file = tmpFolder.resolve(relativePath);
         Files.createDirectories(file.getParent());
