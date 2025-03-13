@@ -36,7 +36,7 @@ public class ListProjectsCommandIT extends AbstractCommandIT {
     @Test
     public void listProjectTest() throws Exception {
         File velocicroptorFile = new File(project.getProjectPath() + "/"
-                + VelocicroptorRemoteJob.RESULTS_REL_PATH + "/job_completed");
+                + VelocicroptorRemoteJob.RESULTS_REL_PATH + "/job_complete");
         velocicroptorFile.mkdirs();
 
         String[] args = new String[] {

@@ -44,7 +44,7 @@ public class SshClientService {
     private String sshPassword;
     private Path sshKeyPath;
     private KeyPair sshKeyPair;
-    private boolean checkHostConfig = true;
+    private boolean checkHostConfig = false;
 
     public void initialize() {
         if (sshKeyPath != null) {
