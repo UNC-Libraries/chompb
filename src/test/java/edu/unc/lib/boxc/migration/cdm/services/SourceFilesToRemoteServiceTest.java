@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -58,6 +59,7 @@ public class SourceFilesToRemoteServiceTest {
         sshClientService.setSshHost("127.0.0.1");
         sshClientService.setSshUsername("testuser");
         sshClientService.setSshKeyPath(clientKeyPath);
+        sshClientService.setCheckHostConfig(false);
         sshClientService.initialize();
         service = new SourceFilesToRemoteService();
         service.setConcurrentTransfers(2);
@@ -80,7 +82,29 @@ public class SourceFilesToRemoteServiceTest {
         var filePath5 = createTestFile("sources/another/file5.jpg", "file5");
         AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
         options.setBasePath(tmpFolder.resolve("sources"));
-        options.setExtensions(Arrays.asList("jpg"));
+        options.setExtensions(List.of("jpg"));
+        sourceFileService.addToMapping(options);
+
+        service.transferFiles(remotePath);
+
+        // Verify that the files were transferred
+        assertTransferred(filePath1);
+        assertTransferred(filePath2);
+        assertTransferred(filePath3);
+        assertTransferred(filePath4);
+        assertTransferred(filePath5);
+    }
+
+    @Test
+    public void testTransferFilesReservedCharacters() throws Exception {
+        var filePath1 = createTestFile("sources/fil e1.jpg", "file1");
+        var filePath2 = createTestFile("sources/space path/file2.jpg", "file2");
+        var filePath3 = createTestFile("sources/nest/pa'th/fi&l;e3.jpg", "file3");
+        var filePath4 = createTestFile("sources/ne(st/file)4.jpg", "file4");
+        var filePath5 = createTestFile("sources/anot!her/f*i\"le'5.jpg", "file5");
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(tmpFolder.resolve("sources"));
+        options.setExtensions(List.of("jpg"));
         sourceFileService.addToMapping(options);
 
         service.transferFiles(remotePath);
@@ -111,28 +135,6 @@ public class SourceFilesToRemoteServiceTest {
 
         // Verify no files transferred
         assertFalse(Files.exists(remotePath));
-    }
-
-    @Test
-    public void testTransferFilesReservedCharacters() throws Exception {
-        var filePath1 = createTestFile("sources/fil e1.jpg", "file1");
-        var filePath2 = createTestFile("sources/space path/file2.jpg", "file2");
-        var filePath3 = createTestFile("sources/nest/pa'th/fi&l;e3.jpg", "file3");
-        var filePath4 = createTestFile("sources/ne(st/file)4.jpg", "file4");
-        var filePath5 = createTestFile("sources/anot!her/f*i\"le'5.jpg", "file5");
-        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
-        options.setBasePath(tmpFolder.resolve("sources"));
-        options.setExtensions(Arrays.asList("jpg"));
-        sourceFileService.addToMapping(options);
-
-        service.transferFiles(remotePath);
-
-        // Verify that the files were transferred
-        assertTransferred(filePath1);
-        assertTransferred(filePath2);
-        assertTransferred(filePath3);
-        assertTransferred(filePath4);
-        assertTransferred(filePath5);
     }
 
     private Path createTestFile(String relativePath, String content) throws Exception {
