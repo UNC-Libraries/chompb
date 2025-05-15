@@ -534,6 +534,66 @@ public class SipServiceTest {
     }
 
     @Test
+    public void generateSipsWithGroupedWorkMultipleDestinations() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        try (BufferedWriter writer = Files.newBufferedWriter(project.getDestinationMappingsPath(), APPEND)) {
+            writer.write("grp:groupa:group1," + DEST_UUID2 + ",");
+        }
+        testHelper.populateDescriptions("grouped_mods.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif",
+                "276_241_E.tif", "276_245a_E.tif");
+        setupGroupIndex();
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(2, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
+        assertFalse(workResc2.hasProperty(Cdr.memberOrder), "Work with group field but only one file should not have order");
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
+        assertFalse(workResc3.hasProperty(Cdr.memberOrder), "Regular work should not have order");
+        Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-10");
+        assertFalse(workResc4.hasProperty(Cdr.memberOrder), "Regular work should not have order");
+
+        assertPersistedSipInfoMatches(sip);
+
+        MigrationSip sip2 = sips.get(1);
+
+        assertTrue(Files.exists(sip2.getSipPath()));
+
+        DepositDirectoryManager dirManager2 = testHelper.createDepositDirectoryManager(sip2);
+
+        Model model2 = testHelper.getSipModel(sip2);
+        Bag depBag2 = model2.getBag(sip2.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren2 = depBag2.iterator().toList();
+        assertEquals(1, depBagChildren2.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren2, "2005-11-23");
+        Bag work1Bag = model2.getBag(workResc1);
+        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager2, model2, "grp:groupa:group1", false,
+                stagingLocs.get(0), stagingLocs.get(1));
+        // Assert that children of grouped work have descriptions added (only second file as a description)
+        Resource work1File1Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(0));
+        Resource work1File2Resc = testHelper.findChildByStagingLocation(work1Bag, stagingLocs.get(1));
+        testHelper.assertModsPresentWithCdmId(dirManager2, PIDs.get(work1File2Resc.getURI()), "26");
+        // Second file should be ordered before the first file for the grouped work
+        String work1Members = PIDs.get(work1File2Resc.getURI()).getId() + "|" + PIDs.get(work1File1Resc.getURI()).getId();
+        assertTrue(workResc1.hasProperty(Cdr.memberOrder, work1Members));
+    }
+
+    @Test
     public void generateSipsWithGroupedWorkWithAggregateFiles() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);

@@ -9,6 +9,7 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationSipEntry;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
+import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
@@ -314,7 +315,7 @@ public class SipService {
                     return entry;
                 });
 
-                if (mapping.getId().contains(":")) {
+                if (mapping.getId().contains(":") && !mapping.getId().startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
                     for (String cdmId : listCdmIdsByArchivalCollectionId(mapping.getId())) {
                         cdmToDestMapper.put(cdmId, destEntry);
                     }
