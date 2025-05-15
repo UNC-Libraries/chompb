@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import edu.unc.lib.boxc.migration.cdm.model.GroupMappingInfo;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -88,7 +89,7 @@ public class DestinationsValidator {
                     if (previousIds.contains(id)) {
                         errors.add("Object ID assigned to multiple destinations, see line " + i);
                     } else {
-                        if (id.contains(":")) {
+                        if (id.contains(":") && !id.startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
                             if (id.endsWith(":")) {
                                 errors.add("Field value after ':' must not be blank");
                             } else {

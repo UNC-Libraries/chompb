@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.validators;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -278,6 +279,33 @@ public class DestinationsValidatorTest {
         List<String> errors = validator.validateMappings(true);
         assertHasError(errors, "Field value after ':' must not be blank");
         assertNumberErrors(errors, 1);
+    }
+
+    @Test
+    public void groupIdValidTest() throws Exception {
+        populateFieldInfo();
+        writeCsv(mappingBody("grp:groupa:group1,9ee8de0d-59ae-4c67-9686-78a79ebc93b1,",
+                "grp:groupa:group2,3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e,"));
+        List<String> errors = validator.validateMappings(true);
+        assertNumberErrors(errors, 0);
+    }
+
+    @Test
+    public void assertValidDestinationNull() {
+        // must not throw an exception
+        DestinationsValidator.assertValidDestination(null);
+    }
+
+    @Test
+    public void assertValidDestinationIsValid() {
+        // must not throw an exception
+        DestinationsValidator.assertValidDestination("9ee8de0d-59ae-4c67-9686-78a79ebc93b1");
+    }
+
+    @Test
+    public void assertValidDestinationIsInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> DestinationsValidator.assertValidDestination("9ee8de0dbad59aetime4c67"));
     }
 
     private void assertHasError(List<String> errors, String expected) {
