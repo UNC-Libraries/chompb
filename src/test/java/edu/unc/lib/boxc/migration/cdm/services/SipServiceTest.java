@@ -20,6 +20,7 @@ import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAcl;
+import edu.unc.lib.boxc.model.api.rdf.CdrAspace;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil;
 import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
@@ -1563,6 +1564,44 @@ public class SipServiceTest {
             var fileResc = childBagChildren.get(0).asResource();
             assertTrue(fileResc.hasProperty(RDF.type, Cdr.FileObject));
         }
+    }
+
+    @Test
+    public void generateSipsWithAspaceRefIds() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.syncDefaultAspaceRefIds();
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
+        assertTrue(workResc1.hasProperty(CdrAspace.refId, "2817ec3c77e5ea9846d5c070d58d402b"));
+
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
+        assertTrue(workResc2.hasProperty(CdrAspace.refId, "3817ec3c77e5ea9846d5c070d58d402b"));
+
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
+        assertTrue(workResc3.hasProperty(CdrAspace.refId, "4817ec3c77e5ea9846d5c070d58d402b"));
+
+        assertPersistedSipInfoMatches(sip);
     }
 
     public void indexFromCsv(Path csvPath) throws Exception {
