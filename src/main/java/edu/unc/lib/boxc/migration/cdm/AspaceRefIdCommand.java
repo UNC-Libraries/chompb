@@ -2,12 +2,10 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import org.slf4j.Logger;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
@@ -33,8 +31,8 @@ public class AspaceRefIdCommand {
     private AspaceRefIdService aspaceRefIdService;
 
     @Command(name="generate",
-            description = {"Generate the optional alt-text mapping file for this project.",
-                    "A blank alt_text_files.csv template will be created for this project, " +
+            description = {"Generate the optional aspace ref id mapping file for this project.",
+                    "A blank ref_id_mapping.csv template will be created for this project, " +
                             "with only cdm dmrecords populated."})
     public int generate() throws Exception {
         long start = System.nanoTime();
