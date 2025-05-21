@@ -1,7 +1,5 @@
 package edu.unc.lib.boxc.migration.cdm.model;
 
-import edu.unc.lib.boxc.migration.cdm.jobs.VelocicroptorRemoteJob;
-
 import java.nio.file.Path;
 
 /**
@@ -32,6 +30,7 @@ public class MigrationProject {
     public static final String EXPORT_OBJECTS_FILENAME = "exported_objects.csv";
     public static final String ALT_TEXT_FILENAME = "alt_text.csv";
     public static final String ALT_TEXT_DIRNAME = "alt_text";
+    public static final String ASPACE_REF_ID_MAPPING_FILENAME = "ref_id_mapping.csv";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -197,5 +196,12 @@ public class MigrationProject {
      */
     public Path getAltTextPath() {
         return projectPath.resolve(ALT_TEXT_DIRNAME);
+    }
+
+    /**
+     * @return Path of the aspace ref id mapping file
+     */
+    public Path getAspaceRefIdMappingPath() {
+        return projectPath.resolve(ASPACE_REF_ID_MAPPING_FILENAME);
     }
 }

@@ -16,14 +16,9 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -61,8 +56,9 @@ public class CdmIndexService {
     public static final String ENTRY_TYPE_COMPOUND_OBJECT = "cpd_object";
     public static final String ENTRY_TYPE_COMPOUND_CHILD = "cpd_child";
     public static final String ENTRY_TYPE_DOCUMENT_PDF = "doc_pdf";
+    public static final String ASPACE_REF_ID = "aspace_ref_id";
     public static final List<String> MIGRATION_FIELDS = Arrays.asList(
-            PARENT_ID_FIELD, ENTRY_TYPE_FIELD, CHILD_ORDER_FIELD);
+            PARENT_ID_FIELD, ENTRY_TYPE_FIELD, CHILD_ORDER_FIELD, ASPACE_REF_ID);
     private static final Pattern CONTROL_PATTERN = Pattern.compile("[\\p{Cntrl}&&[^\r\n\t]]");
     private static final Pattern IGNORE_CLOSING_PATTERN = Pattern.compile(
             "(a|span|div|img|ul|li|ol|h\\d|input|label|html|table|tr|td|th)");
