@@ -9,6 +9,7 @@ import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
+import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ public class SipsCommand {
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
     private AltTextService altTextService;
+    private AspaceRefIdService aspaceRefIdService;
     private DescriptionsService descriptionsService;
     private DestinationsService destinationsService;
     private CdmIndexService indexService;
@@ -139,6 +141,9 @@ public class SipsCommand {
         altTextService = new AltTextService();
         altTextService.setIndexService(indexService);
         altTextService.setProject(project);
+        aspaceRefIdService = new AspaceRefIdService();
+        aspaceRefIdService.setIndexService(indexService);
+        aspaceRefIdService.setProject(project);
         descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
@@ -159,6 +164,7 @@ public class SipsCommand {
         sipService.setIndexService(indexService);
         sipService.setAccessFileService(accessFileService);
         sipService.setAltTextService(altTextService);
+        sipService.setAspaceRefIdService(aspaceRefIdService);
         sipService.setSourceFileService(sourceFileService);
         sipService.setPidMinter(pidMinter);
         sipService.setDescriptionsService(descriptionsService);
