@@ -35,7 +35,6 @@ public class AspaceRefIdService {
 
     private MigrationProject project;
     private CdmIndexService indexService;
-    private List<String> ids;
 
     public AspaceRefIdService() {
     }
@@ -66,8 +65,7 @@ public class AspaceRefIdService {
      */
     public void syncMappings() throws IOException {
         assertProjectStateValid();
-        if (project.getProjectProperties().getAspaceRefIdMappingsUpdatedDate() == null
-                || Files.notExists(project.getAspaceRefIdMappingPath())) {
+        if (Files.notExists(project.getAspaceRefIdMappingPath())) {
             throw new InvalidProjectStateException("Project has not previously generated aspace ref id mappings");
         }
 
@@ -83,11 +81,8 @@ public class AspaceRefIdService {
 
             // Sync the aspace ref ids into the database
             AspaceRefIdInfo info = loadMappings();
-            for (AspaceRefIdInfo.AspaceRefIdMapping entry : info.getMappings()) {
-                String cdmId = entry.getCdmId();
-                String aspaceRefId = entry.getAspaceRefId();
-
-                updateAspaceRefIdEntry(stmt, cdmId, aspaceRefId);
+            for (AspaceRefIdInfo.AspaceRefIdMapping mapping : info.getMappings()) {
+                updateAspaceRefIdEntry(stmt, mapping);
             }
         } catch (SQLException e) {
             throw new MigrationException("Error interacting with export index", e);
@@ -103,10 +98,10 @@ public class AspaceRefIdService {
                 + " set " + CdmIndexService.ASPACE_REF_ID + " = null ");
     }
 
-    private void updateAspaceRefIdEntry(Statement stmt, String aspaceRefId, String cdmId) throws SQLException {
+    private void updateAspaceRefIdEntry(Statement stmt, AspaceRefIdInfo.AspaceRefIdMapping mapping) throws SQLException {
         stmt.executeUpdate("update " + CdmIndexService.TB_NAME
-                + " set " + CdmIndexService.ASPACE_REF_ID + " = '" + aspaceRefId + "'"
-                + " where " + CdmFieldInfo.CDM_ID + " = '"  + cdmId + "'");
+                + " set " + CdmIndexService.ASPACE_REF_ID + " = '" + mapping.getAspaceRefId() + "'"
+                + " where " + CdmFieldInfo.CDM_ID + " = '"  + mapping.getCdmId() + "'");
     }
 
     protected void setUpdatedDate(Instant timestamp) throws IOException {
@@ -124,32 +119,29 @@ public class AspaceRefIdService {
     }
 
     private List<String> getIds() {
-        if (ids == null) {
-            ids = new ArrayList<>();
-            // for all work objects in the project (grouped works, compound objects, and single file works)
-            String query = "select " + CdmFieldInfo.CDM_ID
-                    + " from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
-                    + " and " + CdmIndexService.PARENT_ID_FIELD + " is null";
+        List<String> ids = new ArrayList<>();
+        // for all work objects in the project (grouped works, compound objects, and single file works)
+        String query = "select " + CdmFieldInfo.CDM_ID
+                + " from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                + " and " + CdmIndexService.PARENT_ID_FIELD + " is null";
 
-            getIndexService();
-            try (Connection conn = indexService.openDbConnection()) {
-                var stmt = conn.createStatement();
-                var rs = stmt.executeQuery(query);
-                while (rs.next()) {
-                    if (!rs.getString(1).isEmpty()) {
-                        ids.add(rs.getString(1));
-                    }
+        getIndexService();
+        try (Connection conn = indexService.openDbConnection()) {
+            var stmt = conn.createStatement();
+            var rs = stmt.executeQuery(query);
+            while (rs.next()) {
+                if (!rs.getString(1).isEmpty()) {
+                    ids.add(rs.getString(1));
                 }
-                return ids;
-            } catch (SQLException e) {
-                throw new MigrationException("Error interacting with export index", e);
             }
+            return ids;
+        } catch (SQLException e) {
+            throw new MigrationException("Error interacting with export index", e);
         }
-        return ids;
     }
 
     /**
