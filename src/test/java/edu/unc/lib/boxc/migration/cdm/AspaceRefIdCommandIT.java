@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
@@ -98,10 +99,10 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
             throws Exception {
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("select * from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.ASPACE_REF_ID + " is not null ");
+                + " where " + CdmFieldInfo.CDM_ID + " = " + expectedCdmId);
         while (rs.next()) {
-            String cdmId = rs.getString(AspaceRefIdInfo.RECORD_ID_FIELD);
-            String refId = rs.getString(AspaceRefIdInfo.REF_ID_FIELD);
+            String cdmId = rs.getString(CdmFieldInfo.CDM_ID);
+            String refId = rs.getString(CdmIndexService.ASPACE_REF_ID);
             assertEquals(expectedCdmId, cdmId);
             assertEquals(expectedAspaceRefId, refId);
         }
