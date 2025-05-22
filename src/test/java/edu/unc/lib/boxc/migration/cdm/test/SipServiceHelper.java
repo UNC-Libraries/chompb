@@ -21,7 +21,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.unc.lib.boxc.auth.api.UserRole;
-import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.options.BoxctronFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
@@ -464,24 +463,6 @@ public class SipServiceHelper {
                     project.getDescriptionsPath().resolve(filename));
         }
         descriptionsService.expandDescriptions();
-    }
-
-    public void syncDefaultAspaceRefIds() throws Exception {
-        writeAspaceRefIdCsv(aspaceRefIdMappingBody("25,2817ec3c77e5ea9846d5c070d58d402b",
-                "26,3817ec3c77e5ea9846d5c070d58d402b", "27,4817ec3c77e5ea9846d5c070d58d402b"));
-        aspaceRefIdService.syncMappings();
-    }
-
-    private String aspaceRefIdMappingBody(String... rows) {
-        return String.join(",", AspaceRefIdInfo.CSV_HEADERS) + "\n"
-                + String.join("\n", rows);
-    }
-
-    private void writeAspaceRefIdCsv(String mappingBody) throws IOException {
-        FileUtils.write(project.getAspaceRefIdMappingPath().toFile(),
-                mappingBody, StandardCharsets.UTF_8);
-        project.getProjectProperties().setAspaceRefIdMappingsUpdatedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
     }
 
     public void assertMigrationEventPresent(DepositDirectoryManager dirManager, PID pid) throws Exception {

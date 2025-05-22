@@ -5,6 +5,7 @@ import edu.unc.lib.boxc.common.xml.SecureXMLFactory;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
+import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
@@ -1569,7 +1570,10 @@ public class SipServiceTest {
     @Test
     public void generateSipsWithAspaceRefIds() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        testHelper.syncDefaultAspaceRefIds();
+        writeAspaceRefIdCsv(aspaceRefIdMappingBody("25,2817ec3c77e5ea9846d5c070d58d402b",
+                "26,3817ec3c77e5ea9846d5c070d58d402b", "27,4817ec3c77e5ea9846d5c070d58d402b"));
+        AspaceRefIdService aspaceRefIdService = testHelper.getAspaceRefIdService();
+        aspaceRefIdService.syncMappings();
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
@@ -1749,5 +1753,17 @@ public class SipServiceTest {
     private void writeAltTextCsv(String mappingBody) throws IOException {
         FileUtils.write(project.getAltTextMappingPath().toFile(),
                 mappingBody, StandardCharsets.UTF_8);
+    }
+
+    private String aspaceRefIdMappingBody(String... rows) {
+        return String.join(",", AspaceRefIdInfo.CSV_HEADERS) + "\n"
+                + String.join("\n", rows);
+    }
+
+    private void writeAspaceRefIdCsv(String mappingBody) throws IOException {
+        FileUtils.write(project.getAspaceRefIdMappingPath().toFile(),
+                mappingBody, StandardCharsets.UTF_8);
+        project.getProjectProperties().setAspaceRefIdMappingsUpdatedDate(Instant.now());
+        ProjectPropertiesSerialization.write(project);
     }
 }
