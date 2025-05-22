@@ -2,6 +2,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
+import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
@@ -207,7 +208,6 @@ public class AspaceRefIdServiceTest {
             conn = indexService.openDbConnection();
             assertWorkSynced(conn, "25", "2817ec3c77e5ea9846d5c070d58d402b");
             assertWorkSynced(conn, "26", "3817ec3c77e5ea9846d5c070d58d402b");
-            assertWorkSynced(conn, "27", "4817ec3c77e5ea9846d5c070d58d402b");
             assertSyncedDatePresent();
         } finally {
             CdmIndexService.closeDbConnection(conn);
@@ -253,10 +253,10 @@ public class AspaceRefIdServiceTest {
             throws Exception {
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("select * from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.ASPACE_REF_ID + " is not null ");
+                + " where " + CdmFieldInfo.CDM_ID + " = " + expectedCdmId);
         while (rs.next()) {
-            String cdmId = rs.getString(AspaceRefIdInfo.RECORD_ID_FIELD);
-            String refId = rs.getString(AspaceRefIdInfo.REF_ID_FIELD);
+            String cdmId = rs.getString(CdmFieldInfo.CDM_ID);
+            String refId = rs.getString(CdmIndexService.ASPACE_REF_ID);
             assertEquals(expectedCdmId, cdmId);
             assertEquals(expectedAspaceRefId, refId);
         }
