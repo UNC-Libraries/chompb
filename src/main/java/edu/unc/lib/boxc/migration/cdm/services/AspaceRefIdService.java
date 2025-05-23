@@ -101,7 +101,7 @@ public class AspaceRefIdService {
     private void updateAspaceRefIdEntry(Statement stmt, AspaceRefIdInfo.AspaceRefIdMapping mapping) throws SQLException {
         stmt.executeUpdate("update " + CdmIndexService.TB_NAME
                 + " set " + CdmIndexService.ASPACE_REF_ID + " = '" + mapping.getAspaceRefId() + "'"
-                + " where " + CdmFieldInfo.CDM_ID + " = '"  + mapping.getCdmId() + "'");
+                + " where " + CdmFieldInfo.CDM_ID + " = "  + mapping.getCdmId());
     }
 
     protected void setUpdatedDate(Instant timestamp) throws IOException {
