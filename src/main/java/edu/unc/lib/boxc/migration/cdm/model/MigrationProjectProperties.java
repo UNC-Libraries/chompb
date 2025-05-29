@@ -21,7 +21,6 @@ public class MigrationProjectProperties {
     private Instant accessFilesUpdatedDate;
     private Instant altTextFilesUpdatedDate;
     private Instant aspaceRefIdMappingsUpdatedDate;
-    private Instant aspaceRefIdMappingsSyncedDate;
     private Instant groupMappingsUpdatedDate;
     private Instant groupMappingsSyncedDate;
     private Instant descriptionsExpandedDate;
@@ -156,17 +155,6 @@ public class MigrationProjectProperties {
 
     public void setAspaceRefIdMappingsUpdatedDate(Instant aspaceRefIdMappingsUpdatedDate) {
         this.aspaceRefIdMappingsUpdatedDate = aspaceRefIdMappingsUpdatedDate;
-    }
-
-    /**
-     * @return timestamp the aspace ref id mapping was last synced to the database
-     */
-    public Instant getAspaceRefIdMappingsSyncedDate() {
-        return aspaceRefIdMappingsSyncedDate;
-    }
-
-    public void setAspaceRefIdMappingsSyncedDate(Instant aspaceRefIdMappingsSyncedDate) {
-        this.aspaceRefIdMappingsSyncedDate = aspaceRefIdMappingsSyncedDate;
     }
 
     /**

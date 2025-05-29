@@ -1,10 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
-import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
@@ -25,17 +22,11 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -139,81 +130,6 @@ public class AspaceRefIdServiceTest {
         }
     }
 
-    @Test
-    public void syncNotIndexedTest() throws Exception {
-        var e = assertThrows(InvalidProjectStateException.class, () -> {
-            service.syncMappings();
-        });
-        assertExceptionContains("Project must be indexed", e);
-        assertMappedDateNotPresent();
-        assertSyncedDateNotPresent();
-    }
-
-    @Test
-    public void syncNotGeneratedTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        var e = assertThrows(InvalidProjectStateException.class, () -> {
-            service.syncMappings();
-        });
-        assertExceptionContains("Project has not previously generated aspace ref id mappings", e);
-        assertMappedDateNotPresent();
-        assertSyncedDateNotPresent();
-    }
-
-    @Test
-    public void syncSingleRunTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        writeCsv(mappingBody("25,2817ec3c77e5ea9846d5c070d58d402b", "26,3817ec3c77e5ea9846d5c070d58d402b",
-                "27,4817ec3c77e5ea9846d5c070d58d402b"));
-
-        service.syncMappings();
-
-        Connection conn = null;
-        try {
-            conn = indexService.openDbConnection();
-            assertWorkSynced(conn, "25", "2817ec3c77e5ea9846d5c070d58d402b");
-            assertWorkSynced(conn, "26", "3817ec3c77e5ea9846d5c070d58d402b");
-            assertWorkSynced(conn, "27", "4817ec3c77e5ea9846d5c070d58d402b");
-            assertSyncedDatePresent();
-        } finally {
-            CdmIndexService.closeDbConnection(conn);
-        }
-    }
-
-    @Test
-    public void syncSecondRunWithCleanupTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        writeCsv(mappingBody("25,2817ec3c77e5ea9846d5c070d58d402b", "26,3817ec3c77e5ea9846d5c070d58d402b",
-                "27,4817ec3c77e5ea9846d5c070d58d402b"));
-
-        service.syncMappings();
-
-        Connection conn = null;
-        try {
-            conn = indexService.openDbConnection();
-            assertWorkSynced(conn, "25", "2817ec3c77e5ea9846d5c070d58d402b");
-            assertWorkSynced(conn, "26", "3817ec3c77e5ea9846d5c070d58d402b");
-            assertWorkSynced(conn, "27", "4817ec3c77e5ea9846d5c070d58d402b");
-
-            assertSyncedDatePresent();
-        } finally {
-            CdmIndexService.closeDbConnection(conn);
-        }
-
-        writeCsv(mappingBody("25,2817ec3c77e5ea9846d5c070d58d402b", "26,3817ec3c77e5ea9846d5c070d58d402b"));
-
-        service.syncMappings();
-
-        try {
-            conn = indexService.openDbConnection();
-            assertWorkSynced(conn, "25", "2817ec3c77e5ea9846d5c070d58d402b");
-            assertWorkSynced(conn, "26", "3817ec3c77e5ea9846d5c070d58d402b");
-            assertSyncedDatePresent();
-        } finally {
-            CdmIndexService.closeDbConnection(conn);
-        }
-    }
-
     private CSVParser parser() throws IOException {
         Reader reader = Files.newBufferedReader(project.getAspaceRefIdMappingPath());
         CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
@@ -247,38 +163,5 @@ public class AspaceRefIdServiceTest {
         GroupMappingService groupService = testHelper.getGroupMappingService();
         groupService.generateMapping(groupOptions);
         groupService.syncMappings(makeDefaultSyncOptions());
-    }
-
-    private void assertWorkSynced(Connection conn, String expectedCdmId, String expectedAspaceRefId)
-            throws Exception {
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("select * from " + CdmIndexService.TB_NAME
-                + " where " + CdmFieldInfo.CDM_ID + " = " + expectedCdmId);
-        while (rs.next()) {
-            String cdmId = rs.getString(CdmFieldInfo.CDM_ID);
-            String refId = rs.getString(CdmIndexService.ASPACE_REF_ID);
-            assertEquals(expectedCdmId, cdmId);
-            assertEquals(expectedAspaceRefId, refId);
-        }
-    }
-
-    private void assertExceptionContains(String expected, Exception e) {
-        assertTrue(e.getMessage().contains(expected),
-                "Expected message exception to contain '" + expected + "', but was: " + e.getMessage());
-    }
-
-    private void assertMappedDateNotPresent() throws Exception {
-        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
-        assertNull(props.getAspaceRefIdMappingsUpdatedDate());
-    }
-
-    private void assertSyncedDatePresent() throws Exception {
-        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
-        assertNotNull(props.getAspaceRefIdMappingsSyncedDate());
-    }
-
-    private void assertSyncedDateNotPresent() throws Exception {
-        MigrationProjectProperties props = ProjectPropertiesSerialization.read(project.getProjectPropertiesPath());
-        assertNull(props.getAspaceRefIdMappingsUpdatedDate());
     }
 }

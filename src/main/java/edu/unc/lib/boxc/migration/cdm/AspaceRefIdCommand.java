@@ -53,29 +53,6 @@ public class AspaceRefIdCommand {
         }
     }
 
-    @Command(name = "sync",
-            description = { "Sync the aspace ref id mapping file for this project into the index database." } )
-    public int sync() throws Exception {
-        long start = System.nanoTime();
-
-        try {
-            initialize();
-
-            aspaceRefIdService.syncMappings();
-            outputLogger.info("Aspace ref id mapping synced to index for {} in {}s", project.getProjectName(),
-                    (System.nanoTime() - start) / 1e9);
-            return 0;
-        } catch (MigrationException | IllegalArgumentException e) {
-            outputLogger.info("Cannot sync aspace ref id mappings: {}", e.getMessage());
-            log.warn("Cannot sync aspace ref id mapping", e);
-            return 1;
-        } catch (Exception e) {
-            log.error("Failed to sync aspace ref id mappings", e);
-            outputLogger.info("Failed to sync aspace ref id mappings: {}", e.getMessage(), e);
-            return 1;
-        }
-    }
-
     private void initialize() throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);

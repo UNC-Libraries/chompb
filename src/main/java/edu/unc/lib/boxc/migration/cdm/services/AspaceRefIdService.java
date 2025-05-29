@@ -19,10 +19,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -58,59 +58,8 @@ public class AspaceRefIdService {
         setUpdatedDate(Instant.now());
     }
 
-    /**
-     * Syncs aspace ref id mappings from the mapping file into the database. Clears out any previously synced
-     * aspace ref id mapping details before updating.
-     * @throws IOException
-     */
-    public void syncMappings() throws IOException {
-        assertProjectStateValid();
-        if (Files.notExists(project.getAspaceRefIdMappingPath())) {
-            throw new InvalidProjectStateException("Project has not previously generated aspace ref id mappings");
-        }
-
-        Connection conn = null;
-        try {
-            conn = indexService.openDbConnection();
-            Statement stmt = conn.createStatement();
-            // Cleanup any previously synced grouping data
-            cleanupStaleSyncedRefIds(stmt);
-            if (project.getProjectProperties().getAspaceRefIdMappingsSyncedDate() != null) {
-                setSyncedDate(null);
-            }
-
-            // Sync the aspace ref ids into the database
-            AspaceRefIdInfo info = loadMappings();
-            for (AspaceRefIdInfo.AspaceRefIdMapping mapping : info.getMappings()) {
-                updateAspaceRefIdEntry(stmt, mapping);
-            }
-        } catch (SQLException e) {
-            throw new MigrationException("Error interacting with export index", e);
-        } finally {
-            CdmIndexService.closeDbConnection(conn);
-        }
-        setSyncedDate(Instant.now());
-    }
-
-    private void cleanupStaleSyncedRefIds(Statement stmt) throws SQLException {
-        // Clear out of date aspace ref ids
-        stmt.executeUpdate("update " + CdmIndexService.TB_NAME
-                + " set " + CdmIndexService.ASPACE_REF_ID + " = null ");
-    }
-
-    private void updateAspaceRefIdEntry(Statement stmt, AspaceRefIdInfo.AspaceRefIdMapping mapping) throws SQLException {
-        stmt.executeUpdate("update " + CdmIndexService.TB_NAME
-                + " set " + CdmIndexService.ASPACE_REF_ID + " = '" + mapping.getAspaceRefId() + "'"
-                + " where " + CdmFieldInfo.CDM_ID + " = "  + mapping.getCdmId());
-    }
-
     protected void setUpdatedDate(Instant timestamp) throws IOException {
         project.getProjectProperties().setAspaceRefIdMappingsUpdatedDate(timestamp);
-        ProjectPropertiesSerialization.write(project);
-    }
-
-    private void setSyncedDate(Instant timestamp) throws IOException {
-        project.getProjectProperties().setAspaceRefIdMappingsSyncedDate(timestamp);
         ProjectPropertiesSerialization.write(project);
     }
 
@@ -158,19 +107,12 @@ public class AspaceRefIdService {
             return info;
         }
         try (var csvParser = openMappingsParser(mappingPath)) {
-            List<AspaceRefIdInfo.AspaceRefIdMapping> mappings = info.getMappings();
+            Map<String, String> mappings = info.getMappings();
             for(CSVRecord csvRecord : csvParser) {
-                mappings.add(recordToMapping(csvRecord));
+                mappings.put(csvRecord.get(0), csvRecord.get(1));
             }
             return info;
         }
-    }
-
-    public static AspaceRefIdInfo.AspaceRefIdMapping recordToMapping(CSVRecord csvRecord) {
-        AspaceRefIdInfo.AspaceRefIdMapping mapping = new AspaceRefIdInfo.AspaceRefIdMapping();
-        mapping.setCdmId(csvRecord.get(0));
-        mapping.setAspaceRefId(csvRecord.get(1));
-        return mapping;
     }
 
     /**

@@ -40,6 +40,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
@@ -292,9 +293,9 @@ public class WorkGenerator {
 
     protected void addRefId(String cdmId, Resource resource) {
         if (aspaceRefIdInfo != null) {
-            AspaceRefIdInfo.AspaceRefIdMapping aspaceRefIdMapping = aspaceRefIdInfo.getMappingByCdmId(cdmId);
-            if (aspaceRefIdMapping != null && !StringUtils.isBlank(aspaceRefIdMapping.getAspaceRefId())) {
-                String refId = aspaceRefIdMapping.getAspaceRefId();
+            Map.Entry<String, String> aspaceRefIdMapping = aspaceRefIdInfo.getMappingByCdmId(cdmId);
+            if (aspaceRefIdMapping != null && !StringUtils.isBlank(aspaceRefIdMapping.getValue())) {
+                String refId = aspaceRefIdMapping.getValue();
                 resource.addProperty(CdrAspace.refId, refId);
             }
         }

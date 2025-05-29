@@ -1572,8 +1572,6 @@ public class SipServiceTest {
         testHelper.indexExportData("mini_gilmer");
         writeAspaceRefIdCsv(aspaceRefIdMappingBody("25,2817ec3c77e5ea9846d5c070d58d402b",
                 "26,3817ec3c77e5ea9846d5c070d58d402b", "27,4817ec3c77e5ea9846d5c070d58d402b"));
-        AspaceRefIdService aspaceRefIdService = testHelper.getAspaceRefIdService();
-        aspaceRefIdService.syncMappings();
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
