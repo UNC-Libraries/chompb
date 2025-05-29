@@ -34,12 +34,7 @@ public class AspaceRefIdInfo {
      * @return aspaceRefId, or null if no match
      */
     public String getRefIdByRecordId(String cdmId) {
-        for (Map.Entry<String, String> entry : mappings.entrySet()) {
-            if (entry.getKey().equals(cdmId)) {
-                return entry.getValue();
-            }
-        }
-        return null;
+        return mappings.get(cdmId);
     }
 
 }
