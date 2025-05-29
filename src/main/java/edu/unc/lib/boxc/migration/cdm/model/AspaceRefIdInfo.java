@@ -31,38 +31,15 @@ public class AspaceRefIdInfo {
 
     /**
      * @param cdmId
-     * @return mapping with matching cdm id, or null if no match
+     * @return aspaceRefId, or null if no match
      */
-    public Map.Entry<String,String> getMappingByCdmId(String cdmId) {
+    public String getRefIdByRecordId(String cdmId) {
         for (Map.Entry<String, String> entry : mappings.entrySet()) {
             if (entry.getKey().equals(cdmId)) {
-                return entry;
+                return entry.getValue();
             }
         }
         return null;
     }
 
-//    /**
-//     * An individual mapping from a migration object to associated aspace ref id
-//     */
-//    public static class AspaceRefIdMapping {
-//        private String cdmId;
-//        private String aspaceRefId;
-//
-//        public String getCdmId() {
-//            return cdmId;
-//        }
-//
-//        public void setCdmId(String cdmId) {
-//            this.cdmId = cdmId;
-//        }
-//
-//        public String getAspaceRefId() {
-//            return aspaceRefId;
-//        }
-//
-//        public void setAspaceRefId(String aspaceRefId) {
-//            this.aspaceRefId = aspaceRefId;
-//        }
-//    }
 }

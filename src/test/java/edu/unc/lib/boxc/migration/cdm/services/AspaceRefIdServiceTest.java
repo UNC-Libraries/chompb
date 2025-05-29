@@ -139,18 +139,6 @@ public class AspaceRefIdServiceTest {
         return csvParser;
     }
 
-    private String mappingBody(String... rows) {
-        return String.join(",", AspaceRefIdInfo.CSV_HEADERS) + "\n"
-                + String.join("\n", rows);
-    }
-
-    private void writeCsv(String mappingBody) throws IOException {
-        FileUtils.write(project.getAspaceRefIdMappingPath().toFile(),
-                mappingBody, StandardCharsets.UTF_8);
-        project.getProjectProperties().setAspaceRefIdMappingsUpdatedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
-    }
-
     private GroupMappingSyncOptions makeDefaultSyncOptions() {
         var options = new GroupMappingSyncOptions();
         options.setSortField("file");
