@@ -1,6 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.services.sips;
 
 import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
+import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
@@ -8,6 +9,7 @@ import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
+import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
@@ -29,6 +31,8 @@ public class WorkGeneratorFactory {
     private AccessFileService accessFileService;
     private AltTextInfo altTextInfo;
     private AltTextService altTextService;
+    private AspaceRefIdInfo aspaceRefIdInfo;
+    private AspaceRefIdService aspaceRefIdService;
     private Connection conn;
     private SipGenerationOptions options;
     private CdmToDestMapper cdmToDestMapper;
@@ -57,6 +61,8 @@ public class WorkGeneratorFactory {
         gen.sourceFilesInfo = sourceFilesInfo;
         gen.altTextInfo = altTextInfo;
         gen.altTextService = altTextService;
+        gen.aspaceRefIdInfo = aspaceRefIdInfo;
+        gen.aspaceRefIdService = aspaceRefIdService;
         gen.descriptionsService = descriptionsService;
         gen.conn = conn;
         gen.options = options;
@@ -85,6 +91,10 @@ public class WorkGeneratorFactory {
         this.altTextInfo = altTextInfo;
     }
 
+    public void setAspaceRefIdInfo(AspaceRefIdInfo aspaceRefIdInfo) {
+        this.aspaceRefIdInfo = aspaceRefIdInfo;
+    }
+
     public void setConn(Connection conn) {
         this.conn = conn;
     }
@@ -107,6 +117,10 @@ public class WorkGeneratorFactory {
 
     public void setAltTextService(AltTextService altTextService) {
         this.altTextService = altTextService;
+    }
+
+    public void setAspaceRefIdService(AspaceRefIdService aspaceRefIdService) {
+        this.aspaceRefIdService = aspaceRefIdService;
     }
 
     public void setDescriptionsService(DescriptionsService descriptionsService) {

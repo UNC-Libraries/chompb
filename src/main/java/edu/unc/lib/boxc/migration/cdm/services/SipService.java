@@ -65,6 +65,7 @@ public class SipService {
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
     private AltTextService altTextService;
+    private AspaceRefIdService aspaceRefIdService;
     private DescriptionsService descriptionsService;
     private RedirectMappingService redirectMappingService;
     private PremisLoggerFactory premisLoggerFactory;
@@ -106,6 +107,7 @@ public class SipService {
         workGeneratorFactory.setDescriptionsService(descriptionsService);
         workGeneratorFactory.setAccessFileService(accessFileService);
         workGeneratorFactory.setAltTextService(altTextService);
+        workGeneratorFactory.setAspaceRefIdService(aspaceRefIdService);
         workGeneratorFactory.setRedirectMappingService(redirectMappingService);
         workGeneratorFactory.setPidMinter(pidMinter);
         workGeneratorFactory.setPostMigrationReportService(postMigrationReportService);
@@ -126,6 +128,11 @@ public class SipService {
             workGeneratorFactory.setAltTextInfo(altTextService.loadMappings());
         } catch (NoSuchFileException e) {
             log.debug("No alt text mappings file, no alt text files will be added to the SIP");
+        }
+        try {
+            workGeneratorFactory.setAspaceRefIdInfo(aspaceRefIdService.loadMappings());
+        } catch (NoSuchFileException e) {
+            log.debug("No aspace ref id mappings file, no aspace ref ids will be added to the SIP");
         }
         workGeneratorFactory.setConn(conn);
         initializeDestinations(options);
@@ -417,6 +424,10 @@ public class SipService {
 
     public void setAltTextService(AltTextService altTextService) {
         this.altTextService = altTextService;
+    }
+
+    public void setAspaceRefIdService(AspaceRefIdService aspaceRefIdService) {
+        this.aspaceRefIdService = aspaceRefIdService;
     }
 
     public void setDescriptionsService(DescriptionsService descriptionsService) {

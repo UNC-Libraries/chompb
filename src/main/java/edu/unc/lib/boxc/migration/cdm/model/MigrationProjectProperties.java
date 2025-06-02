@@ -20,6 +20,7 @@ public class MigrationProjectProperties {
     private Instant sourceFilesUpdatedDate;
     private Instant accessFilesUpdatedDate;
     private Instant altTextFilesUpdatedDate;
+    private Instant aspaceRefIdMappingsUpdatedDate;
     private Instant groupMappingsUpdatedDate;
     private Instant groupMappingsSyncedDate;
     private Instant descriptionsExpandedDate;
@@ -143,6 +144,17 @@ public class MigrationProjectProperties {
 
     public void setAltTextFilesUpdatedDate(Instant altTextFilesUpdatedDate) {
         this.altTextFilesUpdatedDate = altTextFilesUpdatedDate;
+    }
+
+    /**
+     * @return timestamp the aspace ref id mapping was last updated
+     */
+    public Instant getAspaceRefIdMappingsUpdatedDate() {
+        return aspaceRefIdMappingsUpdatedDate;
+    }
+
+    public void setAspaceRefIdMappingsUpdatedDate(Instant aspaceRefIdMappingsUpdatedDate) {
+        this.aspaceRefIdMappingsUpdatedDate = aspaceRefIdMappingsUpdatedDate;
     }
 
     /**

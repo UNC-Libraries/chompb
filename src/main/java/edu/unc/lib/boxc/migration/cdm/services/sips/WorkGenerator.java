@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelHelpers;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
+import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationSipEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
@@ -11,6 +12,7 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
+import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
 import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
@@ -20,6 +22,7 @@ import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
+import edu.unc.lib.boxc.model.api.rdf.CdrAspace;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -62,6 +65,7 @@ public class WorkGenerator {
     protected SourceFilesInfo sourceFilesInfo;
     protected SourceFilesInfo accessFilesInfo;
     protected AltTextInfo altTextInfo;
+    protected AspaceRefIdInfo aspaceRefIdInfo;
     protected Connection conn;
     protected SipGenerationOptions options;
     protected Model model;
@@ -70,6 +74,7 @@ public class WorkGenerator {
     protected DescriptionsService descriptionsService;
     protected AccessFileService accessFileService;
     protected AltTextService altTextService;
+    protected AspaceRefIdService aspaceRefIdService;
     protected PostMigrationReportService postMigrationReportService;
     protected PermissionsInfo permissionsInfo;
     protected StreamingMetadataService streamingMetadataService;
@@ -110,6 +115,7 @@ public class WorkGenerator {
 
         // add permission to work
         addPermission(cdmId, workBag);
+        addRefId(cdmId, workBag);
 
         // Copy description to SIP
         copyDescriptionToSip(workPid, expDescPath);
@@ -280,6 +286,15 @@ public class WorkGenerator {
             if (altTextMapping != null && !StringUtils.isBlank(altTextMapping.getAltTextBody())) {
                 Path sipAltTextPath = destEntry.getDepositDirManager().getAltTextPath(pid, true);
                 altTextService.writeAltTextToFile(cdmId, sipAltTextPath);
+            }
+        }
+    }
+
+    protected void addRefId(String cdmId, Resource resource) {
+        if (aspaceRefIdInfo != null) {
+            String aspaceRefId = aspaceRefIdInfo.getRefIdByRecordId(cdmId);
+            if (aspaceRefId != null && !StringUtils.isBlank(aspaceRefId)) {
+                resource.addProperty(CdrAspace.refId, aspaceRefId);
             }
         }
     }

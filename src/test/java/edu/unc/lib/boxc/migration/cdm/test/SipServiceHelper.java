@@ -28,6 +28,7 @@ import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.ArchivalDestinationsService;
+import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
 import edu.unc.lib.boxc.migration.cdm.services.BoxctronFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
@@ -91,6 +92,7 @@ public class SipServiceHelper {
     private SourceFileService sourceFileService;
     private AccessFileService accessFileService;
     private AltTextService altTextService;
+    private AspaceRefIdService aspaceRefIdService;
     private AggregateFileMappingService aggregateFileMappingService;
     private AggregateFileMappingService aggregateBottomMappingService;
     private BoxctronFileService boxctronFileService;
@@ -132,6 +134,9 @@ public class SipServiceHelper {
         altTextService = new AltTextService();
         altTextService.setIndexService(indexService);
         altTextService.setProject(project);
+        aspaceRefIdService = new AspaceRefIdService();
+        aspaceRefIdService.setIndexService(indexService);
+        aspaceRefIdService.setProject(project);
         descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
         destinationsService = new DestinationsService();
@@ -161,6 +166,7 @@ public class SipServiceHelper {
         service.setIndexService(indexService);
         service.setAccessFileService(accessFileService);
         service.setAltTextService(altTextService);
+        service.setAspaceRefIdService(aspaceRefIdService);
         service.setSourceFileService(sourceFileService);
         service.setPidMinter(pidMinter);
         service.setDescriptionsService(descriptionsService);
@@ -567,6 +573,15 @@ public class SipServiceHelper {
             this.altTextService.setIndexService(indexService);
         }
         return this.altTextService;
+    }
+
+    public AspaceRefIdService getAspaceRefIdService() {
+        if (this.aspaceRefIdService == null) {
+            this. aspaceRefIdService = new AspaceRefIdService();
+            this.aspaceRefIdService.setProject(project);
+            this.aspaceRefIdService.setIndexService(indexService);
+        }
+        return this.aspaceRefIdService;
     }
 
     public AggregateFileMappingService getAggregateFileMappingService() {
