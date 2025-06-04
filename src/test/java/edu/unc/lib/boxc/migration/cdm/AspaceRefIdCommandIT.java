@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -49,6 +50,35 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
 
         assertUpdatedDatePresent();
+    }
+
+    @Test
+    public void validateValidTest() throws Exception {
+        indexExportSamples();
+        writeCsv(mappingBody("25,fcee5fc2bb61effc8836498a8117b05d"));
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "aspace_ref_id", "validate" };
+        executeExpectSuccess(args);
+
+        assertOutputContains("PASS: Aspace ref id mapping at path " + project.getAspaceRefIdMappingPath() + " is valid");
+    }
+
+    @Test
+    public void validateInvalidTest() throws Exception {
+        indexExportSamples();
+        writeCsv(mappingBody("25,"));
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "aspace_ref_id", "validate" };
+        executeExpectFailure(args);
+
+        assertOutputContains("FAIL: Aspace ref id mapping at path " + project.getAspaceRefIdMappingPath()
+                + " is invalid");
+        assertOutputContains("- No aspace ref id mapped at line 2");
+        assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
     }
 
     private void indexExportSamples() throws Exception {
