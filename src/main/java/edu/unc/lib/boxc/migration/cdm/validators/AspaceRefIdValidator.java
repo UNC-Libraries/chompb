@@ -22,6 +22,10 @@ import java.util.regex.Pattern;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+/**
+ * Validator for aspace ref id mappings
+ * @author krwong
+ */
 public class AspaceRefIdValidator {
     private static final Logger log = getLogger(AspaceRefIdValidator.class);
     private MigrationProject project;
