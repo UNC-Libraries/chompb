@@ -3,7 +3,6 @@ package edu.unc.lib.boxc.migration.cdm.validators;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
@@ -45,6 +44,14 @@ public class AspaceRefIdValidatorTest {
     }
 
     @Test
+    public void validMappingTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        writeCsv(mappingBody("25,fcee5fc2bb61effc8836498a8117b05d"));
+        List<String> errors = validator.validateMappings(false);
+        assertNumberErrors(errors, 0);
+    }
+
+    @Test
     public void noMappingFileTest() throws Exception {
         Assertions.assertThrows(MigrationException.class, () -> {
             validator.validateMappings(false);
@@ -69,12 +76,19 @@ public class AspaceRefIdValidatorTest {
     }
 
     @Test
+    public void blankIdForceTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        writeCsv(mappingBody(",fcee5fc2bb61effc8836498a8117b05d"));
+        List<String> errors = validator.validateMappings(true);
+        assertNumberErrors(errors, 0);
+    }
+
+    @Test
     public void blankRefIdTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("25,"));
         List<String> errors = validator.validateMappings(false);
-        assertHasError(errors, "No aspace ref id mapped at line 2");
-        assertNumberErrors(errors, 1);
+        assertNumberErrors(errors, 0);
     }
 
     @Test
@@ -99,10 +113,19 @@ public class AspaceRefIdValidatorTest {
     public void duplicateIdTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         writeCsv(mappingBody("25,fcee5fc2bb61effc8836498a8117b05d",
-                "25,fcee5fc2bb61effc8836498a8117b05d"));
+                "25,4817ec3c77e5ea9846d5c070d58d402b"));
         List<String> errors = validator.validateMappings(false);
         assertHasError(errors, "Duplicate mapping for id 25 at line 3");
         assertNumberErrors(errors, 1);
+    }
+
+    @Test
+    public void duplicateRefIdTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        writeCsv(mappingBody("25,fcee5fc2bb61effc8836498a8117b05d",
+                "26,fcee5fc2bb61effc8836498a8117b05d"));
+        List<String> errors = validator.validateMappings(false);
+        assertNumberErrors(errors, 0);
     }
 
     private void assertHasError(List<String> errors, String expected) {

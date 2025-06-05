@@ -33,6 +33,7 @@ public class AspaceRefIdValidator {
     protected List<String> errors = new ArrayList<>();
 
     public static final String REF_ID_QUERY = "[a-zA-Z0-9]{32}";
+    public static final Pattern PATTERN = Pattern.compile(REF_ID_QUERY);
 
     public List<String> validateMappings(boolean force) {
         try (
@@ -62,13 +63,8 @@ public class AspaceRefIdValidator {
                     previousIds.add(id);
                 }
 
-                if (refId == null || refId.isEmpty()) {
-                    if (!force && !allowUnmapped()) {
-                        errors.add("No aspace ref id mapped at line " + i);
-                    }
-                } else {
-                    Pattern pattern = Pattern.compile(REF_ID_QUERY);
-                    Matcher matcher = pattern.matcher(refId);
+                if (!StringUtils.isBlank(refId)) {
+                    Matcher matcher = PATTERN.matcher(refId);
                     if (!matcher.matches()) {
                         errors.add("Invalid ref id at line " + i);
                     }
@@ -87,10 +83,6 @@ public class AspaceRefIdValidator {
 
     protected Path getMappingPath() {
         return project.getAspaceRefIdMappingPath();
-    }
-
-    protected boolean allowUnmapped() {
-        return false;
     }
 
     public void setProject(MigrationProject project) {

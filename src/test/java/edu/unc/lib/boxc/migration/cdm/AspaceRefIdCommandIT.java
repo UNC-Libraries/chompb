@@ -62,13 +62,14 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
                 "aspace_ref_id", "validate" };
         executeExpectSuccess(args);
 
-        assertOutputContains("PASS: Aspace ref id mapping at path " + project.getAspaceRefIdMappingPath() + " is valid");
+        assertOutputContains("PASS: Aspace ref id mapping at path "
+                + project.getAspaceRefIdMappingPath() + " is valid");
     }
 
     @Test
     public void validateInvalidTest() throws Exception {
         indexExportSamples();
-        writeCsv(mappingBody("25,"));
+        writeCsv(mappingBody(",fcee5fc2bb61effc8836498a8117b05d"));
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -77,8 +78,23 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
 
         assertOutputContains("FAIL: Aspace ref id mapping at path " + project.getAspaceRefIdMappingPath()
                 + " is invalid");
-        assertOutputContains("- No aspace ref id mapped at line 2");
+        assertOutputContains("- Invalid blank id at line 2");
         assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
+    }
+
+    @Test
+    public void validateInvalidQuietTest() throws Exception {
+        indexExportSamples();
+        writeCsv(mappingBody(",fcee5fc2bb61effc8836498a8117b05d"));
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "aspace_ref_id", "validate",
+                "-q"};
+        executeExpectFailure(args);
+
+        assertOutputContains("FAIL: Aspace ref id mapping is invalid with 1 errors");
+        assertEquals(1, output.split("    - ").length, "Must only be one errors: " + output);
     }
 
     private void indexExportSamples() throws Exception {
