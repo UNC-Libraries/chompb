@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,14 +37,21 @@ public class AspaceRefIdService {
     private MigrationProject project;
     private CdmIndexService indexService;
 
+    public static Path HOOKID_REFID_CSV =
+            Path.of("/net/deploy/prod/ArchivesSpace_Scripts/shared/output/hookids/hookid_to_refid_map.csv");
+    public static final String[] HOOKID_REFID_CSV_HEADERS = {"cache_hookid", "normalized_cache_hookid", "collid",
+            "ref_id", "ao_title", "tc_type", "tc_indicator", "sc_type", "sc_indicator", "gc_type", "gc_indicator",
+            "aspace_hookid", "cdm_alias"};
+
     public AspaceRefIdService() {
     }
 
     /**
-     * Generate the aspace ref id mapping template
+     * Generate the blank aspace ref id mapping template
+     * Only record ids populated
      * @throws Exception
      */
-    public void generateAspaceRefIdMapping() throws IOException {
+    public void generateBlankAspaceRefIdMapping() throws IOException {
         assertProjectStateValid();
         Path mappingPath = getMappingPath();
         BufferedWriter writer = Files.newBufferedWriter(mappingPath);
@@ -52,6 +60,33 @@ public class AspaceRefIdService {
                 .withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
             for (var id : getIds()) {
                 csvPrinter.printRecord(id, null);
+            }
+        }
+
+        setUpdatedDate(Instant.now());
+    }
+
+    /**
+     * Generate the aspace ref id mapping using the hookid_to_refid_mapping.csv
+     * Record ids and ref ids populated
+     * @throws Exception
+     */
+    public void generateAspaceRefIdMappingFromHookIdRefIdCsv() throws IOException {
+        assertProjectStateValid();
+        Path mappingPath = getMappingPath();
+        BufferedWriter writer = Files.newBufferedWriter(mappingPath);
+
+        Map<String, String> idsAndHookIds = getIdsAndHookIds();
+        Map<String, String> hookIdsAndRefIds = getHookIdsAndRefIds(HOOKID_REFID_CSV);
+
+        try (var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
+                .withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
+            for (Map.Entry<String, String> entry : idsAndHookIds.entrySet()) {
+                String recordId = entry.getKey();
+                String hookId = entry.getValue();
+                if (hookIdsAndRefIds.containsKey(hookId)) {
+                    csvPrinter.printRecord(recordId, hookIdsAndRefIds.get(hookId));
+                }
             }
         }
 
@@ -93,6 +128,48 @@ public class AspaceRefIdService {
         }
     }
 
+    private Map<String,String> getIdsAndHookIds() {
+        Map<String, String> idsAndHookIds = new HashMap<>();
+
+        String query = "select " + CdmFieldInfo.CDM_ID + "," + FindingAidService.DESCRI_FIELD + ","
+                + FindingAidService.CONTRI_FIELD + " from " + CdmIndexService.TB_NAME
+                + " where " + FindingAidService.DESCRI_FIELD + " != ''"
+                + " and " + FindingAidService.CONTRI_FIELD + " != ''";
+
+        getIndexService();
+        try (Connection conn = indexService.openDbConnection()) {
+            var stmt = conn.createStatement();
+            var rs = stmt.executeQuery(query);
+            while (rs.next()) {
+                if (!rs.getString(1).isBlank() && !rs.getString(2).isBlank() && !rs.getString(3).isBlank()) {
+                    idsAndHookIds.put(rs.getString(1), rs.getString(2) + "_" + rs.getString(3));
+                }
+            }
+            return idsAndHookIds;
+        } catch (SQLException e) {
+            throw new MigrationException("Error interacting with export index", e);
+        }
+    }
+
+    private Map<String, String> getHookIdsAndRefIds(Path mappingPath) throws IOException {
+        if (!Files.exists(mappingPath)) {
+            throw new InvalidProjectStateException();
+        }
+
+        try (var csvParser = openHookIdRefIdCsvParser(mappingPath)) {
+            Map<String, String> hookIdsAndRefIds = new HashMap<>();
+
+            for (CSVRecord csvRecord : csvParser) {
+                if (!csvRecord.get(0).isBlank() && !csvRecord.get(3).isBlank()) {
+                    hookIdsAndRefIds.put(csvRecord.get(0), csvRecord.get(3));
+                } else if (csvRecord.get(1).isBlank() && !csvRecord.get(3).isBlank()) {
+                    hookIdsAndRefIds.put(csvRecord.get(1), csvRecord.get(3));
+                }
+            }
+            return hookIdsAndRefIds;
+        }
+    }
+
     /**
      * @return the aspace ref id mapping info for the configured project
      * @throws IOException
@@ -125,6 +202,19 @@ public class AspaceRefIdService {
         return new CSVParser(reader, CSVFormat.DEFAULT
                 .withFirstRecordAsHeader()
                 .withHeader(AspaceRefIdInfo.CSV_HEADERS)
+                .withTrim());
+    }
+
+    /**
+     * @param mappingPath Path of the CSV to read from
+     * @return CSVParser for reading from the hookid_to_refid_map.csv file
+     * @throws IOException
+     */
+    public static CSVParser openHookIdRefIdCsvParser(Path mappingPath) throws IOException {
+        Reader reader = Files.newBufferedReader(mappingPath);
+        return new CSVParser(reader, CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withHeader(HOOKID_REFID_CSV_HEADERS)
                 .withTrim());
     }
 

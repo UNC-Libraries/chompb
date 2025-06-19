@@ -37,13 +37,37 @@ public class AspaceRefIdCommand {
     @Command(name="generate",
             description = {"Generate the optional aspace ref id mapping file for this project.",
                     "A blank ref_id_mapping.csv template will be created for this project, " +
-                            "with only cdm dmrecords populated."})
+                            "with only record ids populated."})
     public int generate() throws Exception {
         long start = System.nanoTime();
 
         try {
             initialize();
-            aspaceRefIdService.generateAspaceRefIdMapping();
+            aspaceRefIdService.generateBlankAspaceRefIdMapping();
+            outputLogger.info("Aspace ref id mapping generated for {} in {}s", project.getProjectName(),
+                    (System.nanoTime() - start) / 1e9);
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Cannot generate aspace ref id mapping: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Failed to generate aspace ref id template", e);
+            outputLogger.info("Failed to generate aspace ref id template: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
+    @Command(name="generate_from_csv",
+            description = {"Generate the optional aspace ref id mapping file for this project " +
+                    "using hookid_to_refid_map.csv.",
+                    "A ref_id_mapping.csv template will be created for this project, " +
+                            "with record ids and aspace ref ids populated."})
+    public int generateFromCsv() throws Exception {
+        long start = System.nanoTime();
+
+        try {
+            initialize();
+            aspaceRefIdService.generateAspaceRefIdMappingFromHookIdRefIdCsv();
             outputLogger.info("Aspace ref id mapping generated for {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;

@@ -7,11 +7,9 @@ import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,10 +17,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,7 +65,7 @@ public class AspaceRefIdServiceTest {
     @Test
     public void generateWorkObjectsTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        service.generateAspaceRefIdMapping();
+        service.generateBlankAspaceRefIdMapping();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
 
@@ -86,7 +83,7 @@ public class AspaceRefIdServiceTest {
         testHelper.indexExportData("grouped_gilmer");
         setupGroupIndex();
 
-        service.generateAspaceRefIdMapping();
+        service.generateBlankAspaceRefIdMapping();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
 
@@ -103,7 +100,7 @@ public class AspaceRefIdServiceTest {
     @Test
     public void generateCompoundObjectsTest() throws Exception {
         testHelper.indexExportData("mini_keepsakes");
-        service.generateAspaceRefIdMapping();
+        service.generateBlankAspaceRefIdMapping();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
 
@@ -119,7 +116,7 @@ public class AspaceRefIdServiceTest {
     @Test
     public void generatePdfCompoundObjectsTest() throws Exception {
         testHelper.indexExportData("pdf");
-        service.generateAspaceRefIdMapping();
+        service.generateBlankAspaceRefIdMapping();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
 
@@ -127,6 +124,25 @@ public class AspaceRefIdServiceTest {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("17940", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals(1, rows.size());
+        }
+    }
+
+    @Test
+    public void generateFromHookIdRefIdCsvTest() throws Exception {
+        testHelper.indexExportData("03883");
+        AspaceRefIdService.HOOKID_REFID_CSV = Paths.get("src/test/resources/hookid_to_refid_map.csv");
+        service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
+
+        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
+        try (CSVParser csvParser = parser()) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("8578708eda77e378b3a844a2166b815b", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals(3, rows.size());
         }
     }
 

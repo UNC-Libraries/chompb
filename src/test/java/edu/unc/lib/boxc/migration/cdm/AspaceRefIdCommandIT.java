@@ -2,6 +2,7 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
+import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,6 +47,21 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "aspace_ref_id", "generate"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
+
+        assertUpdatedDatePresent();
+    }
+
+    @Test
+    public void generateFromCsvAspaceRefIdMappingSucceedsTest() throws Exception {
+        testHelper.indexExportData("03883");
+        AspaceRefIdService.HOOKID_REFID_CSV = Paths.get("src/test/resources/hookid_to_refid_map.csv");
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "aspace_ref_id", "generate_from_csv"};
         executeExpectSuccess(args);
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
