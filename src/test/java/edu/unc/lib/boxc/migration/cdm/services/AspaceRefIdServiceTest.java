@@ -37,7 +37,6 @@ public class AspaceRefIdServiceTest {
     private SipServiceHelper testHelper;
     private CdmIndexService indexService;
     private AspaceRefIdService service;
-    private Path hookIdRefIdMapPath;
 
     private AutoCloseable closeable;
 
@@ -48,7 +47,6 @@ public class AspaceRefIdServiceTest {
                 tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
                 BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         Files.createDirectories(project.getExportPath());
-        hookIdRefIdMapPath = Paths.get("src/test/resources/hookid_to_refid_map.csv");
 
         basePath = tmpFolder.resolve("testFolder");
         Files.createDirectory(basePath);
@@ -57,7 +55,6 @@ public class AspaceRefIdServiceTest {
         service = testHelper.getAspaceRefIdService();
         service.setProject(project);
         service.setIndexService(testHelper.getIndexService());
-        service.setHookIdRefIdMapPath(hookIdRefIdMapPath);
     }
 
     @AfterEach
@@ -133,6 +130,7 @@ public class AspaceRefIdServiceTest {
     @Test
     public void generateFromHookIdRefIdCsvTest() throws Exception {
         testHelper.indexExportData("03883");
+        service.setHookIdRefIdMapPath(Paths.get("src/test/resources/hookid_to_refid_map.csv"));
         service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
@@ -140,6 +138,25 @@ public class AspaceRefIdServiceTest {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals("8578708eda77e378b3a844a2166b815b", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals(3, rows.size());
+        }
+    }
+
+    @Test
+    public void generateFromHookIdRefIdCsvNoRefIdTest() throws Exception {
+        testHelper.indexExportData("03883");
+        service.setHookIdRefIdMapPath(Paths.get("src/test/resources/hookid_to_refid_map2.csv"));
+        service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
+
+        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
+        try (CSVParser csvParser = parser()) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
