@@ -37,6 +37,7 @@ public class AspaceRefIdServiceTest {
     private SipServiceHelper testHelper;
     private CdmIndexService indexService;
     private AspaceRefIdService service;
+    private Path hookIdRefIdMapPath;
 
     private AutoCloseable closeable;
 
@@ -47,6 +48,7 @@ public class AspaceRefIdServiceTest {
                 tmpFolder, PROJECT_NAME, null, "user", CdmEnvironmentHelper.DEFAULT_ENV_ID,
                 BxcEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
         Files.createDirectories(project.getExportPath());
+        hookIdRefIdMapPath = Paths.get("src/test/resources/hookid_to_refid_map.csv");
 
         basePath = tmpFolder.resolve("testFolder");
         Files.createDirectory(basePath);
@@ -55,6 +57,7 @@ public class AspaceRefIdServiceTest {
         service = testHelper.getAspaceRefIdService();
         service.setProject(project);
         service.setIndexService(testHelper.getIndexService());
+        service.setHookIdRefIdMapPath(hookIdRefIdMapPath);
     }
 
     @AfterEach
@@ -130,7 +133,6 @@ public class AspaceRefIdServiceTest {
     @Test
     public void generateFromHookIdRefIdCsvTest() throws Exception {
         testHelper.indexExportData("03883");
-        AspaceRefIdService.HOOKID_REFID_CSV = Paths.get("src/test/resources/hookid_to_refid_map.csv");
         service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));

@@ -121,5 +121,7 @@ public class AspaceRefIdCommand {
         aspaceRefIdService = new AspaceRefIdService();
         aspaceRefIdService.setProject(project);
         aspaceRefIdService.setIndexService(indexService);
+        aspaceRefIdService.setHookIdRefIdMapPath(parentCommand.getChompbConfig().getBxcEnvironments()
+                .get(project.getProjectProperties().getBxcEnvironmentId()).getHookIdRefIdMapPath());
     }
 }

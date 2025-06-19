@@ -1,8 +1,11 @@
 package edu.unc.lib.boxc.migration.cdm;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
-import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
+import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
+import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
+import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,12 +30,36 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
     public void setup() throws Exception {
         initProjectAndHelper();
         basePath = tmpFolder;
+        setupChompbConfig();
+    }
+
+    @Override
+    protected void setupChompbConfig() throws IOException {
+        var configPath = tmpFolder.resolve("config.json");
+        var config = new ChompbConfigService.ChompbConfig();
+        config.setCdmEnvironments(CdmEnvironmentHelper.getTestMapping());
+        var bxcEnvs = BxcEnvironmentHelper.getTestMapping();
+        config.setBxcEnvironments(bxcEnvs);
+        var bxcEnv = bxcEnvs.get(BxcEnvironmentHelper.DEFAULT_ENV_ID);
+        bxcEnv.setBoxctronScriptHost("127.0.0.1");
+        bxcEnv.setBoxctronTransferHost("127.0.0.1");
+        bxcEnv.setBoxctronPort(42222);
+        bxcEnv.setBoxctronAdminEmail("chompb@example.com");
+        bxcEnv.setBoxctronOutputServer("chompb.example.com");
+        bxcEnv.setBoxctronOutputBasePath(tmpFolder);
+        bxcEnv.setBoxctronRemoteJobScriptsPath(tmpFolder.resolve("scripts"));
+        bxcEnv.setBoxctronRemoteProjectsPath(tmpFolder.resolve("remote_projects"));
+        bxcEnv.setHookIdRefIdMapPath(Paths.get("src/test/resources/hookid_to_refid_map.csv"));
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(Files.newOutputStream(configPath), config);
+        chompbConfigPath = configPath.toString();
     }
 
     @Test
     public void generateNotIndexedTest() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
                 "aspace_ref_id", "generate"};
         executeExpectFailure(args);
 
@@ -46,6 +73,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
         indexExportSamples();
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
                 "aspace_ref_id", "generate"};
         executeExpectSuccess(args);
 
@@ -57,10 +85,10 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
     @Test
     public void generateFromCsvAspaceRefIdMappingSucceedsTest() throws Exception {
         testHelper.indexExportData("03883");
-        AspaceRefIdService.HOOKID_REFID_CSV = Paths.get("src/test/resources/hookid_to_refid_map.csv");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
                 "aspace_ref_id", "generate_from_csv"};
         executeExpectSuccess(args);
 
@@ -76,6 +104,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
                 "aspace_ref_id", "validate" };
         executeExpectSuccess(args);
 
@@ -90,6 +119,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
                 "aspace_ref_id", "validate" };
         executeExpectFailure(args);
 
@@ -106,6 +136,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
                 "aspace_ref_id", "validate",
                 "-q"};
         executeExpectFailure(args);

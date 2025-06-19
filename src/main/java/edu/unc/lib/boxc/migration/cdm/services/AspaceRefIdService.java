@@ -36,9 +36,8 @@ public class AspaceRefIdService {
 
     private MigrationProject project;
     private CdmIndexService indexService;
+    private Path hookIdRefIdMapPath;
 
-    public static Path HOOKID_REFID_CSV =
-            Path.of("/net/deploy/prod/ArchivesSpace_Scripts/shared/output/hookids/hookid_to_refid_map.csv");
     public static final String[] HOOKID_REFID_CSV_HEADERS = {"cache_hookid", "normalized_cache_hookid", "collid",
             "ref_id", "ao_title", "tc_type", "tc_indicator", "sc_type", "sc_indicator", "gc_type", "gc_indicator",
             "aspace_hookid", "cdm_alias"};
@@ -53,11 +52,9 @@ public class AspaceRefIdService {
      */
     public void generateBlankAspaceRefIdMapping() throws IOException {
         assertProjectStateValid();
-        Path mappingPath = getMappingPath();
-        BufferedWriter writer = Files.newBufferedWriter(mappingPath);
 
-        try (var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                .withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
+        try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
+             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
             for (var id : getIds()) {
                 csvPrinter.printRecord(id, null);
             }
@@ -73,19 +70,19 @@ public class AspaceRefIdService {
      */
     public void generateAspaceRefIdMappingFromHookIdRefIdCsv() throws IOException {
         assertProjectStateValid();
-        Path mappingPath = getMappingPath();
-        BufferedWriter writer = Files.newBufferedWriter(mappingPath);
 
-        Map<String, String> idsAndHookIds = getIdsAndHookIds();
-        Map<String, String> hookIdsAndRefIds = getHookIdsAndRefIds(HOOKID_REFID_CSV);
+        try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
+             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
+            Map<String, String> idsAndHookIds = getIdsAndHookIds();
+            Map<String, String> hookIdsAndRefIds = getHookIdsAndRefIds(hookIdRefIdMapPath);
 
-        try (var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                .withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
             for (Map.Entry<String, String> entry : idsAndHookIds.entrySet()) {
                 String recordId = entry.getKey();
                 String hookId = entry.getValue();
                 if (hookIdsAndRefIds.containsKey(hookId)) {
                     csvPrinter.printRecord(recordId, hookIdsAndRefIds.get(hookId));
+                } else {
+                    csvPrinter.printRecord(recordId, null);
                 }
             }
         }
@@ -132,15 +129,18 @@ public class AspaceRefIdService {
         Map<String, String> idsAndHookIds = new HashMap<>();
 
         String query = "select " + CdmFieldInfo.CDM_ID + "," + FindingAidService.DESCRI_FIELD + ","
-                + FindingAidService.CONTRI_FIELD + " from " + CdmIndexService.TB_NAME
-                + " where " + FindingAidService.DESCRI_FIELD + " != ''"
-                + " and " + FindingAidService.CONTRI_FIELD + " != ''";
+                + FindingAidService.CONTRI_FIELD
+                + " from " + CdmIndexService.TB_NAME
+                + " where " + FindingAidService.DESCRI_FIELD + " is not null"
+                + " and " + FindingAidService.CONTRI_FIELD + " is not null";
 
         getIndexService();
         try (Connection conn = indexService.openDbConnection()) {
             var stmt = conn.createStatement();
             var rs = stmt.executeQuery(query);
             while (rs.next()) {
+                // if dmrecord, descri, and contri fields are not blank,
+                // add dmrecord and descri_contri (hook id when combined) to map
                 if (!rs.getString(1).isBlank() && !rs.getString(2).isBlank() && !rs.getString(3).isBlank()) {
                     idsAndHookIds.put(rs.getString(1), rs.getString(2) + "_" + rs.getString(3));
                 }
@@ -153,16 +153,18 @@ public class AspaceRefIdService {
 
     private Map<String, String> getHookIdsAndRefIds(Path mappingPath) throws IOException {
         if (!Files.exists(mappingPath)) {
-            throw new InvalidProjectStateException();
+            throw new InvalidProjectStateException("hookid_to_refid_map.csv does not exist");
         }
 
         try (var csvParser = openHookIdRefIdCsvParser(mappingPath)) {
             Map<String, String> hookIdsAndRefIds = new HashMap<>();
 
             for (CSVRecord csvRecord : csvParser) {
+                // if cache_hook_id and ref_id are not blank, add cache_hook_id and ref_id to map
                 if (!csvRecord.get(0).isBlank() && !csvRecord.get(3).isBlank()) {
                     hookIdsAndRefIds.put(csvRecord.get(0), csvRecord.get(3));
-                } else if (csvRecord.get(1).isBlank() && !csvRecord.get(3).isBlank()) {
+                // if normalized_cache_id and ref_id are not blank, add normalized_cache_id and ref_id to map
+                } else if (!csvRecord.get(1).isBlank() && !csvRecord.get(3).isBlank()) {
                     hookIdsAndRefIds.put(csvRecord.get(1), csvRecord.get(3));
                 }
             }
@@ -238,5 +240,9 @@ public class AspaceRefIdService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    public void setHookIdRefIdMapPath(Path hookIdRefIdMapPath) {
+        this.hookIdRefIdMapPath = hookIdRefIdMapPath;
     }
 }
