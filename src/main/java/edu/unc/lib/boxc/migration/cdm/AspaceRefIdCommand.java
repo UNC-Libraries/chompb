@@ -4,6 +4,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.validators.AspaceRefIdValidator;
@@ -31,6 +32,7 @@ public class AspaceRefIdCommand {
     private CLIMain parentCommand;
 
     private MigrationProject project;
+    private CdmFieldService fieldService;
     private CdmIndexService indexService;
     private AspaceRefIdService aspaceRefIdService;
 
@@ -116,10 +118,13 @@ public class AspaceRefIdCommand {
     private void initialize() throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
+        fieldService = new CdmFieldService();
+        fieldService.setProject(project);
         indexService = new CdmIndexService();
         indexService.setProject(project);
         aspaceRefIdService = new AspaceRefIdService();
         aspaceRefIdService.setProject(project);
+        aspaceRefIdService.setFieldService(fieldService);
         aspaceRefIdService.setIndexService(indexService);
         aspaceRefIdService.setHookIdRefIdMapPath(parentCommand.getChompbConfig().getBxcEnvironments()
                 .get(project.getProjectProperties().getBxcEnvironmentId()).getHookIdRefIdMapPath());

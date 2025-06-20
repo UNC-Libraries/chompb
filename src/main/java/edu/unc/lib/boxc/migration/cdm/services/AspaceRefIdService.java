@@ -35,8 +35,10 @@ public class AspaceRefIdService {
     private static final Logger log = getLogger(AspaceRefIdService.class);
 
     private MigrationProject project;
+    private CdmFieldService fieldService;
     private CdmIndexService indexService;
     private Path hookIdRefIdMapPath;
+    private Boolean projectHasContriAndDescri = null;
 
     public static final String[] HOOKID_REFID_CSV_HEADERS = {"cache_hookid", "normalized_cache_hookid", "collid",
             "ref_id", "ao_title", "tc_type", "tc_indicator", "sc_type", "sc_indicator", "gc_type", "gc_indicator",
@@ -70,6 +72,10 @@ public class AspaceRefIdService {
      */
     public void generateAspaceRefIdMappingFromHookIdRefIdCsv() throws IOException {
         assertProjectStateValid();
+
+        if (!hasProjectContriAndDescriFields()) {
+            throw new InvalidProjectStateException("Project has no contri and descri fields");
+        }
 
         try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
              var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
@@ -153,7 +159,7 @@ public class AspaceRefIdService {
 
     private Map<String, String> getHookIdsAndRefIds(Path mappingPath) throws IOException {
         if (!Files.exists(mappingPath)) {
-            throw new InvalidProjectStateException("hookid_to_refid_map.csv does not exist");
+            throw new InvalidProjectStateException(mappingPath + " does not exist");
         }
 
         try (var csvParser = openHookIdRefIdCsvParser(mappingPath)) {
@@ -170,6 +176,18 @@ public class AspaceRefIdService {
             }
             return hookIdsAndRefIds;
         }
+    }
+
+    private boolean hasProjectContriAndDescriFields() {
+        if (projectHasContriAndDescri == null) {
+            // check if project has contri field and descri field
+            fieldService.validateFieldsFile(project);
+            CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+            List<String> exportFields = fieldInfo.listAllExportFields();
+            projectHasContriAndDescri = exportFields.contains(FindingAidService.CONTRI_FIELD)
+                    && exportFields.contains(FindingAidService.DESCRI_FIELD);
+        }
+        return projectHasContriAndDescri;
     }
 
     /**
@@ -236,6 +254,10 @@ public class AspaceRefIdService {
 
     public void setProject(MigrationProject project) {
         this.project = project;
+    }
+
+    public void setFieldService(CdmFieldService fieldService) {
+        this.fieldService = fieldService;
     }
 
     public void setIndexService(CdmIndexService indexService) {

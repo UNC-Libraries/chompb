@@ -54,6 +54,7 @@ public class AspaceRefIdServiceTest {
         indexService = testHelper.getIndexService();
         service = testHelper.getAspaceRefIdService();
         service.setProject(project);
+        service.setFieldService(testHelper.getFieldService());
         service.setIndexService(testHelper.getIndexService());
     }
 
