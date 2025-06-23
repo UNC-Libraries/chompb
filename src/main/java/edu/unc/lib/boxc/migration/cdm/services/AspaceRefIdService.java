@@ -134,10 +134,17 @@ public class AspaceRefIdService {
     private Map<String,String> getIdsAndHookIds() {
         Map<String, String> idsAndHookIds = new HashMap<>();
 
+        // for all work objects in the project (grouped works, compound objects, and single file works)
+        // with hook ids
         String query = "select " + CdmFieldInfo.CDM_ID + "," + FindingAidService.DESCRI_FIELD + ","
                 + FindingAidService.CONTRI_FIELD
                 + " from " + CdmIndexService.TB_NAME
-                + " where " + FindingAidService.DESCRI_FIELD + " is not null"
+                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                + " and " + CdmIndexService.PARENT_ID_FIELD + " is null"
+                + " and " + FindingAidService.DESCRI_FIELD + " is not null"
                 + " and " + FindingAidService.CONTRI_FIELD + " is not null";
 
         getIndexService();
