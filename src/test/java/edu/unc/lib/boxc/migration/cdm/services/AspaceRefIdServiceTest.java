@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -164,6 +166,19 @@ public class AspaceRefIdServiceTest {
             assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals(3, rows.size());
         }
+    }
+
+    @Test
+    public void generateFromHookIdRefIdCsvNoContriDescriTest() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/monograph_fields.csv"), "monograph");
+
+        Exception exception = assertThrows(InvalidProjectStateException.class, () -> {
+            service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
+        });
+        String expectedMessage = "Project has no contri and descri fields";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
     }
 
     private CSVParser parser() throws IOException {
