@@ -10,7 +10,9 @@ import java.util.Map;
 public class AspaceRefIdInfo {
     public static final String RECORD_ID_FIELD = CdmFieldInfo.CDM_ID;
     public static final String REF_ID_FIELD = "aspaceRefId";
-    public static final String[] CSV_HEADERS = {RECORD_ID_FIELD, REF_ID_FIELD};
+    public static final String HOOK_ID_FIELD = "hookId";
+    public static final String[] BLANK_CSV_HEADERS = {RECORD_ID_FIELD, REF_ID_FIELD};
+    public static final String[] FROM_CSV_HEADERS = {RECORD_ID_FIELD, REF_ID_FIELD, HOOK_ID_FIELD};
 
     private Map<String, String> mappings;
 

@@ -160,7 +160,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
     }
 
     private String mappingBody(String... rows) {
-        return String.join(",", AspaceRefIdInfo.CSV_HEADERS) + "\n"
+        return String.join(",", AspaceRefIdInfo.BLANK_CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
     }
 

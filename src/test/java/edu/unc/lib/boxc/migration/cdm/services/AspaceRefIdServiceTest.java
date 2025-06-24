@@ -137,14 +137,17 @@ public class AspaceRefIdServiceTest {
         service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
-        try (CSVParser csvParser = parser()) {
+        try (CSVParser csvParser = fromCsvParser()) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals("8578708eda77e378b3a844a2166b815b", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("03883_folder_5", rows.get(0).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(1).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(2).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals(3, rows.size());
         }
     }
@@ -156,14 +159,17 @@ public class AspaceRefIdServiceTest {
         service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
-        try (CSVParser csvParser = parser()) {
+        try (CSVParser csvParser = fromCsvParser()) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals("", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("03883_folder_5", rows.get(0).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(1).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(2).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals(3, rows.size());
         }
     }
@@ -185,7 +191,16 @@ public class AspaceRefIdServiceTest {
         Reader reader = Files.newBufferedReader(project.getAspaceRefIdMappingPath());
         CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                 .withFirstRecordAsHeader()
-                .withHeader(AspaceRefIdInfo.CSV_HEADERS)
+                .withHeader(AspaceRefIdInfo.BLANK_CSV_HEADERS)
+                .withTrim());
+        return csvParser;
+    }
+
+    private CSVParser fromCsvParser() throws IOException {
+        Reader reader = Files.newBufferedReader(project.getAspaceRefIdMappingPath());
+        CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withHeader(AspaceRefIdInfo.FROM_CSV_HEADERS)
                 .withTrim());
         return csvParser;
     }

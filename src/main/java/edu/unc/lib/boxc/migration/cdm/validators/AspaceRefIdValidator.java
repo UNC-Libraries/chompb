@@ -40,13 +40,13 @@ public class AspaceRefIdValidator {
                 Reader reader = Files.newBufferedReader(getMappingPath());
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
-                        .withHeader(AspaceRefIdInfo.CSV_HEADERS)
+                        .withHeader(AspaceRefIdInfo.BLANK_CSV_HEADERS)
                         .withTrim());
         ) {
             int i = 2;
             for (CSVRecord csvRecord : csvParser) {
-                if (csvRecord.size() != 2) {
-                    errors.add("Invalid entry at line " + i + ", must be 2 columns but were " + csvRecord.size());
+                if (!(csvRecord.size() == 2 || csvRecord.size() == 3)) {
+                    errors.add("Invalid entry at line " + i + ", must be 2 or 3 columns but were " + csvRecord.size());
                     continue;
                 }
                 String id = csvRecord.get(0);
@@ -67,6 +67,15 @@ public class AspaceRefIdValidator {
                     Matcher matcher = PATTERN.matcher(refId);
                     if (!matcher.matches()) {
                         errors.add("Invalid ref id at line " + i);
+                    }
+                }
+
+                if (csvRecord.size() == 3) {
+                    String hookId = csvRecord.get(2);
+                    if (StringUtils.isBlank(hookId)) {
+                        if (!force) {
+                            errors.add("Invalid blank hook id at line " + i);
+                        }
                     }
                 }
 

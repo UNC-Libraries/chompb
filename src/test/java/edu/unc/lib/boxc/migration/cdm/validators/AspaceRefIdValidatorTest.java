@@ -95,16 +95,16 @@ public class AspaceRefIdValidatorTest {
     public void tooFewColumnsTest() throws Exception {
         writeCsv(mappingBody("25"));
         List<String> errors = validator.validateMappings(false);
-        assertHasError(errors, "Invalid entry at line 2, must be 2 columns but were 1");
+        assertHasError(errors, "Invalid entry at line 2, must be 2 or 3 columns but were 1");
         // Registers as having no mappings
         assertNumberErrors(errors, 2);
     }
 
     @Test
     public void tooManyColumnsTest() throws Exception {
-        writeCsv(mappingBody("25,,"));
+        writeCsv(mappingBody("25,,,"));
         List<String> errors = validator.validateMappings(false);
-        assertHasError(errors, "Invalid entry at line 2, must be 2 columns but were 3");
+        assertHasError(errors, "Invalid entry at line 2, must be 2 or 3 columns but were 4");
         // Registers as having no mappings
         assertNumberErrors(errors, 2);
     }
@@ -134,7 +134,7 @@ public class AspaceRefIdValidatorTest {
     }
 
     private String mappingBody(String... rows) {
-        return String.join(",", AspaceRefIdInfo.CSV_HEADERS) + "\n"
+        return String.join(",", AspaceRefIdInfo.BLANK_CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
     }
 

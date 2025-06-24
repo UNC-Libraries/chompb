@@ -56,7 +56,7 @@ public class AspaceRefIdService {
         assertProjectStateValid();
 
         try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
-             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
+             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.BLANK_CSV_HEADERS))) {
             for (var id : getIds()) {
                 csvPrinter.printRecord(id, null);
             }
@@ -78,7 +78,7 @@ public class AspaceRefIdService {
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
-             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
+             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.FROM_CSV_HEADERS))) {
             Map<String, String> idsAndHookIds = getIdsAndHookIds();
             Map<String, String> hookIdsAndRefIds = getHookIdsAndRefIds(hookIdRefIdMapPath);
 
@@ -86,9 +86,9 @@ public class AspaceRefIdService {
                 String recordId = entry.getKey();
                 String hookId = entry.getValue();
                 if (hookIdsAndRefIds.containsKey(hookId)) {
-                    csvPrinter.printRecord(recordId, hookIdsAndRefIds.get(hookId));
+                    csvPrinter.printRecord(recordId, hookIdsAndRefIds.get(hookId), hookId);
                 } else {
-                    csvPrinter.printRecord(recordId, null);
+                    csvPrinter.printRecord(recordId, null, hookId);
                 }
             }
         }
@@ -228,7 +228,7 @@ public class AspaceRefIdService {
         Reader reader = Files.newBufferedReader(mappingsPath);
         return new CSVParser(reader, CSVFormat.DEFAULT
                 .withFirstRecordAsHeader()
-                .withHeader(AspaceRefIdInfo.CSV_HEADERS)
+                .withHeader(AspaceRefIdInfo.BLANK_CSV_HEADERS)
                 .withTrim());
     }
 
