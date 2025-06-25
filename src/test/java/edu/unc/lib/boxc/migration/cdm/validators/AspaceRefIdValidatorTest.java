@@ -46,7 +46,7 @@ public class AspaceRefIdValidatorTest {
     @Test
     public void validMappingTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        writeCsv(mappingBody("25,fcee5fc2bb61effc8836498a8117b05d"));
+        writeCsv(mappingBody("25,03883_folder_9,fcee5fc2bb61effc8836498a8117b05d"));
         List<String> errors = validator.validateMappings(false);
         assertNumberErrors(errors, 0);
     }
@@ -69,7 +69,7 @@ public class AspaceRefIdValidatorTest {
     @Test
     public void blankIdTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        writeCsv(mappingBody(",fcee5fc2bb61effc8836498a8117b05d"));
+        writeCsv(mappingBody(",03883_folder_9,fcee5fc2bb61effc8836498a8117b05d"));
         List<String> errors = validator.validateMappings(false);
         assertHasError(errors, "Invalid blank id at line 2");
         assertNumberErrors(errors, 1);
@@ -78,7 +78,7 @@ public class AspaceRefIdValidatorTest {
     @Test
     public void blankIdForceTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        writeCsv(mappingBody(",fcee5fc2bb61effc8836498a8117b05d"));
+        writeCsv(mappingBody(",03883_folder_9,fcee5fc2bb61effc8836498a8117b05d"));
         List<String> errors = validator.validateMappings(true);
         assertNumberErrors(errors, 0);
     }
@@ -86,7 +86,7 @@ public class AspaceRefIdValidatorTest {
     @Test
     public void blankRefIdTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        writeCsv(mappingBody("25,"));
+        writeCsv(mappingBody("25,03883_folder_9,"));
         List<String> errors = validator.validateMappings(false);
         assertNumberErrors(errors, 0);
     }
@@ -112,29 +112,39 @@ public class AspaceRefIdValidatorTest {
     @Test
     public void duplicateIdTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        writeCsv(mappingBody("25,fcee5fc2bb61effc8836498a8117b05d",
-                "25,4817ec3c77e5ea9846d5c070d58d402b"));
+        writeCsv(mappingBody("25,03883_folder_9,fcee5fc2bb61effc8836498a8117b05d",
+                "25,03883_folder_9,4817ec3c77e5ea9846d5c070d58d402b"));
         List<String> errors = validator.validateMappings(false);
         assertHasError(errors, "Duplicate mapping for id 25 at line 3");
         assertNumberErrors(errors, 1);
     }
 
     @Test
+    public void duplicateHookIdTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        writeCsv(mappingBody("25,03883_folder_9,fcee5fc2bb61effc8836498a8117b05d",
+                "26,03883_folder_9,4817ec3c77e5ea9846d5c070d58d402b"));
+        List<String> errors = validator.validateMappings(false);
+        assertNumberErrors(errors, 0);
+    }
+
+    @Test
     public void duplicateRefIdTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
-        writeCsv(mappingBody("25,fcee5fc2bb61effc8836498a8117b05d",
-                "26,fcee5fc2bb61effc8836498a8117b05d"));
+        writeCsv(mappingBody("25,03883_folder_9,fcee5fc2bb61effc8836498a8117b05d",
+                "26,03883_folder_5,fcee5fc2bb61effc8836498a8117b05d"));
         List<String> errors = validator.validateMappings(false);
         assertNumberErrors(errors, 0);
     }
 
     private void assertHasError(List<String> errors, String expected) {
         assertTrue(errors.contains(expected),
-                "Expected error:\n" + expected + "\nBut the returned errors were:\n" + String.join("\n", errors));
+                "Expected error:\n" + expected + "\nBut the returned errors were:\n"
+                        + String.join("\n", errors));
     }
 
     private String mappingBody(String... rows) {
-        return String.join(",", AspaceRefIdInfo.BLANK_CSV_HEADERS) + "\n"
+        return String.join(",", AspaceRefIdInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
     }
 

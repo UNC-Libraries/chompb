@@ -1629,13 +1629,16 @@ public class SipServiceTest {
 
     @Test
     public void generateSipsWithAspaceRefIds() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        writeAspaceRefIdCsv(aspaceRefIdMappingBody("25,2817ec3c77e5ea9846d5c070d58d402b",
-                "26,3817ec3c77e5ea9846d5c070d58d402b", "27,4817ec3c77e5ea9846d5c070d58d402b"));
+        testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
+        writeAspaceRefIdCsv(aspaceRefIdMappingBody("0,03883_folder_5,8578708eda77e378b3a844a2166b815b",
+                "548,03883_folder_9,4c1196b46a06b21b1184fba0de1e84bd",
+                "549,03883_folder_9,4c1196b46a06b21b1184fba0de1e84bd"));
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.getDescriptionsService().generateDocuments(false);
+        testHelper.getDescriptionsService().expandDescriptions();
 
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("03883_0005_0025.tif",
+                "03883_0009_0051.tif", "03883_0009_0051.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1651,17 +1654,17 @@ public class SipServiceTest {
         List<RDFNode> depBagChildren = depBag.iterator().toList();
         assertEquals(3, depBagChildren.size());
 
-        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
-        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "25");
-        assertTrue(workResc1.hasProperty(CdrAspace.refId, "2817ec3c77e5ea9846d5c070d58d402b"));
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2012-02-03");
+        testHelper.assertObjectPopulatedInSip(workResc1, dirManager, model, stagingLocs.get(0), null, "0");
+        assertTrue(workResc1.hasProperty(CdrAspace.refId, "8578708eda77e378b3a844a2166b815b"));
 
-        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
-        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "26");
-        assertTrue(workResc2.hasProperty(CdrAspace.refId, "3817ec3c77e5ea9846d5c070d58d402b"));
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2012-03-03");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(1), null, "548");
+        assertTrue(workResc2.hasProperty(CdrAspace.refId, "4c1196b46a06b21b1184fba0de1e84bd"));
 
-        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "27");
-        assertTrue(workResc3.hasProperty(CdrAspace.refId, "4817ec3c77e5ea9846d5c070d58d402b"));
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2012-04-03");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(2), null, "549");
+        assertTrue(workResc3.hasProperty(CdrAspace.refId, "4c1196b46a06b21b1184fba0de1e84bd"));
 
         assertPersistedSipInfoMatches(sip);
     }
@@ -1814,7 +1817,7 @@ public class SipServiceTest {
     }
 
     private String aspaceRefIdMappingBody(String... rows) {
-        return String.join(",", AspaceRefIdInfo.BLANK_CSV_HEADERS) + "\n"
+        return String.join(",", AspaceRefIdInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
     }
 

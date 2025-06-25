@@ -20,10 +20,9 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -55,10 +54,18 @@ public class AspaceRefIdService {
     public void generateBlankAspaceRefIdMapping() throws IOException {
         assertProjectStateValid();
 
+        if (!hasProjectContriAndDescriFields()) {
+            throw new InvalidProjectStateException("Project has no contri field named hook id " +
+                    "and/or descri field named collection number");
+        }
+
         try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
-             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.BLANK_CSV_HEADERS))) {
-            for (var id : getIds()) {
-                csvPrinter.printRecord(id, null);
+             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
+            Map<String, String> idsAndHookIds = getIdsAndHookIds();
+            for (Map.Entry<String, String> entry : idsAndHookIds.entrySet()) {
+                String recordId = entry.getKey();
+                String hookId = entry.getValue();
+                csvPrinter.printRecord(recordId, hookId, null);
             }
         }
 
@@ -74,11 +81,12 @@ public class AspaceRefIdService {
         assertProjectStateValid();
 
         if (!hasProjectContriAndDescriFields()) {
-            throw new InvalidProjectStateException("Project has no contri and descri fields");
+            throw new InvalidProjectStateException("Project has no contri field named hook id " +
+                    "and/or descri field named collection number");
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
-             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.FROM_CSV_HEADERS))) {
+             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
             Map<String, String> idsAndHookIds = getIdsAndHookIds();
             Map<String, String> hookIdsAndRefIds = getHookIdsAndRefIds(hookIdRefIdMapPath);
 
@@ -86,9 +94,9 @@ public class AspaceRefIdService {
                 String recordId = entry.getKey();
                 String hookId = entry.getValue();
                 if (hookIdsAndRefIds.containsKey(hookId)) {
-                    csvPrinter.printRecord(recordId, hookIdsAndRefIds.get(hookId), hookId);
+                    csvPrinter.printRecord(recordId, hookId, hookIdsAndRefIds.get(hookId));
                 } else {
-                    csvPrinter.printRecord(recordId, null, hookId);
+                    csvPrinter.printRecord(recordId, hookId, null);
                 }
             }
         }
@@ -103,32 +111,6 @@ public class AspaceRefIdService {
 
     public Path getMappingPath() {
         return project.getAspaceRefIdMappingPath();
-    }
-
-    private List<String> getIds() {
-        List<String> ids = new ArrayList<>();
-        // for all work objects in the project (grouped works, compound objects, and single file works)
-        String query = "select " + CdmFieldInfo.CDM_ID
-                + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
-                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
-                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
-                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
-                + " and " + CdmIndexService.PARENT_ID_FIELD + " is null";
-
-        getIndexService();
-        try (Connection conn = indexService.openDbConnection()) {
-            var stmt = conn.createStatement();
-            var rs = stmt.executeQuery(query);
-            while (rs.next()) {
-                if (!rs.getString(1).isEmpty()) {
-                    ids.add(rs.getString(1));
-                }
-            }
-            return ids;
-        } catch (SQLException e) {
-            throw new MigrationException("Error interacting with export index", e);
-        }
     }
 
     private Map<String,String> getIdsAndHookIds() {
@@ -187,12 +169,33 @@ public class AspaceRefIdService {
 
     private boolean hasProjectContriAndDescriFields() {
         if (projectHasContriAndDescri == null) {
-            // check if project has contri field and descri field
+            // check if project has contri field named hook id and descri field named collection number
+            boolean hasContri = false;
+            boolean hasDescri = false;
             fieldService.validateFieldsFile(project);
             CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
-            List<String> exportFields = fieldInfo.listAllExportFields();
-            projectHasContriAndDescri = exportFields.contains(FindingAidService.CONTRI_FIELD)
-                    && exportFields.contains(FindingAidService.DESCRI_FIELD);
+            Map<String, String> fields = fieldInfo.getFields().stream()
+                    .filter(f -> !f.getSkipExport())
+                    .collect(Collectors.toMap(CdmFieldInfo.CdmFieldEntry::getNickName,
+                            CdmFieldInfo.CdmFieldEntry::getDescription));
+
+            for (Map.Entry<String, String> entry : fields.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (key.equalsIgnoreCase(FindingAidService.CONTRI_FIELD)
+                        && value.equalsIgnoreCase(FindingAidService.HOOK_ID_FIELD_DESC)) {
+                    hasContri = true;
+                } else if (key.equalsIgnoreCase(FindingAidService.DESCRI_FIELD)
+                        && value.equalsIgnoreCase(FindingAidService.COLLECTION_NUMBER_FIELD_DESC)) {
+                    hasDescri = true;
+                }
+            }
+
+            if (hasContri && hasDescri) {
+                projectHasContriAndDescri = true;
+            } else {
+                projectHasContriAndDescri = false;
+            }
         }
         return projectHasContriAndDescri;
     }
@@ -213,7 +216,8 @@ public class AspaceRefIdService {
         try (var csvParser = openMappingsParser(mappingPath)) {
             Map<String, String> mappings = info.getMappings();
             for(CSVRecord csvRecord : csvParser) {
-                mappings.put(csvRecord.get(0), csvRecord.get(1));
+                // csv columns are record id, hook id, ref id
+                mappings.put(csvRecord.get(0), csvRecord.get(2));
             }
             return info;
         }
@@ -228,7 +232,7 @@ public class AspaceRefIdService {
         Reader reader = Files.newBufferedReader(mappingsPath);
         return new CSVParser(reader, CSVFormat.DEFAULT
                 .withFirstRecordAsHeader()
-                .withHeader(AspaceRefIdInfo.BLANK_CSV_HEADERS)
+                .withHeader(AspaceRefIdInfo.CSV_HEADERS)
                 .withTrim());
     }
 

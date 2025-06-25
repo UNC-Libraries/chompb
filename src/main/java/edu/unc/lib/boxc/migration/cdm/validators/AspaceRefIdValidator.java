@@ -40,7 +40,7 @@ public class AspaceRefIdValidator {
                 Reader reader = Files.newBufferedReader(getMappingPath());
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
-                        .withHeader(AspaceRefIdInfo.BLANK_CSV_HEADERS)
+                        .withHeader(AspaceRefIdInfo.CSV_HEADERS)
                         .withTrim());
         ) {
             int i = 2;
@@ -50,7 +50,8 @@ public class AspaceRefIdValidator {
                     continue;
                 }
                 String id = csvRecord.get(0);
-                String refId = csvRecord.get(1);
+                String hookId = csvRecord.get(1);
+                String refId = csvRecord.get(2);
 
                 if (StringUtils.isBlank(id)) {
                     if (!force) {
@@ -63,19 +64,16 @@ public class AspaceRefIdValidator {
                     previousIds.add(id);
                 }
 
+                if (StringUtils.isBlank(hookId)) {
+                    if (!force) {
+                        errors.add("Invalid blank hook id at line " + i);
+                    }
+                }
+
                 if (!StringUtils.isBlank(refId)) {
                     Matcher matcher = PATTERN.matcher(refId);
                     if (!matcher.matches()) {
                         errors.add("Invalid ref id at line " + i);
-                    }
-                }
-
-                if (csvRecord.size() == 3) {
-                    String hookId = csvRecord.get(2);
-                    if (StringUtils.isBlank(hookId)) {
-                        if (!force) {
-                            errors.add("Invalid blank hook id at line " + i);
-                        }
                     }
                 }
 

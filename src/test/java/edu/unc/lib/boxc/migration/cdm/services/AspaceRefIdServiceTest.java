@@ -66,59 +66,41 @@ public class AspaceRefIdServiceTest {
     }
 
     @Test
-    public void generateWorkObjectsTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
+    public void generateBlankCsvTest() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
         service.generateBlankAspaceRefIdMapping();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
 
         try (CSVParser csvParser = parser()) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals("25", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("26", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("27", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_5", rows.get(0).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(1).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(2).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals(3, rows.size());
         }
     }
 
     @Test
-    public void generateGroupObjectsTest() throws Exception {
+    public void generateBlankCsvNoContriDescriTest() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         setupGroupIndex();
 
-        service.generateBlankAspaceRefIdMapping();
+        Exception exception = assertThrows(InvalidProjectStateException.class, () -> {
+            service.generateBlankAspaceRefIdMapping();
+        });
+        String expectedMessage = "Project has no contri field named hook id and/or descri field named collection number";
+        String actualMessage = exception.getMessage();
 
-        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
-
-        try (CSVParser csvParser = parser()) {
-            List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals("27", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("28", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("29", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("grp:groupa:group1", rows.get(3).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals(4, rows.size());
-        }
-    }
-
-    @Test
-    public void generateCompoundObjectsTest() throws Exception {
-        testHelper.indexExportData("mini_keepsakes");
-        service.generateBlankAspaceRefIdMapping();
-
-        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
-
-        try (CSVParser csvParser = parser()) {
-            List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals("216", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("604", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("607", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals(3, rows.size());
-        }
+        assertTrue(actualMessage.contains(expectedMessage));
     }
 
     @Test
     public void generatePdfCompoundObjectsTest() throws Exception {
-        testHelper.indexExportData("pdf");
+        testHelper.indexExportData(Paths.get("src/test/resources/pdf_fields.csv"), "pdf");
         service.generateBlankAspaceRefIdMapping();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
@@ -132,44 +114,44 @@ public class AspaceRefIdServiceTest {
 
     @Test
     public void generateFromHookIdRefIdCsvTest() throws Exception {
-        testHelper.indexExportData("03883");
+        testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
         service.setHookIdRefIdMapPath(Paths.get("src/test/resources/hookid_to_refid_map.csv"));
         service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
-        try (CSVParser csvParser = fromCsvParser()) {
+        try (CSVParser csvParser = parser()) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("8578708eda77e378b3a844a2166b815b", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("03883_folder_5", rows.get(0).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("8578708eda77e378b3a844a2166b815b", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("03883_folder_9", rows.get(1).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("03883_folder_9", rows.get(2).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals(3, rows.size());
         }
     }
 
     @Test
     public void generateFromHookIdRefIdCsvNoRefIdTest() throws Exception {
-        testHelper.indexExportData("03883");
+        testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
         service.setHookIdRefIdMapPath(Paths.get("src/test/resources/hookid_to_refid_map2.csv"));
         service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
-        try (CSVParser csvParser = fromCsvParser()) {
+        try (CSVParser csvParser = parser()) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("03883_folder_5", rows.get(0).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("03883_folder_9", rows.get(1).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals("03883_folder_9", rows.get(2).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
             assertEquals(3, rows.size());
         }
     }
@@ -181,7 +163,7 @@ public class AspaceRefIdServiceTest {
         Exception exception = assertThrows(InvalidProjectStateException.class, () -> {
             service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
         });
-        String expectedMessage = "Project has no contri and descri fields";
+        String expectedMessage = "Project has no contri field named hook id and/or descri field named collection number";
         String actualMessage = exception.getMessage();
 
         assertTrue(actualMessage.contains(expectedMessage));
@@ -191,16 +173,7 @@ public class AspaceRefIdServiceTest {
         Reader reader = Files.newBufferedReader(project.getAspaceRefIdMappingPath());
         CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                 .withFirstRecordAsHeader()
-                .withHeader(AspaceRefIdInfo.BLANK_CSV_HEADERS)
-                .withTrim());
-        return csvParser;
-    }
-
-    private CSVParser fromCsvParser() throws IOException {
-        Reader reader = Files.newBufferedReader(project.getAspaceRefIdMappingPath());
-        CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                .withFirstRecordAsHeader()
-                .withHeader(AspaceRefIdInfo.FROM_CSV_HEADERS)
+                .withHeader(AspaceRefIdInfo.CSV_HEADERS)
                 .withTrim());
         return csvParser;
     }

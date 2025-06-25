@@ -84,7 +84,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
 
     @Test
     public void generateFromCsvAspaceRefIdMappingSucceedsTest() throws Exception {
-        testHelper.indexExportData("03883");
+        indexExportSamples();
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -100,7 +100,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
     @Test
     public void validateValidTest() throws Exception {
         indexExportSamples();
-        writeCsv(mappingBody("25,fcee5fc2bb61effc8836498a8117b05d"));
+        writeCsv(mappingBody("25,03883_folder_9,fcee5fc2bb61effc8836498a8117b05d"));
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -115,7 +115,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
     @Test
     public void validateInvalidTest() throws Exception {
         indexExportSamples();
-        writeCsv(mappingBody(",fcee5fc2bb61effc8836498a8117b05d"));
+        writeCsv(mappingBody(",03883_folder_9,fcee5fc2bb61effc8836498a8117b05d"));
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -132,7 +132,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
     @Test
     public void validateInvalidQuietTest() throws Exception {
         indexExportSamples();
-        writeCsv(mappingBody(",fcee5fc2bb61effc8836498a8117b05d"));
+        writeCsv(mappingBody(",03883_folder_9,fcee5fc2bb61effc8836498a8117b05d"));
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -146,7 +146,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
     }
 
     private void indexExportSamples() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
+        testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
     }
 
     private void assertUpdatedDatePresent() throws Exception {
@@ -160,7 +160,7 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
     }
 
     private String mappingBody(String... rows) {
-        return String.join(",", AspaceRefIdInfo.BLANK_CSV_HEADERS) + "\n"
+        return String.join(",", AspaceRefIdInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);
     }
 
