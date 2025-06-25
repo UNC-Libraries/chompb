@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
@@ -7,11 +8,9 @@ import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
-import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,14 +18,14 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -57,6 +56,7 @@ public class AspaceRefIdServiceTest {
         indexService = testHelper.getIndexService();
         service = testHelper.getAspaceRefIdService();
         service.setProject(project);
+        service.setFieldService(testHelper.getFieldService());
         service.setIndexService(testHelper.getIndexService());
     }
 
@@ -67,26 +67,26 @@ public class AspaceRefIdServiceTest {
 
     @Test
     public void generateWorkObjectsTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        service.generateAspaceRefIdMapping();
+        testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
+        service.generateBlankAspaceRefIdMapping();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
 
         try (CSVParser csvParser = parser()) {
             List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals("25", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("26", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("27", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals(3, rows.size());
         }
     }
 
     @Test
-    public void generateGroupObjectsTest() throws Exception {
+    public void generateGroupedObjectsTest() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         setupGroupIndex();
 
-        service.generateAspaceRefIdMapping();
+        service.generateBlankAspaceRefIdMapping();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
 
@@ -101,25 +101,9 @@ public class AspaceRefIdServiceTest {
     }
 
     @Test
-    public void generateCompoundObjectsTest() throws Exception {
-        testHelper.indexExportData("mini_keepsakes");
-        service.generateAspaceRefIdMapping();
-
-        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
-
-        try (CSVParser csvParser = parser()) {
-            List<CSVRecord> rows = csvParser.getRecords();
-            assertEquals("216", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("604", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("607", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals(3, rows.size());
-        }
-    }
-
-    @Test
     public void generatePdfCompoundObjectsTest() throws Exception {
-        testHelper.indexExportData("pdf");
-        service.generateAspaceRefIdMapping();
+        testHelper.indexExportData(Paths.get("src/test/resources/pdf_fields.csv"), "pdf");
+        service.generateBlankAspaceRefIdMapping();
 
         assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
 
@@ -128,6 +112,63 @@ public class AspaceRefIdServiceTest {
             assertEquals("17940", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
             assertEquals(1, rows.size());
         }
+    }
+
+    @Test
+    public void generateFromHookIdRefIdCsvTest() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
+        service.setHookIdRefIdMapPath(Paths.get("src/test/resources/hookid_to_refid_map.csv"));
+        service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
+
+        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
+        try (CSVParser csvParser = parser()) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_5", rows.get(0).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("8578708eda77e378b3a844a2166b815b", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(1).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(2).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals(3, rows.size());
+        }
+    }
+
+    @Test
+    public void generateFromHookIdRefIdCsvNoRefIdTest() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
+        service.setHookIdRefIdMapPath(Paths.get("src/test/resources/hookid_to_refid_map2.csv"));
+        service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
+
+        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
+        try (CSVParser csvParser = parser()) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_5", rows.get(0).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(1).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(2).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals(3, rows.size());
+        }
+    }
+
+    @Test
+    public void generateFromHookIdRefIdCsvNoContriDescriTest() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/monograph_fields.csv"), "monograph");
+
+        Exception exception = assertThrows(InvalidProjectStateException.class, () -> {
+            service.generateAspaceRefIdMappingFromHookIdRefIdCsv();
+        });
+        String expectedMessage = "Project has no contri field named hook id and/or descri field named collection number";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
     }
 
     private CSVParser parser() throws IOException {

@@ -20,6 +20,8 @@ public class BxcEnvironment {
     private Path boxctronOutputBasePath;
     private Path boxctronRemoteJobScriptsPath;
 
+    private Path hookIdRefIdMapPath;
+
     public String getHttpBaseUrl() {
         return httpBaseUrl;
     }
@@ -98,5 +100,13 @@ public class BxcEnvironment {
 
     public void setBoxctronRemoteJobScriptsPath(Path boxctronRemoteJobScriptsPath) {
         this.boxctronRemoteJobScriptsPath = boxctronRemoteJobScriptsPath;
+    }
+
+    public Path getHookIdRefIdMapPath() {
+        return hookIdRefIdMapPath;
+    }
+
+    public void setHookIdRefIdMapPath(Path hookIdRefIdMapPath) {
+        this.hookIdRefIdMapPath = hookIdRefIdMapPath;
     }
 }

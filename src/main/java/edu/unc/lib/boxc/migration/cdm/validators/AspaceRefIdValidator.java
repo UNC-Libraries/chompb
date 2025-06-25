@@ -45,12 +45,12 @@ public class AspaceRefIdValidator {
         ) {
             int i = 2;
             for (CSVRecord csvRecord : csvParser) {
-                if (csvRecord.size() != 2) {
-                    errors.add("Invalid entry at line " + i + ", must be 2 columns but were " + csvRecord.size());
+                if (!(csvRecord.size() == 2 || csvRecord.size() == 3)) {
+                    errors.add("Invalid entry at line " + i + ", must be 2 or 3 columns but were " + csvRecord.size());
                     continue;
                 }
                 String id = csvRecord.get(0);
-                String refId = csvRecord.get(1);
+                String refId = csvRecord.get(2);
 
                 if (StringUtils.isBlank(id)) {
                     if (!force) {
