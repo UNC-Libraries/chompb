@@ -50,7 +50,6 @@ public class AspaceRefIdValidator {
                     continue;
                 }
                 String id = csvRecord.get(0);
-                String hookId = csvRecord.get(1);
                 String refId = csvRecord.get(2);
 
                 if (StringUtils.isBlank(id)) {
@@ -62,12 +61,6 @@ public class AspaceRefIdValidator {
                         errors.add("Duplicate mapping for id " + id + " at line " + i);
                     }
                     previousIds.add(id);
-                }
-
-                if (StringUtils.isBlank(hookId)) {
-                    if (!force) {
-                        errors.add("Invalid blank hook id at line " + i);
-                    }
                 }
 
                 if (!StringUtils.isBlank(refId)) {

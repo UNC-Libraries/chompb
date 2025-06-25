@@ -20,7 +20,9 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -54,18 +56,10 @@ public class AspaceRefIdService {
     public void generateBlankAspaceRefIdMapping() throws IOException {
         assertProjectStateValid();
 
-        if (!hasProjectContriAndDescriFields()) {
-            throw new InvalidProjectStateException("Project has no contri field named hook id " +
-                    "and/or descri field named collection number");
-        }
-
         try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
              var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
-            Map<String, String> idsAndHookIds = getIdsAndHookIds();
-            for (Map.Entry<String, String> entry : idsAndHookIds.entrySet()) {
-                String recordId = entry.getKey();
-                String hookId = entry.getValue();
-                csvPrinter.printRecord(recordId, hookId, null);
+            for (var id : getIds()) {
+                csvPrinter.printRecord(id, null, null);
             }
         }
 
@@ -111,6 +105,31 @@ public class AspaceRefIdService {
 
     public Path getMappingPath() {
         return project.getAspaceRefIdMappingPath();
+    }
+
+    private List<String> getIds() {
+        List<String> ids = new ArrayList<>();
+        // for all work objects in the project (grouped works, compound objects, and single file works)
+        String query = "select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                + " and " + CdmIndexService.PARENT_ID_FIELD + " is null";
+
+        getIndexService();
+        try (Connection conn = indexService.openDbConnection()) {
+            var stmt = conn.createStatement();
+            var rs = stmt.executeQuery(query);
+            while (rs.next()) {
+                if (!rs.getString(1).isEmpty()) {
+                    ids.add(rs.getString(1));
+                }
+            }
+            return ids;
+        } catch (SQLException e) {
+            throw new MigrationException("Error interacting with export index", e);
+        }
     }
 
     private Map<String,String> getIdsAndHookIds() {
@@ -191,11 +210,7 @@ public class AspaceRefIdService {
                 }
             }
 
-            if (hasContri && hasDescri) {
-                projectHasContriAndDescri = true;
-            } else {
-                projectHasContriAndDescri = false;
-            }
+            projectHasContriAndDescri = hasContri && hasDescri;
         }
         return projectHasContriAndDescri;
     }

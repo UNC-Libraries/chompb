@@ -66,7 +66,7 @@ public class AspaceRefIdServiceTest {
     }
 
     @Test
-    public void generateBlankCsvTest() throws Exception {
+    public void generateWorkObjectsTest() throws Exception {
         testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
         service.generateBlankAspaceRefIdMapping();
 
@@ -75,27 +75,29 @@ public class AspaceRefIdServiceTest {
         try (CSVParser csvParser = parser()) {
             List<CSVRecord> rows = csvParser.getRecords();
             assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("03883_folder_5", rows.get(0).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("03883_folder_9", rows.get(1).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
-            assertEquals("03883_folder_9", rows.get(2).get(AspaceRefIdInfo.HOOK_ID_FIELD));
             assertEquals(3, rows.size());
         }
     }
 
     @Test
-    public void generateBlankCsvNoContriDescriTest() throws Exception {
+    public void generateGroupedObjectsTest() throws Exception {
         testHelper.indexExportData("grouped_gilmer");
         setupGroupIndex();
 
-        Exception exception = assertThrows(InvalidProjectStateException.class, () -> {
-            service.generateBlankAspaceRefIdMapping();
-        });
-        String expectedMessage = "Project has no contri field named hook id and/or descri field named collection number";
-        String actualMessage = exception.getMessage();
+        service.generateBlankAspaceRefIdMapping();
 
-        assertTrue(actualMessage.contains(expectedMessage));
+        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
+
+        try (CSVParser csvParser = parser()) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals("27", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("28", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("29", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("grp:groupa:group1", rows.get(3).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals(4, rows.size());
+        }
     }
 
     @Test
