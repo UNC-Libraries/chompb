@@ -141,6 +141,10 @@ public class DescriptionsService {
                             inMods = true;
                             openTags = 1;
                             cdmId = null;
+                            // Close the previous writer before creating a new one if this isn't the first MODS record
+                            if (modsWriter != null) {
+                                modsWriter.close();
+                            }
                             modsWriter = new StringWriter();
                             xmlWriter = xmlOutput.createXMLEventWriter(modsWriter);
                             xmlWriter.add(event);
@@ -185,10 +189,13 @@ public class DescriptionsService {
                                 if (Files.deleteIfExists(descPath)) {
                                     log.debug("Overwriting existing MODS file {}", descPath);
                                 }
-                                // Pass through xmlOutputter to fix indentation issues and add xml declaration
-                                Document doc = xmlBuilder.build(new ByteArrayInputStream(
-                                        modsWriter.toString().getBytes()));
-                                xmlOutputter.output(doc, Files.newOutputStream(descPath));
+                                try (var docStream = new ByteArrayInputStream(modsWriter.toString().getBytes());
+                                     var docOutputStream = Files.newOutputStream(descPath);
+                                ) {
+                                    // Pass through xmlOutputter to fix indentation issues and add xml declaration
+                                    Document doc = xmlBuilder.build(docStream);
+                                    xmlOutputter.output(doc, docOutputStream);
+                                }
                             }
 
                             idsWithMods.add(cdmId.trim());

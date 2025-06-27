@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
+import edu.unc.lib.boxc.migration.cdm.test.SipServiceHelper;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -45,6 +46,7 @@ public class DescriptionsServiceTest {
 
     private MigrationProject project;
     private DescriptionsService service;
+    private SipServiceHelper testHelper;
 
     private Path basePath;
 
@@ -54,6 +56,7 @@ public class DescriptionsServiceTest {
         project = MigrationProjectFactory.createCdmMigrationProject(basePath, PROJECT_NAME, null,
                 "user", CdmEnvironmentHelper.DEFAULT_ENV_ID, BxcEnvironmentHelper.DEFAULT_ENV_ID);
         Files.createDirectories(project.getDescriptionsPath());
+        testHelper = new SipServiceHelper(project, basePath);
         service = new DescriptionsService();
         service.setProject(project);
     }
@@ -200,6 +203,27 @@ public class DescriptionsServiceTest {
 
         assertEquals(3, idsWithMods.size());
         assertDateNotPresent();
+    }
+
+    @Test
+    public void generateDescriptionsAndExpandTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+
+        service.generateDocuments(false);
+        assertTrue(Files.exists(project.getDescriptionsPath()));
+
+        try (var files = Files.list(project.getDescriptionsPath())) {
+            assertEquals(1, files.count());
+        }
+
+        Document modsDoc = SecureXMLFactory.createSAXBuilder()
+                .build(project.getDescriptionsPath().resolve("generated_mods.xml").toFile());
+        Element rootEl = modsDoc.getRootElement();
+        assertEquals("modsCollection", rootEl.getName());
+        assertEquals(MODS_V3_NS, rootEl.getNamespace());
+
+        Set<String> idsWithMods = service.expandDescriptions();
+        assertEquals(3, idsWithMods.size());
     }
 
     private void assertModsPopulated(String expectedTitle, String expectedId) throws Exception {
