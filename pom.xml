@@ -13,6 +13,10 @@
     <name>CDM to Box-c Migration Utility</name>
     <description>Utilities for migrating content from CDM to Box-c</description>
     <properties>
+        <project.java.source>21</project.java.source>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <compiler.plugin.version>3.14.0</compiler.plugin.version>
         <picocli.version>4.7.7</picocli.version>
         <wiremock.version>2.35.2</wiremock.version>
         <sqlite-jdbc.version>3.50.3.0</sqlite-jdbc.version>
@@ -77,9 +81,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${compiler.plugin.version}</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <release>${project.java.source}</release>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
         </plugins>
