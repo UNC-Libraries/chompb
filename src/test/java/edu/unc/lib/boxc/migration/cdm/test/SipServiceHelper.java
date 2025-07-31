@@ -125,6 +125,10 @@ public class SipServiceHelper {
         indexService = new CdmIndexService();
         indexService.setProject(project);
         indexService.setFieldService(fieldService);
+        streamingMetadataService = new StreamingMetadataService();
+        streamingMetadataService.setProject(project);
+        streamingMetadataService.setFieldService(fieldService);
+        streamingMetadataService.setIndexService(indexService);
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(indexService);
         sourceFileService.setStreamingMetadataService(streamingMetadataService);
