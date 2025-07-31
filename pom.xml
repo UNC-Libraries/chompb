@@ -5,7 +5,7 @@
     <parent>
         <groupId>edu.unc.lib.cdr</groupId>
         <artifactId>cdr</artifactId>
-        <version>5.0-SNAPSHOT</version>
+        <version>6.0-SNAPSHOT</version>
     </parent>
     <groupId>edu.unc.lib.boxc</groupId>
     <artifactId>cdm-to-boxc-migration-util</artifactId>
@@ -78,8 +78,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
         </plugins>
