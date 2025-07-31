@@ -46,8 +46,6 @@ public class SourceFileServiceTest {
     public Path tmpFolder;
 
     private MigrationProject project;
-    private CdmIndexService indexService;
-    private CdmFieldService fieldService;
     private SourceFileService service;
     private SipServiceHelper testHelper;
 
@@ -551,8 +549,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "", null);
-        assertMappingPresent(info, "26", "", null);
-        assertMappingPresent(info, "27", "", null);
+        // 26 and 27 contain duracloud content and are excluded when generating blank source files
 
         assertMappedDatePresent();
     }
@@ -567,9 +564,8 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "", null);
-        assertMappingPresent(info, "26", "", null);
-        assertMappingPresent(info, "27", "", null);
-        assertEquals(3, info.getMappings().size());
+        // 26 and 27 contain duracloud content and are excluded when generating blank source files
+        assertEquals(1, info.getMappings().size());
 
         try {
             service.generateMapping(options);
@@ -583,9 +579,8 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info2 = service.loadMappings();
         assertMappingPresent(info2, "25", "", null);
-        assertMappingPresent(info2, "26", "", null);
-        assertMappingPresent(info2, "27", "", null);
-        assertEquals(3, info2.getMappings().size());
+        // 26 and 27 contain duracloud content and are excluded when generating blank source files
+        assertEquals(1, info2.getMappings().size());
     }
 
     @Test

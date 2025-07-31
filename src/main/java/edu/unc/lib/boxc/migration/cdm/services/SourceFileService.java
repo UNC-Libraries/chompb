@@ -64,6 +64,7 @@ public class SourceFileService {
 
     protected MigrationProject project;
     protected CdmIndexService indexService;
+    protected StreamingMetadataService streamingMetadataService;
 
     public SourceFileService() {
     }
@@ -106,6 +107,10 @@ public class SourceFileService {
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 if (options.isPopulateBlank()) {
+                    // when creating a blank source files csv, filter out source files for duracloud content
+                    if (streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
+                        break;
+                    }
                     csvPrinter.printRecord(cdmId, null, null, null);
                     continue;
                 }
@@ -557,5 +562,9 @@ public class SourceFileService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
+        this.streamingMetadataService = streamingMetadataService;
     }
 }
