@@ -105,7 +105,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Unmapped Objects: +2 \\(66.7%\\).*");
         assertOutputMatches(".*Unmapped Objects:.* + \\* 26.*");
         assertOutputMatches(".*Unmapped Objects:.* + \\* 27.*");
-        assertOutputMatches(".*Mappings Valid: +Yes.*");
+        assertOutputMatches(".*Mappings Valid: +No.*");
         assertOutputMatches(".*Potential Matches: +0.*");
     }
 
@@ -124,7 +124,7 @@ public class SourceFilesStatusServiceTest extends AbstractOutputTest {
         assertOutputMatches(".*Objects Mapped: +2 \\(66.7%\\).*");
         assertOutputMatches(".*Unmapped Objects: +1 \\(33.3%\\).*");
         assertOutputMatches(".*Unknown Objects: +0.*");
-        assertOutputMatches(".*Mappings Valid: +Yes.*");
+        assertOutputMatches(".*Mappings Valid: +No.*");
         assertOutputMatches(".*Potential Matches: +1.*");
     }
 

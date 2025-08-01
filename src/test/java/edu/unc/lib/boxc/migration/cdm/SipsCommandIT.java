@@ -227,7 +227,7 @@ public class SipsCommandIT extends AbstractCommandIT {
 
     @Test
     public void generateStreamingFilesOnlyTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
+        testHelper.indexExportData("mini_gilmer_duracloud");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
         List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");

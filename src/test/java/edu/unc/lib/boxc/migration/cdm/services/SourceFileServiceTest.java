@@ -549,6 +549,22 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "", null);
+        assertMappingPresent(info, "26", "", null);
+        assertMappingPresent(info, "27", "", null);
+
+        assertMappedDatePresent();
+    }
+
+    @Test
+    public void generateBlankStreamingMetadataTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer_duracloud");
+        GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
+        options.setPopulateBlank(true);
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "", null);
         // 26 and 27 contain duracloud content and are excluded when generating blank source files
 
         assertMappedDatePresent();
@@ -564,8 +580,9 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "", null);
-        // 26 and 27 contain duracloud content and are excluded when generating blank source files
-        assertEquals(1, info.getMappings().size());
+        assertMappingPresent(info, "26", "", null);
+        assertMappingPresent(info, "27", "", null);
+        assertEquals(3, info.getMappings().size());
 
         try {
             service.generateMapping(options);
@@ -580,7 +597,7 @@ public class SourceFileServiceTest {
         SourceFilesInfo info2 = service.loadMappings();
         assertMappingPresent(info2, "25", "", null);
         // 26 and 27 contain duracloud content and are excluded when generating blank source files
-        assertEquals(1, info2.getMappings().size());
+        assertEquals(3, info2.getMappings().size());
     }
 
     @Test

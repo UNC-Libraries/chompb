@@ -216,7 +216,7 @@ public class SourceFilesValidatorTest {
 
     @Test
     public void streamingMetadataTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
+        testHelper.indexExportData("mini_gilmer_duracloud");
         Path path2 = testHelper.addSourceFile("26.txt");
         writeCsv(mappingBody("26,," + path2 + ",", "27,,,"));
         List<String> errors = validator.validateMappings(false);
