@@ -332,7 +332,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
     @Test
     public void fileWithStreamingOnlyNoSourceFileTest() throws Exception {
-        mockFieldInfoUrl("cdm_fields_resp.json", COLLECTION_ID);
+        mockFieldInfoUrl("cdm_fields_resp.json", "mini_gilmer_duracloud");
 
         String[] argsInit = new String[] {
                 "-w", baseDir.toString(),
