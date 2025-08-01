@@ -104,56 +104,55 @@ public class SourceFileService {
             stmt.setFetchSize(FETCH_SIZE);
 
             ResultSet rs = stmt.executeQuery(buildQuery(options));
-            ResultSetMetaData rsmd = rs.getMetaData();
             // Generate source file mapping entry for each returned object
             while (rs.next()) {
                 String cdmId = rs.getString(1);
                 // when creating a blank source files csv, filter out source files for duracloud content
-                if (options.isPopulateBlank() && !streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
+                if (options.isPopulateBlank()) {
+                    if (!streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
+                        csvPrinter.printRecord(cdmId, null, null, null);
+                    }
+                    continue;
+                }
+
+                String dbFilename = rs.getString(2);
+                if (StringUtils.isBlank(dbFilename)) {
+                    log.debug("No matching field for object {}", cdmId);
                     csvPrinter.printRecord(cdmId, null, null, null);
                     continue;
                 }
 
-                if (rsmd.getColumnCount() == 2) {
-                    String dbFilename = rs.getString(2);
-                    if (StringUtils.isBlank(dbFilename)) {
-                        log.debug("No matching field for object {}", cdmId);
-                        csvPrinter.printRecord(cdmId, null, null, null);
-                        continue;
+                Matcher fieldMatcher = fieldMatchingPattern.matcher(dbFilename);
+                if (fieldMatcher.matches()) {
+                    String transformed = fieldMatcher.replaceFirst(options.getFilenameTemplate());
+                    if (options.isLowercaseTemplate()) {
+                        transformed = transformed.toLowerCase();
                     }
 
-                    Matcher fieldMatcher = fieldMatchingPattern.matcher(dbFilename);
-                    if (fieldMatcher.matches()) {
-                        String transformed = fieldMatcher.replaceFirst(options.getFilenameTemplate());
-                        if (options.isLowercaseTemplate()) {
-                            transformed = transformed.toLowerCase();
-                        }
-
-                        List<String> paths = candidatePaths.get(transformed);
-                        if (paths == null) {
-                            log.debug("Transformed field '{}' => '{}' for {} did not match and source filenames",
-                                    dbFilename, transformed, cdmId);
-                            csvPrinter.printRecord(cdmId, dbFilename, null, null);
-                        } else {
-                            if (paths.size() > 1) {
-                                log.debug("Encountered multiple potential matches for {} from field {}", cdmId, dbFilename);
-                                String joined = paths.stream()
-                                        .map(s -> basePath.resolve(Paths.get(s)).toString())
-                                        .collect(Collectors.joining(SourceFilesInfo.SEPARATOR));
-                                csvPrinter.printRecord(cdmId, dbFilename, null, joined);
-                            } else if (paths.size() == 1) {
-                                log.debug("Found match for {} from field {}", cdmId, dbFilename);
-                                csvPrinter.printRecord(cdmId, dbFilename,
-                                        basePath.resolve(Paths.get(paths.get(0))).toString(), null);
-                            } else {
-                                throw new MigrationException("No paths returned for matching field value " + dbFilename);
-                            }
-                        }
-                    } else {
-                        log.debug("Field {} for object {} with field {} does not match the field value pattern",
-                                options.getExportField(), cdmId, dbFilename);
+                    List<String> paths = candidatePaths.get(transformed);
+                    if (paths == null) {
+                        log.debug("Transformed field '{}' => '{}' for {} did not match and source filenames",
+                                dbFilename, transformed, cdmId);
                         csvPrinter.printRecord(cdmId, dbFilename, null, null);
+                    } else {
+                        if (paths.size() > 1) {
+                            log.debug("Encountered multiple potential matches for {} from field {}", cdmId, dbFilename);
+                            String joined = paths.stream()
+                                    .map(s -> basePath.resolve(Paths.get(s)).toString())
+                                    .collect(Collectors.joining(SourceFilesInfo.SEPARATOR));
+                            csvPrinter.printRecord(cdmId, dbFilename, null, joined);
+                        } else if (paths.size() == 1) {
+                            log.debug("Found match for {} from field {}", cdmId, dbFilename);
+                            csvPrinter.printRecord(cdmId, dbFilename,
+                                    basePath.resolve(Paths.get(paths.get(0))).toString(), null);
+                        } else {
+                            throw new MigrationException("No paths returned for matching field value " + dbFilename);
+                        }
                     }
+                } else {
+                    log.debug("Field {} for object {} with field {} does not match the field value pattern",
+                            options.getExportField(), cdmId, dbFilename);
+                    csvPrinter.printRecord(cdmId, dbFilename, null, null);
                 }
             }
         } catch (SQLException e) {

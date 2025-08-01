@@ -566,6 +566,7 @@ public class SourceFileServiceTest {
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "25", "", null);
         // 26 and 27 contain duracloud content and are excluded when generating blank source files
+        assertEquals(1, info.getMappings().size());
 
         assertMappedDatePresent();
     }
