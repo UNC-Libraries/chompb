@@ -338,11 +338,11 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-p", COLLECTION_ID,
+                "-p", "mini_gilmer_duracloud",
                 "-e", "test"};
         executeExpectSuccess(argsInit);
 
-        Path projPath = baseDir.resolve(COLLECTION_ID);
+        Path projPath = baseDir.resolve("mini_gilmer_duracloud");
         MigrationProject project = new MigrationProject(projPath);
 
         String[] argsExport = new String[] {
