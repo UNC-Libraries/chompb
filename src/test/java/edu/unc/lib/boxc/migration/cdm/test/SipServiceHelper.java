@@ -125,12 +125,18 @@ public class SipServiceHelper {
         indexService = new CdmIndexService();
         indexService.setProject(project);
         indexService.setFieldService(fieldService);
+        streamingMetadataService = new StreamingMetadataService();
+        streamingMetadataService.setProject(project);
+        streamingMetadataService.setFieldService(fieldService);
+        streamingMetadataService.setIndexService(indexService);
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(indexService);
+        sourceFileService.setStreamingMetadataService(streamingMetadataService);
         sourceFileService.setProject(project);
         accessFileService = new AccessFileService();
         accessFileService.setIndexService(indexService);
         accessFileService.setProject(project);
+        accessFileService.setStreamingMetadataService(streamingMetadataService);
         altTextService = new AltTextService();
         altTextService.setIndexService(indexService);
         altTextService.setProject(project);
@@ -148,15 +154,12 @@ public class SipServiceHelper {
         boxctronFileService = new BoxctronFileService();
         boxctronFileService.setProject(project);
         boxctronFileService.setIndexService(indexService);
+        boxctronFileService.setStreamingMetadataService(streamingMetadataService);
         findingAidReportService = new FindingAidReportService();
         findingAidReportService.setProject(project);
         findingAidReportService.setIndexService(indexService);
         permissionsService = new PermissionsService();
         permissionsService.setProject(project);
-        streamingMetadataService = new StreamingMetadataService();
-        streamingMetadataService.setProject(project);
-        streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(indexService);
 
         Files.createDirectories(project.getExportPath());
     }
@@ -589,6 +592,7 @@ public class SipServiceHelper {
             this.aggregateFileMappingService = new AggregateFileMappingService(false);
             this.aggregateFileMappingService.setProject(project);
             this.aggregateFileMappingService.setIndexService(indexService);
+            this.aggregateFileMappingService.setStreamingMetadataService(streamingMetadataService);
         }
         return this.aggregateFileMappingService;
     }
@@ -598,6 +602,7 @@ public class SipServiceHelper {
             this.aggregateBottomMappingService = new AggregateFileMappingService(true);
             this.aggregateBottomMappingService.setProject(project);
             this.aggregateBottomMappingService.setIndexService(indexService);
+            this.aggregateBottomMappingService.setStreamingMetadataService(streamingMetadataService);
         }
         return this.aggregateBottomMappingService;
     }

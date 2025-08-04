@@ -34,6 +34,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
@@ -64,6 +65,7 @@ public class SourceFileService {
 
     protected MigrationProject project;
     protected CdmIndexService indexService;
+    protected StreamingMetadataService streamingMetadataService;
 
     public SourceFileService() {
     }
@@ -105,8 +107,11 @@ public class SourceFileService {
             // Generate source file mapping entry for each returned object
             while (rs.next()) {
                 String cdmId = rs.getString(1);
+                // when creating a blank source files csv, filter out source files for duracloud content
                 if (options.isPopulateBlank()) {
-                    csvPrinter.printRecord(cdmId, null, null, null);
+                    if (!streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
+                        csvPrinter.printRecord(cdmId, null, null, null);
+                    }
                     continue;
                 }
 
@@ -557,5 +562,9 @@ public class SourceFileService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
+        this.streamingMetadataService = streamingMetadataService;
     }
 }

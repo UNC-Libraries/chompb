@@ -460,6 +460,21 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void generateBlankStreamingMetadataSucceedsTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer_duracloud");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-B"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
+        assertOutputMatches(".*New Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files Mapped: +0.*");
+        assertOutputMatches(".*Total Files in Project: +3.*");
+    }
+
+    @Test
     public void validateValidTest() throws Exception {
         indexExportSamples();
         addSourceFile("276_182_E.tif");
@@ -483,6 +498,8 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     @Test
     public void validateInvalidTest() throws Exception {
         indexExportSamples();
+        addSourceFile("276_183_E.tif");
+        addSourceFile("276_203_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -507,6 +524,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         indexExportSamples();
         addSourceFile("276_182_E.tif");
         addSourceFile("276_183_E.tif");
+        addSourceFile("276_203_E.tif");
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -542,7 +560,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Last Updated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Objects Mapped: +3 \\(100.0%\\).*");
-        assertOutputMatches(".*Unmapped Objects: +0.*");
+        assertOutputMatches(".*Unmapped Objects: +0 \\(0.0%\\).*");
         assertOutputMatches(".*Mappings Valid: +Yes\n.*");
         assertOutputMatches(".*Potential Matches: +0.*");
     }
@@ -567,9 +585,9 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
 
         assertOutputMatches(".*Last Updated: +[0-9\\-T:]+.*");
         assertOutputMatches(".*Objects Mapped: +2 \\(66.7%\\).*");
-        assertOutputMatches(".*Unmapped Objects: +1.*");
+        assertOutputMatches(".*Unmapped Objects: +1 \\(33.3%\\).*");
         assertOutputMatches(".*Unmapped Objects:.*\n + \\* 26.*");
-        assertOutputMatches(".*Mappings Valid: +Yes.*");
+        assertOutputMatches(".*Mappings Valid: +No.*");
         assertOutputMatches(".*Potential Matches: +0.*");
     }
 

@@ -49,7 +49,7 @@ public class StreamingMetadataServiceTest {
 
     @Test
     public void verifyNoStreamingMetadata() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
+        testHelper.indexExportData("mini_gilmer_duracloud");
 
         var result = service.verifyRecordHasStreamingMetadata("25");
         assertFalse(result);
@@ -57,7 +57,7 @@ public class StreamingMetadataServiceTest {
 
     @Test
     public void verifyHasStreamingMetadata() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
+        testHelper.indexExportData("mini_gilmer_duracloud");
 
         var result = service.verifyRecordHasStreamingMetadata("27");
         assertTrue(result);
@@ -65,7 +65,7 @@ public class StreamingMetadataServiceTest {
 
     @Test
     public void getStreamingMetadataSuccess() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
+        testHelper.indexExportData("mini_gilmer_duracloud");
 
         var result = service.getStreamingMetadata("27");
         assertEquals("gilmer_recording-playlist.m3u8", result[0]);
@@ -76,7 +76,7 @@ public class StreamingMetadataServiceTest {
 
     @Test
     public void getStreamingMetadataFail() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
+        testHelper.indexExportData("mini_gilmer_duracloud");
 
         Exception exception = assertThrows(MigrationException.class, () -> {
             service.getStreamingMetadata("25");

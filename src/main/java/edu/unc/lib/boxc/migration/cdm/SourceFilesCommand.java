@@ -185,17 +185,18 @@ public class SourceFilesCommand {
         fieldService = new CdmFieldService();
         indexService = new CdmIndexService();
         indexService.setProject(project);
+        streamingMetadataService = new StreamingMetadataService();
+        streamingMetadataService.setProject(project);
+        streamingMetadataService.setFieldService(fieldService);
+        streamingMetadataService.setIndexService(indexService);
         sourceService = new SourceFileService();
         sourceService.setIndexService(indexService);
+        sourceService.setStreamingMetadataService(streamingMetadataService);
         sourceService.setProject(project);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
         summaryService.setDryRun(dryRun);
         summaryService.setSourceFileService(sourceService);
-        streamingMetadataService = new StreamingMetadataService();
-        streamingMetadataService.setProject(project);
-        streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(indexService);
     }
 
     @Command(name = "export_unmapped",

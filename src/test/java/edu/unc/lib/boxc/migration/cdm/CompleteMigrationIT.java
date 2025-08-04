@@ -332,17 +332,17 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
     @Test
     public void fileWithStreamingOnlyNoSourceFileTest() throws Exception {
-        mockFieldInfoUrl("cdm_fields_resp.json", COLLECTION_ID);
+        mockFieldInfoUrl("cdm_fields_resp.json", "mini_gilmer_duracloud");
 
         String[] argsInit = new String[] {
                 "-w", baseDir.toString(),
                 "--env-config", chompbConfigPath,
                 "init",
-                "-p", COLLECTION_ID,
+                "-p", "mini_gilmer_duracloud",
                 "-e", "test"};
         executeExpectSuccess(argsInit);
 
-        Path projPath = baseDir.resolve(COLLECTION_ID);
+        Path projPath = baseDir.resolve("mini_gilmer_duracloud");
         MigrationProject project = new MigrationProject(projPath);
 
         String[] argsExport = new String[] {
