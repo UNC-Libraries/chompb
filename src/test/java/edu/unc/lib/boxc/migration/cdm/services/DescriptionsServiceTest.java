@@ -1,7 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static edu.unc.lib.boxc.migration.cdm.services.DescriptionsService.CDM_NUMBER_LABEL;
-import static edu.unc.lib.boxc.migration.cdm.services.DescriptionsService.CHOMPB_NUMBER_LABEL;
+import static edu.unc.lib.boxc.migration.cdm.services.DescriptionsService.CDM_ID_LABEL;
+import static edu.unc.lib.boxc.migration.cdm.services.DescriptionsService.CHOMPB_ID_LABEL;
 import static edu.unc.lib.boxc.migration.cdm.services.DescriptionsService.LOCAL_TYPE_VALUE;
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -254,7 +254,7 @@ public class DescriptionsServiceTest {
 
         Optional<Element> idEl = rootEl.getChildren("identifier", MODS_V3_NS).stream()
             .filter(e -> LOCAL_TYPE_VALUE.equals(e.getAttributeValue("type")))
-            .filter(e -> CDM_NUMBER_LABEL.equals(e.getAttributeValue("displayLabel")))
+            .filter(e -> CDM_ID_LABEL.equals(e.getAttributeValue("displayLabel")))
             .findFirst();
         assertTrue(idEl.isPresent(), "Expected to find CDM number identifier field");
         assertEquals(expectedId, idEl.get().getText());
@@ -270,7 +270,7 @@ public class DescriptionsServiceTest {
 
         Optional<Element> idEl = rootEl.getChildren("identifier", MODS_V3_NS).stream()
                 .filter(e -> LOCAL_TYPE_VALUE.equals(e.getAttributeValue("type")))
-                .filter(e -> CHOMPB_NUMBER_LABEL.equals(e.getAttributeValue("displayLabel")))
+                .filter(e -> CHOMPB_ID_LABEL.equals(e.getAttributeValue("displayLabel")))
                 .findFirst();
         assertTrue(idEl.isPresent(), "Expected to find Chompb number identifier field");
         assertEquals(expectedId, idEl.get().getText());

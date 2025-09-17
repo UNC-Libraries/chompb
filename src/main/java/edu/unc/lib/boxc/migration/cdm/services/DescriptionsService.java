@@ -59,9 +59,9 @@ public class DescriptionsService {
     private static final QName COLLECTION_NAME = new QName(MODS_V3_NS.getURI(), "modsCollection");
     private static final QName MODS_NAME = new QName(MODS_V3_NS.getURI(), "mods");
 
-    public static final String CDM_NUMBER_LABEL = "CONTENTdm number";
+    public static final String CDM_ID_LABEL = "CONTENTdm number";
     public static final String LOCAL_TYPE_VALUE = "local";
-    public static final String CHOMPB_NUMBER_LABEL = "Chompb number";
+    public static final String CHOMPB_ID_LABEL = "Chompb number";
 
     public static final String GENERATED_MODS_FILENAME = "generated_mods.xml";
 
@@ -201,7 +201,7 @@ public class DescriptionsService {
 
                             idsWithMods.add(cdmId.trim());
                         } else {
-                            log.warn("MODS record does not contain a CDM ID, skipping: {}", modsWriter);
+                            log.warn("MODS record does not contain an identifier, skipping: {}", modsWriter);
                         }
                     }
                 }
@@ -220,10 +220,8 @@ public class DescriptionsService {
             return false;
         }
         Attribute labelAttr = element.getAttributeByName(DISPLAY_LABEL_NAME);
-        if (labelAttr == null || !CDM_NUMBER_LABEL.equals(labelAttr.getValue())) {
-            return false;
-        }
-        return true;
+        return labelAttr != null && (CDM_ID_LABEL.equals(labelAttr.getValue()) ||
+                CHOMPB_ID_LABEL.equals((labelAttr.getValue())));
     }
 
     /**
@@ -278,7 +276,7 @@ public class DescriptionsService {
                                 .addContent(new Element("title", MODS_V3_NS)
                                 .setText(title)))
                         .addContent(new Element("identifier", MODS_V3_NS)
-                                .setAttribute("displayLabel", CDM_NUMBER_LABEL)
+                                .setAttribute("displayLabel", CDM_ID_LABEL)
                                 .setAttribute("type", LOCAL_TYPE_VALUE)
                                 .setText(cdmId)));
                 cnt++;
