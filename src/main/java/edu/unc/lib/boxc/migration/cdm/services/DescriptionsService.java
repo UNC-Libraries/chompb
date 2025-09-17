@@ -60,7 +60,8 @@ public class DescriptionsService {
     private static final QName MODS_NAME = new QName(MODS_V3_NS.getURI(), "mods");
 
     public static final String CDM_NUMBER_LABEL = "CONTENTdm number";
-    private static final String LOCAL_TYPE_VALUE = "local";
+    public static final String LOCAL_TYPE_VALUE = "local";
+    public static final String CHOMPB_NUMBER_LABEL = "Chompb number";
 
     public static final String GENERATED_MODS_FILENAME = "generated_mods.xml";
 
