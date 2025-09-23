@@ -22,7 +22,6 @@
         <sqlite-jdbc.version>3.50.3.0</sqlite-jdbc.version>
         <poi.version>5.4.1</poi.version>
         <log4j-to-slf4j.version>2.18.0</log4j-to-slf4j.version>
-        <build-tools.path></build-tools.path>
         <mysql.version>8.0.33</mysql.version>
         <csv.version>1.13.0</csv.version>
         <junit.jupiter.version>5.12.1</junit.jupiter.version>
@@ -70,6 +69,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <configLocation>checkstyle/checkstyle.xml</configLocation>
+                    <suppressionsLocation>checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
+                </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>edu.unc.lib.cdr</groupId>
