@@ -495,7 +495,7 @@ public class SipServiceHelper {
         List<Element> children = doc.getRootElement().getChildren("identifier", JDOMNamespaceUtil.MODS_V3_NS);
         Element cdmIdEl = children.stream()
             .filter(e -> "local".equals(e.getAttributeValue("type"))
-                    && DescriptionsService.CDM_NUMBER_LABEL.equals(e.getAttributeValue("displayLabel")))
+                    && DescriptionsService.CDM_ID_LABEL.equals(e.getAttributeValue("displayLabel")))
             .findFirst().orElseGet(null);
         assertNotNull(cdmIdEl, "Did not find a CDM identifier field");
         assertEquals(cdmId, cdmIdEl.getText());

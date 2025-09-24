@@ -1,5 +1,8 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import static edu.unc.lib.boxc.migration.cdm.services.DescriptionsService.CDM_ID_LABEL;
+import static edu.unc.lib.boxc.migration.cdm.services.DescriptionsService.CHOMPB_ID_LABEL;
+import static edu.unc.lib.boxc.migration.cdm.services.DescriptionsService.LOCAL_TYPE_VALUE;
 import static edu.unc.lib.boxc.model.api.xml.JDOMNamespaceUtil.MODS_V3_NS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -226,6 +229,21 @@ public class DescriptionsServiceTest {
         assertEquals(3, idsWithMods.size());
     }
 
+    @Test
+    public void expandNonCDMCollectionsOneFile() throws Exception {
+        Files.copy(Paths.get("src/test/resources/mods_collections/non_cdm_mods.xml"),
+                project.getDescriptionsPath().resolve("non_cdm_mods.xml"));
+        Set<String> idsWithMods = service.expandDescriptions();
+        assertEquals(3, idsWithMods.size());
+        assertDatePresent();
+
+        assertTrue(Files.exists(project.getExpandedDescriptionsPath()));
+        assertNonCDMModsPopulated("Redoubt C", "25");
+        assertNonCDMModsPopulated("Plan of Battery McIntosh", "26");
+        assertNonCDMModsPopulated("Fort DeRussy on Red River, Louisiana", "27");
+        assertExpandedDescriptionFilesCount(3);
+    }
+
     private void assertModsPopulated(String expectedTitle, String expectedId) throws Exception {
         Path path = service.getExpandedDescriptionFilePath(expectedId);
         Document modsDoc = SecureXMLFactory.createSAXBuilder().build(path.toFile());
@@ -235,10 +253,26 @@ public class DescriptionsServiceTest {
         assertEquals(expectedTitle, rootEl.getChild("titleInfo", MODS_V3_NS).getChildText("title", MODS_V3_NS));
 
         Optional<Element> idEl = rootEl.getChildren("identifier", MODS_V3_NS).stream()
-            .filter(e -> "local".equals(e.getAttributeValue("type")))
-            .filter(e -> "CONTENTdm number".equals(e.getAttributeValue("displayLabel")))
+            .filter(e -> LOCAL_TYPE_VALUE.equals(e.getAttributeValue("type")))
+            .filter(e -> CDM_ID_LABEL.equals(e.getAttributeValue("displayLabel")))
             .findFirst();
         assertTrue(idEl.isPresent(), "Expected to find CDM number identifier field");
+        assertEquals(expectedId, idEl.get().getText());
+    }
+
+    private void assertNonCDMModsPopulated(String expectedTitle, String expectedId) throws Exception {
+        Path path = service.getExpandedDescriptionFilePath(expectedId);
+        Document modsDoc = SecureXMLFactory.createSAXBuilder().build(path.toFile());
+        Element rootEl = modsDoc.getRootElement();
+        assertEquals("mods", rootEl.getName());
+        assertEquals(MODS_V3_NS, rootEl.getNamespace());
+        assertEquals(expectedTitle, rootEl.getChild("titleInfo", MODS_V3_NS).getChildText("title", MODS_V3_NS));
+
+        Optional<Element> idEl = rootEl.getChildren("identifier", MODS_V3_NS).stream()
+                .filter(e -> LOCAL_TYPE_VALUE.equals(e.getAttributeValue("type")))
+                .filter(e -> CHOMPB_ID_LABEL.equals(e.getAttributeValue("displayLabel")))
+                .findFirst();
+        assertTrue(idEl.isPresent(), "Expected to find Chompb number identifier field");
         assertEquals(expectedId, idEl.get().getText());
     }
 
