@@ -350,7 +350,7 @@ public class CdmFieldServiceTest {
         Files.copy(Paths.get("src/test/resources/files/exported_objects.csv"),
                 project.getExportObjectsPath());
 
-        CdmFieldInfo fieldInfo = service.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/exported_objects.csv"));
+        CdmFieldInfo fieldInfo = service.retrieveFields(Paths.get("src/test/resources/files/exported_objects.csv"), CdmFieldService.CSV);
         List<CdmFieldEntry> fields = fieldInfo.getFields();
 
         assertHasFieldWithValue(ExportObjectsInfo.RECORD_ID, ExportObjectsInfo.RECORD_ID, ExportObjectsInfo.RECORD_ID,

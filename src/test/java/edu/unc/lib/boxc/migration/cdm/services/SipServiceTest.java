@@ -1670,7 +1670,7 @@ public class SipServiceTest {
     }
 
     public void indexFromCsv(Path csvPath) throws Exception {
-        CdmFieldInfo csvExportFields = testHelper.getFieldService().retrieveFieldsFromCsv(csvPath);
+        CdmFieldInfo csvExportFields = testHelper.getFieldService().retrieveFields(csvPath, CdmFieldService.CSV);
         testHelper.getFieldService().persistFieldsToProject(project, csvExportFields);
         project.getProjectProperties().setExportedDate(Instant.now());
 

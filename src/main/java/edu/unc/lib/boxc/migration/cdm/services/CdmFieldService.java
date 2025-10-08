@@ -9,6 +9,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.csv.CSVFormat;
@@ -43,7 +44,8 @@ public class CdmFieldService {
     private CloseableHttpClient httpClient;
     private String cdmBaseUri;
     private MigrationProject project;
-
+    public static final String CSV = "comma";
+    public static final String EAD_TO_CDM = "ead";
     private static final String CDM_NICK_FIELD = "nick";
     private static final String CDM_NAME_FIELD = "name";
     private static final String CDM_REQUIRED_FIELD = "req";
@@ -234,25 +236,32 @@ public class CdmFieldService {
         existing.add(field);
     }
 
+
     /**
-     * Retrieve field information for the project from the csv
-     * @param
-     * @return
+     * Retrieve field information for the project from the CSV or TSV
+     * @param exportedObjectsPath path of the CSV or TSV
+     * @param source CSV or tab-delimited EAD to CDM file
+     * @return CDM Field Info object
      */
-    public CdmFieldInfo retrieveFieldsFromCsv(Path exportedObjectsPath) throws IOException {
+    public CdmFieldInfo retrieveFields(Path exportedObjectsPath, String source) {
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
 
-        try (
+        try {
             Reader reader = Files.newBufferedReader(exportedObjectsPath);
-            CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT
-                    .withTrim());
-        ) {
-            List<String> headers = parser.getRecords().get(0).toList();
+            var format = CSVFormat.DEFAULT;
+            if (Objects.equals(source, EAD_TO_CDM)) {
+                format = CSVFormat.TDF;
+            }
+            var csvFormat = format.builder().setTrim(true).get();
+            var parser = CSVParser.parse(reader, csvFormat);
+
+            List<String> headers = parser.getRecords().getFirst().toList();
             for (String header : headers) {
                 CdmFieldEntry fieldEntry = new CdmFieldEntry();
-                fieldEntry.setNickName(header);
-                fieldEntry.setExportAs(header);
-                fieldEntry.setDescription(header);
+                var formattedHeader = header.replaceAll(" ", "_").toLowerCase();
+                fieldEntry.setNickName(formattedHeader);
+                fieldEntry.setExportAs(formattedHeader);
+                fieldEntry.setDescription(formattedHeader);
                 fieldEntry.setSkipExport(false);
                 fieldInfo.getFields().add(fieldEntry);
             }

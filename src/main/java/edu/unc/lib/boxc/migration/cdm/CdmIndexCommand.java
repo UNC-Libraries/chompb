@@ -50,10 +50,18 @@ public class CdmIndexCommand implements Callable<Integer> {
             // if user provides csv, check that it exists
             if (options.getCsvFile() != null) {
                 if (Files.exists(options.getCsvFile())) {
-                    CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(options.getCsvFile());
+                    CdmFieldInfo csvExportFields = fieldService.retrieveFields(options.getCsvFile(), CdmFieldService.CSV);
                     fieldService.persistFieldsToProject(project, csvExportFields);
                 } else {
                     throw new MigrationException("No csv file exists in " + options.getCsvFile());
+                }
+            } else if (options.getEadTsvFile() != null) { // if user provides EAD to CDM tsv, check that it exists
+                if (Files.exists(options.getEadTsvFile())) {
+                    // TODO match up ID column from source files
+                    CdmFieldInfo csvExportFields = fieldService.retrieveFields(options.getEadTsvFile(), CdmFieldService.EAD_TO_CDM);
+                    fieldService.persistFieldsToProject(project, csvExportFields);
+                } else {
+                    throw new MigrationException("No EAD to CDM tsv file exists in " + options.getEadTsvFile());
                 }
             }
 
@@ -61,7 +69,7 @@ public class CdmIndexCommand implements Callable<Integer> {
             indexService.index(options);
             // Display any warning messages to user
             if (!indexService.getIndexingWarnings().isEmpty()) {
-                indexService.getIndexingWarnings().forEach(msg -> outputLogger.info(msg));
+                indexService.getIndexingWarnings().forEach(outputLogger::info);
             }
             outputLogger.info("Indexed project {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);

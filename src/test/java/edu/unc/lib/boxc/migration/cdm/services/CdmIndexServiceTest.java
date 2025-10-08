@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.CSV;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -705,7 +706,7 @@ public class CdmIndexServiceTest {
 
     @Test
     public void indexFromCsvTest() throws Exception {
-        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/exported_objects.csv"));
+        CdmFieldInfo csvExportFields = fieldService.retrieveFields(Paths.get("src/test/resources/files/exported_objects.csv"), "comma");
         fieldService.persistFieldsToProject(project, csvExportFields);
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
@@ -749,7 +750,7 @@ public class CdmIndexServiceTest {
 
     @Test
     public void indexFromCsvMoreFieldsTest() throws Exception {
-        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(Paths.get("src/test/resources/files/more_fields.csv"));
+        CdmFieldInfo csvExportFields = fieldService.retrieveFields(Paths.get("src/test/resources/files/more_fields.csv"), CSV);
         fieldService.persistFieldsToProject(project, csvExportFields);
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();

@@ -667,7 +667,7 @@ public class GroupMappingServiceTest {
     }
 
     public void indexFromCsv(Path csvPath) throws Exception {
-        CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(csvPath);
+        CdmFieldInfo csvExportFields = fieldService.retrieveFields(csvPath, CdmFieldService.CSV);
         fieldService.persistFieldsToProject(project, csvExportFields);
         project.getProjectProperties().setExportedDate(Instant.now());
 
