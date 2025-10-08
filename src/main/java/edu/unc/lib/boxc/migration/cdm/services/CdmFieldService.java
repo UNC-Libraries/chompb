@@ -252,13 +252,13 @@ public class CdmFieldService {
             if (Objects.equals(source, EAD_TO_CDM)) {
                 format = CSVFormat.TDF;
             }
-            var csvFormat = format.builder().setTrim(true).get();
+            var csvFormat = format.builder().setQuote(null).setTrim(true).get();
             var parser = CSVParser.parse(reader, csvFormat);
 
             List<String> headers = parser.getRecords().getFirst().toList();
             for (String header : headers) {
                 CdmFieldEntry fieldEntry = new CdmFieldEntry();
-                var formattedHeader = header.replaceAll(" ", "_").toLowerCase();
+                var formattedHeader = header.replaceAll(" ", "_").replaceAll("\"", "").toLowerCase();
                 fieldEntry.setNickName(formattedHeader);
                 fieldEntry.setExportAs(formattedHeader);
                 fieldEntry.setDescription(formattedHeader);

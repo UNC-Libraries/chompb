@@ -364,6 +364,19 @@ public class CdmFieldServiceTest {
                 null, null, fields);
     }
 
+    @Test
+    public void retrieveCdmFieldsFromEadToCdmTsvTest() throws Exception {
+        var path = Paths.get("src/test/resources/files/ead_to_cdm.tsv");
+        Files.copy(path,project.getExportObjectsPath());
+
+        CdmFieldInfo fieldInfo = service.retrieveFields(path, CdmFieldService.EAD_TO_CDM);
+        List<CdmFieldEntry> fields = fieldInfo.getFields();
+
+        assertHasFieldWithValue("collection_name", "collection_name", "collection_name",
+                false, null, null, null,
+                null, null, fields);
+    }
+
     private void assertHasFieldWithValue(String nick, String expectedExport, String expectedDesc,
             boolean expectedSkip, String expectedCdmRequired, String expectedCdmSearchable, String expectedCdmHidden,
             String expectedCdmVocab, String expectedCdmDcMapping, List<CdmFieldEntry> fields) {
