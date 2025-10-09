@@ -44,7 +44,7 @@ public class CdmFieldService {
     private CloseableHttpClient httpClient;
     private String cdmBaseUri;
     private MigrationProject project;
-    public static final String CSV = "comma";
+    public static final String CSV = "csv";
     public static final String EAD_TO_CDM = "ead";
     private static final String CDM_NICK_FIELD = "nick";
     private static final String CDM_NAME_FIELD = "name";
@@ -252,7 +252,7 @@ public class CdmFieldService {
             if (Objects.equals(source, EAD_TO_CDM)) {
                 format = CSVFormat.TDF;
             }
-            var csvFormat = format.builder().setQuote(null).setTrim(true).get();
+            var csvFormat = format.builder().setTrim(true).get();
             var parser = CSVParser.parse(reader, csvFormat);
 
             List<String> headers = parser.getRecords().getFirst().toList();

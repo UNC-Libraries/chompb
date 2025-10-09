@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.CSV;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -667,7 +668,7 @@ public class GroupMappingServiceTest {
     }
 
     public void indexFromCsv(Path csvPath) throws Exception {
-        CdmFieldInfo csvExportFields = fieldService.retrieveFields(csvPath, CdmFieldService.CSV);
+        CdmFieldInfo csvExportFields = fieldService.retrieveFields(csvPath, CSV);
         fieldService.persistFieldsToProject(project, csvExportFields);
         project.getProjectProperties().setExportedDate(Instant.now());
 
@@ -676,7 +677,7 @@ public class GroupMappingServiceTest {
         options.setForce(false);
 
         indexService.createDatabase(options);
-        indexService.indexAllFromCsv(options);
+        indexService.indexAllFromFile(options);
         ProjectPropertiesSerialization.write(project);
     }
 }

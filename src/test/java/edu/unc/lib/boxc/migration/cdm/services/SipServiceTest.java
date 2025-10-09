@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.CSV;
 import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_TYPE;
 import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_URL;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
@@ -1670,7 +1671,7 @@ public class SipServiceTest {
     }
 
     public void indexFromCsv(Path csvPath) throws Exception {
-        CdmFieldInfo csvExportFields = testHelper.getFieldService().retrieveFields(csvPath, CdmFieldService.CSV);
+        CdmFieldInfo csvExportFields = testHelper.getFieldService().retrieveFields(csvPath, CSV);
         testHelper.getFieldService().persistFieldsToProject(project, csvExportFields);
         project.getProjectProperties().setExportedDate(Instant.now());
 
@@ -1679,7 +1680,7 @@ public class SipServiceTest {
         options.setForce(false);
 
         testHelper.getIndexService().createDatabase(options);
-        testHelper.getIndexService().indexAllFromCsv(options);
+        testHelper.getIndexService().indexAllFromFile(options);
         ProjectPropertiesSerialization.write(project);
     }
 

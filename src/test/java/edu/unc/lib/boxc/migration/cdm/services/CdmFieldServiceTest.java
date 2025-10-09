@@ -1,5 +1,16 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.CITATION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_NUMBER;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_URL;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.CONTAINER_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.HOOK_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.LOC_IN_COLLECTION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.OBJECT;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.OBJ_FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.REF_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -372,7 +383,37 @@ public class CdmFieldServiceTest {
         CdmFieldInfo fieldInfo = service.retrieveFields(path, CdmFieldService.EAD_TO_CDM);
         List<CdmFieldEntry> fields = fieldInfo.getFields();
 
-        assertHasFieldWithValue("collection_name", "collection_name", "collection_name",
+        assertHasFieldWithValue(COLLECTION_NAME, COLLECTION_NAME, COLLECTION_NAME,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(COLLECTION_NUMBER, COLLECTION_NUMBER, COLLECTION_NUMBER,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(LOC_IN_COLLECTION, LOC_IN_COLLECTION, LOC_IN_COLLECTION,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(CITATION, CITATION, CITATION,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(FILENAME, FILENAME, FILENAME,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(OBJ_FILENAME, OBJ_FILENAME, OBJ_FILENAME,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(CONTAINER_TYPE, CONTAINER_TYPE, CONTAINER_TYPE,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(HOOK_ID, HOOK_ID, HOOK_ID,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(OBJECT, OBJECT, OBJECT,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(COLLECTION_URL, COLLECTION_URL, COLLECTION_URL,
+                false, null, null, null,
+                null, null, fields);
+        assertHasFieldWithValue(REF_ID, REF_ID, REF_ID,
                 false, null, null, null,
                 null, null, fields);
     }

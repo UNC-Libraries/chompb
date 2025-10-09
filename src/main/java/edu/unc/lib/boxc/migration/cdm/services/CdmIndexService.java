@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -39,6 +40,8 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.CSV;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.EAD_TO_CDM;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -64,13 +67,14 @@ public class CdmIndexService {
 
     private MigrationProject project;
     private CdmFieldService fieldService;
-
+    private String source;
     private String recordInsertSqlTemplate;
     private List<String> indexingWarnings = new ArrayList<>();
 
     public void index(CdmIndexOptions options) throws Exception {
-        if (options.getCsvFile() != null) {
-            indexAllFromCsv(options);
+        if (options.getCsvFile() != null || options.getEadTsvFile() != null) {
+            determineSource(options);
+            indexAllFromFile(options);
         } else {
             indexAll();
         }
@@ -404,23 +408,29 @@ public class CdmIndexService {
      * @param options
      * @throws IOException
      */
-    public void indexAllFromCsv(CdmIndexOptions options) throws IOException {
-        assertCsvImportExists(options);
+    public void indexAllFromFile(CdmIndexOptions options) throws IOException {
+        var path = getPath(options);
+        assertFileImportExists(path);
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
         exportFields.addAll(MIGRATION_FIELDS);
         recordInsertSqlTemplate = makeInsertTemplate(exportFields);
 
-        try (
-                var conn = openDbConnection();
-                Reader reader = Files.newBufferedReader(options.getCsvFile());
-                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                        .withFirstRecordAsHeader()
-                        .withHeader(String.valueOf(exportFields))
-                        .withTrim());
-        ) {
-            for (CSVRecord csvRecord : csvParser) {
+        try {
+            var conn = openDbConnection();
+            var reader = Files.newBufferedReader(path);
+            var format = CSVFormat.DEFAULT;
+            if (Objects.equals(source, EAD_TO_CDM)) {
+                format = CSVFormat.TDF;
+            }
+            var csvFormat = format.builder()
+                    .setTrim(true)
+                    .setSkipHeaderRecord(true)
+                    .setHeader(String.valueOf(exportFields))
+                    .get();
+            var csvRecords = CSVParser.parse(reader, csvFormat).getRecords();
+            for (CSVRecord csvRecord : csvRecords) {
                 if (!csvRecord.get(0).isEmpty()) {
                     List<String> fieldValues = csvRecord.toList();
                     indexObject(conn, fieldValues);
@@ -436,9 +446,9 @@ public class CdmIndexService {
         ProjectPropertiesSerialization.write(project);
     }
 
-    private void assertCsvImportExists(CdmIndexOptions options) {
-        if (Files.notExists(options.getCsvFile())) {
-            throw new InvalidProjectStateException("User provided csv must exist prior to indexing");
+    private void assertFileImportExists(Path path) {
+        if (Files.notExists(path)) {
+            throw new InvalidProjectStateException("User provided csv/tsv must exist prior to indexing");
         }
     }
 
@@ -455,6 +465,22 @@ public class CdmIndexService {
                         + " Use the force flag to overwrite.");
             }
         }
+    }
+
+    private void determineSource(CdmIndexOptions options) {
+        if (options.getEadTsvFile() != null) {
+            setSource(EAD_TO_CDM);
+        }
+        if (options.getCsvFile() != null) {
+            setSource(CSV);
+        }
+    }
+
+    private Path getPath(CdmIndexOptions options) {
+        if (Objects.equals(source, EAD_TO_CDM)) {
+            return options.getEadTsvFile();
+        }
+        return options.getCsvFile();
     }
 
     public void setFieldService(CdmFieldService fieldService) {
@@ -509,5 +535,13 @@ public class CdmIndexService {
      */
     public List<String> getIndexingWarnings() {
         return indexingWarnings;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }

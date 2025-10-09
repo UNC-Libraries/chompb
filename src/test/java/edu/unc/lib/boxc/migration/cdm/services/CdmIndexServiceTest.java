@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.CSV;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.EAD_TO_CDM;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -706,7 +707,7 @@ public class CdmIndexServiceTest {
 
     @Test
     public void indexFromCsvTest() throws Exception {
-        CdmFieldInfo csvExportFields = fieldService.retrieveFields(Paths.get("src/test/resources/files/exported_objects.csv"), "comma");
+        CdmFieldInfo csvExportFields = fieldService.retrieveFields(Paths.get("src/test/resources/files/exported_objects.csv"), CSV);
         fieldService.persistFieldsToProject(project, csvExportFields);
         setExportedDate();
         CdmIndexOptions options = new CdmIndexOptions();
@@ -714,7 +715,7 @@ public class CdmIndexServiceTest {
         options.setForce(false);
 
         service.createDatabase(options);
-        service.indexAllFromCsv(options);
+        service.indexAllFromFile(options);
 
         assertDateIndexedPresent();
         assertRowCount(3);
@@ -758,7 +759,7 @@ public class CdmIndexServiceTest {
         options.setForce(false);
 
         service.createDatabase(options);
-        service.indexAllFromCsv(options);
+        service.indexAllFromFile(options);
 
         assertDateIndexedPresent();
         assertRowCount(3);
@@ -794,6 +795,51 @@ public class CdmIndexServiceTest {
             CdmIndexService.closeDbConnection(conn);
         }
     }
+
+//    @Test
+//    public void indexFromEadToCdmTsvTest() throws Exception {
+//        var path = Paths.get("src/test/resources/files/ead_to_cdm.tsv");
+//        CdmFieldInfo csvExportFields = fieldService.retrieveFields(path, EAD_TO_CDM);
+//        fieldService.persistFieldsToProject(project, csvExportFields);
+//        setExportedDate();
+//        CdmIndexOptions options = new CdmIndexOptions();
+//        options.setEadTsvFile(path);
+//        options.setForce(false);
+//
+//        service.createDatabase(options);
+//        service.indexAllFromCsv(options);
+//
+//        assertDateIndexedPresent();
+//        assertRowCount(3);
+//
+//        CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+//        List<String> exportFields = fieldInfo.listAllExportFields();
+//
+//        Connection conn = service.openDbConnection();
+//        try {
+//            Statement stmt = conn.createStatement();
+//            ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
+//                    + " from " + CdmIndexService.TB_NAME + " order by " + ExportObjectsInfo.RECORD_ID + " asc");
+//            rs.next();
+//            assertEquals("test-00001", rs.getString(ExportObjectsInfo.RECORD_ID));
+//            assertEquals("src/test/resources/files/D2_035_Varners_DrugStore_interior.tif",
+//                    rs.getString(ExportObjectsInfo.FILE_PATH));
+//            assertEquals("D2_035_Varners_DrugStore_interior.tif", rs.getString(ExportObjectsInfo.FILENAME));
+//
+//            rs.next();
+//            assertEquals("test-00002", rs.getString(ExportObjectsInfo.RECORD_ID));
+//            assertEquals("src/test/resources/files/MJM_7_016_LumberMills_IndianCreekTrestle.tif",
+//                    rs.getString(ExportObjectsInfo.FILE_PATH));
+//            assertEquals("MJM_7_016_LumberMills_IndianCreekTrestle.tif", rs.getString(ExportObjectsInfo.FILENAME));
+//
+//            rs.next();
+//            assertEquals("test-00003", rs.getString(ExportObjectsInfo.RECORD_ID));
+//            assertEquals("src/test/resources/files/IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILE_PATH));
+//            assertEquals("IMG_2377.jpeg", rs.getString(ExportObjectsInfo.FILENAME));
+//        } finally {
+//            CdmIndexService.closeDbConnection(conn);
+//        }
+//    }
 
     @Test
     public void indexExportNestedXmlTest() throws Exception {
