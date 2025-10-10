@@ -72,8 +72,7 @@ public class CdmIndexService {
     private List<String> indexingWarnings = new ArrayList<>();
 
     public void index(CdmIndexOptions options) throws Exception {
-        if (options.getCsvFile() != null || options.getEadTsvFile() != null) {
-            determineSource(options);
+        if (source != null) {
             indexAllFromFile(options);
         } else {
             indexAll();
@@ -466,16 +465,6 @@ public class CdmIndexService {
             }
         }
     }
-
-    private void determineSource(CdmIndexOptions options) {
-        if (options.getEadTsvFile() != null) {
-            setSource(EAD_TO_CDM);
-        }
-        if (options.getCsvFile() != null) {
-            setSource(CSV);
-        }
-    }
-
     private Path getPath(CdmIndexOptions options) {
         if (Objects.equals(source, EAD_TO_CDM)) {
             return options.getEadTsvFile();

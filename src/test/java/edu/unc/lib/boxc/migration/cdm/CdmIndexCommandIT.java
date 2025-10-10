@@ -140,6 +140,40 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         assertDateIndexedPresent();
     }
 
+    @Test
+    public void indexFromEadToCdmTsvTest() throws Exception {
+        initProject();
+        Files.createDirectories(project.getExportPath());
+
+        Files.copy(Paths.get("src/test/resources/files/ead_to_cdm.tsv"), project.getExportObjectsPath());
+        setExportedDate();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "index",
+                "-ead", "src/test/resources/files/ead_to_cdm.tsv"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getIndexPath()));
+        assertTrue(Files.exists(project.getFieldsPath()));
+        assertDateIndexedPresent();
+    }
+
+    @Test
+    public void indexFromCsvAndEadToCdmTsvTest() throws Exception {
+        initProject();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "index",
+                "-c", "src/test/resources/files/exported_objects.csv",
+                "-ead", "src/test/resources/files/ead_to_cdm.tsv"};
+        executeExpectFailure(args);
+        assertOutputContains("CSVs and EAD to CDM TSVs may not be used in the same indexing command");
+        assertDateIndexedNotPresent();
+        assertTrue(Files.notExists(project.getIndexPath()), "Index file should be cleaned up");
+    }
+
     private void setExportedDate() throws Exception {
         project.getProjectProperties().setExportedDate(Instant.now());
         ProjectPropertiesSerialization.write(project);
