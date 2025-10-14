@@ -6,10 +6,12 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Document;
@@ -40,8 +42,23 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.ID_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SOURCE_FILE_FIELD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.CSV;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.EAD_TO_CDM;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.CITATION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_NUMBER;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_URL;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.CONTAINER_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.HOOK_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.LOC_IN_COLLECTION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.OBJECT;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.OBJ_FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.REF_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.TSV_HEADERS;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.TSV_WITH_ID_HEADERS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -70,6 +87,8 @@ public class CdmIndexService {
     private String source;
     private String recordInsertSqlTemplate;
     private List<String> indexingWarnings = new ArrayList<>();
+    private Path exportSourceFilesPath;
+    private Path eadToCdmWithIdPath;
 
     public void index(CdmIndexOptions options) throws Exception {
         if (source != null) {
@@ -420,13 +439,19 @@ public class CdmIndexService {
             var conn = openDbConnection();
             var reader = Files.newBufferedReader(path);
             var format = CSVFormat.DEFAULT;
+            var header = String.valueOf(exportFields);
             if (Objects.equals(source, EAD_TO_CDM)) {
                 format = CSVFormat.TDF;
+                exportSourceFilesPath = CdmFileRetrievalService.getExportedSourceFilesPath(project);
+                eadToCdmWithIdPath = exportSourceFilesPath.resolve("ead_to_cdm_with_ids.tsv");
+                addIdsToEadToCdmTsv(path);
+                reader = Files.newBufferedReader(eadToCdmWithIdPath);
+                header = Arrays.toString(TSV_WITH_ID_HEADERS);
             }
             var csvFormat = format.builder()
                     .setTrim(true)
                     .setSkipHeaderRecord(true)
-                    .setHeader(String.valueOf(exportFields))
+                    .setHeader(header)
                     .get();
             var csvRecords = CSVParser.parse(reader, csvFormat).getRecords();
             for (CSVRecord csvRecord : csvRecords) {
@@ -439,6 +464,8 @@ public class CdmIndexService {
             throw new MigrationException("Failed to read export files", e);
         } catch (SQLException e) {
             throw new MigrationException("Failed to update database", e);
+        } catch (IllegalArgumentException e) {
+            throw new MigrationException("Invalid arguments", e);
         }
 
         project.getProjectProperties().setIndexedDate(Instant.now());
@@ -449,6 +476,54 @@ public class CdmIndexService {
         if (Files.notExists(path)) {
             throw new InvalidProjectStateException("User provided csv/tsv must exist prior to indexing");
         }
+    }
+
+    private void addIdsToEadToCdmTsv(Path eadToCdmTsvPath) {
+        try {
+            var filenameToIdMap = getIdsFromSourceFile();
+            var format = CSVFormat.TDF;
+            var originalReader = Files.newBufferedReader(eadToCdmTsvPath);
+            var originalHeader = Arrays.toString(TSV_HEADERS);
+            var originalFormat = format.builder()
+                    .setTrim(true)
+                    .setSkipHeaderRecord(true)
+                    .setHeader(originalHeader)
+                    .get();
+            var originalRecords = CSVParser.parse(originalReader, originalFormat).getRecords();
+
+            var writer = Files.newBufferedWriter(eadToCdmWithIdPath);
+            CSVPrinter tsvPrinter = new CSVPrinter(writer, CSVFormat.TDF.builder().setHeader(TSV_WITH_ID_HEADERS).get());
+            for (CSVRecord tsvRecord : originalRecords) {
+                var filename = tsvRecord.get(FILENAME);
+                var cdmId = filenameToIdMap.get(filename);
+                if (cdmId == null) {
+                    throw new IllegalArgumentException("No CDM ID found for EAD to CDM record for filename:" + filename);
+                }
+                tsvPrinter.printRecord(tsvRecord.get(COLLECTION_NAME), tsvRecord.get(COLLECTION_NUMBER),
+                        tsvRecord.get(LOC_IN_COLLECTION), tsvRecord.get(CITATION), filename,
+                        tsvRecord.get(OBJ_FILENAME), tsvRecord.get(CONTAINER_TYPE), tsvRecord.get(HOOK_ID),
+                        tsvRecord.get(OBJECT), tsvRecord.get(COLLECTION_URL), tsvRecord.get(REF_ID), cdmId);
+            }
+        } catch (IOException e) {
+            throw new MigrationException("Unable to format new TSV");
+        }
+    }
+
+    private Map<String, String> getIdsFromSourceFile() {
+        Map<String, String> filenameToId = new HashMap<>();
+        var sourceFilesPath = project.getSourceFilesMappingPath();
+        try (var parser = SourceFileService.openMappingsParser(sourceFilesPath)) {
+            var csvRecords = parser.getRecords();
+            for (var record : csvRecords) {
+                var basePath = exportSourceFilesPath.toString();
+                var filename = record.get(SOURCE_FILE_FIELD).replace(basePath,"");
+                filenameToId.put(filename, record.get(ID_FIELD));
+            }
+        } catch (IOException e) {
+            throw new MigrationException("Failed to get source files info: ", e);
+        }
+
+        return filenameToId;
     }
 
     private void ensureDatabaseState(boolean force) {
@@ -532,5 +607,13 @@ public class CdmIndexService {
 
     public void setSource(String source) {
         this.source = source;
+    }
+
+    public void setExportSourceFilesPath(Path exportSourceFilesPath) {
+        this.exportSourceFilesPath = exportSourceFilesPath;
+    }
+
+    public void setEadToCdmWithIdPath(Path eadToCdmWithIdPath) {
+        this.eadToCdmWithIdPath = eadToCdmWithIdPath;
     }
 }
