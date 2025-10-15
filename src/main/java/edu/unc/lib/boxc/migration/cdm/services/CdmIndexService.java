@@ -26,6 +26,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -87,7 +88,6 @@ public class CdmIndexService {
     private String source;
     private String recordInsertSqlTemplate;
     private List<String> indexingWarnings = new ArrayList<>();
-    private Path exportSourceFilesPath;
     private Path eadToCdmWithIdPath;
 
     public void index(CdmIndexOptions options) throws Exception {
@@ -442,12 +442,12 @@ public class CdmIndexService {
             var header = String.valueOf(exportFields);
             if (Objects.equals(source, EAD_TO_CDM)) {
                 format = CSVFormat.TDF;
-                exportSourceFilesPath = CdmFileRetrievalService.getExportedSourceFilesPath(project);
-                eadToCdmWithIdPath = exportSourceFilesPath.resolve("ead_to_cdm_with_ids.tsv");
+                eadToCdmWithIdPath = project.getProjectPath().resolve("ead_to_cdm_with_ids.tsv");
                 addIdsToEadToCdmTsv(path);
                 reader = Files.newBufferedReader(eadToCdmWithIdPath);
                 header = Arrays.toString(TSV_WITH_ID_HEADERS);
             }
+
             var csvFormat = format.builder()
                     .setTrim(true)
                     .setSkipHeaderRecord(true)
@@ -460,6 +460,7 @@ public class CdmIndexService {
                     indexObject(conn, fieldValues);
                 }
             }
+            closeDbConnection(conn);
         } catch (IOException e) {
             throw new MigrationException("Failed to read export files", e);
         } catch (SQLException e) {
@@ -481,20 +482,18 @@ public class CdmIndexService {
     private void addIdsToEadToCdmTsv(Path eadToCdmTsvPath) {
         try {
             var filenameToIdMap = getIdsFromSourceFile();
-            var format = CSVFormat.TDF;
-            var originalReader = Files.newBufferedReader(eadToCdmTsvPath);
-            var originalHeader = Arrays.toString(TSV_HEADERS);
-            var originalFormat = format.builder()
+            var reader = Files.newBufferedReader(eadToCdmTsvPath);
+            var format = CSVFormat.TDF.builder()
                     .setTrim(true)
                     .setSkipHeaderRecord(true)
-                    .setHeader(originalHeader)
+                    .setHeader(Arrays.toString(TSV_HEADERS))
                     .get();
-            var originalRecords = CSVParser.parse(originalReader, originalFormat).getRecords();
+            var originalRecords = CSVParser.parse(reader, format).getRecords();
 
             var writer = Files.newBufferedWriter(eadToCdmWithIdPath);
             CSVPrinter tsvPrinter = new CSVPrinter(writer, CSVFormat.TDF.builder().setHeader(TSV_WITH_ID_HEADERS).get());
             for (CSVRecord tsvRecord : originalRecords) {
-                var filename = tsvRecord.get(FILENAME);
+                var filename = tsvRecord.get("Filename");
                 var cdmId = filenameToIdMap.get(filename);
                 if (cdmId == null) {
                     throw new IllegalArgumentException("No CDM ID found for EAD to CDM record for filename:" + filename);
@@ -511,12 +510,18 @@ public class CdmIndexService {
 
     private Map<String, String> getIdsFromSourceFile() {
         Map<String, String> filenameToId = new HashMap<>();
-        var sourceFilesPath = project.getSourceFilesMappingPath();
-        try (var parser = SourceFileService.openMappingsParser(sourceFilesPath)) {
-            var csvRecords = parser.getRecords();
+        try {
+            var sourceFilesPath = project.getSourceFilesMappingPath();
+            var reader = Files.newBufferedReader(sourceFilesPath);
+            var format = CSVFormat.DEFAULT.builder()
+                    .setTrim(true)
+                    .setSkipHeaderRecord(true)
+                    .setHeader(SourceFilesInfo.CSV_HEADERS)
+                    .get();
+            var csvRecords = CSVParser.parse(reader, format).getRecords();
             for (var record : csvRecords) {
-                var basePath = exportSourceFilesPath.toString();
-                var filename = record.get(SOURCE_FILE_FIELD).replace(basePath,"");
+                var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
+                var filename = basePath.getFileName().toString();
                 filenameToId.put(filename, record.get(ID_FIELD));
             }
         } catch (IOException e) {
@@ -607,10 +612,6 @@ public class CdmIndexService {
 
     public void setSource(String source) {
         this.source = source;
-    }
-
-    public void setExportSourceFilesPath(Path exportSourceFilesPath) {
-        this.exportSourceFilesPath = exportSourceFilesPath;
     }
 
     public void setEadToCdmWithIdPath(Path eadToCdmWithIdPath) {
