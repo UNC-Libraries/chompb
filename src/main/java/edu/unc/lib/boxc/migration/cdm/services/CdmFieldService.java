@@ -35,6 +35,8 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.TSV_WITH_ID_HEADERS;
+
 /**
  * Service for persistence and retrieval of CDM field information
  *
@@ -245,23 +247,22 @@ public class CdmFieldService {
      */
     public CdmFieldInfo retrieveFields(Path exportedObjectsPath, String source) {
         CdmFieldInfo fieldInfo = new CdmFieldInfo();
+        var format = CSVFormat.DEFAULT;
+        if (Objects.equals(source, EAD_TO_CDM)) {
+            format = CSVFormat.TDF;
+        }
+        var csvFormat = format.builder().setTrim(true).get();
 
-        try {
+        try (
             Reader reader = Files.newBufferedReader(exportedObjectsPath);
-            var format = CSVFormat.DEFAULT;
-            if (Objects.equals(source, EAD_TO_CDM)) {
-                format = CSVFormat.TDF;
-            }
-            var csvFormat = format.builder().setTrim(true).get();
             var parser = CSVParser.parse(reader, csvFormat);
-
+        ) {
             List<String> headers = parser.getRecords().getFirst().toList();
             for (String header : headers) {
                 CdmFieldEntry fieldEntry = new CdmFieldEntry();
-                var formattedHeader = header.replaceAll(" ", "_").replaceAll("\"", "").toLowerCase();
-                fieldEntry.setNickName(formattedHeader);
-                fieldEntry.setExportAs(formattedHeader);
-                fieldEntry.setDescription(formattedHeader);
+                fieldEntry.setNickName(header);
+                fieldEntry.setExportAs(header);
+                fieldEntry.setDescription(header);
                 fieldEntry.setSkipExport(false);
                 fieldInfo.getFields().add(fieldEntry);
             }

@@ -255,7 +255,7 @@ public class FilterIndexCommandIT extends AbstractCommandIT {
     }
 
     private int countRemaining() throws Exception {
-        Connection conn = testHelper.getIndexService().openDbConnection();
+        Connection conn = testHelper.getCdmIndexService().openDbConnection();
         try {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME);

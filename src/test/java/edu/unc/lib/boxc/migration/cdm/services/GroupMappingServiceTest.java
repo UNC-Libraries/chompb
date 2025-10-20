@@ -50,8 +50,9 @@ public class GroupMappingServiceTest {
     public Path tmpFolder;
 
     private MigrationProject project;
-    private CdmIndexService indexService;
+    private CdmIndexService cdmIndexService;
     private CdmFieldService fieldService;
+    private FileIndexService fileIndexService;
     private GroupMappingService service;
     private SipServiceHelper testHelper;
 
@@ -63,11 +64,12 @@ public class GroupMappingServiceTest {
         Files.createDirectories(project.getExportPath());
 
         fieldService = new CdmFieldService();
-        indexService = new CdmIndexService();
-        indexService.setProject(project);
-        indexService.setFieldService(fieldService);
+        cdmIndexService = new CdmIndexService();
+        cdmIndexService.setProject(project);
+        cdmIndexService.setFieldService(fieldService);
+        fileIndexService.setSource(CSV);
         service = new GroupMappingService();
-        service.setIndexService(indexService);
+        service.setIndexService(cdmIndexService);
         service.setProject(project);
         service.setFieldService(fieldService);
 
@@ -292,7 +294,7 @@ public class GroupMappingServiceTest {
         Connection conn = null;
         try {
             GroupMappingInfo info = service.loadMappings();
-            conn = indexService.openDbConnection();
+            conn = cdmIndexService.openDbConnection();
             assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, "groupa:group1", "25", "26");
             assertFileHasOrder(conn, "25", 1);
@@ -318,7 +320,7 @@ public class GroupMappingServiceTest {
         Connection conn = null;
         try {
             GroupMappingInfo info = service.loadMappings();
-            conn = indexService.openDbConnection();
+            conn = cdmIndexService.openDbConnection();
             assertWorkSynced(conn, "digitc:2005-11-10", "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, "digitc:2005-11-10", "25", "28", "29");
             assertFileHasOrder(conn, "25", 0);
@@ -339,7 +341,7 @@ public class GroupMappingServiceTest {
 
         try {
             GroupMappingInfo info = service.loadMappings();
-            conn = indexService.openDbConnection();
+            conn = cdmIndexService.openDbConnection();
             assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, "groupa:group1", "25", "26");
             assertFileHasOrder(conn, "25", 1);
@@ -391,7 +393,7 @@ public class GroupMappingServiceTest {
         Connection conn = null;
         try {
             GroupMappingInfo info = service.loadMappings();
-            conn = indexService.openDbConnection();
+            conn = cdmIndexService.openDbConnection();
             assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
             assertWorkSynced(conn, "dcmi:Image", "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, "groupa:group1,dcmi:Image", "25", "26");
@@ -445,7 +447,7 @@ public class GroupMappingServiceTest {
         Connection conn = null;
         try {
             GroupMappingInfo info = service.loadMappings();
-            conn = indexService.openDbConnection();
+            conn = cdmIndexService.openDbConnection();
             assertWorkSynced(conn, "digitc:2005-11-10", "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, "digitc:2005-11-10", "25", "28", "29");
             assertFileHasOrder(conn, "25", 0);
@@ -466,7 +468,7 @@ public class GroupMappingServiceTest {
 
         try {
             GroupMappingInfo info = service.loadMappings();
-            conn = indexService.openDbConnection();
+            conn = cdmIndexService.openDbConnection();
             assertWorkSynced(conn, "groupa:group1", "Redoubt C", "2005-11-23");
             assertWorkSynced(conn, "dcmi:Image", "Redoubt C", "2005-11-23");
             assertFilesGrouped(conn, "groupa:group1,dcmi:Image", "25", "26");
@@ -500,7 +502,7 @@ public class GroupMappingServiceTest {
         Connection conn = null;
         try {
             GroupMappingInfo info = service.loadMappings();
-            conn = indexService.openDbConnection();
+            conn = cdmIndexService.openDbConnection();
             assertFilesGrouped(conn, "file_type:tif", "test-00001", "test-00002");
             assertFileHasOrder(conn, "test-00001", 0);
             assertFileHasOrder(conn, "test-00002", 1);
@@ -676,8 +678,8 @@ public class GroupMappingServiceTest {
         options.setCsvFile(csvPath);
         options.setForce(false);
 
-        indexService.createDatabase(options);
-        indexService.indexAllFromFile(options);
+        fileIndexService.createDatabase(fieldService, project, options);
+        fileIndexService.indexAllFromFile(options);
         ProjectPropertiesSerialization.write(project);
     }
 }

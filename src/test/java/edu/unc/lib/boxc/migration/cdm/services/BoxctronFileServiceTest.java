@@ -50,7 +50,7 @@ public class BoxctronFileServiceTest {
 
         service = testHelper.getBoxctronFileService();
         service.setProject(project);
-        service.setIndexService(testHelper.getIndexService());
+        service.setIndexService(testHelper.getCdmIndexService());
     }
 
     @Test

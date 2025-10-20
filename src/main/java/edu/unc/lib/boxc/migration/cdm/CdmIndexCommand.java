@@ -13,7 +13,8 @@ import java.util.concurrent.Callable;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
-import org.apache.commons.csv.CSVFormat;
+import edu.unc.lib.boxc.migration.cdm.services.FileIndexService;
+import edu.unc.lib.boxc.migration.cdm.services.IndexService;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
@@ -37,7 +38,9 @@ public class CdmIndexCommand implements Callable<Integer> {
     private CLIMain parentCommand;
 
     private CdmFieldService fieldService;
-    private CdmIndexService indexService;
+    private CdmIndexService cdmIndexService;
+    private FileIndexService fileIndexService;
+    private IndexService indexService;
     private MigrationProject project;
 
     @Mixin
@@ -54,31 +57,36 @@ public class CdmIndexCommand implements Callable<Integer> {
                 throw new IllegalArgumentException("CSVs and EAD to CDM TSVs may not be used in the same indexing command");
             }
 
-            // if user provides csv, check that it exists
+            // if user provides a file, check that it exists
             if (options.getCsvFile() != null) {
                 if (Files.exists(options.getCsvFile())) {
                     CdmFieldInfo csvExportFields = fieldService.retrieveFields(options.getCsvFile(), CSV);
                     fieldService.persistFieldsToProject(project, csvExportFields);
-                    indexService.setSource(CSV);
+                    indexService.createDatabase(fieldService, project, options);
+                    fileIndexService.setSource(CSV);
+                    fileIndexService.indexAllFromFile(options);
                 } else {
                     throw new MigrationException("No csv file exists in " + options.getCsvFile());
                 }
             } else if (options.getEadTsvFile() != null) { // if user provides EAD to CDM tsv, check that it exists
                 if (Files.exists(options.getEadTsvFile())) {
-                    // TODO match up ID column from source files
-                    CdmFieldInfo csvExportFields = fieldService.retrieveFields(options.getEadTsvFile(), CdmFieldService.EAD_TO_CDM);
+                    // standardize headers and add CDM ID column
+                    var formattedEadToCdmTsvPath = fileIndexService.addIdsToEadToCdmTsv(options.getEadTsvFile());
+                    CdmFieldInfo csvExportFields = fieldService.retrieveFields(formattedEadToCdmTsvPath, CdmFieldService.EAD_TO_CDM);
                     fieldService.persistFieldsToProject(project, csvExportFields);
-                    indexService.setSource(EAD_TO_CDM);
+                    indexService.createDatabase(fieldService, project, options);
+                    fileIndexService.setSource(EAD_TO_CDM);
+                    fileIndexService.indexAllFromFile(options);
                 } else {
                     throw new MigrationException("No EAD to CDM tsv file exists in " + options.getEadTsvFile());
                 }
-            }
-
-            indexService.createDatabase(options);
-            indexService.index(options);
-            // Display any warning messages to user
-            if (!indexService.getIndexingWarnings().isEmpty()) {
-                indexService.getIndexingWarnings().forEach(outputLogger::info);
+            } else {
+                indexService.createDatabase(fieldService, project, options);
+                cdmIndexService.index(options);
+                // Display any warning messages to user
+                if (!cdmIndexService.getIndexingWarnings().isEmpty()) {
+                    cdmIndexService.getIndexingWarnings().forEach(outputLogger::info);
+                }
             }
             outputLogger.info("Indexed project {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
@@ -92,7 +100,7 @@ public class CdmIndexCommand implements Callable<Integer> {
         } catch (Exception e) {
             log.error("Failed to export project", e);
             outputLogger.info("Failed to export project: {}", e.getMessage(), e);
-            indexService.removeIndex();
+            indexService.removeIndex(project);
             return 1;
         }
     }
@@ -101,8 +109,12 @@ public class CdmIndexCommand implements Callable<Integer> {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         fieldService = new CdmFieldService();
-        indexService = new CdmIndexService();
-        indexService.setFieldService(fieldService);
-        indexService.setProject(project);
+        cdmIndexService = new CdmIndexService();
+        cdmIndexService.setFieldService(fieldService);
+        cdmIndexService.setProject(project);
+        fileIndexService = new FileIndexService();
+        fileIndexService.setFieldService(fieldService);
+        fileIndexService.setProject(project);
+        indexService = new IndexService();
     }
 }
