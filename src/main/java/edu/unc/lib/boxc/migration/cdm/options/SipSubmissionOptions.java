@@ -36,10 +36,16 @@ public class SipSubmissionOptions {
     private String redisHost;
 
     @Option(names = { "--redis-port"},
-            description = { "Post for the Redis server.",
+            description = { "Port for the Redis server.",
                 "Defaults to using the REDIS_PORT variable: ${DEFAULT-VALUE}" },
             defaultValue = "${env:REDIS_PORT:-${sys:REDIS_PORT:-6379}}")
     private int redisPort;
+
+    @Option(names = { "--broker-url"},
+            description = { "URL of the JMS broker to use for submitting to the deposit pipeline.",
+                    "Defaults to using the BROKER_URL variable: ${DEFAULT-VALUE}" },
+            defaultValue = "${env:BROKER_URL:-${sys:BROKER_URL:-tcp://localhost:61616}}")
+    private String brokerUrl;
 
     @Option(names = { "-f", "--force"},
             description = "Allow resubmission of previously submitted SIPs")
@@ -75,6 +81,14 @@ public class SipSubmissionOptions {
 
     public void setRedisPort(int redisPort) {
         this.redisPort = redisPort;
+    }
+
+    public String getBrokerUrl() {
+        return brokerUrl;
+    }
+
+    public void setBrokerUrl(String brokerUrl) {
+        this.brokerUrl = brokerUrl;
     }
 
     public List<String> getSipIds() {

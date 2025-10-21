@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
+import edu.unc.lib.boxc.deposit.impl.jms.DepositOperationMessageService;
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -17,6 +19,7 @@ import edu.unc.lib.boxc.migration.cdm.options.SipSubmissionOptions;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.services.SipSubmissionService;
+import org.springframework.jms.core.JmsTemplate;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParentCommand;
@@ -95,6 +98,17 @@ public class SubmitSipsCommand implements Callable<Integer> {
         jedisPool = new JedisPool(jedisPoolConfig, options.getRedisHost(), options.getRedisPort());
         DepositStatusFactory depositStatusFactory = new DepositStatusFactory();
         depositStatusFactory.setJedisPool(jedisPool);
+
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(options.getBrokerUrl());
+        JmsTemplate jmsTemplate = new JmsTemplate();
+        jmsTemplate.setConnectionFactory(connectionFactory);
+        jmsTemplate.setDeliveryPersistent(true);
+        jmsTemplate.setPubSubDomain(false);
+
+        DepositOperationMessageService depositOperationMessageService = new DepositOperationMessageService();
+        depositOperationMessageService.setJmsTemplate(jmsTemplate);
+        depositOperationMessageService.setDestinationName("");
+
 
         submissionService = new SipSubmissionService();
         submissionService.setProject(project);

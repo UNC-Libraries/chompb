@@ -199,6 +199,11 @@
             <artifactId>sshd-sftp</artifactId>
             <version>${apache-sshd.version}</version>
         </dependency>
+        <!-- jms -->
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-client</artifactId>
+        </dependency>
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
