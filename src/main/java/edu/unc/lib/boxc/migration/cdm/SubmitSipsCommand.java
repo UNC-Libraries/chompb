@@ -99,6 +99,16 @@ public class SubmitSipsCommand implements Callable<Integer> {
         DepositStatusFactory depositStatusFactory = new DepositStatusFactory();
         depositStatusFactory.setJedisPool(jedisPool);
 
+        DepositOperationMessageService depositOperationMessageService = getDepositOperationMessageService(options);
+
+        submissionService = new SipSubmissionService();
+        submissionService.setProject(project);
+        submissionService.setSipService(sipService);
+        submissionService.setDepositStatusFactory(depositStatusFactory);
+        submissionService.setDepositOperationMessageService(depositOperationMessageService);
+    }
+
+    private static DepositOperationMessageService getDepositOperationMessageService(SipSubmissionOptions options) {
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(options.getBrokerUrl());
         JmsTemplate jmsTemplate = new JmsTemplate();
         jmsTemplate.setConnectionFactory(connectionFactory);
@@ -107,12 +117,7 @@ public class SubmitSipsCommand implements Callable<Integer> {
 
         DepositOperationMessageService depositOperationMessageService = new DepositOperationMessageService();
         depositOperationMessageService.setJmsTemplate(jmsTemplate);
-        depositOperationMessageService.setDestinationName("");
-
-
-        submissionService = new SipSubmissionService();
-        submissionService.setProject(project);
-        submissionService.setSipService(sipService);
-        submissionService.setDepositStatusFactory(depositStatusFactory);
+        depositOperationMessageService.setDestinationName(options.getJmsEndpoint());
+        return depositOperationMessageService;
     }
 }
