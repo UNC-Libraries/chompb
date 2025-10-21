@@ -13,6 +13,7 @@ import java.time.Instant;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.assertDateIndexedNotPresent;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.assertDateIndexedPresent;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.mappingBody;
+import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.setExportedDate;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.writeCsv;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,7 +32,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         Files.copy(Paths.get("src/test/resources/descriptions/gilmer/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-        setExportedDate();
+        setExportedDate(project);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -50,7 +51,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         Files.copy(Paths.get("src/test/resources/descriptions/mini_gilmer/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project));
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-        setExportedDate();
+        setExportedDate(project);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -87,7 +88,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
 
         FileUtils.write(CdmFileRetrievalService.getDescAllPath(project).toFile(), "uh oh", ISO_8859_1);
         Files.copy(Paths.get("src/test/resources/gilmer_fields.csv"), project.getFieldsPath());
-        setExportedDate();
+        setExportedDate(project);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -109,7 +110,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         Files.copy(Paths.get("src/test/resources/descriptions/mini_keepsakes/image/620.cpd"),
                 CdmFileRetrievalService.getExportedCpdsPath(project).resolve("620.cpd"));
         Files.copy(Paths.get("src/test/resources/keepsakes_fields.csv"), project.getFieldsPath());
-        setExportedDate();
+        setExportedDate(project);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -128,7 +129,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         Files.createDirectories(project.getExportPath());
 
         Files.copy(Paths.get("src/test/resources/files/exported_objects.csv"), project.getExportObjectsPath());
-        setExportedDate();
+        setExportedDate(project);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -150,7 +151,7 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
                 "00002,," + project.getProjectPath() + "/00011_0045_0002.tif,"));
 
         Files.copy(Paths.get("src/test/resources/files/ead_to_cdm.tsv"), project.getExportObjectsPath());
-        setExportedDate();
+        setExportedDate(project);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -176,10 +177,5 @@ public class CdmIndexCommandIT extends AbstractCommandIT {
         assertOutputContains("CSVs and EAD to CDM TSVs may not be used in the same indexing command");
         assertDateIndexedNotPresent(project);
         assertTrue(Files.notExists(project.getIndexPath()), "Index file should be cleaned up");
-    }
-
-    private void setExportedDate() throws Exception {
-        project.getProjectProperties().setExportedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
     }
 }

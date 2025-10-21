@@ -35,8 +35,6 @@ import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.TSV_WITH_ID_HEADERS;
-
 /**
  * Service for persistence and retrieval of CDM field information
  *
