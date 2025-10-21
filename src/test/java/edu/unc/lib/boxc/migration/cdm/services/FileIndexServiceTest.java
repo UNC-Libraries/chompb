@@ -65,7 +65,7 @@ public class FileIndexServiceTest {
         options.setCsvFile(Paths.get("src/test/resources/files/exported_objects.csv"));
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAllFromFile(options);
 
         assertDateIndexedPresent(project);
@@ -74,7 +74,7 @@ public class FileIndexServiceTest {
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
 
-        Connection conn = service.openDbConnection(project);
+        Connection conn = service.openDbConnection();
         try {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
@@ -109,7 +109,7 @@ public class FileIndexServiceTest {
         options.setCsvFile(Paths.get("src/test/resources/files/more_fields.csv"));
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAllFromFile(options);
 
         assertDateIndexedPresent(project);
@@ -118,7 +118,7 @@ public class FileIndexServiceTest {
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
 
-        Connection conn = service.openDbConnection(project);
+        Connection conn = service.openDbConnection();
         try {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
@@ -164,7 +164,7 @@ public class FileIndexServiceTest {
         options.setForce(false);
 
         service.setSource(EAD_TO_CDM);
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAllFromFile(options);
 
         assertDateIndexedPresent(project);
@@ -173,7 +173,7 @@ public class FileIndexServiceTest {
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
 
-        Connection conn = service.openDbConnection(project);
+        Connection conn = service.openDbConnection();
         try {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select " + String.join(",", exportFields)
@@ -207,7 +207,7 @@ public class FileIndexServiceTest {
     }
 
     public void assertRowCount(int expected) throws Exception {
-        Connection conn = service.openDbConnection(project);
+        Connection conn = service.openDbConnection();
         try {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select count(*) from " + CdmIndexService.TB_NAME);

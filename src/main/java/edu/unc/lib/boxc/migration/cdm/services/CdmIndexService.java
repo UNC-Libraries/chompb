@@ -86,8 +86,6 @@ public class CdmIndexService extends IndexService {
     private static final Pattern IGNORE_CLOSING_PATTERN = Pattern.compile(
             "(a|span|div|img|ul|li|ol|h\\d|input|label|html|table|tr|td|th)");
 
-    private MigrationProject project;
-    private CdmFieldService fieldService;
     private List<String> indexingWarnings = new ArrayList<>();
 
     public void index(CdmIndexOptions options) throws Exception {
@@ -335,27 +333,10 @@ public class CdmIndexService extends IndexService {
         });
     }
 
-    public Connection openDbConnection() throws SQLException {
-        try {
-            Class.forName("org.sqlite.JDBC");
-            return DriverManager.getConnection("jdbc:sqlite:" + project.getIndexPath());
-        } catch (ClassNotFoundException e) {
-            throw new MigrationException("Failed to open database connection to " + project.getIndexPath(), e);
-        }
-    }
-
     /**
      * @return Warning messages generated while indexing
      */
     public List<String> getIndexingWarnings() {
         return indexingWarnings;
-    }
-
-    public void setProject(MigrationProject project) {
-        this.project = project;
-    }
-
-    public void setFieldService(CdmFieldService fieldService) {
-        this.fieldService = fieldService;
     }
 }

@@ -127,6 +127,9 @@ public class SipServiceHelper {
         cdmIndexService = new CdmIndexService();
         cdmIndexService.setProject(project);
         cdmIndexService.setFieldService(fieldService);
+        fileIndexService = new FileIndexService();
+        fileIndexService.setProject(project);
+        fileIndexService.setFieldService(fieldService);
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(cdmIndexService);
         sourceFileService.setProject(project);
@@ -342,7 +345,7 @@ public class SipServiceHelper {
             });
         }
         project.getProjectProperties().setExportedDate(Instant.now());
-        cdmIndexService.createDatabase(fieldService, project, options);
+        cdmIndexService.createDatabase(options);
         cdmIndexService.indexAll();
         ProjectPropertiesSerialization.write(project);
     }

@@ -67,7 +67,10 @@ public class GroupMappingServiceTest {
         cdmIndexService = new CdmIndexService();
         cdmIndexService.setProject(project);
         cdmIndexService.setFieldService(fieldService);
+        fileIndexService = new FileIndexService();
         fileIndexService.setSource(CSV);
+        fileIndexService.setProject(project);
+        fileIndexService.setFieldService(fieldService);
         service = new GroupMappingService();
         service.setIndexService(cdmIndexService);
         service.setProject(project);
@@ -678,7 +681,7 @@ public class GroupMappingServiceTest {
         options.setCsvFile(csvPath);
         options.setForce(false);
 
-        fileIndexService.createDatabase(fieldService, project, options);
+        fileIndexService.createDatabase(options);
         fileIndexService.indexAllFromFile(options);
         ProjectPropertiesSerialization.write(project);
     }

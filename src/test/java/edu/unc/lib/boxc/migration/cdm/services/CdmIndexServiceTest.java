@@ -68,7 +68,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent(project);
@@ -125,9 +125,9 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         try {
-            service.createDatabase(fieldService, project, options);
+            service.createDatabase(options);
             fail();
         } catch (StateAlreadyExistsException e) {
             assertTrue(e.getMessage().contains("Cannot create index, an index file already exists"));
@@ -144,7 +144,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project,options);
+        service.createDatabase(options);
         service.indexAll();
         assertRowCount(3);
 
@@ -152,7 +152,7 @@ public class CdmIndexServiceTest {
         Files.copy(Paths.get("src/test/resources/descriptions/gilmer/index/description/desc.all"),
                 CdmFileRetrievalService.getDescAllPath(project), StandardCopyOption.REPLACE_EXISTING);
         options.setForce(true);
-        service.createDatabase(fieldService, project,options);
+        service.createDatabase(options);
         service.indexAll();
         assertRowCount(161);
 
@@ -168,11 +168,11 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
         assertRowCount(3);
 
-        service.removeIndex(project);
+        service.removeIndex();
 
         assertTrue(Files.notExists(project.getIndexPath()));
         assertDateIndexedNotPresent(project);
@@ -186,7 +186,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         try {
             service.indexAll();
             fail();
@@ -206,7 +206,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
@@ -240,7 +240,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent(project);
@@ -334,7 +334,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent(project);
@@ -404,7 +404,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent(project);
@@ -450,7 +450,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent(project);
@@ -517,7 +517,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent(project);
@@ -555,7 +555,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent(project);
@@ -711,7 +711,7 @@ public class CdmIndexServiceTest {
         CdmIndexOptions options = new CdmIndexOptions();
         options.setForce(false);
 
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.indexAll();
 
         assertDateIndexedPresent(project);

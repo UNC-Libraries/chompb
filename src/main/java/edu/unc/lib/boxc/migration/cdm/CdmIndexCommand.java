@@ -62,7 +62,7 @@ public class CdmIndexCommand implements Callable<Integer> {
                 if (Files.exists(options.getCsvFile())) {
                     CdmFieldInfo csvExportFields = fieldService.retrieveFields(options.getCsvFile(), CSV);
                     fieldService.persistFieldsToProject(project, csvExportFields);
-                    indexService.createDatabase(fieldService, project, options);
+                    indexService.createDatabase(options);
                     fileIndexService.setSource(CSV);
                     fileIndexService.indexAllFromFile(options);
                 } else {
@@ -72,16 +72,16 @@ public class CdmIndexCommand implements Callable<Integer> {
                 if (Files.exists(options.getEadTsvFile())) {
                     // standardize headers and add CDM ID column
                     var formattedEadToCdmTsvPath = fileIndexService.addIdsToEadToCdmTsv(options.getEadTsvFile());
-                    CdmFieldInfo csvExportFields = fieldService.retrieveFields(formattedEadToCdmTsvPath, CdmFieldService.EAD_TO_CDM);
+                    CdmFieldInfo csvExportFields = fieldService.retrieveFields(formattedEadToCdmTsvPath, EAD_TO_CDM);
                     fieldService.persistFieldsToProject(project, csvExportFields);
-                    indexService.createDatabase(fieldService, project, options);
+                    indexService.createDatabase( options);
                     fileIndexService.setSource(EAD_TO_CDM);
                     fileIndexService.indexAllFromFile(options);
                 } else {
                     throw new MigrationException("No EAD to CDM tsv file exists in " + options.getEadTsvFile());
                 }
             } else {
-                indexService.createDatabase(fieldService, project, options);
+                indexService.createDatabase(options);
                 cdmIndexService.index(options);
                 // Display any warning messages to user
                 if (!cdmIndexService.getIndexingWarnings().isEmpty()) {
@@ -100,7 +100,7 @@ public class CdmIndexCommand implements Callable<Integer> {
         } catch (Exception e) {
             log.error("Failed to export project", e);
             outputLogger.info("Failed to export project: {}", e.getMessage(), e);
-            indexService.removeIndex(project);
+            indexService.removeIndex();
             return 1;
         }
     }
@@ -116,5 +116,7 @@ public class CdmIndexCommand implements Callable<Integer> {
         fileIndexService.setFieldService(fieldService);
         fileIndexService.setProject(project);
         indexService = new IndexService();
+        indexService.setProject(project);
+        indexService.setFieldService(fieldService);
     }
 }

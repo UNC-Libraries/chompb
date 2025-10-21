@@ -1681,7 +1681,7 @@ public class SipServiceTest {
         options.setForce(false);
 
         var service = testHelper.getFileIndexService();
-        service.createDatabase(fieldService, project, options);
+        service.createDatabase(options);
         service.setSource(CSV);
         service.indexAllFromFile(options);
         ProjectPropertiesSerialization.write(project);

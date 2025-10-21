@@ -32,14 +32,16 @@ public class IndexService {
     public static final List<String> MIGRATION_FIELDS = Arrays.asList(
             PARENT_ID_FIELD, ENTRY_TYPE_FIELD, CHILD_ORDER_FIELD);
     public String recordInsertSqlTemplate;
+    public MigrationProject project;
+    public CdmFieldService fieldService;
 
     /**
      * Create the index database with all cdm and migration fields
      * @param options
      * @throws IOException
      */
-    public void createDatabase(CdmFieldService fieldService, MigrationProject project, CdmIndexOptions options) throws IOException {
-        ensureDatabaseState(project, options.getForce());
+    public void createDatabase(CdmIndexOptions options) {
+        ensureDatabaseState(options.getForce());
 
         CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
         List<String> exportFields = fieldInfo.listAllExportFields();
@@ -59,7 +61,7 @@ public class IndexService {
 
         Connection conn = null;
         try {
-            conn = openDbConnection(project);
+            conn = openDbConnection();
             Statement stmt = conn.createStatement();
             stmt.executeUpdate(queryBuilder.toString());
         } catch (SQLException e) {
@@ -69,7 +71,7 @@ public class IndexService {
         }
     }
 
-    private void ensureDatabaseState(MigrationProject project, boolean force) {
+    private void ensureDatabaseState(boolean force) {
         if (Files.exists(project.getIndexPath())) {
             if (force) {
                 try {
@@ -119,7 +121,7 @@ public class IndexService {
     /**
      * Remove the index and related properties
      */
-    public void removeIndex(MigrationProject project) {
+    public void removeIndex() {
         try {
             Files.delete(project.getIndexPath());
         } catch (NoSuchFileException e) {
@@ -152,7 +154,7 @@ public class IndexService {
         }
     }
 
-    public Connection openDbConnection(MigrationProject project) throws SQLException {
+    public Connection openDbConnection() throws SQLException {
         try {
             Class.forName("org.sqlite.JDBC");
             return DriverManager.getConnection("jdbc:sqlite:" + project.getIndexPath());
@@ -169,5 +171,21 @@ public class IndexService {
         } catch (SQLException e) {
             throw new MigrationException("Failed to close database connection", e);
         }
+    }
+
+    public void setRecordInsertSqlTemplate(String recordInsertSqlTemplate) {
+        this.recordInsertSqlTemplate = recordInsertSqlTemplate;
+    }
+
+    public MigrationProject getProject() {
+        return project;
+    }
+
+    public void setProject(MigrationProject project) {
+        this.project = project;
+    }
+
+    public void setFieldService(CdmFieldService fieldService) {
+        this.fieldService = fieldService;
     }
 }

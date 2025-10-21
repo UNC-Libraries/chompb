@@ -2,6 +2,9 @@ package edu.unc.lib.boxc.migration.cdm.util;
 
 import static edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CDM_ID;
 
+/**
+ * Constants related to the EAD to CDM TSV used for indexing
+ */
 public class EadToCdmHeaderConstants {
     public static final String COLLECTION_NAME = "Collection name";
     public static final String COLLECTION_NUMBER = "Collection Number";
@@ -52,5 +55,8 @@ public class EadToCdmHeaderConstants {
 
     public static String standardizeHeader(String header) {
         return header.replaceAll(" ", "_").replaceAll("\"", "").toLowerCase();
+    }
+
+    private EadToCdmHeaderConstants() {
     }
 }
