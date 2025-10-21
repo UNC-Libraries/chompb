@@ -76,10 +76,16 @@ public class SubmitSipsCommand implements Callable<Integer> {
             throw new IllegalArgumentException("Must provide one or more groups");
         }
         if (StringUtils.isBlank(options.getRedisHost())) {
-            throw new IllegalArgumentException("Must a Redis host URI");
+            throw new IllegalArgumentException("Must provide a Redis host URI");
         }
         if (options.getRedisPort() <= 0) {
             throw new IllegalArgumentException("Must provide a valid Redis port number");
+        }
+        if (StringUtils.isBlank(options.getBrokerUrl())) {
+            throw new IllegalArgumentException("Must provide a broker URL");
+        }
+        if (StringUtils.isBlank(options.getJmsEndpoint())) {
+            throw new IllegalArgumentException("Must provide a JMS endpoint name");
         }
     }
 

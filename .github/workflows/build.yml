@@ -18,6 +18,13 @@ jobs:
         image: redis:6
         ports:
           - 46380:6379
+      activemq:
+        image: apache/activemq-artemis:latest-alpine
+        ports:
+          - 46161:61616
+          - 46888:8161
+        env:
+          ANONYMOUS_LOGIN: true
 
     steps:
     - name: Checkout boxc repository

@@ -57,7 +57,14 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
         initProjectAndHelper();
         System.setProperty("REDIS_HOST", "localhost");
         System.setProperty("REDIS_PORT", Integer.toString(REDIS_PORT));
+        System.setProperty("BROKER_URL", "tcp://localhost:46161");
         sipService = testHelper.createSipsService();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        System.clearProperty("REDIS_HOST");
+        System.clearProperty("REDIS_PORT");
     }
 
     public void initDepositStatusFactory() {
@@ -136,6 +143,48 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
         executeExpectFailure(args);
 
         assertOutputContains("Must a Redis host URI");
+
+        initDepositStatusFactory();
+        assertTrue(depositStatusFactory.get(sip.getDepositId()).isEmpty());
+    }
+
+    @Test
+    public void submitNoBrokerTest() throws Exception {
+        System.setProperty("BROKER_URL", "");
+        testHelper.initializeDefaultProjectState(DEST_UUID);
+        SipGenerationOptions genOptions = new SipGenerationOptions();
+        genOptions.setUsername(USERNAME);
+        List<MigrationSip> sips = sipService.generateSips(genOptions);
+        MigrationSip sip = sips.getFirst();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "submit",
+                "-g", GROUPS};
+        executeExpectFailure(args);
+
+        assertOutputContains("Must provide a broker URL");
+
+        initDepositStatusFactory();
+        assertTrue(depositStatusFactory.get(sip.getDepositId()).isEmpty());
+    }
+
+    @Test
+    public void submitNoJmsEndpointTest() throws Exception {
+        System.setProperty("JMS_ENDPOINT", "");
+        testHelper.initializeDefaultProjectState(DEST_UUID);
+        SipGenerationOptions genOptions = new SipGenerationOptions();
+        genOptions.setUsername(USERNAME);
+        List<MigrationSip> sips = sipService.generateSips(genOptions);
+        MigrationSip sip = sips.getFirst();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "submit",
+                "-g", GROUPS};
+        executeExpectFailure(args);
+
+        assertOutputContains("Must provide a JMS endpoint name");
 
         initDepositStatusFactory();
         assertTrue(depositStatusFactory.get(sip.getDepositId()).isEmpty());
