@@ -65,6 +65,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
     public void tearDown() {
         System.clearProperty("REDIS_HOST");
         System.clearProperty("REDIS_PORT");
+        System.clearProperty("BROKER_URL");
     }
 
     public void initDepositStatusFactory() {
