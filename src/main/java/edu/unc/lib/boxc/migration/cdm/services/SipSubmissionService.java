@@ -6,6 +6,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.util.Set;
 
+import edu.unc.lib.boxc.deposit.impl.jms.DepositOperationMessageService;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.auth.api.models.AgentPrincipals;
@@ -34,6 +35,7 @@ public class SipSubmissionService {
     private static final String EMAIL_SUFFIX = "@ad.unc.edu";
 
     private DepositStatusFactory depositStatusFactory;
+    private DepositOperationMessageService depositOperationMessageService;
     private SipService sipService;
     private MigrationProject project;
 
@@ -81,6 +83,7 @@ public class SipSubmissionService {
 
         PreconstructedDepositHandler depositHandler = new PreconstructedDepositHandler(sip.getDepositPid());
         depositHandler.setDepositStatusFactory(depositStatusFactory);
+        depositHandler.setDepositOperationMessageService(depositOperationMessageService);
         log.debug("Initialized deposit handler for sip {}", sip.getDepositId());
         try {
             depositHandler.doDeposit(sip.getDestinationPid(), depositData);
@@ -92,6 +95,10 @@ public class SipSubmissionService {
 
     public void setDepositStatusFactory(DepositStatusFactory depositStatusFactory) {
         this.depositStatusFactory = depositStatusFactory;
+    }
+
+    public void setDepositOperationMessageService(DepositOperationMessageService depositOperationMessageService) {
+        this.depositOperationMessageService = depositOperationMessageService;
     }
 
     public void setSipService(SipService sipService) {

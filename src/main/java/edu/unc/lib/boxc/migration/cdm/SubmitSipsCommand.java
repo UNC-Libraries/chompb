@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
+import edu.unc.lib.boxc.deposit.impl.jms.DepositOperationMessageService;
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -17,6 +19,7 @@ import edu.unc.lib.boxc.migration.cdm.options.SipSubmissionOptions;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.services.SipSubmissionService;
+import org.springframework.jms.core.JmsTemplate;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParentCommand;
@@ -73,10 +76,16 @@ public class SubmitSipsCommand implements Callable<Integer> {
             throw new IllegalArgumentException("Must provide one or more groups");
         }
         if (StringUtils.isBlank(options.getRedisHost())) {
-            throw new IllegalArgumentException("Must a Redis host URI");
+            throw new IllegalArgumentException("Must provide a Redis host URI");
         }
         if (options.getRedisPort() <= 0) {
             throw new IllegalArgumentException("Must provide a valid Redis port number");
+        }
+        if (StringUtils.isBlank(options.getBrokerUrl())) {
+            throw new IllegalArgumentException("Must provide a broker URL");
+        }
+        if (StringUtils.isBlank(options.getJmsEndpoint())) {
+            throw new IllegalArgumentException("Must provide a JMS endpoint name");
         }
     }
 
@@ -96,9 +105,25 @@ public class SubmitSipsCommand implements Callable<Integer> {
         DepositStatusFactory depositStatusFactory = new DepositStatusFactory();
         depositStatusFactory.setJedisPool(jedisPool);
 
+        DepositOperationMessageService depositOperationMessageService = getDepositOperationMessageService(options);
+
         submissionService = new SipSubmissionService();
         submissionService.setProject(project);
         submissionService.setSipService(sipService);
         submissionService.setDepositStatusFactory(depositStatusFactory);
+        submissionService.setDepositOperationMessageService(depositOperationMessageService);
+    }
+
+    private static DepositOperationMessageService getDepositOperationMessageService(SipSubmissionOptions options) {
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(options.getBrokerUrl());
+        JmsTemplate jmsTemplate = new JmsTemplate();
+        jmsTemplate.setConnectionFactory(connectionFactory);
+        jmsTemplate.setDeliveryPersistent(true);
+        jmsTemplate.setPubSubDomain(false);
+
+        DepositOperationMessageService depositOperationMessageService = new DepositOperationMessageService();
+        depositOperationMessageService.setJmsTemplate(jmsTemplate);
+        depositOperationMessageService.setDestinationName(options.getJmsEndpoint());
+        return depositOperationMessageService;
     }
 }

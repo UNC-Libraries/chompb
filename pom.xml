@@ -199,6 +199,11 @@
             <artifactId>sshd-sftp</artifactId>
             <version>${apache-sshd.version}</version>
         </dependency>
+        <!-- jms -->
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-client</artifactId>
+        </dependency>
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -224,7 +229,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8</artifactId>
+            <artifactId>wiremock-jre8-standalone</artifactId>
             <version>${wiremock.version}</version>
             <scope>test</scope>
         </dependency>
