@@ -143,7 +143,7 @@ public class SubmitSipsCommandIT extends AbstractCommandIT {
                 "-g", GROUPS};
         executeExpectFailure(args);
 
-        assertOutputContains("Must a Redis host URI");
+        assertOutputContains("Must provide a Redis host URI");
 
         initDepositStatusFactory();
         assertTrue(depositStatusFactory.get(sip.getDepositId()).isEmpty());
