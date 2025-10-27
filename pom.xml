@@ -5,7 +5,7 @@
     <parent>
         <groupId>edu.unc.lib.cdr</groupId>
         <artifactId>cdr</artifactId>
-        <version>5.0-SNAPSHOT</version>
+        <version>6.0-SNAPSHOT</version>
     </parent>
     <groupId>edu.unc.lib.boxc</groupId>
     <artifactId>cdm-to-boxc-migration-util</artifactId>
@@ -13,17 +13,20 @@
     <name>CDM to Box-c Migration Utility</name>
     <description>Utilities for migrating content from CDM to Box-c</description>
     <properties>
-        <picocli.version>4.6.1</picocli.version>
-        <wiremock.version>2.32.0</wiremock.version>
-        <sqlite-jdbc.version>3.36.0.1</sqlite-jdbc.version>
-        <poi.version>5.1.0</poi.version>
-        <log4j-to-slf4j.version>2.17.1</log4j-to-slf4j.version>
-        <build-tools.path></build-tools.path>
-        <mysql.version>8.0.28</mysql.version>
-        <csv.version>1.9.0</csv.version>
-        <junit.jupiter.version>5.9.2</junit.jupiter.version>
-        <solr.solrj.version>8.10.1</solr.solrj.version>
-        <embedded-redis.version>0.7.3</embedded-redis.version>
+        <project.java.source>21</project.java.source>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <compiler.plugin.version>3.14.0</compiler.plugin.version>
+        <picocli.version>4.7.7</picocli.version>
+        <wiremock.version>2.35.2</wiremock.version>
+        <sqlite-jdbc.version>3.50.3.0</sqlite-jdbc.version>
+        <poi.version>5.4.1</poi.version>
+        <log4j-to-slf4j.version>2.18.0</log4j-to-slf4j.version>
+        <mysql.version>8.0.33</mysql.version>
+        <csv.version>1.13.0</csv.version>
+        <junit.jupiter.version>5.12.1</junit.jupiter.version>
+        <solr.solrj.version>9.8.0</solr.solrj.version>
+        <apache-sshd.version>2.15.0</apache-sshd.version>
     </properties>
 
     <build>
@@ -66,6 +69,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <configLocation>checkstyle/checkstyle.xml</configLocation>
+                    <suppressionsLocation>checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
+                </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>edu.unc.lib.cdr</groupId>
@@ -77,9 +84,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${compiler.plugin.version}</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <release>${project.java.source}</release>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
         </plugins>
@@ -158,8 +166,8 @@
             <version>${sqlite-jdbc.version}</version>
         </dependency>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <version>${mysql.version}</version>
         </dependency>
         <dependency>
@@ -184,12 +192,17 @@
         <dependency>
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-scp</artifactId>
-            <version>2.15.0</version>
+            <version>${apache-sshd.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-sftp</artifactId>
-            <version>2.15.0</version>
+            <version>${apache-sshd.version}</version>
+        </dependency>
+        <!-- jms -->
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-client</artifactId>
         </dependency>
         <!-- Testing -->
         <dependency>
@@ -216,7 +229,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8</artifactId>
+            <artifactId>wiremock-jre8-standalone</artifactId>
             <version>${wiremock.version}</version>
             <scope>test</scope>
         </dependency>

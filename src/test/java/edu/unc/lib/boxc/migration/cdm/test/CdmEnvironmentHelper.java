@@ -11,7 +11,7 @@ import java.util.Map;
  * @author bbpennel
  */
 public class CdmEnvironmentHelper {
-    public static final int TEST_HTTP_PORT = 46888;
+    public static final int TEST_HTTP_PORT = 46887;
     public static final String TEST_BASE_URL = "http://localhost:" + TEST_HTTP_PORT;
     public static final int TEST_SSH_PORT = 42222;
     public static final String TEST_SSH_HOST = "localhost";

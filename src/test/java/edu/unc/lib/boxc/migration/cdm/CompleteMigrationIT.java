@@ -66,6 +66,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
 
         System.setProperty("REDIS_HOST", "localhost");
         System.setProperty("REDIS_PORT", Integer.toString(REDIS_PORT));
+        System.setProperty("BROKER_URL", "tcp://localhost:46161");
 
         testSshServer = new TestSshServer();
         testSshServer.startServer();
@@ -98,6 +99,7 @@ public class CompleteMigrationIT extends AbstractCommandIT {
     public void after() throws Exception {
         System.clearProperty("REDIS_HOST");
         System.clearProperty("REDIS_PORT");
+        System.clearProperty("BROKER_URL");
         if (jedisPool != null) {
             jedisPool.close();
         }

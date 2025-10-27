@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -142,12 +143,9 @@ public class DescriptionsServiceTest {
                 + "</mods:modsCollection>",
                 StandardCharsets.UTF_8);
 
-        try {
-            service.expandDescriptions();
-            fail();
-        } catch (MigrationException e) {
-            assertTrue(e.getMessage().contains("Unexpected close tag"), "Unexpected message: " + e.getMessage());
-        }
+        var e = assertThrows(MigrationException.class, () -> service.expandDescriptions());
+
+        assertTrue(e.getMessage().contains("end-tag for element"), "Unexpected message: " + e.getMessage());
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
         assertDateNotPresent();
     }
@@ -168,12 +166,9 @@ public class DescriptionsServiceTest {
     public void expandEmptyDocument() throws Exception {
         Files.createFile(project.getDescriptionsPath().resolve("input.xml"));
 
-        try {
-            service.expandDescriptions();
-            fail();
-        } catch (MigrationException e) {
-            assertTrue(e.getMessage().contains("Unexpected EOF"), "Unexpected message: " + e.getMessage());
-        }
+        var e = assertThrows(MigrationException.class, () -> service.expandDescriptions());
+
+        assertTrue(e.getMessage().contains("Premature end of file"), "Unexpected message: " + e.getMessage());
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
         assertDateNotPresent();
     }

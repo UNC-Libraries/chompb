@@ -39,7 +39,7 @@ public class StreamingMetadataServiceTest {
         service = new StreamingMetadataService();
         service.setProject(project);
         service.setFieldService(testHelper.getFieldService());
-        service.setIndexService(testHelper.getIndexService());
+        service.setIndexService(testHelper.getCdmIndexService());
     }
 
     @AfterEach

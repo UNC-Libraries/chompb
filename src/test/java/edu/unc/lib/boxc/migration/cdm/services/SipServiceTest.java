@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.CSV;
 import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_TYPE;
 import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_URL;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
@@ -1670,16 +1671,19 @@ public class SipServiceTest {
     }
 
     public void indexFromCsv(Path csvPath) throws Exception {
-        CdmFieldInfo csvExportFields = testHelper.getFieldService().retrieveFieldsFromCsv(csvPath);
-        testHelper.getFieldService().persistFieldsToProject(project, csvExportFields);
+        var fieldService = testHelper.getFieldService();
+        CdmFieldInfo csvExportFields = fieldService.retrieveFields(csvPath, CSV);
+        fieldService.persistFieldsToProject(project, csvExportFields);
         project.getProjectProperties().setExportedDate(Instant.now());
 
         CdmIndexOptions options = new CdmIndexOptions();
         options.setCsvFile(csvPath);
         options.setForce(false);
 
-        testHelper.getIndexService().createDatabase(options);
-        testHelper.getIndexService().indexAllFromCsv(options);
+        var service = testHelper.getFileIndexService();
+        service.createDatabase(options);
+        service.setSource(CSV);
+        service.indexAllFromFile(options);
         ProjectPropertiesSerialization.write(project);
     }
 

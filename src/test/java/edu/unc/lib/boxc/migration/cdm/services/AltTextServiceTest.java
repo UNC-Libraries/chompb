@@ -55,7 +55,7 @@ public class AltTextServiceTest {
         testHelper = new SipServiceHelper(project, basePath);
         service = testHelper.getAltTextService();
         service.setProject(project);
-        service.setIndexService(testHelper.getIndexService());
+        service.setIndexService(testHelper.getCdmIndexService());
     }
 
     @AfterEach

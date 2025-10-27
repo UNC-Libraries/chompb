@@ -33,10 +33,12 @@ import edu.unc.lib.boxc.migration.cdm.services.BoxctronFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService;
 import edu.unc.lib.boxc.migration.cdm.services.ExportObjectsService;
+import edu.unc.lib.boxc.migration.cdm.services.FileIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.FindingAidReportService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
+import jakarta.ws.rs.HEAD;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -99,7 +101,8 @@ public class SipServiceHelper {
     private DescriptionsService descriptionsService;
     private DestinationsService destinationsService;
     private ArchivalDestinationsService archivalDestinationsService;
-    private CdmIndexService indexService;
+    private CdmIndexService cdmIndexService;
+    private FileIndexService fileIndexService;
     private FindingAidReportService findingAidReportService;
     private GroupMappingService groupMappingService;
     private PermissionsService permissionsService;
@@ -122,26 +125,29 @@ public class SipServiceHelper {
         fieldService = new CdmFieldService();
         exportObjectsService = new ExportObjectsService();
         exportObjectsService.setProject(project);
-        indexService = new CdmIndexService();
-        indexService.setProject(project);
-        indexService.setFieldService(fieldService);
+        cdmIndexService = new CdmIndexService();
+        cdmIndexService.setProject(project);
+        cdmIndexService.setFieldService(fieldService);
+        fileIndexService = new FileIndexService();
+        fileIndexService.setProject(project);
+        fileIndexService.setFieldService(fieldService);
         streamingMetadataService = new StreamingMetadataService();
         streamingMetadataService.setProject(project);
         streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(indexService);
+        streamingMetadataService.setIndexService(cdmIndexService);
         sourceFileService = new SourceFileService();
-        sourceFileService.setIndexService(indexService);
+        sourceFileService.setIndexService(cdmIndexService);
         sourceFileService.setStreamingMetadataService(streamingMetadataService);
         sourceFileService.setProject(project);
         accessFileService = new AccessFileService();
-        accessFileService.setIndexService(indexService);
+        accessFileService.setIndexService(cdmIndexService);
         accessFileService.setProject(project);
         accessFileService.setStreamingMetadataService(streamingMetadataService);
         altTextService = new AltTextService();
-        altTextService.setIndexService(indexService);
+        altTextService.setIndexService(cdmIndexService);
         altTextService.setProject(project);
         aspaceRefIdService = new AspaceRefIdService();
-        aspaceRefIdService.setIndexService(indexService);
+        aspaceRefIdService.setIndexService(cdmIndexService);
         aspaceRefIdService.setProject(project);
         descriptionsService = new DescriptionsService();
         descriptionsService.setProject(project);
@@ -149,15 +155,15 @@ public class SipServiceHelper {
         destinationsService.setProject(project);
         archivalDestinationsService = new ArchivalDestinationsService();
         archivalDestinationsService.setProject(project);
-        archivalDestinationsService.setIndexService(indexService);
+        archivalDestinationsService.setIndexService(cdmIndexService);
         archivalDestinationsService.setDestinationsService(destinationsService);
         boxctronFileService = new BoxctronFileService();
         boxctronFileService.setProject(project);
-        boxctronFileService.setIndexService(indexService);
+        boxctronFileService.setIndexService(cdmIndexService);
         boxctronFileService.setStreamingMetadataService(streamingMetadataService);
         findingAidReportService = new FindingAidReportService();
         findingAidReportService.setProject(project);
-        findingAidReportService.setIndexService(indexService);
+        findingAidReportService.setIndexService(cdmIndexService);
         permissionsService = new PermissionsService();
         permissionsService.setProject(project);
 
@@ -166,7 +172,7 @@ public class SipServiceHelper {
 
     public SipService createSipsService() {
         SipService service = new SipService();
-        service.setIndexService(indexService);
+        service.setIndexService(cdmIndexService);
         service.setAccessFileService(accessFileService);
         service.setAltTextService(altTextService);
         service.setAspaceRefIdService(aspaceRefIdService);
@@ -343,8 +349,8 @@ public class SipServiceHelper {
             });
         }
         project.getProjectProperties().setExportedDate(Instant.now());
-        indexService.createDatabase(options);
-        indexService.indexAll();
+        cdmIndexService.createDatabase(options);
+        cdmIndexService.indexAll();
         ProjectPropertiesSerialization.write(project);
     }
 
@@ -573,7 +579,7 @@ public class SipServiceHelper {
         if (this.altTextService == null) {
             this.altTextService = new AltTextService();
             this.altTextService.setProject(project);
-            this.altTextService.setIndexService(indexService);
+            this.altTextService.setIndexService(cdmIndexService);
         }
         return this.altTextService;
     }
@@ -582,7 +588,7 @@ public class SipServiceHelper {
         if (this.aspaceRefIdService == null) {
             this. aspaceRefIdService = new AspaceRefIdService();
             this.aspaceRefIdService.setProject(project);
-            this.aspaceRefIdService.setIndexService(indexService);
+            this.aspaceRefIdService.setIndexService(cdmIndexService);
         }
         return this.aspaceRefIdService;
     }
@@ -591,7 +597,7 @@ public class SipServiceHelper {
         if (this.aggregateFileMappingService == null) {
             this.aggregateFileMappingService = new AggregateFileMappingService(false);
             this.aggregateFileMappingService.setProject(project);
-            this.aggregateFileMappingService.setIndexService(indexService);
+            this.aggregateFileMappingService.setIndexService(cdmIndexService);
             this.aggregateFileMappingService.setStreamingMetadataService(streamingMetadataService);
         }
         return this.aggregateFileMappingService;
@@ -601,7 +607,7 @@ public class SipServiceHelper {
         if (this.aggregateBottomMappingService == null) {
             this.aggregateBottomMappingService = new AggregateFileMappingService(true);
             this.aggregateBottomMappingService.setProject(project);
-            this.aggregateBottomMappingService.setIndexService(indexService);
+            this.aggregateBottomMappingService.setIndexService(cdmIndexService);
             this.aggregateBottomMappingService.setStreamingMetadataService(streamingMetadataService);
         }
         return this.aggregateBottomMappingService;
@@ -611,7 +617,7 @@ public class SipServiceHelper {
         if (this.boxctronFileService == null) {
             this.boxctronFileService = new BoxctronFileService();
             this.boxctronFileService.setProject(project);
-            this.boxctronFileService.setIndexService(indexService);
+            this.boxctronFileService.setIndexService(cdmIndexService);
         }
         return this.boxctronFileService;
     }
@@ -620,7 +626,7 @@ public class SipServiceHelper {
         if (this.groupMappingService == null) {
             this.groupMappingService = new GroupMappingService();
             this.groupMappingService.setFieldService(fieldService);
-            this.groupMappingService.setIndexService(indexService);
+            this.groupMappingService.setIndexService(cdmIndexService);
             this.groupMappingService.setProject(project);
         }
         return this.groupMappingService;
@@ -642,8 +648,12 @@ public class SipServiceHelper {
         return findingAidReportService;
     }
 
-    public CdmIndexService getIndexService() {
-        return indexService;
+    public CdmIndexService getCdmIndexService() {
+        return cdmIndexService;
+    }
+
+    public FileIndexService getFileIndexService() {
+        return fileIndexService;
     }
 
     public StreamingMetadataService getStreamingMetadataService() {

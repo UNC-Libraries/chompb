@@ -53,7 +53,7 @@ public class FindingAidReportServiceTest extends AbstractOutputTest {
 
         service = new FindingAidReportService();
         service.setProject(project);
-        service.setIndexService(testHelper.getIndexService());
+        service.setIndexService(testHelper.getCdmIndexService());
         service.setFieldService(testHelper.getFieldService());
     }
 

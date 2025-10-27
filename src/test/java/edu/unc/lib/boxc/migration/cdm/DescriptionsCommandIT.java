@@ -76,7 +76,7 @@ public class DescriptionsCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "descriptions", "expand" };
         executeExpectFailure(args);
-        assertOutputContains("Unexpected EOF");
+        assertOutputContains("Premature end of file");
 
         assertFalse(Files.exists(project.getExpandedDescriptionsPath()));
     }

@@ -1,5 +1,7 @@
 package edu.unc.lib.boxc.migration.cdm;
 
+import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.CSV;
+import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.EAD_TO_CDM;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -11,6 +13,8 @@ import java.util.concurrent.Callable;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
+import edu.unc.lib.boxc.migration.cdm.services.FileIndexService;
+import edu.unc.lib.boxc.migration.cdm.services.IndexService;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
@@ -34,7 +38,9 @@ public class CdmIndexCommand implements Callable<Integer> {
     private CLIMain parentCommand;
 
     private CdmFieldService fieldService;
-    private CdmIndexService indexService;
+    private CdmIndexService cdmIndexService;
+    private FileIndexService fileIndexService;
+    private IndexService indexService;
     private MigrationProject project;
 
     @Mixin
@@ -47,27 +53,49 @@ public class CdmIndexCommand implements Callable<Integer> {
         try {
             initialize();
 
-            // if user provides csv, check that it exists
+            if (options.getCsvFile() != null && options.getEadTsvFile() != null) {
+                throw new IllegalArgumentException("CSVs and EAD to CDM TSVs may not be used in the same indexing command");
+            }
+
+            // if user provides a file, check that it exists
             if (options.getCsvFile() != null) {
                 if (Files.exists(options.getCsvFile())) {
-                    CdmFieldInfo csvExportFields = fieldService.retrieveFieldsFromCsv(options.getCsvFile());
+                    CdmFieldInfo csvExportFields = fieldService.retrieveFields(options.getCsvFile(), CSV);
                     fieldService.persistFieldsToProject(project, csvExportFields);
+                    indexService.createDatabase(options);
+                    fileIndexService.setSource(CSV);
+                    fileIndexService.indexAllFromFile(options);
                 } else {
                     throw new MigrationException("No csv file exists in " + options.getCsvFile());
                 }
-            }
-
-            indexService.createDatabase(options);
-            indexService.index(options);
-            // Display any warning messages to user
-            if (!indexService.getIndexingWarnings().isEmpty()) {
-                indexService.getIndexingWarnings().forEach(msg -> outputLogger.info(msg));
+            } else if (options.getEadTsvFile() != null) { // if user provides EAD to CDM tsv, check that it exists
+                if (Files.exists(options.getEadTsvFile())) {
+                    // standardize headers and add CDM ID column
+                    var formattedEadToCdmTsvPath = fileIndexService.addIdsToEadToCdmTsv(options.getEadTsvFile());
+                    CdmFieldInfo csvExportFields = fieldService.retrieveFields(formattedEadToCdmTsvPath, EAD_TO_CDM);
+                    fieldService.persistFieldsToProject(project, csvExportFields);
+                    indexService.createDatabase( options);
+                    fileIndexService.setSource(EAD_TO_CDM);
+                    fileIndexService.indexAllFromFile(options);
+                } else {
+                    throw new MigrationException("No EAD to CDM tsv file exists in " + options.getEadTsvFile());
+                }
+            } else {
+                indexService.createDatabase(options);
+                cdmIndexService.index(options);
+                // Display any warning messages to user
+                if (!cdmIndexService.getIndexingWarnings().isEmpty()) {
+                    cdmIndexService.getIndexingWarnings().forEach(outputLogger::info);
+                }
             }
             outputLogger.info("Indexed project {} in {}s", project.getProjectName(),
                     (System.nanoTime() - start) / 1e9);
             return 0;
         } catch (StateAlreadyExistsException e) {
             outputLogger.info("Cannot index project: {}", e.getMessage());
+            return 1;
+        } catch (IllegalArgumentException e) {
+            outputLogger.info("Command arguments are invalid: {}", e.getMessage());
             return 1;
         } catch (Exception e) {
             log.error("Failed to export project", e);
@@ -81,8 +109,14 @@ public class CdmIndexCommand implements Callable<Integer> {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
         fieldService = new CdmFieldService();
-        indexService = new CdmIndexService();
-        indexService.setFieldService(fieldService);
+        cdmIndexService = new CdmIndexService();
+        cdmIndexService.setFieldService(fieldService);
+        cdmIndexService.setProject(project);
+        fileIndexService = new FileIndexService();
+        fileIndexService.setFieldService(fieldService);
+        fileIndexService.setProject(project);
+        indexService = new IndexService();
         indexService.setProject(project);
+        indexService.setFieldService(fieldService);
     }
 }
