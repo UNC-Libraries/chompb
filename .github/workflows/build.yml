@@ -32,7 +32,7 @@ jobs:
       with:
         repository: UNC-Libraries/Carolina-Digital-Repository.git
         path: boxc
-        ref: java-21-development
+        ref: main
     - name: Checkout submodules
       run: git submodule update --init --recursive
       working-directory: boxc
