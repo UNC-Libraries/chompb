@@ -46,8 +46,6 @@ public class SourceFileServiceTest {
     public Path tmpFolder;
 
     private MigrationProject project;
-    private CdmIndexService indexService;
-    private CdmFieldService fieldService;
     private SourceFileService service;
     private SipServiceHelper testHelper;
 
@@ -558,6 +556,22 @@ public class SourceFileServiceTest {
     }
 
     @Test
+    public void generateBlankStreamingMetadataTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer_duracloud");
+        GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
+        options.setPopulateBlank(true);
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "", null);
+        // 26 and 27 contain duracloud content and are excluded when generating blank source files
+        assertEquals(1, info.getMappings().size());
+
+        assertMappedDatePresent();
+    }
+
+    @Test
     public void generateRespectsForceFlagTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         GenerateSourceFileMappingOptions options = new GenerateSourceFileMappingOptions();
@@ -583,8 +597,7 @@ public class SourceFileServiceTest {
 
         SourceFilesInfo info2 = service.loadMappings();
         assertMappingPresent(info2, "25", "", null);
-        assertMappingPresent(info2, "26", "", null);
-        assertMappingPresent(info2, "27", "", null);
+        // 26 and 27 contain duracloud content and are excluded when generating blank source files
         assertEquals(3, info2.getMappings().size());
     }
 

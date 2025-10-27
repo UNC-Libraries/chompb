@@ -38,6 +38,7 @@ import edu.unc.lib.boxc.migration.cdm.services.FindingAidReportService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
+import jakarta.ws.rs.HEAD;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -130,12 +131,18 @@ public class SipServiceHelper {
         fileIndexService = new FileIndexService();
         fileIndexService.setProject(project);
         fileIndexService.setFieldService(fieldService);
+        streamingMetadataService = new StreamingMetadataService();
+        streamingMetadataService.setProject(project);
+        streamingMetadataService.setFieldService(fieldService);
+        streamingMetadataService.setIndexService(cdmIndexService);
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(cdmIndexService);
+        sourceFileService.setStreamingMetadataService(streamingMetadataService);
         sourceFileService.setProject(project);
         accessFileService = new AccessFileService();
         accessFileService.setIndexService(cdmIndexService);
         accessFileService.setProject(project);
+        accessFileService.setStreamingMetadataService(streamingMetadataService);
         altTextService = new AltTextService();
         altTextService.setIndexService(cdmIndexService);
         altTextService.setProject(project);
@@ -153,15 +160,12 @@ public class SipServiceHelper {
         boxctronFileService = new BoxctronFileService();
         boxctronFileService.setProject(project);
         boxctronFileService.setIndexService(cdmIndexService);
+        boxctronFileService.setStreamingMetadataService(streamingMetadataService);
         findingAidReportService = new FindingAidReportService();
         findingAidReportService.setProject(project);
         findingAidReportService.setIndexService(cdmIndexService);
         permissionsService = new PermissionsService();
         permissionsService.setProject(project);
-        streamingMetadataService = new StreamingMetadataService();
-        streamingMetadataService.setProject(project);
-        streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(cdmIndexService);
 
         Files.createDirectories(project.getExportPath());
     }
@@ -497,7 +501,7 @@ public class SipServiceHelper {
         List<Element> children = doc.getRootElement().getChildren("identifier", JDOMNamespaceUtil.MODS_V3_NS);
         Element cdmIdEl = children.stream()
             .filter(e -> "local".equals(e.getAttributeValue("type"))
-                    && DescriptionsService.CDM_NUMBER_LABEL.equals(e.getAttributeValue("displayLabel")))
+                    && DescriptionsService.CDM_ID_LABEL.equals(e.getAttributeValue("displayLabel")))
             .findFirst().orElseGet(null);
         assertNotNull(cdmIdEl, "Did not find a CDM identifier field");
         assertEquals(cdmId, cdmIdEl.getText());
@@ -594,6 +598,7 @@ public class SipServiceHelper {
             this.aggregateFileMappingService = new AggregateFileMappingService(false);
             this.aggregateFileMappingService.setProject(project);
             this.aggregateFileMappingService.setIndexService(cdmIndexService);
+            this.aggregateFileMappingService.setStreamingMetadataService(streamingMetadataService);
         }
         return this.aggregateFileMappingService;
     }
@@ -603,6 +608,7 @@ public class SipServiceHelper {
             this.aggregateBottomMappingService = new AggregateFileMappingService(true);
             this.aggregateBottomMappingService.setProject(project);
             this.aggregateBottomMappingService.setIndexService(cdmIndexService);
+            this.aggregateBottomMappingService.setStreamingMetadataService(streamingMetadataService);
         }
         return this.aggregateBottomMappingService;
     }

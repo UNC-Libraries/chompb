@@ -8,13 +8,14 @@ import java.nio.file.Path;
 import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
+import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
+import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
@@ -38,6 +39,7 @@ public class AccessFilesCommand {
     private CLIMain parentCommand;
 
     private MigrationProject project;
+    private StreamingMetadataService streamingMetadataService;
     private SourceFilesSummaryService summaryService;
     private AccessFileService accessService;
 
@@ -132,10 +134,16 @@ public class AccessFilesCommand {
     private void initialize(boolean dryRun) throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
+        CdmFieldService fieldService = new CdmFieldService();
         CdmIndexService indexService = new CdmIndexService();
         indexService.setProject(project);
+        streamingMetadataService = new StreamingMetadataService();
+        streamingMetadataService.setProject(project);
+        streamingMetadataService.setFieldService(fieldService);
+        streamingMetadataService.setIndexService(indexService);
         accessService = new AccessFileService();
         accessService.setIndexService(indexService);
+        accessService.setStreamingMetadataService(streamingMetadataService);
         accessService.setProject(project);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
