@@ -53,11 +53,11 @@ public class AspaceRefIdServiceTest {
         basePath = tmpFolder.resolve("testFolder");
         Files.createDirectory(basePath);
         testHelper = new SipServiceHelper(project, basePath);
-        indexService = testHelper.getIndexService();
+        indexService = testHelper.getCdmIndexService();
         service = testHelper.getAspaceRefIdService();
         service.setProject(project);
         service.setFieldService(testHelper.getFieldService());
-        service.setIndexService(testHelper.getIndexService());
+        service.setIndexService(testHelper.getCdmIndexService());
     }
 
     @AfterEach

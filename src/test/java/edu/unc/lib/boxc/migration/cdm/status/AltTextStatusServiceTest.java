@@ -39,7 +39,7 @@ public class AltTextStatusServiceTest extends AbstractOutputTest {
         testHelper = new SipServiceHelper(project, tmpFolder);
         statusService = new AltTextStatusService();
         statusService.setProject(project);
-        statusService.setIndexService(testHelper.getIndexService());
+        statusService.setIndexService(testHelper.getCdmIndexService());
     }
 
     @Test

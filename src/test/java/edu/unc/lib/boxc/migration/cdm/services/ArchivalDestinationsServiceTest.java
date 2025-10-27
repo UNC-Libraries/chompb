@@ -75,7 +75,7 @@ public class ArchivalDestinationsServiceTest {
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = new ArchivalDestinationsService();
         service.setProject(project);
-        service.setIndexService(testHelper.getIndexService());
+        service.setIndexService(testHelper.getCdmIndexService());
         service.setDestinationsService(testHelper.getDestinationsService());
         service.setSolrServerUrl(SOLR_URL);
         service.setSolr(solrClient);

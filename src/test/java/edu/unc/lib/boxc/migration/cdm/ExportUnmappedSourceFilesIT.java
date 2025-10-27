@@ -142,7 +142,7 @@ public class ExportUnmappedSourceFilesIT extends AbstractCommandIT {
         var originalContents = FileUtils.readFileToString(sourceMappingPath.toFile(), StandardCharsets.UTF_8);
 
         // Change the filename of one of the records so it doesn't match any existing files
-        try (var conn = testHelper.getIndexService().openDbConnection()) {
+        try (var conn = testHelper.getCdmIndexService().openDbConnection()) {
             var stmt = conn.createStatement();
             stmt.executeUpdate("UPDATE " + CdmIndexService.TB_NAME + " SET find = '25.JP2' WHERE "
                     + CdmFieldInfo.CDM_ID + " = 25");

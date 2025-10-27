@@ -42,7 +42,7 @@ public class IndexFilteringServiceTest {
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = new IndexFilteringService();
         service.setProject(project);
-        service.setIndexService(testHelper.getIndexService());
+        service.setIndexService(testHelper.getCdmIndexService());
     }
 
     @Test
@@ -251,7 +251,7 @@ public class IndexFilteringServiceTest {
     }
 
     private List<String> getRemainingIds() throws Exception {
-        Connection conn = testHelper.getIndexService().openDbConnection();
+        Connection conn = testHelper.getCdmIndexService().openDbConnection();
         var result = new ArrayList<String>();
         try {
             Statement stmt = conn.createStatement();
