@@ -220,8 +220,11 @@ public class DescriptionsService {
             return false;
         }
         Attribute labelAttr = element.getAttributeByName(DISPLAY_LABEL_NAME);
-        return labelAttr != null && (CDM_ID_LABEL.equals(labelAttr.getValue()) ||
-                CHOMPB_ID_LABEL.equals((labelAttr.getValue())));
+        if (labelAttr != null && (CDM_ID_LABEL.equals(labelAttr.getValue()) ||
+                CHOMPB_ID_LABEL.equals(labelAttr.getValue()))) {
+            return true;
+        }
+        return false;
     }
 
     /**
