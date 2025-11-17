@@ -23,6 +23,10 @@ public class CdmExportOptions {
                     + "or completed, but you would like to begin the export again.")
     private boolean force;
 
+    @CommandLine.Option(names = {"-ead", "--from-ead-to-cdm"},
+            description = "Export objects using the EAD to CDM API, generating a TSV file.")
+    private boolean isEadToCdm;
+
     public String getCdmUsername() {
         return cdmUsername;
     }
@@ -45,5 +49,13 @@ public class CdmExportOptions {
 
     public void setForce(boolean force) {
         this.force = force;
+    }
+
+    public boolean isEadToCdm() {
+        return isEadToCdm;
+    }
+
+    public void setEadToCdm(boolean eadToCdm) {
+        isEadToCdm = eadToCdm;
     }
 }
