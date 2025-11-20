@@ -31,6 +31,7 @@ public class MigrationProject {
     public static final String ALT_TEXT_FILENAME = "alt_text.csv";
     public static final String ALT_TEXT_DIRNAME = "alt_text";
     public static final String ASPACE_REF_ID_MAPPING_FILENAME = "ref_id_mapping.csv";
+    public static final String EAD_TO_CDM_EXPORT_FILENAME = "ead_to_cdm.tsv";
 
     private Path projectPath;
     private MigrationProjectProperties properties;
@@ -203,5 +204,12 @@ public class MigrationProject {
      */
     public Path getAspaceRefIdMappingPath() {
         return projectPath.resolve(ASPACE_REF_ID_MAPPING_FILENAME);
+    }
+
+    /**
+     * @return Path of the ead to cdm export tsv file
+     */
+    public Path getEadToCdmExportPath() {
+        return projectPath.resolve(EAD_TO_CDM_EXPORT_FILENAME);
     }
 }

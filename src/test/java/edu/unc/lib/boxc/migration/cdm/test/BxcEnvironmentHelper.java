@@ -15,6 +15,7 @@ public class BxcEnvironmentHelper {
     public static final String TEST_BASE_URL = "http://localhost:" + TEST_HTTP_PORT + "/bxc/";
     public static final int TEST_SOLR_PORT = 46887;
     public static final String TEST_SOLR_URL = "http://localhost:" + TEST_SOLR_PORT + "/solr";
+    public static final String EAD_TO_CDM_BASE_URL = "http://localhost:" + TEST_HTTP_PORT + "/ead/";
 
     /**
      * @return environment mapping containing test environment
@@ -30,6 +31,7 @@ public class BxcEnvironmentHelper {
         var testEnv = new BxcEnvironment();
         testEnv.setHttpBaseUrl(TEST_BASE_URL);
         testEnv.setSolrServerUrl(TEST_SOLR_URL);
+        testEnv.setEadToCdmUrl(EAD_TO_CDM_BASE_URL);
         return testEnv;
     }
 }

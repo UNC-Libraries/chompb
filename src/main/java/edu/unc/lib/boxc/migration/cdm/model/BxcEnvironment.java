@@ -19,8 +19,8 @@ public class BxcEnvironment {
     private String boxctronOutputServer;
     private Path boxctronOutputBasePath;
     private Path boxctronRemoteJobScriptsPath;
-
     private Path hookIdRefIdMapPath;
+    private String eadToCdmUrl;
 
     public String getHttpBaseUrl() {
         return httpBaseUrl;
@@ -108,5 +108,13 @@ public class BxcEnvironment {
 
     public void setHookIdRefIdMapPath(Path hookIdRefIdMapPath) {
         this.hookIdRefIdMapPath = hookIdRefIdMapPath;
+    }
+
+    public String getEadToCdmUrl() {
+        return eadToCdmUrl;
+    }
+
+    public void setEadToCdmUrl(String eadToCdmUrl) {
+        this.eadToCdmUrl = eadToCdmUrl;
     }
 }

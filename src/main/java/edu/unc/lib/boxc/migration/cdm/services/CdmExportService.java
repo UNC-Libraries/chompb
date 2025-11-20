@@ -2,7 +2,9 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
@@ -10,10 +12,10 @@ import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
 import edu.unc.lib.boxc.migration.cdm.services.ChompbConfigService.ChompbConfig;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 
@@ -23,6 +25,25 @@ import java.nio.file.Files;
 import java.time.Instant;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_CITATION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_COLLECTION_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_COLLECTION_NUMBER;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_COLLECTION_URL;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_CONTAINER;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_CONTAINER_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_EXTENT;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_GENRE_FORM;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_GEOGRAPHIC_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_HOOK_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_LOC_IN_COLLECTION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_OBJECT;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_OBJ_FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_PROCESS_INFO;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_REF_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_SCOPE_CONTENT;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_UNIT_DATE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_UNIT_TITLE;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.TSV_STANDARDIZED_HEADERS;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -38,7 +59,6 @@ public class CdmExportService {
     private CdmFileRetrievalService fileRetrievalService;
     private MigrationProject project;
     private ChompbConfig chompbConfig;
-    private CloseableHttpClient httpClient;
 
     public CdmExportService() {
     }
@@ -51,11 +71,11 @@ public class CdmExportService {
     public void exportAll(CdmExportOptions options) throws IOException {
         initializeExportDir(project);
         if (options.isEadToCdm()) {
-            exportFromEadToCdm(options);
+            exportFromEadToCdm();
         } else {
            exportFromCdm(options);
+           exportStateService.exportingCompleted();
         }
-        exportStateService.exportingCompleted();
     }
 
     private void exportFromCdm(CdmExportOptions options) throws IOException {
@@ -84,36 +104,60 @@ public class CdmExportService {
         }
     }
 
-    private void exportFromEadToCdm(CdmExportOptions options) {
+    private void exportFromEadToCdm() {
         var projectName = project.getProjectName();
         var eadId = projectName.split("_")[0];
-        var url = "https://atka.lib.unc.edu/ead-to-cdm/api/" + eadId;
+        var url = chompbConfig.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId()).getEadToCdmUrl() + eadId;
         var getMethod = new HttpGet(url);
         ObjectMapper mapper = new ObjectMapper();
+        var csvPrinterFormat = CSVFormat.TDF.builder()
+                .setTrim(true)
+                .setHeader(TSV_STANDARDIZED_HEADERS)
+                .get();
+        var eadToCdmTsvPath = project.getEadToCdmExportPath();
 
         try (
-            CloseableHttpResponse resp = httpClient.execute(getMethod)
+            var httpClient = HttpClientBuilder.create().disableRedirectHandling().build();
+            CloseableHttpResponse resp = httpClient.execute(getMethod);
+            var writer = Files.newBufferedWriter(eadToCdmTsvPath);
+            CSVPrinter tsvPrinter = new CSVPrinter(writer, csvPrinterFormat);
         ) {
             var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.ISO_8859_1);
-            var csvFormat = CSVFormat.TDF.builder()
-                    .setTrim(true)
-                    .setSkipHeaderRecord(true)
-                    .setHeader(TSV_STANDARDIZED_HEADERS)
-                    .get();
             JsonParser parser = mapper.getFactory().createParser(body);
-            if (parser.nextToken() != JsonToken.START_ARRAY) {
+            if (parser.nextToken() != JsonToken.START_OBJECT) {
                 throw new MigrationException("Unexpected response from URL " + url
-                        + "\nIt must be a JSON array, please check the response.");
+                        + "\nIt must be a JSON object, please check the response.");
             }
-            while (parser.nextToken() == JsonToken.START_OBJECT) {
-
+            ObjectNode rootNode = mapper.readTree(parser);
+            var jsonArray = rootNode.get(eadId);
+            if (!jsonArray.isArray()) {
+                throw new MigrationException("Unexpected response from URL " + url
+                        + "\nJSON value must be a JSON array, please check the response.");
+            }
+            for (JsonNode jsonNode : jsonArray) {
+                ObjectNode entryNode = (ObjectNode) jsonNode;
+                tsvPrinter.printRecord(getValue(STANDARDIZED_COLLECTION_NAME, entryNode), getValue(STANDARDIZED_COLLECTION_NUMBER, entryNode),
+                    getValue(STANDARDIZED_LOC_IN_COLLECTION, entryNode), getValue(STANDARDIZED_CITATION, entryNode),
+                    getValue(STANDARDIZED_FILENAME, entryNode), getValue(STANDARDIZED_OBJ_FILENAME, entryNode), getValue(STANDARDIZED_CONTAINER_TYPE, entryNode),
+                    getValue(STANDARDIZED_HOOK_ID, entryNode), getValue(STANDARDIZED_OBJECT, entryNode), getValue(STANDARDIZED_COLLECTION_URL, entryNode),
+                    getValue(STANDARDIZED_GENRE_FORM, entryNode), getValue(STANDARDIZED_EXTENT, entryNode), getValue(STANDARDIZED_UNIT_DATE, entryNode),
+                    getValue(STANDARDIZED_GEOGRAPHIC_NAME, entryNode), getValue(STANDARDIZED_REF_ID, entryNode), getValue(STANDARDIZED_PROCESS_INFO, entryNode),
+                    getValue(STANDARDIZED_SCOPE_CONTENT, entryNode), getValue(STANDARDIZED_UNIT_TITLE, entryNode), getValue(STANDARDIZED_CONTAINER, entryNode));
             }
         } catch (IOException e) {
             log.warn("Failed to retrieve response from EAD to CDM API {}: {}", url, e.getMessage());
             log.debug("Full error", e);
-
+            throw new MigrationException("Unable to export from EAD to CDM", e);
         }
 
+    }
+
+    private String getValue(String key, JsonNode jsonNode) {
+        var value = jsonNode.get(key);
+        if (value == null) {
+            return "";
+        }
+        return value.asText();
     }
 
     private void initializeFileRetrievalService(CdmExportOptions options) {
@@ -148,9 +192,5 @@ public class CdmExportService {
 
     public void setChompbConfig(ChompbConfig chompbConfig) {
         this.chompbConfig = chompbConfig;
-    }
-
-    public void setHttpClient(CloseableHttpClient httpClient) {
-        this.httpClient = httpClient;
     }
 }

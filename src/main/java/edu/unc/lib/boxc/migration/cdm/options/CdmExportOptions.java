@@ -55,7 +55,7 @@ public class CdmExportOptions {
         return isEadToCdm;
     }
 
-    public void setEadToCdm(boolean eadToCdm) {
-        isEadToCdm = eadToCdm;
+    public void setEadToCdm(boolean isEadToCdm) {
+        this.isEadToCdm = isEadToCdm;
     }
 }

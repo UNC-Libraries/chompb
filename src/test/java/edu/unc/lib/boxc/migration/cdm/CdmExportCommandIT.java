@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CdmFieldEntry;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
@@ -9,6 +10,8 @@ import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -16,10 +19,19 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_COLLECTION_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_CONTAINER_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_GEOGRAPHIC_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.TSV_STANDARDIZED_HEADERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author bbpennel
  */
+@WireMockTest(httpPort = BxcEnvironmentHelper.TEST_HTTP_PORT)
 public class CdmExportCommandIT extends AbstractCommandIT {
 
     private final static String COLLECTION_ID = "gilmer";
@@ -183,6 +196,46 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         assertCpdFilePresent(project, "17941.cpd", "/descriptions/pdf/image/17941.cpd");
     }
 
+    @Test
+    public void exportEadToCdmTest() throws Exception {
+        eadToCdmApiResponse("04428", "{\"04428\":[{\"collection_name\":\"Joyner Family Papers, ; 4428\",\"collection_number\":\"04428\"," +
+                "\"location_in_collection\":\"Series 1. Correspondence, 1836-1881.\",\"citation\":\"[Identification of item], " +
+                "in the Joyner Family Papers #4428, Southern Historical Collection, Wilson Special Collections Library, University " +
+                "of North Carolina at Chapel Hill.\",\"container_type\":\"Folder\",\"hook_id\":\"folder_1\",\"object\":\"Folder 1: " +
+                "April 1836-15 October 1858, (17 items): Scan 1\",\"collection_url\":\"https:\\/\\/finding-aids.lib.unc.edu\\/catalog\\/04428\"," +
+                "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"processinfo\":\"\",\"scopecontent\":\"\"," +
+                "\"unit_title\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
+        Path projPath = createProject("04428_ead");
+        String[] args = exportArgs(projPath, "-ead");
+        executeExpectSuccess(args);
+
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
+        assertTrue(Files.exists(project.getEadToCdmExportPath()), "EAD to CDM export file not created");
+        var format = CSVFormat.TDF.builder()
+                .setTrim(true)
+                .setSkipHeaderRecord(true)
+                .setHeader(TSV_STANDARDIZED_HEADERS)
+                .get();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getEadToCdmExportPath());
+                var tsvParser = CSVParser.parse(reader, format);
+        ) {
+            var tsvRecord = tsvParser.getRecords().getFirst();
+            assertEquals("Joyner Family Papers, ; 4428", tsvRecord.get(STANDARDIZED_COLLECTION_NAME));
+            assertEquals("Folder", tsvRecord.get(STANDARDIZED_CONTAINER_TYPE));
+            assertEquals("", tsvRecord.get(STANDARDIZED_GEOGRAPHIC_NAME));
+        }
+    }
+
+    @Test
+    public void exportEadToCdmApiCollectionNotFoundTest() throws Exception {
+        eadToCdmApiResponse("nope", "[\"nope was not found\"]");
+        Path projPath = createProject("nope_ead");
+        String[] args = exportArgs(projPath, "-ead");
+        executeExpectFailure(args);
+    }
+
     private void assertDescAllFilePresent(MigrationProject project, String expectedContentPath) throws Exception {
         assertEquals(IOUtils.toString(getClass().getResourceAsStream(expectedContentPath), StandardCharsets.UTF_8),
                 FileUtils.readFileToString(CdmFileRetrievalService.getDescAllPath(project).toFile(), StandardCharsets.UTF_8));
@@ -216,4 +269,10 @@ public class CdmExportCommandIT extends AbstractCommandIT {
         return project.getProjectPath();
     }
 
+    private void eadToCdmApiResponse(String eadId, String apiResponse) {
+        stubFor(get(urlEqualTo("/ead/" + eadId))
+                .willReturn(aResponse()
+                        .withBody(apiResponse)
+                        .withHeader("Content-Type", "text/json")));
+    }
 }
