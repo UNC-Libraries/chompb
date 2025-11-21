@@ -1,13 +1,14 @@
 package edu.unc.lib.boxc.migration.cdm.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.ArrayUtils;
 
 import static edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CDM_ID;
 
 /**
- * Constants related to the EAD to CDM TSV used for indexing
+ * Helper methods and constants related to EAD to CDM indexing and exporting
  */
-public class EadToCdmHeaderConstants {
+public class EadToCdmUtil {
     public static final String COLLECTION_NAME = "Collection name";
     public static final String COLLECTION_NUMBER = "Collection Number";
     public static final String LOC_IN_COLLECTION = "Location in collection";
@@ -76,10 +77,24 @@ public class EadToCdmHeaderConstants {
     // standardized tsv headers with CDM ID included
     public static String[] TSV_WITH_ID_HEADERS = ArrayUtils.addAll(TSV_STANDARDIZED_HEADERS, CDM_ID);
 
+    /**
+     * Formats string from EAD to CDM JSON API response
+     * @param key standardized header name
+     * @param jsonNode json node array
+     * @return empty string or string without quotation marks
+     */
+    public static String getValue(String key, JsonNode jsonNode) {
+        var value = jsonNode.get(key);
+        if (value == null) {
+            return "";
+        }
+        return value.asText();
+    }
+
     public static String standardizeHeader(String header) {
         return header.replaceAll(" ", "_").replaceAll("\"", "").toLowerCase();
     }
 
-    private EadToCdmHeaderConstants() {
+    private EadToCdmUtil() {
     }
 }

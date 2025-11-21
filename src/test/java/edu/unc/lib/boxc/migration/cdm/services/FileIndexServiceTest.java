@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,9 +26,9 @@ import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.assertDateI
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.mappingBody;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.setExportedDate;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.writeCsv;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_NAME;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.REF_ID;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.standardizeHeader;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.COLLECTION_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.REF_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.standardizeHeader;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

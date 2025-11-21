@@ -1,16 +1,16 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.CITATION;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_NAME;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_NUMBER;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.COLLECTION_URL;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.CONTAINER_TYPE;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.FILENAME;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.HOOK_ID;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.LOC_IN_COLLECTION;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.OBJECT;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.OBJ_FILENAME;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.REF_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.CITATION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.COLLECTION_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.COLLECTION_NUMBER;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.COLLECTION_URL;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.CONTAINER_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.HOOK_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.LOC_IN_COLLECTION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.OBJECT;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.OBJ_FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.REF_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;

@@ -25,30 +25,31 @@ import java.nio.file.Files;
 import java.time.Instant;
 
 import static edu.unc.lib.boxc.migration.cdm.services.export.ExportState.ProgressState;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_CITATION;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_COLLECTION_NAME;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_COLLECTION_NUMBER;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_COLLECTION_URL;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_CONTAINER;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_CONTAINER_TYPE;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_EXTENT;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_FILENAME;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_GENRE_FORM;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_GEOGRAPHIC_NAME;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_HOOK_ID;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_LOC_IN_COLLECTION;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_OBJECT;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_OBJ_FILENAME;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_PROCESS_INFO;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_REF_ID;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_SCOPE_CONTENT;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_UNIT_DATE;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.STANDARDIZED_UNIT_TITLE;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmHeaderConstants.TSV_STANDARDIZED_HEADERS;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_CITATION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_COLLECTION_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_COLLECTION_NUMBER;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_COLLECTION_URL;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_CONTAINER;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_CONTAINER_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_EXTENT;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_GENRE_FORM;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_GEOGRAPHIC_NAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_HOOK_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_LOC_IN_COLLECTION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_OBJECT;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_OBJ_FILENAME;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_PROCESS_INFO;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_REF_ID;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_SCOPE_CONTENT;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_UNIT_DATE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_UNIT_TITLE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.TSV_STANDARDIZED_HEADERS;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.getValue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * Service for exporting CDM item records
+ * Service for exporting CDM item records, either from CDM or EAD to CDM
  * @author bbpennel
  */
 public class CdmExportService {
@@ -104,6 +105,9 @@ public class CdmExportService {
         }
     }
 
+    /**
+     * This method calls the EAD to CDM API and transforms the JSON to a TSV for indexing
+     */
     private void exportFromEadToCdm() {
         var projectName = project.getProjectName();
         var eadId = projectName.split("_")[0];
@@ -150,14 +154,6 @@ public class CdmExportService {
             throw new MigrationException("Unable to export from EAD to CDM", e);
         }
 
-    }
-
-    private String getValue(String key, JsonNode jsonNode) {
-        var value = jsonNode.get(key);
-        if (value == null) {
-            return "";
-        }
-        return value.asText();
     }
 
     private void initializeFileRetrievalService(CdmExportOptions options) {
