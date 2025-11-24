@@ -92,11 +92,18 @@ public class CdmExportCommand implements Callable<Integer> {
     }
 
     private void validate() {
-        if (StringUtils.isBlank(options.getCdmUsername())) {
-            throw new MigrationException("Must provided a CDM username");
+        if (!options.isEadToCdm()) {
+            if (StringUtils.isBlank(options.getCdmUsername())) {
+                throw new MigrationException("Must provide a CDM username");
+            }
+            if (StringUtils.isBlank(options.getCdmPassword())) {
+                throw new MigrationException("Must provide a CDM password for user " + options.getCdmUsername());
+            }
+        } else {
+            if (StringUtils.isBlank(options.getEadId())) {
+                throw new MigrationException("Must provide an EAD ID for EAD to CDM export");
+            }
         }
-        if (StringUtils.isBlank(options.getCdmPassword())) {
-            throw new MigrationException("Must provided a CDM password for user " + options.getCdmUsername());
-        }
+
     }
 }
