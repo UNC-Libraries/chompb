@@ -14,7 +14,7 @@ public class CdmExportOptions {
             defaultValue = "${sys:user.name}")
     private String cdmUsername;
     @CommandLine.Option(names = {"-p", "--cdm-password"},
-            description = "Password for CDM requests. Required.",
+            description = "Password for CDM requests. Required if not exporting from EAD to CDM.",
             arity = "0..1",
             interactive = true)
     private String cdmPassword;
@@ -26,6 +26,10 @@ public class CdmExportOptions {
     @CommandLine.Option(names = {"-ead", "--from-ead-to-cdm"},
             description = "Export objects using the EAD to CDM API, generating a TSV file.")
     private boolean isEadToCdm;
+
+    @CommandLine.Option(names = {"-id", "--ead-id"},
+            description = "EAD ID for exporting from EAD to CDM.")
+    private String eadId;
 
     public String getCdmUsername() {
         return cdmUsername;
@@ -57,5 +61,13 @@ public class CdmExportOptions {
 
     public void setEadToCdm(boolean isEadToCdm) {
         this.isEadToCdm = isEadToCdm;
+    }
+
+    public String getEadId() {
+        return eadId;
+    }
+
+    public void setEadId(String eadId) {
+        this.eadId = eadId;
     }
 }

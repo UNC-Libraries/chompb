@@ -72,7 +72,7 @@ public class CdmExportService {
     public void exportAll(CdmExportOptions options) throws IOException {
         initializeExportDir(project);
         if (options.isEadToCdm()) {
-            exportFromEadToCdm();
+            exportFromEadToCdm(options.getEadId());
         } else {
            exportFromCdm(options);
            exportStateService.exportingCompleted();
@@ -108,9 +108,7 @@ public class CdmExportService {
     /**
      * This method calls the EAD to CDM API and transforms the JSON to a TSV for indexing
      */
-    private void exportFromEadToCdm() {
-        var projectName = project.getProjectName();
-        var eadId = projectName.split("_")[0];
+    private void exportFromEadToCdm(String eadId) {
         var url = chompbConfig.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId()).getEadToCdmUrl() + eadId;
         var getMethod = new HttpGet(url);
         ObjectMapper mapper = new ObjectMapper();
@@ -126,7 +124,7 @@ public class CdmExportService {
             var writer = Files.newBufferedWriter(eadToCdmTsvPath);
             CSVPrinter tsvPrinter = new CSVPrinter(writer, csvPrinterFormat);
         ) {
-            var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.ISO_8859_1);
+            var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonParser parser = mapper.getFactory().createParser(body);
             if (parser.nextToken() != JsonToken.START_OBJECT) {
                 throw new MigrationException("Unexpected response from URL " + url

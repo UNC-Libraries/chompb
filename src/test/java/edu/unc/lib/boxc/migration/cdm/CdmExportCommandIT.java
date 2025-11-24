@@ -93,7 +93,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         assertFalse(Files.exists(project.getExportPath()), "Description folder should not be created");
-        assertOutputContains("Must provided a CDM username");
+        assertOutputContains("Must provide a CDM username");
     }
 
     @Test
@@ -107,7 +107,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         assertFalse(Files.exists(project.getExportPath()), "Description folder should not be created");
-        assertOutputContains("Must provided a CDM password");
+        assertOutputContains("Must provide a CDM password");
     }
 
     @Test
@@ -205,8 +205,8 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 "April 1836-15 October 1858, (17 items): Scan 1\",\"collection_url\":\"https:\\/\\/finding-aids.lib.unc.edu\\/catalog\\/04428\"," +
                 "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"processinfo\":\"\",\"scopecontent\":\"\"," +
                 "\"unit_title\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
-        Path projPath = createProject("04428_ead");
-        String[] args = exportArgs(projPath, "-ead");
+        Path projPath = createProject("ead");
+        String[] args = exportArgs(projPath, "-ead", "-id", "04428");
         executeExpectSuccess(args);
 
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
@@ -231,9 +231,17 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     @Test
     public void exportEadToCdmApiCollectionNotFoundTest() throws Exception {
         eadToCdmApiResponse("nope", "[\"nope was not found\"]");
-        Path projPath = createProject("nope_ead");
+        Path projPath = createProject("ead");
+        String[] args = exportArgs(projPath, "-ead", "-id", "nope");
+        executeExpectFailure(args);
+    }
+
+    @Test
+    public void exportEadToCdmApiNoEadIdTest() throws Exception {
+        Path projPath = createProject("ead");
         String[] args = exportArgs(projPath, "-ead");
         executeExpectFailure(args);
+        assertOutputContains("Must provide an EAD ID for EAD to CDM export");
     }
 
     private void assertDescAllFilePresent(MigrationProject project, String expectedContentPath) throws Exception {
