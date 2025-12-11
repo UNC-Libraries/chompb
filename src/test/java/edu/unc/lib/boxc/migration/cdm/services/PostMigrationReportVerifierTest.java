@@ -100,7 +100,7 @@ public class PostMigrationReportVerifierTest {
     @Test
     public void reportVerifySuccessTest() throws Exception {
         mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.OK,
-                BOXC_URL_2, HttpStatus.FORBIDDEN));
+                BOXC_URL_2, HttpStatus.FORBIDDEN), false);
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
@@ -112,7 +112,8 @@ public class PostMigrationReportVerifierTest {
         var outcome = verifier.verify();
         assertEquals(2, outcome.verifiedCount);
         assertEquals(2, outcome.totalRecords);
-        assertEquals(0, outcome.errorCount);
+        assertEquals(0, outcome.urlErrorCount);
+        assertEquals(0, outcome.parentCollErrorCount);
 
         var rows = parseReport(project);
         assertRowContainsAllInfo(rows, "25",
@@ -146,7 +147,7 @@ public class PostMigrationReportVerifierTest {
     @Test
     public void reportVerifyErrorsTest() throws Exception {
         mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.NOT_FOUND,
-                BOXC_URL_2, HttpStatus.NOT_FOUND));
+                BOXC_URL_2, HttpStatus.NOT_FOUND), false);
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
@@ -158,7 +159,8 @@ public class PostMigrationReportVerifierTest {
         var outcome = verifier.verify();
         assertEquals(2, outcome.verifiedCount);
         assertEquals(2, outcome.totalRecords);
-        assertEquals(2, outcome.errorCount);
+        assertEquals(2, outcome.urlErrorCount);
+        assertEquals(0, outcome.parentCollErrorCount);
 
         var rows = parseReport(project);
         assertRowContainsAllInfo(rows, "25",
@@ -191,7 +193,7 @@ public class PostMigrationReportVerifierTest {
 
     @Test
     public void reportVerifyPartialTest() throws Exception {
-        mockBxcResponses(Map.of(BOXC_URL_2, HttpStatus.OK));
+        mockBxcResponses(Map.of(BOXC_URL_2, HttpStatus.OK), false);
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
@@ -203,7 +205,8 @@ public class PostMigrationReportVerifierTest {
         var outcome = verifier.verify();
         assertEquals(1, outcome.verifiedCount);
         assertEquals(2, outcome.totalRecords);
-        assertEquals(0, outcome.errorCount);
+        assertEquals(0, outcome.urlErrorCount);
+        assertEquals(0, outcome.parentCollErrorCount);
 
         var rows = parseReport(project);
         assertRowContainsAllInfo(rows, "25",
@@ -236,7 +239,7 @@ public class PostMigrationReportVerifierTest {
 
     @Test
     public void reportVerifyWithParentCollectionError() throws Exception {
-        mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.OK, BOXC_URL_2, HttpStatus.OK));
+        mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.OK, BOXC_URL_2, HttpStatus.OK), true);
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
@@ -248,7 +251,8 @@ public class PostMigrationReportVerifierTest {
         var outcome = verifier.verify();
         assertEquals(2, outcome.verifiedCount);
         assertEquals(2, outcome.totalRecords);
-        assertEquals(2, outcome.errorCount);
+        assertEquals(0, outcome.urlErrorCount);
+        assertEquals(2, outcome.parentCollErrorCount);
 
         var rows = parseReport(project);
         assertRowContainsAllInfo(rows, "25",
@@ -279,7 +283,7 @@ public class PostMigrationReportVerifierTest {
                 "");
     }
 
-    private void mockBxcResponses(Map<String, HttpStatus> urlToStatus) throws IOException {
+    private void mockBxcResponses(Map<String, HttpStatus> urlToStatus, boolean apiFailure) throws IOException {
         when(httpClient.execute(any(HttpUriRequest.class))).thenAnswer(invocation -> {
             HttpGet httpGet = invocation.getArgument(0);
             var requestUrl = httpGet.getURI().toString();
@@ -289,6 +293,10 @@ public class PostMigrationReportVerifierTest {
             when(resp.getStatusLine()).thenReturn(statusLine);
 
             if (requestUrl.contains(BXC_API_BASE_URL)) {
+                if (apiFailure) {
+                    when(statusLine.getStatusCode()).thenReturn(HttpStatus.INTERNAL_SERVER_ERROR.value());
+                    return resp;
+                }
                 when(statusLine.getStatusCode()).thenReturn(HttpStatus.OK.value());
                 when(respEntity.getContent()).thenReturn(new ByteArrayInputStream(JSON.getBytes(StandardCharsets.UTF_8)));
             } else {

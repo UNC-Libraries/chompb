@@ -84,6 +84,22 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
         assertTrue(Files.readString(project.getPostMigrationReportPath()).contains(HttpStatus.NOT_FOUND.name()));
     }
 
+    @Test
+    public void parentCollectionErrorsTest() throws Exception {
+        stubFor(get(urlMatching("/api/.*"))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.NOT_FOUND.value())));
+
+        generateSip();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "verify_migration" };
+        executeExpectFailure(args);
+        assertOutputContains("Parent Collection Errors encountered for 6 objects");
+        assertTrue(Files.exists(project.getPostMigrationReportPath()));
+    }
+
     private void generateSip() {
         var sipService = testHelper.createSipsService();
         var sipOptions = new SipGenerationOptions();

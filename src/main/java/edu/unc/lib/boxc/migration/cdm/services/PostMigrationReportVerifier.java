@@ -64,8 +64,9 @@ public class PostMigrationReportVerifier {
                 }
 
                 // add parent collection information
-                var parentCollInfo = getParentCollectionInfo(boxcUrl);
-                rowValues.add(bxcRecordBaseUrl + parentCollInfo.get("id"));
+                var parentCollInfo = getParentCollectionInfo(boxcUrl, outcome);
+                var parentCollId = parentCollInfo.get("id");
+                rowValues.add(formatId(parentCollId));
                 rowValues.add(parentCollInfo.get("name"));
 
                 // Write the row out into the new version of the report
@@ -106,11 +107,17 @@ public class PostMigrationReportVerifier {
         }
     }
 
-    private Map<String, String> getParentCollectionInfo(String bxcUrl) throws IOException, URISyntaxException {
+    private Map<String, String> getParentCollectionInfo(String bxcUrl, VerificationOutcome outcome) throws IOException, URISyntaxException {
         var map = new HashMap<String, String>();
         var id = getId(bxcUrl);
         var getRequest = new HttpGet(URI.create(bxcApiBaseUrl + id));
         try (var resp = httpClient.execute(getRequest)) {
+            if (resp.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
+                map.put("id", "");
+                map.put("name", "");
+                outcome.recordParentCollError();
+                return map;
+            }
             var entity = resp.getEntity();
             var content = entity.getContent();
             var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -119,6 +126,7 @@ public class PostMigrationReportVerifier {
             map.put("id", jsonNode.get("briefObject").get("parentCollectionId").asText());
             map.put("name", jsonNode.get("briefObject").get("parentCollectionName").asText());
         }
+
         return map;
     }
 
@@ -128,6 +136,13 @@ public class PostMigrationReportVerifier {
 
         String[] parts = path.split("/");
         return parts[parts.length - 1];
+    }
+
+    private String formatId(String id) {
+        if (id.isBlank()) {
+            return "";
+        }
+        return bxcRecordBaseUrl + id;
     }
 
     private CSVParser openCsvParser() throws IOException {
@@ -186,19 +201,24 @@ public class PostMigrationReportVerifier {
     }
 
     public static class VerificationOutcome {
-        public long errorCount = 0;
+        public long urlErrorCount = 0;
         public long verifiedCount = 0;
         public long totalRecords = 0;
+        public long parentCollErrorCount = 0;
 
         protected void recordResult(String result) {
             if (!isStatusAcceptable(result)) {
-                errorCount++;
+                urlErrorCount++;
             }
             verifiedCount++;
         }
 
+        protected void recordParentCollError() {
+            parentCollErrorCount++;
+        }
+
         public boolean hasErrors() {
-            return errorCount > 0;
+            return urlErrorCount > 0 || parentCollErrorCount > 0;
         }
     }
 }
