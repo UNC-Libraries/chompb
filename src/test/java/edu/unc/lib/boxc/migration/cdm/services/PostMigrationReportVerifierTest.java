@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -46,6 +45,7 @@ public class PostMigrationReportVerifierTest {
     private static final String CDM_URL_2 = "http://localhost/cdm/singleitem/collection/proj/id/26";
     private static final String PARENT_COLL_ID = "4fe5080f-41cd-4b1e-9cdd-71203c824cd0";
     private static final String BXC_RECORD_BASE_URL = "https://example.com/bxc/";
+    private static final String BXC_API_BASE_URL = "https://example.com/api/";
     private static final String PARENT_COLL_URL = BXC_RECORD_BASE_URL + PARENT_COLL_ID;
     private static final String PARENT_COLL_TITLE = "Latin Studies Program";
     private static final String JSON = "{\"findingAidUrl\":\"https://finding-aids.lib.unc.edu/catalog/40489\"," +
@@ -82,6 +82,7 @@ public class PostMigrationReportVerifierTest {
         verifier.setProject(project);
         verifier.setHttpClient(httpClient);
         verifier.setBxcRecordBaseUrl(BXC_RECORD_BASE_URL);
+        verifier.setBxcApiBaseUrl(BXC_API_BASE_URL);
     }
 
     @AfterEach
@@ -90,7 +91,7 @@ public class PostMigrationReportVerifierTest {
     }
 
     @Test
-    public void noReportTest() throws Exception {
+    public void noReportTest() {
         Assertions.assertThrows(InvalidProjectStateException.class, () -> {
             verifier.verify();
         });
@@ -114,7 +115,7 @@ public class PostMigrationReportVerifierTest {
         assertEquals(0, outcome.errorCount);
 
         var rows = parseReport(project);
-        assertContainsRow(rows, "25",
+        assertRowContainsAllInfo(rows, "25",
                 CDM_URL_1,
                 "Work",
                 BOXC_URL_1,
@@ -124,8 +125,10 @@ public class PostMigrationReportVerifierTest {
                 HttpStatus.OK.name(),
                 "",
                 "",
-                "1");
-        assertContainsRow(rows, "26",
+                "1",
+                PARENT_COLL_URL,
+                PARENT_COLL_TITLE);
+        assertRowContainsAllInfo(rows, "26",
                 CDM_URL_2,
                 "File",
                 BOXC_URL_2,
@@ -135,7 +138,9 @@ public class PostMigrationReportVerifierTest {
                 HttpStatus.OK.name(),
                 BOXC_URL_1,
                 "Redoubt C",
-                "");
+                "",
+                PARENT_COLL_URL,
+                PARENT_COLL_TITLE);
     }
 
     @Test
@@ -156,7 +161,7 @@ public class PostMigrationReportVerifierTest {
         assertEquals(2, outcome.errorCount);
 
         var rows = parseReport(project);
-        assertContainsRow(rows, "25",
+        assertRowContainsAllInfo(rows, "25",
                 CDM_URL_1,
                 "Work",
                 BOXC_URL_1,
@@ -166,8 +171,10 @@ public class PostMigrationReportVerifierTest {
                 HttpStatus.NOT_FOUND.name(),
                 "",
                 "",
-                "1");
-        assertContainsRow(rows, "26",
+                "1",
+                PARENT_COLL_URL,
+                PARENT_COLL_TITLE);
+        assertRowContainsAllInfo(rows, "26",
                 CDM_URL_2,
                 "File",
                 BOXC_URL_2,
@@ -177,7 +184,9 @@ public class PostMigrationReportVerifierTest {
                 HttpStatus.NOT_FOUND.name(),
                 BOXC_URL_1,
                 "Redoubt C",
-                "");
+                "",
+                PARENT_COLL_URL,
+                PARENT_COLL_TITLE);
     }
 
     @Test
@@ -197,7 +206,7 @@ public class PostMigrationReportVerifierTest {
         assertEquals(0, outcome.errorCount);
 
         var rows = parseReport(project);
-        assertContainsRow(rows, "25",
+        assertRowContainsAllInfo(rows, "25",
                 CDM_URL_1,
                 "Work",
                 BOXC_URL_1,
@@ -207,8 +216,10 @@ public class PostMigrationReportVerifierTest {
                 HttpStatus.OK.name(),
                 "",
                 "",
-                "1");
-        assertContainsRow(rows, "26",
+                "1",
+                PARENT_COLL_URL,
+                PARENT_COLL_TITLE);
+        assertRowContainsAllInfo(rows, "26",
                 CDM_URL_2,
                 "File",
                 BOXC_URL_2,
@@ -218,78 +229,76 @@ public class PostMigrationReportVerifierTest {
                 HttpStatus.OK.name(),
                 BOXC_URL_1,
                 "Redoubt C",
-                "");
+                "",
+                PARENT_COLL_URL,
+                PARENT_COLL_TITLE);
     }
 
-//    @Test
-//    public void reportVerifyWithParentCollectionInformation() throws Exception {
-//        mockApiResponse();
-//
-//        reportGenerator.init();
-//        reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-//                null, null, null, "", "", 1);
-//        reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-//                null, null, null, BOXC_URL_1, "Redoubt C", null);
-//        reportGenerator.closeCsv();
-//
-//        var outcome = verifier.verify();
-//        assertEquals(2, outcome.verifiedCount);
-//        assertEquals(2, outcome.totalRecords);
-//        assertEquals(0, outcome.errorCount);
-//
-//        var rows = parseReport(project);
-//        assertRowContainsParentCollectionInfo(rows, "25",
-//                CDM_URL_1,
-//                "Work",
-//                BOXC_URL_1,
-//                "Redoubt C",
-//                "",
-//                "",
-//                HttpStatus.OK.name(),
-//                "",
-//                "",
-//                "1",
-//                PARENT_COLL_URL,
-//                PARENT_COLL_TITLE);
-//        assertRowContainsParentCollectionInfo(rows, "26",
-//                CDM_URL_2,
-//                "File",
-//                BOXC_URL_2,
-//                "A file",
-//                "",
-//                "",
-//                HttpStatus.OK.name(),
-//                BOXC_URL_1,
-//                "Redoubt C",
-//                "",
-//                PARENT_COLL_URL,
-//                PARENT_COLL_TITLE);
-//    }
+    @Test
+    public void reportVerifyWithParentCollectionError() throws Exception {
+        mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.OK, BOXC_URL_2, HttpStatus.OK));
+
+        reportGenerator.init();
+        reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
+                null, null, null, "", "", 1);
+        reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
+                null, null, null, BOXC_URL_1, "Redoubt C", null);
+        reportGenerator.closeCsv();
+
+        var outcome = verifier.verify();
+        assertEquals(2, outcome.verifiedCount);
+        assertEquals(2, outcome.totalRecords);
+        assertEquals(2, outcome.errorCount);
+
+        var rows = parseReport(project);
+        assertRowContainsAllInfo(rows, "25",
+                CDM_URL_1,
+                "Work",
+                BOXC_URL_1,
+                "Redoubt C",
+                "",
+                "",
+                HttpStatus.OK.name(),
+                "",
+                "",
+                "1",
+                "",
+                "");
+        assertRowContainsAllInfo(rows, "26",
+                CDM_URL_2,
+                "File",
+                BOXC_URL_2,
+                "A file",
+                "",
+                "",
+                HttpStatus.OK.name(),
+                BOXC_URL_1,
+                "Redoubt C",
+                "",
+                "",
+                "");
+    }
 
     private void mockBxcResponses(Map<String, HttpStatus> urlToStatus) throws IOException {
         when(httpClient.execute(any(HttpUriRequest.class))).thenAnswer(invocation -> {
             HttpGet httpGet = invocation.getArgument(0);
-            var resp1 = mock(CloseableHttpResponse.class);
-            var statusLine1 = mock(StatusLine.class);
-            when(resp1.getStatusLine()).thenReturn(statusLine1);
-            when(statusLine1.getStatusCode()).thenReturn(urlToStatus.get(httpGet.getURI().toString()).value());
-            return resp1;
-        });
-    }
-
-    private void mockApiResponse() throws IOException {
-        when(httpClient.execute(any(HttpUriRequest.class))).thenAnswer(invocation -> {
+            var requestUrl = httpGet.getURI().toString();
             var resp = mock(CloseableHttpResponse.class);
+            when(resp.getEntity()).thenReturn(respEntity);
             var statusLine = mock(StatusLine.class);
             when(resp.getStatusLine()).thenReturn(statusLine);
-            when(statusLine.getStatusCode()).thenReturn(HttpStatus.OK.value());
-            when(resp.getEntity()).thenReturn(respEntity);
-            when(respEntity.getContent()).thenReturn(new ByteArrayInputStream(JSON.getBytes(StandardCharsets.UTF_8)));
+
+            if (requestUrl.contains(BXC_API_BASE_URL)) {
+                when(statusLine.getStatusCode()).thenReturn(HttpStatus.OK.value());
+                when(respEntity.getContent()).thenReturn(new ByteArrayInputStream(JSON.getBytes(StandardCharsets.UTF_8)));
+            } else {
+                when(statusLine.getStatusCode()).thenReturn(urlToStatus.get(httpGet.getURI().toString()).value());
+            }
             return resp;
         });
     }
 
-    public static void assertRowContainsParentCollectionInfo(List<List<String>> rows, String cdmId, String cdmUrl, String objType,
+    public static void assertRowContainsAllInfo(List<List<String>> rows, String cdmId, String cdmUrl, String objType,
                                          String bxcUrl, String bxcTitle, String matchingValue, String sourceFile,
                                          String verified, String parentUrl, String parentTitle, String childCount,
                                          String parentCollUrl, String parentCollTitle) {
