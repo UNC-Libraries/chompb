@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.util.DisplayProgressUtil;
@@ -7,6 +8,7 @@ import edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.springframework.http.HttpStatus;
@@ -15,9 +17,13 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Service which verifies the Box-c URLs in the post migration report and updates the verified field
@@ -25,11 +31,13 @@ import java.nio.file.StandardCopyOption;
  * @author bbpennel
  */
 public class PostMigrationReportVerifier {
+    private String bxcApiBaseUrl;
+    private String bxcRecordBaseUrl;
     private MigrationProject project;
     private CloseableHttpClient httpClient;
     private boolean showProgress;
 
-    public VerificationOutcome verify() throws IOException {
+    public VerificationOutcome verify() throws IOException, URISyntaxException {
         validateReport();
 
         var outcome = new VerificationOutcome();
@@ -47,13 +55,19 @@ public class PostMigrationReportVerifier {
                 var verified = originalRecord.get(PostMigrationReportConstants.VERIFIED_HEADER);
 
                 var rowValues = originalRecord.toList();
+                var boxcUrl = originalRecord.get(PostMigrationReportConstants.BXC_URL_HEADER);
                 // 'verified' field is empty or was not previously successful, so request the boxc url
                 if (!isStatusAcceptable(verified)) {
-                    var boxcUrl = originalRecord.get(PostMigrationReportConstants.BXC_URL_HEADER);
                     var result = requestHttpResult(boxcUrl);
                     outcome.recordResult(result);
                     rowValues.set(PostMigrationReportConstants.VERIFIED_INDEX, result);
                 }
+
+                // add parent collection information
+                var parentCollInfo = getParentCollectionInfo(boxcUrl);
+                rowValues.add(bxcRecordBaseUrl + parentCollInfo.get("id"));
+                rowValues.add(parentCollInfo.get("name"));
+
                 // Write the row out into the new version of the report
                 csvPrinter.printRecord(rowValues);
 
@@ -90,6 +104,30 @@ public class PostMigrationReportVerifier {
             }
             return HttpStatus.valueOf(status).name();
         }
+    }
+
+    private Map<String, String> getParentCollectionInfo(String bxcUrl) throws IOException, URISyntaxException {
+        var map = new HashMap<String, String>();
+        var id = getId(bxcUrl);
+        var getRequest = new HttpGet(URI.create(bxcApiBaseUrl + id));
+        try (var resp = httpClient.execute(getRequest)) {
+            var entity = resp.getEntity();
+            var content = entity.getContent();
+            var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.UTF_8);
+            var mapper = new ObjectMapper();
+            var jsonNode = mapper.readTree(body);
+            map.put("id", jsonNode.get("briefObject").get("parentCollectionId").asText());
+            map.put("name", jsonNode.get("briefObject").get("parentCollectionName").asText());
+        }
+        return map;
+    }
+
+    private String getId(String url) throws URISyntaxException {
+        var uri = new URI(url);
+        String path = uri.getPath();
+
+        String[] parts = path.split("/");
+        return parts[parts.length - 1];
     }
 
     private CSVParser openCsvParser() throws IOException {
@@ -133,6 +171,14 @@ public class PostMigrationReportVerifier {
 
     public void setShowProgress(boolean showProgress) {
         this.showProgress = showProgress;
+    }
+
+    public void setBxcApiBaseUrl(String bxcApiBaseUrl) {
+        this.bxcApiBaseUrl = bxcApiBaseUrl;
+    }
+
+    public void setBxcRecordBaseUrl(String bxcRecordBaseUrl) {
+        this.bxcRecordBaseUrl = bxcRecordBaseUrl;
     }
 
     private static boolean isStatusAcceptable(String status) {
