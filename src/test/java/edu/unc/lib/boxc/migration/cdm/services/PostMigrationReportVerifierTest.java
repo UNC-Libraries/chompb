@@ -118,7 +118,7 @@ public class PostMigrationReportVerifierTest {
                 "",
                 "",
                 "1",
-                PARENT_COLL_ID,
+                PARENT_COLL_URL,
                 PARENT_COLL_TITLE);
         assertRowContainsAllInfo(rows, "26",
                 CDM_URL_2,
