@@ -34,7 +34,6 @@ public class SipSubmissionService {
     private static final Logger log = getLogger(SipSubmissionService.class);
     private static final String EMAIL_SUFFIX = "@ad.unc.edu";
 
-    private DepositStatusFactory depositStatusFactory;
     private DepositOperationMessageService depositOperationMessageService;
     private SipService sipService;
     private MigrationProject project;
@@ -82,7 +81,6 @@ public class SipSubmissionService {
         log.debug("Compiled deposit data for sip {}", sip.getDepositId());
 
         PreconstructedDepositHandler depositHandler = new PreconstructedDepositHandler(sip.getDepositPid());
-        depositHandler.setDepositStatusFactory(depositStatusFactory);
         depositHandler.setDepositOperationMessageService(depositOperationMessageService);
         log.debug("Initialized deposit handler for sip {}", sip.getDepositId());
         try {
@@ -91,10 +89,6 @@ public class SipSubmissionService {
         } catch (DepositException e) {
             throw new MigrationException("Failed to submit deposit", e);
         }
-    }
-
-    public void setDepositStatusFactory(DepositStatusFactory depositStatusFactory) {
-        this.depositStatusFactory = depositStatusFactory;
     }
 
     public void setDepositOperationMessageService(DepositOperationMessageService depositOperationMessageService) {

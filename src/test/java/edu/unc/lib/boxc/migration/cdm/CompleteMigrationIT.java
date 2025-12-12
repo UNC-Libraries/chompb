@@ -2,8 +2,9 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.DepositField;
+import edu.unc.lib.boxc.deposit.impl.jms.DepositOperationMessage;
+import edu.unc.lib.boxc.deposit.impl.jms.DepositOperationMessageService;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
-import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
@@ -13,6 +14,11 @@ import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 import edu.unc.lib.boxc.persist.api.PackagingType;
+import jakarta.jms.ConnectionFactory;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.Queue;
+import jakarta.jms.Session;
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -21,8 +27,17 @@ import org.apache.jena.rdf.model.Resource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
+import jakarta.jms.Connection;
+import jakarta.jms.ConnectionFactory;
+import jakarta.jms.Message;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.Queue;
+import jakarta.jms.Session;
+import jakarta.jms.TextMessage;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.io.IOException;
 import java.net.URI;
@@ -52,24 +67,26 @@ public class CompleteMigrationIT extends AbstractCommandIT {
     private final static String COLLECTION_ID = "mini_gilmer";
     private final static String GROUPS = "my:admin:group";
     private final static String DEST_UUID = "3f3c5bcf-d5d6-46ad-87ec-bcdf1f06b19e";
-    private final static int REDIS_PORT = 46380;
+    private static final Logger log = LoggerFactory.getLogger(CompleteMigrationIT.class);
 
     private TestSshServer testSshServer;
     private Path filesBasePath;
 
-    private DepositStatusFactory depositStatusFactory;
-    private JedisPool jedisPool;
+    private ConnectionFactory connectionFactory;
+    private Connection jmsConnection;
+    private Session jmsSession;
+    private MessageConsumer messageConsumer;
 
     @BeforeEach
     public void setup() throws Exception {
         filesBasePath = tmpFolder;
 
-        System.setProperty("REDIS_HOST", "localhost");
-        System.setProperty("REDIS_PORT", Integer.toString(REDIS_PORT));
         System.setProperty("BROKER_URL", "tcp://localhost:46161");
 
         testSshServer = new TestSshServer();
         testSshServer.startServer();
+
+        setupJmsConsumer();
 
         setupChompbConfig();
     }
@@ -84,27 +101,25 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                         .withBody(validRespBody)));
     }
 
-    public void initDepositStatusFactory() {
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxIdle(15);
-        jedisPoolConfig.setMaxTotal(25);
-        jedisPoolConfig.setMinIdle(2);
-
-        jedisPool = new JedisPool(jedisPoolConfig, "localhost", REDIS_PORT);
-        depositStatusFactory = new DepositStatusFactory();
-        depositStatusFactory.setJedisPool(jedisPool);
-    }
-
     @AfterEach
     public void after() throws Exception {
-        System.clearProperty("REDIS_HOST");
-        System.clearProperty("REDIS_PORT");
         System.clearProperty("BROKER_URL");
-        if (jedisPool != null) {
-            jedisPool.close();
-        }
         testSshServer.stopServer();
+
+        if (messageConsumer != null) {
+            while (messageConsumer.receiveNoWait() != null) {
+                // Drain any extra messages
+            }
+            messageConsumer.close();
+        }
+        if (jmsSession != null) {
+            jmsSession.close();
+        }
+        if (jmsConnection != null) {
+            jmsConnection.close();
+        }
     }
+
 
     @Test
     public void migrateSimpleCollectionTest() throws Exception {
@@ -193,7 +208,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 "-g", GROUPS };
         executeExpectSuccess(argsSubmit);
 
-        initDepositStatusFactory();
         assertDepositStatusSet(sip);
     }
 
@@ -328,7 +342,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 "-g", GROUPS };
         executeExpectSuccess(argsSubmit);
 
-        initDepositStatusFactory();
         assertDepositStatusSet(sip);
     }
 
@@ -419,7 +432,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
                 "-g", GROUPS };
         executeExpectSuccess(argsSubmit);
 
-        initDepositStatusFactory();
         assertDepositStatusSet(sip);
     }
 
@@ -428,12 +440,40 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         return PIDs.get(fileResc.getURI()).getId();
     }
 
-    private void assertDepositStatusSet(MigrationSip sip) {
-        Map<String, String> status = depositStatusFactory.get(sip.getDepositId());
-        String sourceUri = status.get(DepositField.sourceUri.name());
+//    private void assertDepositStatusSet(MigrationSip sip) {
+//        Map<String, String> status = depositStatusFactory.get(sip.getDepositId());
+//        String sourceUri = status.get(DepositField.sourceUri.name());
+//        assertEquals(sip.getSipPath(), Paths.get(URI.create(sourceUri)));
+//        assertEquals(USERNAME + "@ad.unc.edu", status.get(DepositField.depositorEmail.name()));
+//        assertEquals("unc:onyen:theuser;my:admin:group", status.get(DepositField.permissionGroups.name()));
+//        assertEquals(PackagingType.BAG_WITH_N3.getUri(), status.get(DepositField.packagingType.name()));
+//    }
+
+    private void setupJmsConsumer() throws Exception {
+        if (connectionFactory == null) {
+            connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:46161");
+        }
+        if (jmsConnection == null || !((org.apache.activemq.ActiveMQConnection) jmsConnection).isStarted()) {
+            jmsConnection = connectionFactory.createConnection();
+            jmsSession = jmsConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            Queue queue = jmsSession.createQueue("activemq:queue:deposit.operation.queue");
+            messageConsumer = jmsSession.createConsumer(queue);
+            jmsConnection.start();
+        }
+    }
+
+    private void assertDepositStatusSet(MigrationSip sip) throws Exception {
+        // Receive message from queue with 5 second timeout
+        Message message = messageConsumer.receive(5000);
+
+        // Deserialize the message
+        DepositOperationMessage depositMsg = DepositOperationMessageService.fromJson(message);
+        Map<String, String> additionalInfo = depositMsg.getAdditionalInfo();
+
+        String sourceUri = additionalInfo.get(DepositField.sourceUri.name());
         assertEquals(sip.getSipPath(), Paths.get(URI.create(sourceUri)));
-        assertEquals(USERNAME + "@ad.unc.edu", status.get(DepositField.depositorEmail.name()));
-        assertEquals("unc:onyen:theuser;my:admin:group", status.get(DepositField.permissionGroups.name()));
-        assertEquals(PackagingType.BAG_WITH_N3.getUri(), status.get(DepositField.packagingType.name()));
+        assertEquals(USERNAME + "@ad.unc.edu", additionalInfo.get(DepositField.depositorEmail.name()));
+        assertEquals("unc:onyen:theuser;my:admin:group", additionalInfo.get(DepositField.permissionGroups.name()));
+        assertEquals(PackagingType.BAG_WITH_N3.getUri(), additionalInfo.get(DepositField.packagingType.name()));
     }
 }

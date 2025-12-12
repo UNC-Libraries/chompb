@@ -12,7 +12,6 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
-import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.SipSubmissionOptions;
@@ -75,12 +74,6 @@ public class SubmitSipsCommand implements Callable<Integer> {
         if (StringUtils.isBlank(options.getGroups())) {
             throw new IllegalArgumentException("Must provide one or more groups");
         }
-        if (StringUtils.isBlank(options.getRedisHost())) {
-            throw new IllegalArgumentException("Must provide a Redis host URI");
-        }
-        if (options.getRedisPort() <= 0) {
-            throw new IllegalArgumentException("Must provide a valid Redis port number");
-        }
         if (StringUtils.isBlank(options.getBrokerUrl())) {
             throw new IllegalArgumentException("Must provide a broker URL");
         }
@@ -101,16 +94,11 @@ public class SubmitSipsCommand implements Callable<Integer> {
         jedisPoolConfig.setMaxTotal(25);
         jedisPoolConfig.setMinIdle(2);
 
-        jedisPool = new JedisPool(jedisPoolConfig, options.getRedisHost(), options.getRedisPort());
-        DepositStatusFactory depositStatusFactory = new DepositStatusFactory();
-        depositStatusFactory.setJedisPool(jedisPool);
-
         DepositOperationMessageService depositOperationMessageService = getDepositOperationMessageService(options);
 
         submissionService = new SipSubmissionService();
         submissionService.setProject(project);
         submissionService.setSipService(sipService);
-        submissionService.setDepositStatusFactory(depositStatusFactory);
         submissionService.setDepositOperationMessageService(depositOperationMessageService);
     }
 
