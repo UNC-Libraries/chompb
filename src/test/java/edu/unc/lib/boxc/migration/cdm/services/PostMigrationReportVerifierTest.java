@@ -27,10 +27,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper.TEST_BASE_URL;
+import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.JSON;
+import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.PARENT_COLL_ID;
+import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.PARENT_COLL_TITLE;
+import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.PARENT_COLL_URL;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
 import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.API_PATH;
-import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.RECORD_PATH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,17 +48,6 @@ public class PostMigrationReportVerifierTest {
     private static final String BOXC_URL_2 = "http://example.com/bxc/91c08272-260f-40f1-bb7c-78854d504368";
     private static final String CDM_URL_1 = "http://localhost/cdm/singleitem/collection/proj/id/25";
     private static final String CDM_URL_2 = "http://localhost/cdm/singleitem/collection/proj/id/26";
-    private static final String PARENT_COLL_ID = "4fe5080f-41cd-4b1e-9cdd-71203c824cd0";
-    private static final String PARENT_COLL_URL = TEST_BASE_URL + RECORD_PATH + PARENT_COLL_ID;
-    private static final String PARENT_COLL_TITLE = "Latin Studies Program";
-    private static final String JSON = "{\"findingAidUrl\":\"https://finding-aids.lib.unc.edu/catalog/40489\"," +
-            "\"viewerType\":\"clover\",\"canBulkDownload\":false,\"dataFileUrl\":\"content/6f4b5e38-754f-49ca-a4a0-6441fea95d76\"," +
-            "\"markedForDeletion\":false,\"pageSubtitle\":\"TEST.jpg\",\"briefObject\":{\"added\":\"2018-05-24T20:39:18.165Z\"," +
-            "\"counts\":{\"child\":1},\"created\":\"2018-05-24T20:39:18.165Z\",\"format\":[\"Image\"],\"parentCollectionName\":\"" + PARENT_COLL_TITLE +"\"," +
-            "\"contentStatus\":[\"Not Described\",\"Has Primary Object\"],\"rollup\":\"1a1e9c1a-cdd2-4874-b6cb-8da783919460\"," +
-            "\"parentCollectionId\":\"" + PARENT_COLL_ID + "\",\"id\":\"1a1e9c1a-cdd2-4874-b6cb-8da783919460\"," +
-            "\"updated\":\"2018-05-25T13:37:01.864Z\",\"fileType\":[\"image/jpeg\"],\"status\":[\"Public Access\"],\"timestamp\":1751312648385}," +
-            "\"collectionId\":\"40489\",\"resourceType\":\"Work\"}";
     private AutoCloseable closeable;
     @TempDir
     public Path tmpFolder;
@@ -127,7 +118,7 @@ public class PostMigrationReportVerifierTest {
                 "",
                 "",
                 "1",
-                PARENT_COLL_URL,
+                PARENT_COLL_ID,
                 PARENT_COLL_TITLE);
         assertRowContainsAllInfo(rows, "26",
                 CDM_URL_2,

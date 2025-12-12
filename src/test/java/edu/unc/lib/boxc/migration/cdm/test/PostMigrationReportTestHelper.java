@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper.TEST_BASE_URL;
+import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.RECORD_PATH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -20,6 +22,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class PostMigrationReportTestHelper {
     private PostMigrationReportTestHelper() {
     }
+    public static final String PARENT_COLL_ID = "4fe5080f-41cd-4b1e-9cdd-71203c824cd0";
+    public static final String PARENT_COLL_URL = TEST_BASE_URL + RECORD_PATH + PARENT_COLL_ID;
+    public static final String PARENT_COLL_TITLE = "Latin Studies Program";
+    public static final String JSON = "{\"findingAidUrl\":\"https://finding-aids.lib.unc.edu/catalog/40489\"," +
+            "\"viewerType\":\"clover\",\"canBulkDownload\":false,\"dataFileUrl\":\"content/6f4b5e38-754f-49ca-a4a0-6441fea95d76\"," +
+            "\"markedForDeletion\":false,\"pageSubtitle\":\"TEST.jpg\",\"briefObject\":{\"added\":\"2018-05-24T20:39:18.165Z\"," +
+            "\"counts\":{\"child\":1},\"created\":\"2018-05-24T20:39:18.165Z\",\"format\":[\"Image\"],\"parentCollectionName\":\"" + PARENT_COLL_TITLE +"\"," +
+            "\"contentStatus\":[\"Not Described\",\"Has Primary Object\"],\"rollup\":\"1a1e9c1a-cdd2-4874-b6cb-8da783919460\"," +
+            "\"parentCollectionId\":\"" + PARENT_COLL_ID + "\",\"id\":\"1a1e9c1a-cdd2-4874-b6cb-8da783919460\"," +
+            "\"updated\":\"2018-05-25T13:37:01.864Z\",\"fileType\":[\"image/jpeg\"],\"status\":[\"Public Access\"],\"timestamp\":1751312648385}," +
+            "\"collectionId\":\"40489\",\"resourceType\":\"Work\"}";
 
     public static List<List<String>> parseReport(MigrationProject project) throws Exception {
         try (

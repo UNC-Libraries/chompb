@@ -9,12 +9,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
+import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.JSON;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -56,6 +59,7 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
                         .withStatus(HttpStatus.OK.value())));
         stubFor(get(urlMatching("/bxc/api/.*"))
                 .willReturn(aResponse()
+                        .withBody(JSON)
                         .withStatus(HttpStatus.OK.value())));
 
         generateSip();
@@ -75,6 +79,10 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
         stubFor(get(urlMatching("/bxc/record/.*"))
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.NOT_FOUND.value())));
+        stubFor(get(urlMatching("/bxc/api/.*"))
+                .willReturn(aResponse()
+                        .withBody(JSON)
+                        .withStatus(HttpStatus.OK.value())));
 
         generateSip();
 
@@ -94,6 +102,7 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
                         .withStatus(HttpStatus.OK.value())));
         stubFor(get(urlMatching("/bxc/api/.*"))
                 .willReturn(aResponse()
+                        .withBody(JSON)
                         .withStatus(HttpStatus.NOT_FOUND.value())));
 
         generateSip();
