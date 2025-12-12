@@ -37,8 +37,6 @@ public class PostMigrationReportVerifier {
     private MigrationProject project;
     private CloseableHttpClient httpClient;
     private ChompbConfigService.ChompbConfig chompbConfig;
-    private String bxcApiBaseUrl;
-    private String bxcRecordBaseUrl;
     private boolean showProgress;
 
     public VerificationOutcome verify() throws IOException, URISyntaxException {
@@ -55,8 +53,6 @@ public class PostMigrationReportVerifier {
             long currentNum = 0;
             updateProgressDisplay(currentNum, totalRecords);
             var baseUrl = chompbConfig.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId()).getHttpBaseUrl();
-            bxcRecordBaseUrl = baseUrl + RECORD_PATH;
-            bxcApiBaseUrl = baseUrl + API_PATH;
 
             for (CSVRecord originalRecord : csvParser) {
                 var verified = originalRecord.get(PostMigrationReportConstants.VERIFIED_HEADER);
@@ -71,9 +67,9 @@ public class PostMigrationReportVerifier {
                 }
 
                 // add parent collection information
-                var parentCollInfo = getParentCollectionInfo(boxcUrl, outcome);
+                var parentCollInfo = getParentCollectionInfo(boxcUrl, outcome, baseUrl + API_PATH);
                 var parentCollId = parentCollInfo.get("id");
-                rowValues.add(formatParentCollUrl(parentCollId));
+                rowValues.add(formatParentCollUrl(parentCollId, baseUrl + RECORD_PATH));
                 rowValues.add(parentCollInfo.get("name"));
 
                 // Write the row out into the new version of the report
@@ -114,7 +110,7 @@ public class PostMigrationReportVerifier {
         }
     }
 
-    private Map<String, String> getParentCollectionInfo(String bxcUrl, VerificationOutcome outcome) throws IOException, URISyntaxException {
+    private Map<String, String> getParentCollectionInfo(String bxcUrl, VerificationOutcome outcome, String bxcApiBaseUrl) throws IOException, URISyntaxException {
         var map = new HashMap<String, String>();
         var id = getId(bxcUrl);
         var getRequest = new HttpGet(URI.create(bxcApiBaseUrl + id));
@@ -125,8 +121,6 @@ public class PostMigrationReportVerifier {
                 outcome.recordParentCollError();
                 return map;
             }
-            var entity = resp.getEntity();
-            var content = entity.getContent();
             var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.UTF_8);
             var mapper = new ObjectMapper();
             var jsonNode = mapper.readTree(body);
@@ -145,7 +139,7 @@ public class PostMigrationReportVerifier {
         return parts[parts.length - 1];
     }
 
-    private String formatParentCollUrl(String id) {
+    private String formatParentCollUrl(String id, String bxcRecordBaseUrl) {
         if (id.isBlank()) {
             return "";
         }
@@ -193,14 +187,6 @@ public class PostMigrationReportVerifier {
 
     public void setShowProgress(boolean showProgress) {
         this.showProgress = showProgress;
-    }
-
-    public void setBxcApiBaseUrl(String bxcApiBaseUrl) {
-        this.bxcApiBaseUrl = bxcApiBaseUrl;
-    }
-
-    public void setBxcRecordBaseUrl(String bxcRecordBaseUrl) {
-        this.bxcRecordBaseUrl = bxcRecordBaseUrl;
     }
 
     public void setChompbConfig(ChompbConfigService.ChompbConfig chompbConfig) {
