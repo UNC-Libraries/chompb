@@ -25,16 +25,20 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
+import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.API_PATH;
+import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.RECORD_PATH;
+
 /**
  * Service which verifies the Box-c URLs in the post migration report and updates the verified field
  *
  * @author bbpennel
  */
 public class PostMigrationReportVerifier {
-    private String bxcApiBaseUrl;
-    private String bxcRecordBaseUrl;
     private MigrationProject project;
     private CloseableHttpClient httpClient;
+    private ChompbConfigService.ChompbConfig chompbConfig;
+    private String bxcApiBaseUrl;
+    private String bxcRecordBaseUrl;
     private boolean showProgress;
 
     public VerificationOutcome verify() throws IOException, URISyntaxException {
@@ -50,6 +54,9 @@ public class PostMigrationReportVerifier {
         ) {
             long currentNum = 0;
             updateProgressDisplay(currentNum, totalRecords);
+            var baseUrl = chompbConfig.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId()).getHttpBaseUrl();
+            bxcRecordBaseUrl = baseUrl + RECORD_PATH;
+            bxcApiBaseUrl = baseUrl + API_PATH;
 
             for (CSVRecord originalRecord : csvParser) {
                 var verified = originalRecord.get(PostMigrationReportConstants.VERIFIED_HEADER);
@@ -66,7 +73,7 @@ public class PostMigrationReportVerifier {
                 // add parent collection information
                 var parentCollInfo = getParentCollectionInfo(boxcUrl, outcome);
                 var parentCollId = parentCollInfo.get("id");
-                rowValues.add(formatId(parentCollId));
+                rowValues.add(formatParentCollUrl(parentCollId));
                 rowValues.add(parentCollInfo.get("name"));
 
                 // Write the row out into the new version of the report
@@ -138,7 +145,7 @@ public class PostMigrationReportVerifier {
         return parts[parts.length - 1];
     }
 
-    private String formatId(String id) {
+    private String formatParentCollUrl(String id) {
         if (id.isBlank()) {
             return "";
         }
@@ -194,6 +201,10 @@ public class PostMigrationReportVerifier {
 
     public void setBxcRecordBaseUrl(String bxcRecordBaseUrl) {
         this.bxcRecordBaseUrl = bxcRecordBaseUrl;
+    }
+
+    public void setChompbConfig(ChompbConfigService.ChompbConfig chompbConfig) {
+        this.chompbConfig = chompbConfig;
     }
 
     private static boolean isStatusAcceptable(String status) {

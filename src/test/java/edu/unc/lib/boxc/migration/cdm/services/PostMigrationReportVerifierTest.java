@@ -27,7 +27,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper.TEST_BASE_URL;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
+import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.API_PATH;
+import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.RECORD_PATH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,9 +47,7 @@ public class PostMigrationReportVerifierTest {
     private static final String CDM_URL_1 = "http://localhost/cdm/singleitem/collection/proj/id/25";
     private static final String CDM_URL_2 = "http://localhost/cdm/singleitem/collection/proj/id/26";
     private static final String PARENT_COLL_ID = "4fe5080f-41cd-4b1e-9cdd-71203c824cd0";
-    private static final String BXC_RECORD_BASE_URL = "https://example.com/bxc/";
-    private static final String BXC_API_BASE_URL = "https://example.com/api/";
-    private static final String PARENT_COLL_URL = BXC_RECORD_BASE_URL + PARENT_COLL_ID;
+    private static final String PARENT_COLL_URL = TEST_BASE_URL + RECORD_PATH + PARENT_COLL_ID;
     private static final String PARENT_COLL_TITLE = "Latin Studies Program";
     private static final String JSON = "{\"findingAidUrl\":\"https://finding-aids.lib.unc.edu/catalog/40489\"," +
             "\"viewerType\":\"clover\",\"canBulkDownload\":false,\"dataFileUrl\":\"content/6f4b5e38-754f-49ca-a4a0-6441fea95d76\"," +
@@ -81,8 +82,7 @@ public class PostMigrationReportVerifierTest {
         verifier = new PostMigrationReportVerifier();
         verifier.setProject(project);
         verifier.setHttpClient(httpClient);
-        verifier.setBxcRecordBaseUrl(BXC_RECORD_BASE_URL);
-        verifier.setBxcApiBaseUrl(BXC_API_BASE_URL);
+        verifier.setChompbConfig(testHelper.getChompbConfig());
     }
 
     @AfterEach
@@ -292,7 +292,7 @@ public class PostMigrationReportVerifierTest {
             var statusLine = mock(StatusLine.class);
             when(resp.getStatusLine()).thenReturn(statusLine);
 
-            if (requestUrl.contains(BXC_API_BASE_URL)) {
+            if (requestUrl.contains(API_PATH)) {
                 if (apiFailure) {
                     when(statusLine.getStatusCode()).thenReturn(HttpStatus.INTERNAL_SERVER_ERROR.value());
                     return resp;
