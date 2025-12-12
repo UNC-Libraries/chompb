@@ -54,6 +54,9 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
         stubFor(get(urlMatching("/bxc/record/.*"))
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.OK.value())));
+        stubFor(get(urlMatching("/bxc/api/.*"))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.OK.value())));
 
         generateSip();
 
@@ -85,8 +88,11 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void parentCollectionErrorsTest() throws Exception {
-        stubFor(get(urlMatching("/api/.*"))
+    public void parentCollectionErrorsTest() {
+        stubFor(get(urlMatching("/bxc/record/.*"))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.OK.value())));
+        stubFor(get(urlMatching("/bxc/api/.*"))
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.NOT_FOUND.value())));
 
