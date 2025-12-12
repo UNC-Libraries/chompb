@@ -34,6 +34,7 @@ public class VerifyPostMigrationCommand implements Callable<Integer> {
         verifier.setHttpClient(httpClient);
         verifier.setProject(project);
         verifier.setShowProgress(true);
+        verifier.setChompbConfig(parentCommand.getChompbConfig());
     }
 
     @Override
