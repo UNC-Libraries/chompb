@@ -1,19 +1,15 @@
 package edu.unc.lib.boxc.migration.cdm;
 
+import static java.nio.file.StandardOpenOption.APPEND;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.DepositField;
 import edu.unc.lib.boxc.deposit.impl.jms.DepositOperationMessage;
 import edu.unc.lib.boxc.deposit.impl.jms.DepositOperationMessageService;
-import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
-import edu.unc.lib.boxc.migration.cdm.services.AccessFileService;
-import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
-import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
-import edu.unc.lib.boxc.migration.cdm.services.DestinationsService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
-import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
-import edu.unc.lib.boxc.model.api.ids.PIDMinter;
-import edu.unc.lib.boxc.operations.impl.events.PremisLoggerFactoryImpl;
 import edu.unc.lib.boxc.persist.api.PackagingType;
 import jakarta.jms.Connection;
 import jakarta.jms.ConnectionFactory;
@@ -25,8 +21,6 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 
 import java.io.BufferedWriter;
 import java.net.URI;
@@ -34,11 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-
-import static java.nio.file.StandardOpenOption.APPEND;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author bbpennel

@@ -22,8 +22,6 @@ import org.springframework.jms.core.JmsTemplate;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParentCommand;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 
 /**
  * @author bbpennel
@@ -38,7 +36,6 @@ public class SubmitSipsCommand implements Callable<Integer> {
     private SipService sipService;
     private MigrationProject project;
     private SipSubmissionService submissionService;
-    private JedisPool jedisPool;
 
     @Mixin
     private SipSubmissionOptions options;
@@ -63,10 +60,6 @@ public class SubmitSipsCommand implements Callable<Integer> {
             log.error("Failed to submit SIPs", e);
             outputLogger.info("Failed to submit SIPs: {}", e.getMessage(), e);
             return 1;
-        } finally {
-            if (jedisPool != null) {
-                jedisPool.close();
-            }
         }
     }
 
@@ -88,11 +81,6 @@ public class SubmitSipsCommand implements Callable<Integer> {
 
         sipService = new SipService();
         sipService.setProject(project);
-
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxIdle(15);
-        jedisPoolConfig.setMaxTotal(25);
-        jedisPoolConfig.setMinIdle(2);
 
         DepositOperationMessageService depositOperationMessageService = getDepositOperationMessageService(options);
 

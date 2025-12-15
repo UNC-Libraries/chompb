@@ -16,7 +16,6 @@ import edu.unc.lib.boxc.deposit.api.DepositMethod;
 import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.Priority;
 import edu.unc.lib.boxc.deposit.api.exceptions.DepositException;
 import edu.unc.lib.boxc.deposit.api.submit.DepositData;
-import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.deposit.impl.submit.PreconstructedDepositHandler;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;

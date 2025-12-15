@@ -33,7 +33,7 @@ If there are updates to the box-c project which need to be pulled in for use in 
 ### Running tests
 The tests can be run in intellij or from the command line with `mvn test` or `mvn verify`.
 
-A few of the tests depend on Redis to be running externally. The preferred way to run Redis is to use the docker-compose file in the box-c project, see the readme in box-c for instructions. After building it the first time, you can start the Redis container directly in Docker Desktop.
+A few of the tests depend on Activemq to be running externally. The preferred way to run Activemq is to use the docker-compose file in the box-c project, see the readme in box-c for instructions. After building it the first time, you can start the Activemq container directly in Docker Desktop.
 
 ### Deploying
 In order to deploy the project to a server or the development VM, see the `deploy_migration_util.rb` command from the `boxc-ansible` project. You can deploy uncommitted changes to the utility by providing the `-p` option. For example, `./deploy_migration_util.rb dev -p /path/to/cdm-to-boxc-migration-util` would build and deploy the current state of the migration util located at the provided path.

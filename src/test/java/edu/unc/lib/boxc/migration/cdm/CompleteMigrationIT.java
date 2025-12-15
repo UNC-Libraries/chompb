@@ -1,5 +1,14 @@
 package edu.unc.lib.boxc.migration.cdm;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_URL;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import edu.unc.lib.boxc.deposit.api.RedisWorkerConstants.DepositField;
 import edu.unc.lib.boxc.deposit.impl.jms.DepositOperationMessage;
@@ -14,7 +23,9 @@ import edu.unc.lib.boxc.migration.cdm.test.TestSshServer;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.fcrepo.ids.PIDs;
 import edu.unc.lib.boxc.persist.api.PackagingType;
+import jakarta.jms.Connection;
 import jakarta.jms.ConnectionFactory;
+import jakarta.jms.Message;
 import jakarta.jms.MessageConsumer;
 import jakarta.jms.Queue;
 import jakarta.jms.Session;
@@ -27,17 +38,8 @@ import org.apache.jena.rdf.model.Resource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import jakarta.jms.Connection;
-import jakarta.jms.ConnectionFactory;
-import jakarta.jms.Message;
-import jakarta.jms.MessageConsumer;
-import jakarta.jms.Queue;
-import jakarta.jms.Session;
-import jakarta.jms.TextMessage;
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.io.IOException;
 import java.net.URI;
@@ -48,15 +50,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_TYPE;
-import static edu.unc.lib.boxc.migration.cdm.services.sips.WorkGenerator.STREAMING_URL;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test which runs a single collection through a full set of migration steps
@@ -439,15 +432,6 @@ public class CompleteMigrationIT extends AbstractCommandIT {
         Resource fileResc = testHelper.findChildByStagingLocation(workBag, stagingLoc);
         return PIDs.get(fileResc.getURI()).getId();
     }
-
-//    private void assertDepositStatusSet(MigrationSip sip) {
-//        Map<String, String> status = depositStatusFactory.get(sip.getDepositId());
-//        String sourceUri = status.get(DepositField.sourceUri.name());
-//        assertEquals(sip.getSipPath(), Paths.get(URI.create(sourceUri)));
-//        assertEquals(USERNAME + "@ad.unc.edu", status.get(DepositField.depositorEmail.name()));
-//        assertEquals("unc:onyen:theuser;my:admin:group", status.get(DepositField.permissionGroups.name()));
-//        assertEquals(PackagingType.BAG_WITH_N3.getUri(), status.get(DepositField.packagingType.name()));
-//    }
 
     private void setupJmsConsumer() throws Exception {
         if (connectionFactory == null) {
