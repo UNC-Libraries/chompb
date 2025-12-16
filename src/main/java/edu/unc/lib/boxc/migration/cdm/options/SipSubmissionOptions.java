@@ -29,18 +29,6 @@ public class SipSubmissionOptions {
             defaultValue = "${env:BOXC_GROUPS}" )
     private String groups;
 
-    @Option(names = { "--redis-host"},
-            description = { "Host for the Redis server.",
-                "Defaults to using the REDIS_HOST variable: ${DEFAULT-VALUE}" },
-            defaultValue = "${env:REDIS_HOST:-${sys:REDIS_HOST:-localhost}}")
-    private String redisHost;
-
-    @Option(names = { "--redis-port"},
-            description = { "Port for the Redis server.",
-                "Defaults to using the REDIS_PORT variable: ${DEFAULT-VALUE}" },
-            defaultValue = "${env:REDIS_PORT:-${sys:REDIS_PORT:-6379}}")
-    private int redisPort;
-
     @Option(names = { "--broker-url"},
             description = { "URL of the JMS broker to use for submitting to the deposit pipeline.",
                     "Defaults to using the BROKER_URL variable: ${DEFAULT-VALUE}" },
@@ -71,22 +59,6 @@ public class SipSubmissionOptions {
 
     public void setGroups(String groups) {
         this.groups = groups;
-    }
-
-    public String getRedisHost() {
-        return redisHost;
-    }
-
-    public void setRedisHost(String redisHost) {
-        this.redisHost = redisHost;
-    }
-
-    public int getRedisPort() {
-        return redisPort;
-    }
-
-    public void setRedisPort(int redisPort) {
-        this.redisPort = redisPort;
     }
 
     public String getBrokerUrl() {

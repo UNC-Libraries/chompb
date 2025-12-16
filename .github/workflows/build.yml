@@ -14,10 +14,6 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      redis:
-        image: redis:6
-        ports:
-          - 46380:6379
       activemq:
         image: apache/activemq-artemis:latest-alpine
         ports:

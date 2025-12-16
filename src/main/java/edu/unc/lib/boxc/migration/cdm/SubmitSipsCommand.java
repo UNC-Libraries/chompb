@@ -12,7 +12,6 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
-import edu.unc.lib.boxc.deposit.impl.model.DepositStatusFactory;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.SipSubmissionOptions;
@@ -23,8 +22,6 @@ import org.springframework.jms.core.JmsTemplate;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParentCommand;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 
 /**
  * @author bbpennel
@@ -39,7 +36,6 @@ public class SubmitSipsCommand implements Callable<Integer> {
     private SipService sipService;
     private MigrationProject project;
     private SipSubmissionService submissionService;
-    private JedisPool jedisPool;
 
     @Mixin
     private SipSubmissionOptions options;
@@ -64,22 +60,12 @@ public class SubmitSipsCommand implements Callable<Integer> {
             log.error("Failed to submit SIPs", e);
             outputLogger.info("Failed to submit SIPs: {}", e.getMessage(), e);
             return 1;
-        } finally {
-            if (jedisPool != null) {
-                jedisPool.close();
-            }
         }
     }
 
     private void validateOptions(SipSubmissionOptions options) {
         if (StringUtils.isBlank(options.getGroups())) {
             throw new IllegalArgumentException("Must provide one or more groups");
-        }
-        if (StringUtils.isBlank(options.getRedisHost())) {
-            throw new IllegalArgumentException("Must provide a Redis host URI");
-        }
-        if (options.getRedisPort() <= 0) {
-            throw new IllegalArgumentException("Must provide a valid Redis port number");
         }
         if (StringUtils.isBlank(options.getBrokerUrl())) {
             throw new IllegalArgumentException("Must provide a broker URL");
@@ -96,21 +82,11 @@ public class SubmitSipsCommand implements Callable<Integer> {
         sipService = new SipService();
         sipService.setProject(project);
 
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxIdle(15);
-        jedisPoolConfig.setMaxTotal(25);
-        jedisPoolConfig.setMinIdle(2);
-
-        jedisPool = new JedisPool(jedisPoolConfig, options.getRedisHost(), options.getRedisPort());
-        DepositStatusFactory depositStatusFactory = new DepositStatusFactory();
-        depositStatusFactory.setJedisPool(jedisPool);
-
         DepositOperationMessageService depositOperationMessageService = getDepositOperationMessageService(options);
 
         submissionService = new SipSubmissionService();
         submissionService.setProject(project);
         submissionService.setSipService(sipService);
-        submissionService.setDepositStatusFactory(depositStatusFactory);
         submissionService.setDepositOperationMessageService(depositOperationMessageService);
     }
 
