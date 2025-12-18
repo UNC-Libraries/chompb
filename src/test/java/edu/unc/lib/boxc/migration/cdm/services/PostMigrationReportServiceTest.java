@@ -87,7 +87,9 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "",
-                "1");
+                "1",
+                "",
+                "");
         assertContainsRow(rows, "25/original_file",
                 "http://localhost/cdm/singleitem/collection/proj/id/25",
                 "File",
@@ -98,6 +100,8 @@ public class PostMigrationReportServiceTest {
                 "",
                 BOXC_URL_1,
                 "Redoubt C",
+                "",
+                "",
                 "");
     }
 
@@ -124,7 +128,9 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "",
-                "1");
+                "1",
+                "",
+                "");
         assertContainsRow(rows, "25/original_file",
                 "http://localhost/cdm/singleitem/collection/proj/id/25",
                 "File",
@@ -135,6 +141,8 @@ public class PostMigrationReportServiceTest {
                 "",
                 BOXC_URL_1,
                 "Redoubt C",
+                "",
+                "",
                 "");
     }
 
@@ -163,7 +171,9 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "",
-                "2");
+                "2",
+                "",
+                "");
         assertContainsRow(rows, "26",
                 "http://localhost/cdm/singleitem/collection/proj/id/26",
                 "File",
@@ -174,6 +184,8 @@ public class PostMigrationReportServiceTest {
                 "",
                 BOXC_URL_1,
                 "Folder Group 1",
+                "",
+                "",
                 "");
         assertContainsRow(rows, "27",
                 "http://localhost/cdm/singleitem/collection/proj/id/27",
@@ -185,6 +197,8 @@ public class PostMigrationReportServiceTest {
                 "",
                 BOXC_URL_1,
                 "Folder Group 1",
+                "",
+                "",
                 "");
     }
 
@@ -214,7 +228,9 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "",
-                "2");
+                "2",
+                "",
+                "");
         assertContainsRow(rows, "602",
                 "http://localhost/cdm/singleitem/collection/proj/id/602",
                 "File",
@@ -225,6 +241,8 @@ public class PostMigrationReportServiceTest {
                 "",
                 BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
+                "",
+                "",
                 "");
         assertContainsRow(rows, "603",
                 "http://localhost/cdm/singleitem/collection/proj/id/603",
@@ -236,6 +254,8 @@ public class PostMigrationReportServiceTest {
                 "",
                 BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
+                "",
+                "",
                 "");
     }
 

@@ -1,5 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.util.DisplayProgressUtil;
@@ -7,17 +8,27 @@ import edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
+
+import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.API_PATH;
+import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.RECORD_PATH;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service which verifies the Box-c URLs in the post migration report and updates the verified field
@@ -25,11 +36,13 @@ import java.nio.file.StandardCopyOption;
  * @author bbpennel
  */
 public class PostMigrationReportVerifier {
+    private static final Logger log = getLogger(PostMigrationReportVerifier.class);
     private MigrationProject project;
     private CloseableHttpClient httpClient;
+    private ChompbConfigService.ChompbConfig chompbConfig;
     private boolean showProgress;
 
-    public VerificationOutcome verify() throws IOException {
+    public VerificationOutcome verify() throws IOException, URISyntaxException {
         validateReport();
 
         var outcome = new VerificationOutcome();
@@ -42,20 +55,30 @@ public class PostMigrationReportVerifier {
         ) {
             long currentNum = 0;
             updateProgressDisplay(currentNum, totalRecords);
+            var baseUrl = chompbConfig.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId()).getHttpBaseUrl();
 
             for (CSVRecord originalRecord : csvParser) {
                 var verified = originalRecord.get(PostMigrationReportConstants.VERIFIED_HEADER);
 
-                var rowValues = originalRecord.toList();
+                var rowValuesMap = originalRecord.toMap();
+                var boxcUrl = originalRecord.get(PostMigrationReportConstants.BXC_URL_HEADER);
                 // 'verified' field is empty or was not previously successful, so request the boxc url
                 if (!isStatusAcceptable(verified)) {
-                    var boxcUrl = originalRecord.get(PostMigrationReportConstants.BXC_URL_HEADER);
                     var result = requestHttpResult(boxcUrl);
                     outcome.recordResult(result);
-                    rowValues.set(PostMigrationReportConstants.VERIFIED_INDEX, result);
+                    rowValuesMap.put(PostMigrationReportConstants.VERIFIED_HEADER, result);
                 }
+
+                // add parent collection information
+                var parentCollInfo = getParentCollectionInfo(boxcUrl, outcome, baseUrl + API_PATH);
+                var parentCollId = parentCollInfo.get("id");
+                rowValuesMap.put(PostMigrationReportConstants.PARENT_COLL_URL_HEADER,
+                        formatParentCollUrl(parentCollId, baseUrl + RECORD_PATH));
+                rowValuesMap.put(PostMigrationReportConstants.PARENT_COLL_TITLE_HEADER, parentCollInfo.get("name"));
+
+
                 // Write the row out into the new version of the report
-                csvPrinter.printRecord(rowValues);
+                csvPrinter.printRecord(rowValuesMap.values());
 
                 currentNum++;
                 updateProgressDisplay(currentNum, totalRecords);
@@ -90,6 +113,41 @@ public class PostMigrationReportVerifier {
             }
             return HttpStatus.valueOf(status).name();
         }
+    }
+
+    private Map<String, String> getParentCollectionInfo(String bxcUrl, VerificationOutcome outcome, String bxcApiBaseUrl) throws IOException, URISyntaxException {
+        var map = new HashMap<String, String>();
+        var id = getId(bxcUrl);
+        var getRequest = new HttpGet(URI.create(bxcApiBaseUrl + id+ "/json"));
+        try (var resp = httpClient.execute(getRequest)) {
+            if (resp.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
+                map.put("id", "");
+                map.put("name", "");
+                outcome.recordParentCollError();
+                return map;
+            }
+            var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.UTF_8);
+            var mapper = new ObjectMapper();
+            var jsonNode = mapper.readTree(body);
+            map.put("id", jsonNode.get("briefObject").get("parentCollectionId").asText());
+            map.put("name", jsonNode.get("briefObject").get("parentCollectionName").asText());
+        }
+        return map;
+    }
+
+    private String getId(String url) throws URISyntaxException {
+        var uri = new URI(url);
+        String path = uri.getPath();
+
+        String[] parts = path.split("/");
+        return parts[parts.length - 1];
+    }
+
+    private String formatParentCollUrl(String id, String bxcRecordBaseUrl) {
+        if (id.isBlank()) {
+            return "";
+        }
+        return bxcRecordBaseUrl + id;
     }
 
     private CSVParser openCsvParser() throws IOException {
@@ -135,24 +193,33 @@ public class PostMigrationReportVerifier {
         this.showProgress = showProgress;
     }
 
+    public void setChompbConfig(ChompbConfigService.ChompbConfig chompbConfig) {
+        this.chompbConfig = chompbConfig;
+    }
+
     private static boolean isStatusAcceptable(String status) {
         return HttpStatus.OK.name().equals(status) || HttpStatus.FORBIDDEN.name().equals(status);
     }
 
     public static class VerificationOutcome {
-        public long errorCount = 0;
+        public long urlErrorCount = 0;
         public long verifiedCount = 0;
         public long totalRecords = 0;
+        public long parentCollErrorCount = 0;
 
         protected void recordResult(String result) {
             if (!isStatusAcceptable(result)) {
-                errorCount++;
+                urlErrorCount++;
             }
             verifiedCount++;
         }
 
+        protected void recordParentCollError() {
+            parentCollErrorCount++;
+        }
+
         public boolean hasErrors() {
-            return errorCount > 0;
+            return urlErrorCount > 0 || parentCollErrorCount > 0;
         }
     }
 }
