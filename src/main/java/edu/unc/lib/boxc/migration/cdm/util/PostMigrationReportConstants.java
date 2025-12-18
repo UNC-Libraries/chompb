@@ -14,7 +14,7 @@ public class PostMigrationReportConstants {
     public static final String PARENT_COLL_TITLE_HEADER = "parent_collection_title";
     public static final String RECORD_PATH = "record/";
     public static final String API_PATH = "api/" + RECORD_PATH;
-    public static final int VERIFIED_INDEX = 7;
+
     public static final String[] CSV_HEADERS = new String[] {
             "cdm_id", "cdm_url", "boxc_obj_type", "boxc_url", "boxc_title", "matching_value", "source_file",
             VERIFIED_HEADER, "boxc_parent_work_url", "boxc_parent_work_title", "children_count", PARENT_COLL_URL_HEADER,

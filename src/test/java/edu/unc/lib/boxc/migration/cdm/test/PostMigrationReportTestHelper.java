@@ -66,10 +66,11 @@ public class PostMigrationReportTestHelper {
     // Assert row matches all provided fields
     public static void assertContainsRow(List<List<String>> rows, String cdmId, String cdmUrl, String objType,
                                          String bxcUrl, String bxcTitle, String matchingValue, String sourceFile,
-                                         String verified, String parentUrl, String parentTitle, String childCount) {
+                                         String verified, String parentUrl, String parentTitle, String childCount,
+                                         String parentCollUrl, String parentCollTitle) {
         var found = rows.stream().filter(r -> r.get(0).equals(cdmId)).findFirst().orElse(null);
         assertNotNull(found, "Did not find row for CDM id " + cdmId + ", rows were:\n" + rows);
         assertEquals(Arrays.asList(cdmId, cdmUrl, objType, bxcUrl, bxcTitle, matchingValue, sourceFile, verified,
-                parentUrl, parentTitle, childCount), found);
+                parentUrl, parentTitle, childCount, parentCollUrl, parentCollTitle), found);
     }
 }

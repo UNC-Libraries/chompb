@@ -95,9 +95,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, null, null, "", "", 1);
+                null, null, null, "", "", 1, null, null);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, null, null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null, null, null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -142,9 +142,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, null, null, "", "", 1);
+                null, null, null, "", "", 1, null, null);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, null, null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null, null, null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -188,9 +188,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, null, HttpStatus.OK.name(), "", "", 1);
+                null, null, HttpStatus.OK.name(), "", "", 1, null, null);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, null, null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null, null, null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -234,9 +234,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, null, null, "", "", 1);
+                null, null, null, "", "", 1, null, null);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, null, null, BOXC_URL_1, "Redoubt C", null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null, null, null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
