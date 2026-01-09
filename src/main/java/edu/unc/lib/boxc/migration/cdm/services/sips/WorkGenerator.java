@@ -299,8 +299,4 @@ public class WorkGenerator {
             }
         }
     }
-
-    public void setSipId(String sipId) {
-        this.sipId = sipId;
-    }
 }
