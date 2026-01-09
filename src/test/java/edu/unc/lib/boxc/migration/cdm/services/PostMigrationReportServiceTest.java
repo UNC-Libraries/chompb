@@ -20,6 +20,7 @@ import java.time.Instant;
 
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.assertContainsRow;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
+import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.SIP_ID;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -72,8 +73,8 @@ public class PostMigrationReportServiceTest {
         writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
-        service.addWorkRow("25", BOXC_ID_1, 1, true);
-        service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true);
+        service.addWorkRow("25", BOXC_ID_1, 1, true, SIP_ID);
+        service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true, SIP_ID);
         service.closeCsv();
 
         var rows = parseReport(project);
@@ -88,6 +89,7 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "1",
+                SIP_ID,
                 "",
                 "");
         assertContainsRow(rows, "25/original_file",
@@ -101,6 +103,7 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_1,
                 "Redoubt C",
                 "",
+                SIP_ID,
                 "",
                 "");
     }
@@ -113,8 +116,8 @@ public class PostMigrationReportServiceTest {
         writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
         testHelper.populateDescriptions("gilmer_mods1.xml", "gilmer_mods_children.xml");
 
-        service.addWorkRow("25", BOXC_ID_1, 1, true);
-        service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true);
+        service.addWorkRow("25", BOXC_ID_1, 1, true, SIP_ID);
+        service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true, SIP_ID);
         service.closeCsv();
 
         var rows = parseReport(project);
@@ -129,6 +132,7 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "1",
+                SIP_ID,
                 "",
                 "");
         assertContainsRow(rows, "25/original_file",
@@ -142,6 +146,7 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_1,
                 "Redoubt C",
                 "",
+                SIP_ID,
                 "",
                 "");
     }
@@ -155,9 +160,9 @@ public class PostMigrationReportServiceTest {
         writeSourceFileCsv(mappingBody("26,," + srcPath1 +",", "27,," + srcPath2 +","));
         testHelper.populateDescriptions("grouped_mods.xml");
 
-        service.addWorkRow("grp:groupa:group1", BOXC_ID_1, 2, false);
-        service.addFileRow("26", "grp:groupa:group1", BOXC_ID_1, BOXC_ID_2, false);
-        service.addFileRow("27", "grp:groupa:group1", BOXC_ID_1, BOXC_ID_3, false);
+        service.addWorkRow("grp:groupa:group1", BOXC_ID_1, 2, false, SIP_ID);
+        service.addFileRow("26", "grp:groupa:group1", BOXC_ID_1, BOXC_ID_2, false, SIP_ID);
+        service.addFileRow("27", "grp:groupa:group1", BOXC_ID_1, BOXC_ID_3, false, SIP_ID);
         service.closeCsv();
 
         var rows = parseReport(project);
@@ -172,6 +177,7 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "2",
+                SIP_ID,
                 "",
                 "");
         assertContainsRow(rows, "26",
@@ -185,6 +191,7 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_1,
                 "Folder Group 1",
                 "",
+                SIP_ID,
                 "",
                 "");
         assertContainsRow(rows, "27",
@@ -198,6 +205,7 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_1,
                 "Folder Group 1",
                 "",
+                SIP_ID,
                 "",
                 "");
     }
@@ -212,9 +220,9 @@ public class PostMigrationReportServiceTest {
         descriptionsService.generateDocuments(true);
         descriptionsService.expandDescriptions();
 
-        service.addWorkRow("605", BOXC_ID_1, 2, false);
-        service.addFileRow("602", "605", BOXC_ID_1, BOXC_ID_2, false);
-        service.addFileRow("603", "605", BOXC_ID_1, BOXC_ID_3, false);
+        service.addWorkRow("605", BOXC_ID_1, 2, false, SIP_ID);
+        service.addFileRow("602", "605", BOXC_ID_1, BOXC_ID_2, false, SIP_ID);
+        service.addFileRow("603", "605", BOXC_ID_1, BOXC_ID_3, false, SIP_ID);
         service.closeCsv();
 
         var rows = parseReport(project);
@@ -229,6 +237,7 @@ public class PostMigrationReportServiceTest {
                 "",
                 "",
                 "2",
+                SIP_ID,
                 "",
                 "");
         assertContainsRow(rows, "602",
@@ -242,6 +251,7 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
                 "",
+                SIP_ID,
                 "",
                 "");
         assertContainsRow(rows, "603",
@@ -255,6 +265,7 @@ public class PostMigrationReportServiceTest {
                 BOXC_URL_1,
                 "Tiffany's pillbox commemorating UNC's bicentennial (closed, in box)",
                 "",
+                SIP_ID,
                 "",
                 "");
     }
@@ -272,8 +283,8 @@ public class PostMigrationReportServiceTest {
         writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
-        service.addWorkRow("25", BOXC_ID_1, 1, true);
-        service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true);
+        service.addWorkRow("25", BOXC_ID_1, 1, true, SIP_ID);
+        service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true, SIP_ID);
         service.closeCsv();
 
         assertFalse(Files.exists(project.getPostMigrationReportPath()));

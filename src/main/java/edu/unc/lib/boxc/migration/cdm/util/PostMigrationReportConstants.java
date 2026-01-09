@@ -12,13 +12,14 @@ public class PostMigrationReportConstants {
     public static final String VERIFIED_HEADER = "verified";
     public static final String PARENT_COLL_URL_HEADER = "parent_collection_url";
     public static final String PARENT_COLL_TITLE_HEADER = "parent_collection_title";
+    public static final String SIP_ID = "sip_id";
     public static final String RECORD_PATH = "record/";
     public static final String API_PATH = "api/" + RECORD_PATH;
 
     public static final String[] CSV_HEADERS = new String[] {
             "cdm_id", "cdm_url", "boxc_obj_type", "boxc_url", "boxc_title", "matching_value", "source_file",
-            VERIFIED_HEADER, "boxc_parent_work_url", "boxc_parent_work_title", "children_count", PARENT_COLL_URL_HEADER,
-            PARENT_COLL_TITLE_HEADER };
+            VERIFIED_HEADER, "boxc_parent_work_url", "boxc_parent_work_title", "children_count",
+            SIP_ID, PARENT_COLL_URL_HEADER, PARENT_COLL_TITLE_HEADER };
     public static final CSVFormat CSV_OUTPUT_FORMAT = CSVFormat.Builder.create()
             .setHeader(CSV_HEADERS)
             .get();

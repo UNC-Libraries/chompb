@@ -33,6 +33,7 @@ import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.PARENT_COLL_URL;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
 import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.API_PATH;
+import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.SIP_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -95,9 +96,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, null, null, "", "", 1, null, null);
+                null, null, null, "", "", 1, SIP_ID, null,null);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, null, null, BOXC_URL_1, "Redoubt C", null, null, null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null, SIP_ID, null,null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -118,6 +119,7 @@ public class PostMigrationReportVerifierTest {
                 "",
                 "",
                 "1",
+                SIP_ID,
                 PARENT_COLL_URL,
                 PARENT_COLL_TITLE);
         assertRowContainsAllInfo(rows, "26",
@@ -131,6 +133,7 @@ public class PostMigrationReportVerifierTest {
                 BOXC_URL_1,
                 "Redoubt C",
                 "",
+                SIP_ID,
                 PARENT_COLL_URL,
                 PARENT_COLL_TITLE);
     }
@@ -142,9 +145,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, null, null, "", "", 1, null, null);
+                null, null, null, "", "", 1, SIP_ID, null,null);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, null, null, BOXC_URL_1, "Redoubt C", null, null, null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null, SIP_ID, null,null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -165,6 +168,7 @@ public class PostMigrationReportVerifierTest {
                 "",
                 "",
                 "1",
+                SIP_ID,
                 PARENT_COLL_URL,
                 PARENT_COLL_TITLE);
         assertRowContainsAllInfo(rows, "26",
@@ -178,6 +182,7 @@ public class PostMigrationReportVerifierTest {
                 BOXC_URL_1,
                 "Redoubt C",
                 "",
+                SIP_ID,
                 PARENT_COLL_URL,
                 PARENT_COLL_TITLE);
     }
@@ -188,9 +193,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, null, HttpStatus.OK.name(), "", "", 1, null, null);
+                null, null, HttpStatus.OK.name(), "", "", 1, SIP_ID, null,null);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, null, null, BOXC_URL_1, "Redoubt C", null, null, null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null, SIP_ID, null,null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -211,6 +216,7 @@ public class PostMigrationReportVerifierTest {
                 "",
                 "",
                 "1",
+                SIP_ID,
                 PARENT_COLL_URL,
                 PARENT_COLL_TITLE);
         assertRowContainsAllInfo(rows, "26",
@@ -224,6 +230,7 @@ public class PostMigrationReportVerifierTest {
                 BOXC_URL_1,
                 "Redoubt C",
                 "",
+                SIP_ID,
                 PARENT_COLL_URL,
                 PARENT_COLL_TITLE);
     }
@@ -234,9 +241,9 @@ public class PostMigrationReportVerifierTest {
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
-                null, null, null, "", "", 1, null, null);
+                null, null, null, "", "", 1, SIP_ID, null,null);
         reportGenerator.addRow("26", CDM_URL_2, "File", BOXC_URL_2, "A file",
-                null, null, null, BOXC_URL_1, "Redoubt C", null, null, null);
+                null, null, null, BOXC_URL_1, "Redoubt C", null, SIP_ID, null,null);
         reportGenerator.closeCsv();
 
         var outcome = verifier.verify();
@@ -257,6 +264,7 @@ public class PostMigrationReportVerifierTest {
                 "",
                 "",
                 "1",
+                SIP_ID,
                 "",
                 "");
         assertRowContainsAllInfo(rows, "26",
@@ -270,6 +278,7 @@ public class PostMigrationReportVerifierTest {
                 BOXC_URL_1,
                 "Redoubt C",
                 "",
+                SIP_ID,
                 "",
                 "");
     }
@@ -300,10 +309,10 @@ public class PostMigrationReportVerifierTest {
     public static void assertRowContainsAllInfo(List<List<String>> rows, String cdmId, String cdmUrl, String objType,
                                          String bxcUrl, String bxcTitle, String matchingValue, String sourceFile,
                                          String verified, String parentUrl, String parentTitle, String childCount,
-                                         String parentCollUrl, String parentCollTitle) {
+                                         String sipId, String parentCollUrl, String parentCollTitle) {
         var found = rows.stream().filter(r -> r.getFirst().equals(cdmId)).findFirst().orElse(null);
         assertNotNull(found, "Did not find row for CDM id " + cdmId + ", rows were:\n" + rows);
         assertEquals(Arrays.asList(cdmId, cdmUrl, objType, bxcUrl, bxcTitle, matchingValue, sourceFile, verified,
-                parentUrl, parentTitle, childCount, parentCollUrl, parentCollTitle), found);
+                parentUrl, parentTitle, childCount, sipId, parentCollUrl, parentCollTitle), found);
     }
 }

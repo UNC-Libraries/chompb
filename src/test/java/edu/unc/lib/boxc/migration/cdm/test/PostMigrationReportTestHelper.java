@@ -25,6 +25,7 @@ public class PostMigrationReportTestHelper {
     public static final String PARENT_COLL_ID = "4fe5080f-41cd-4b1e-9cdd-71203c824cd0";
     public static final String PARENT_COLL_URL = TEST_BASE_URL + RECORD_PATH + PARENT_COLL_ID;
     public static final String PARENT_COLL_TITLE = "Latin Studies Program";
+    private static final String SIP_ID = "6f4b5e38-754f-49ca-a4a0-6441fea95d76";
     public static final String JSON = "{\"findingAidUrl\":\"https://finding-aids.lib.unc.edu/catalog/40489\"," +
             "\"viewerType\":\"clover\",\"canBulkDownload\":false,\"dataFileUrl\":\"content/6f4b5e38-754f-49ca-a4a0-6441fea95d76\"," +
             "\"markedForDeletion\":false,\"pageSubtitle\":\"TEST.jpg\",\"briefObject\":{\"added\":\"2018-05-24T20:39:18.165Z\"," +
@@ -67,10 +68,10 @@ public class PostMigrationReportTestHelper {
     public static void assertContainsRow(List<List<String>> rows, String cdmId, String cdmUrl, String objType,
                                          String bxcUrl, String bxcTitle, String matchingValue, String sourceFile,
                                          String verified, String parentUrl, String parentTitle, String childCount,
-                                         String parentCollUrl, String parentCollTitle) {
+                                         String sipId, String parentCollUrl, String parentCollTitle ) {
         var found = rows.stream().filter(r -> r.get(0).equals(cdmId)).findFirst().orElse(null);
         assertNotNull(found, "Did not find row for CDM id " + cdmId + ", rows were:\n" + rows);
         assertEquals(Arrays.asList(cdmId, cdmUrl, objType, bxcUrl, bxcTitle, matchingValue, sourceFile, verified,
-                parentUrl, parentTitle, childCount, parentCollUrl, parentCollTitle), found);
+                parentUrl, parentTitle, childCount, sipId, parentCollUrl, parentCollTitle), found);
     }
 }

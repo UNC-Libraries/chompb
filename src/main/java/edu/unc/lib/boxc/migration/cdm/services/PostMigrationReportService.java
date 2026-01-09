@@ -109,7 +109,7 @@ public class PostMigrationReportService {
      * @param isSingleItem whether this work is a CDM single item type
      * @throws IOException
      */
-    public void addWorkRow(String cdmObjectId, String boxcWorkId, int childCount, boolean isSingleItem)
+    public void addWorkRow(String cdmObjectId, String boxcWorkId, int childCount, boolean isSingleItem, String sipId)
             throws IOException {
         if (!enabled) {
             return;
@@ -129,7 +129,7 @@ public class PostMigrationReportService {
         }
 
         addRow(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
-                null, parentUrl, parentTitle, childCount, null, null);
+                null, parentUrl, parentTitle, childCount, sipId, null, null);
     }
 
     /**
@@ -142,7 +142,7 @@ public class PostMigrationReportService {
      * @throws IOException
      */
     public void addFileRow(String fileCdmId, String parentCdmId, String boxcWorkId, String boxcFileId,
-                           boolean isSingleItem)
+                           boolean isSingleItem, String sipId)
             throws IOException {
         if (!enabled) {
             return;
@@ -165,14 +165,14 @@ public class PostMigrationReportService {
         }
 
         addRow(fileCdmId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
-                null, parentUrl, parentTitle, null, null, null);
+                null, parentUrl, parentTitle, null, sipId, null, null);
     }
 
     protected void addRow(String cdmId, String cdmUrl, String objType, String boxcUrl, String boxcTitle,
                           String matchingValue, String sourceFile, String verified, String parentUrl,
-                          String parentTitle, Integer childCount, String parentCollUrl, String parentCollTitle) throws IOException {
+                          String parentTitle, Integer childCount, String sipId, String parentCollUrl, String parentCollTitle) throws IOException {
         csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
-                verified, parentUrl, parentTitle, childCount, parentCollUrl, parentCollTitle);
+                verified, parentUrl, parentTitle, childCount, sipId, parentCollUrl, parentCollTitle);
     }
 
     private String buildCdmUrl(String cdmObjectId, boolean isWorkObject, boolean isSingleItem) {
