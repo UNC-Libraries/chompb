@@ -82,7 +82,7 @@ public class WorkGenerator {
 
     protected String cdmId;
     protected String cdmCreated;
-
+    protected String sipId;
     protected PID workPid;
     protected Bag workBag;
     protected List<PID> fileObjPids;
@@ -119,9 +119,10 @@ public class WorkGenerator {
 
         // Copy description to SIP
         copyDescriptionToSip(workPid, expDescPath);
+        sipId = destEntry.getDepositPid().getId();
 
         fileObjPids = addChildObjects();
-        postMigrationReportService.addWorkRow(cdmId, workPid.getId(), fileObjPids.size(), isSingleItem());
+        postMigrationReportService.addWorkRow(cdmId, workPid.getId(), fileObjPids.size(), isSingleItem(), sipId);
     }
 
     protected List<PID> addChildObjects() throws IOException {
@@ -130,7 +131,7 @@ public class WorkGenerator {
         // in a single file object, the cdm id refers to the new work, so add suffix to reference the child file
         addChildDescription(cdmId + "/original_file", fileObjectPid);
         postMigrationReportService.addFileRow(cdmId + "/original_file", cdmId, workPid.getId(),
-                fileObjectPid.getId(), isSingleItem());
+                fileObjectPid.getId(), isSingleItem(), sipId);
         return Collections.singletonList(fileObjectPid);
     }
 

@@ -51,7 +51,7 @@ public class MultiFileWorkGenerator extends WorkGenerator {
                 PID filePid = addFileObject(fileCdmId, cdmCreated, sourceMapping);
                 addChildDescription(fileCdmId, filePid);
                 postMigrationReportService.addFileRow(fileCdmId, cdmId, workPid.getId(),
-                        filePid.getId(), isSingleItem());
+                        filePid.getId(), isSingleItem(), sipId);
 
                 childPids.add(filePid);
             }
