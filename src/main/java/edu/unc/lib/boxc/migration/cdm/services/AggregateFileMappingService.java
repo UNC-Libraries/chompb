@@ -42,9 +42,10 @@ public class AggregateFileMappingService extends SourceFileService {
             selectStatement = "select " + CdmFieldInfo.CDM_ID + ", " + options.getExportField();
         }
         return selectStatement
-                + " from " + CdmIndexService.TB_NAME
-                + " where " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
-                + " or " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'";
+                + " from " + CdmIndexService.TB_NAME + " where " +
+                ENTRY_TYPE_FIELD + " = '" +CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                + " or " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                + " or " + ENTRY_TYPE_FIELD + " is NULL";
     }
 
     @Override

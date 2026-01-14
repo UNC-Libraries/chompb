@@ -176,19 +176,29 @@ public class AggregateFileMappingServiceTest {
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "604", "617.cpd", aggrPath1);
         assertMappingPresent(info, "607", "620.cpd", aggrPath2);
-        assertEquals(2, info.getMappings().size());
+        // single file object that does not match the pattern
+        assertNoMatchingSourceFile(info, "216", "229.jp2");
+        assertEquals(3, info.getMappings().size());
     }
 
     @Test
-    public void generateNoMatchableObjectsTest() throws Exception {
-        // Doesn't contain any compounds and no grouping
+    public void generateOnlyMatchableObjectsTest() throws Exception {
+        // Single File Objects
         testHelper.indexExportData("mini_gilmer");
+        Path aggrPath1 = testHelper.addSourceFile("26.pdf");
+        var path = project.getProjectPath();
 
         var options = makeDefaultOptions();
+        options.setExportField("find");
+        options.setFieldMatchingPattern("([^.]+)\\.JP2");
         service.generateMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
-        assertTrue(info.getMappings().isEmpty());
+        assertFalse(info.getMappings().isEmpty());
+        assertMappingPresent(info, "25", "26.JP2", aggrPath1);
+        assertNoMatchingSourceFile(info, "26", "27.JP2");
+        assertNoMatchingSourceFile(info, "27", "50.jp2");
+        assertEquals(3, info.getMappings().size());
     }
 
     @Test
@@ -260,5 +270,14 @@ public class AggregateFileMappingServiceTest {
             assertTrue(mapping.getPotentialMatches().contains(potentialPath.toString()),
                     "Mapping did not contain expected potential path: " + potentialPath);
         }
+    }
+
+    private void assertNoMatchingSourceFile(SourceFilesInfo info, String cdmid, String matchingVal) {
+        List<SourceFilesInfo.SourceFileMapping> mappings = info.getMappings();
+        SourceFilesInfo.SourceFileMapping mapping = mappings.stream().filter(m -> m.getCdmId().equals(cdmid)).findFirst().get();
+
+        assertNull(mapping.getSourcePaths());
+        assertEquals(matchingVal, mapping.getMatchingValue());
+        assertNull(mapping.getPotentialMatches());
     }
 }
