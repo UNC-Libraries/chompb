@@ -104,11 +104,13 @@ public class StreamingMetadataService {
                     + " from " + CdmIndexService.TB_NAME
                     + " where " + CdmFieldInfo.CDM_ID + " = '" + cdmId + "'");
             while (rs.next()) {
-                if (!rs.getString(1).isEmpty()) {
-                    streamingFile = rs.getString(1);
+                final String streamingVal = rs.getString(1);
+                if (streamingVal != null && !streamingVal.isEmpty()) {
+                    streamingFile = streamingVal;
                 }
-                if (!rs.getString(2).isEmpty()) {
-                    duracloudSpace = rs.getString(2);
+                final String duracloudVal = rs.getString(2);
+                if (duracloudVal != null && !duracloudVal.isEmpty()) {
+                    duracloudSpace = duracloudVal;
                 }
             }
         } catch (SQLException e) {
