@@ -68,8 +68,11 @@ public class AggregateFileMappingServiceTest {
         service.generateMapping(options);
 
         SourceFilesInfo info = service.loadMappings();
-        assertMappingPresent(info, "grp:groupa:group1", "group1", null);
-        assertEquals(1, info.getMappings().size());
+        assertNoMatchingSourceFile(info, "grp:groupa:group1", "group1");
+        assertNoMatchingSourceFile(info, "27", "group2");
+        assertNoMatchingSourceFile(info, "28", "group11");
+        assertNoMatchingSourceFile(info, "29", "");
+        assertEquals(4, info.getMappings().size());
     }
 
     @Test
@@ -87,7 +90,10 @@ public class AggregateFileMappingServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "grp:groupa:group1", "group1", aggrPath1);
-        assertEquals(1, info.getMappings().size());
+        assertNoMatchingSourceFile(info, "27", "group2");
+        assertNoMatchingSourceFile(info, "28", "group11");
+        assertNoMatchingSourceFile(info, "29", "");
+        assertEquals(4, info.getMappings().size());
     }
 
     @Test
@@ -102,7 +108,10 @@ public class AggregateFileMappingServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresentWithPotentials(info, "grp:groupa:group1", "group1", aggrPath1, aggrPath2);
-        assertEquals(1, info.getMappings().size());
+        assertNoMatchingSourceFile(info, "27", "group2");
+        assertNoMatchingSourceFile(info, "28", "group11");
+        assertNoMatchingSourceFile(info, "29", "");
+        assertEquals(4, info.getMappings().size());
     }
 
     @Test
@@ -119,7 +128,10 @@ public class AggregateFileMappingServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "grp:groupa:group1", "group1", aggrPath1);
-        assertEquals(1, info.getMappings().size());
+        assertNoMatchingSourceFile(info, "27", "group2");
+        assertNoMatchingSourceFile(info, "28", "group11");
+        assertNoMatchingSourceFile(info, "29", "");
+        assertEquals(4, info.getMappings().size());
     }
 
     @Test
@@ -138,7 +150,10 @@ public class AggregateFileMappingServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "grp:groupa:group1", "group1", aggrPath1, aggrPath2);
-        assertEquals(1, info.getMappings().size());
+        assertNoMatchingSourceFile(info, "27", "group2");
+        assertNoMatchingSourceFile(info, "28", "group11");
+        assertNoMatchingSourceFile(info, "29", "");
+        assertEquals(4, info.getMappings().size());
     }
 
     @Test
@@ -159,7 +174,10 @@ public class AggregateFileMappingServiceTest {
         SourceFilesInfo info = service.loadMappings();
         // Only the new path should be retained with force flag
         assertMappingPresent(info, "grp:groupa:group1", "group1", aggrPath2);
-        assertEquals(1, info.getMappings().size());
+        assertNoMatchingSourceFile(info, "27", "group2");
+        assertNoMatchingSourceFile(info, "28", "group11");
+        assertNoMatchingSourceFile(info, "29", "");
+        assertEquals(4, info.getMappings().size());
     }
 
     @Test
@@ -182,7 +200,7 @@ public class AggregateFileMappingServiceTest {
     }
 
     @Test
-    public void generateOnlyMatchableObjectsTest() throws Exception {
+    public void generateSingleFileMatchableObjectsTest() throws Exception {
         // Single File Objects
         testHelper.indexExportData("mini_gilmer");
         Path aggrPath1 = testHelper.addSourceFile("26.pdf");
@@ -217,12 +235,15 @@ public class AggregateFileMappingServiceTest {
 
         SourceFilesInfo info = service.loadMappings();
         assertMappingPresent(info, "grp:groupa:group1", "group1", aggrPath1);
-        assertEquals(1, info.getMappings().size());
+        assertNoMatchingSourceFile(info, "27", "group2");
+        assertNoMatchingSourceFile(info, "28", "group11");
+        assertNoMatchingSourceFile(info, "29", "");
+        assertEquals(4, info.getMappings().size());
     }
 
     private void setupGroupedIndex() throws Exception {
         var options = new GroupMappingOptions();
-        options.setGroupFields(Arrays.asList("groupa"));
+        options.setGroupFields(List.of("groupa"));
         testHelper.getGroupMappingService().generateMapping(options);
         var syncOptions = new GroupMappingSyncOptions();
         syncOptions.setSortField("file");

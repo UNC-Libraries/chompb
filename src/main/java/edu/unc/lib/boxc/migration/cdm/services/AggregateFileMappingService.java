@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.services.IndexService.PARENT_ID_FIELD;
 
 /**
  * Service which allows mapping of aggregate files like PDFs or TXTs to multi-file works
@@ -45,7 +46,7 @@ public class AggregateFileMappingService extends SourceFileService {
                 + " from " + CdmIndexService.TB_NAME + " where " +
                 ENTRY_TYPE_FIELD + " = '" +CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
                 + " or " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
-                + " or " + ENTRY_TYPE_FIELD + " is NULL";
+                + " or (" + PARENT_ID_FIELD + " is NULL and " +  ENTRY_TYPE_FIELD + " is NULL)";
     }
 
     @Override
