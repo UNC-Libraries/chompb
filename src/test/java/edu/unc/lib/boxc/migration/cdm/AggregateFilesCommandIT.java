@@ -200,9 +200,10 @@ public class AggregateFilesCommandIT extends AbstractCommandIT {
                 "aggregate_files", "validate",
                 "--sort-bottom" };
         executeExpectFailure(args);
+        var output = getOutput();
 
         assertOutputContains("FAIL: Bottom aggregate file mappings at path " + project.getAggregateBottomMappingPath() + " is invalid due to the following issues");
-        assertOutputContains("- Invalid path at line 3, file does not exist");
+        assertOutputContains("- Invalid path at line 4, file does not exist");
     }
 
     private List<String> argsGenerate(String field) {
