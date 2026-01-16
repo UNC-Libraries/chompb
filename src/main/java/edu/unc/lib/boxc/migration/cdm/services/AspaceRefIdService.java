@@ -155,8 +155,12 @@ public class AspaceRefIdService {
             while (rs.next()) {
                 // if dmrecord, descri, and contri fields are not blank,
                 // add dmrecord and descri_contri (hook id when combined) to map
-                if (!rs.getString(1).isBlank() && !rs.getString(2).isBlank() && !rs.getString(3).isBlank()) {
-                    idsAndHookIds.put(rs.getString(1), rs.getString(2) + "_" + rs.getString(3));
+                var dmrecord = rs.getString(1);
+                var descri = rs.getString(2);
+                var contri = rs.getString(3);
+                if (!dmrecord.isBlank() && !descri.isBlank() && !contri.isBlank()) {
+                    // remove -v from descri for matching purposes
+                    idsAndHookIds.put(dmrecord, descri.replace("-z", "") + "_" + contri);
                 }
             }
             return idsAndHookIds;
