@@ -21,6 +21,8 @@ public class BxcEnvironment {
     private Path boxctronRemoteJobScriptsPath;
     private Path hookIdRefIdMapPath;
     private String eadToCdmUrl;
+    private String eadToCdmUsername;
+    private String eadToCdmPassword;
 
     public String getHttpBaseUrl() {
         return httpBaseUrl;
@@ -116,5 +118,21 @@ public class BxcEnvironment {
 
     public void setEadToCdmUrl(String eadToCdmUrl) {
         this.eadToCdmUrl = eadToCdmUrl;
+    }
+
+    public String getEadToCdmUsername() {
+        return eadToCdmUsername;
+    }
+
+    public void setEadToCdmUsername(String eadToCdmUsername) {
+        this.eadToCdmUsername = eadToCdmUsername;
+    }
+
+    public String getEadToCdmPassword() {
+        return eadToCdmPassword;
+    }
+
+    public void setEadToCdmPassword(String eadToCdmPassword) {
+        this.eadToCdmPassword = eadToCdmPassword;
     }
 }
