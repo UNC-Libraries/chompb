@@ -32,6 +32,8 @@ public class BxcEnvironmentHelper {
         testEnv.setHttpBaseUrl(TEST_BASE_URL);
         testEnv.setSolrServerUrl(TEST_SOLR_URL);
         testEnv.setEadToCdmUrl(EAD_TO_CDM_BASE_URL);
+        testEnv.setEadToCdmUsername("user");
+        testEnv.setEadToCdmPassword("password");
         return testEnv;
     }
 }
