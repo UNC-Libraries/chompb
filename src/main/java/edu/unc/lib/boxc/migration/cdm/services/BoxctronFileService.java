@@ -16,7 +16,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +40,7 @@ public class BoxctronFileService extends AccessFileService {
             PREDICTED_CONF, BOUNDING_BOX, EXTENDED_BOX};
     public static final String[] EXCUSIONS_CSV_HEADERS = new String[] {ORIGINAL_PATH, PREDICTED_CLASS, CORRECTED_CLASS};
 
-    public BoxctronFileService() {}
+    public BoxctronFileService() { }
 
     /**
      * Generate the boxctron source file mapping

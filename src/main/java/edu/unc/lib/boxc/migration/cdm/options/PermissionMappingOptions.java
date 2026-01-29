@@ -3,6 +3,10 @@ package edu.unc.lib.boxc.migration.cdm.options;
 import edu.unc.lib.boxc.auth.api.UserRole;
 import picocli.CommandLine.Option;
 
+/**
+ * Permission mapping options
+ * @author krwong
+ */
 public class PermissionMappingOptions {
     @Option(names = {"-wd", "--with-default"},
             description = "Add 'default' entry to CSV mapping, 'id' field set to 'default")

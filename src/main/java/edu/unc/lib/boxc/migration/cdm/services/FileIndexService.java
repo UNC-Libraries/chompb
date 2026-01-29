@@ -49,6 +49,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.UNIT_TITLE;
 
 /**
  * Service for populating the index of a CDM project via a file (CSV or EAD to CDM TSV)
+ * @author snluong
  */
 public class FileIndexService extends IndexService {
     private String source;
@@ -136,14 +137,16 @@ public class FileIndexService extends IndexService {
                 var filename = tsvRecord.get(FILENAME);
                 var cdmId = filenameToIdMap.get(filename);
                 if (cdmId == null) {
-                    throw new IllegalArgumentException("No CDM ID found for EAD to CDM record for filename: " + filename);
+                    throw new IllegalArgumentException("No CDM ID found for EAD to CDM record for filename: "
+                            + filename);
                 }
                 tsvPrinter.printRecord(tsvRecord.get(COLLECTION_NAME), tsvRecord.get(COLLECTION_NUMBER),
-                        tsvRecord.get(LOC_IN_COLLECTION), tsvRecord.get(CITATION), filename, tsvRecord.get(OBJ_FILENAME),
-                        tsvRecord.get(CONTAINER_TYPE), tsvRecord.get(HOOK_ID), tsvRecord.get(OBJECT),
-                        tsvRecord.get(COLLECTION_URL), tsvRecord.get(GENRE_FORM), tsvRecord.get(EXTENT),
-                        tsvRecord.get(UNIT_DATE), tsvRecord.get(GEOGRAPHIC_NAME),tsvRecord.get(REF_ID), tsvRecord.get(PROCESS_INFO),
-                        tsvRecord.get(SCOPE_CONTENT), tsvRecord.get(UNIT_TITLE), tsvRecord.get(CONTAINER), cdmId);
+                        tsvRecord.get(LOC_IN_COLLECTION), tsvRecord.get(CITATION), filename,
+                        tsvRecord.get(OBJ_FILENAME), tsvRecord.get(CONTAINER_TYPE), tsvRecord.get(HOOK_ID),
+                        tsvRecord.get(OBJECT), tsvRecord.get(COLLECTION_URL), tsvRecord.get(GENRE_FORM),
+                        tsvRecord.get(EXTENT), tsvRecord.get(UNIT_DATE), tsvRecord.get(GEOGRAPHIC_NAME),
+                        tsvRecord.get(REF_ID), tsvRecord.get(PROCESS_INFO), tsvRecord.get(SCOPE_CONTENT),
+                        tsvRecord.get(UNIT_TITLE), tsvRecord.get(CONTAINER), cdmId);
             }
             return eadToCdmWithIdPath;
         } catch (IOException e) {

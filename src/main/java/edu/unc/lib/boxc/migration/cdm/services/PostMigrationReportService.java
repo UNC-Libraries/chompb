@@ -170,7 +170,8 @@ public class PostMigrationReportService {
 
     protected void addRow(String cdmId, String cdmUrl, String objType, String boxcUrl, String boxcTitle,
                           String matchingValue, String sourceFile, String verified, String parentUrl,
-                          String parentTitle, Integer childCount, String sipId, String parentCollUrl, String parentCollTitle) throws IOException {
+                          String parentTitle, Integer childCount, String sipId, String parentCollUrl,
+                          String parentCollTitle) throws IOException {
         csvPrinter.printRecord(cdmId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
                 verified, parentUrl, parentTitle, childCount, sipId, parentCollUrl, parentCollTitle);
     }

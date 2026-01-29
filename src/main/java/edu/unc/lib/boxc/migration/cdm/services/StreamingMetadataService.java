@@ -12,8 +12,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
-import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
-
 /**
  * Service for retrieving streaming metadata
  * @author krwong
@@ -55,7 +53,8 @@ public class StreamingMetadataService {
             fieldService.validateFieldsFile(project);
             CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
             List<String> exportFields = fieldInfo.listAllExportFields();
-            projectHasStreamingMetadata = exportFields.contains(STREAMING_FILE_FIELD) && exportFields.contains(DURACLOUD_SPACE_FIELD);
+            projectHasStreamingMetadata = exportFields.contains(STREAMING_FILE_FIELD) &&
+                    exportFields.contains(DURACLOUD_SPACE_FIELD);
         }
         return projectHasStreamingMetadata;
     }

@@ -49,7 +49,8 @@ public class WorkGeneratorFactory {
 
     public WorkGenerator create(String cdmId, String cdmCreated, String entryType) throws IOException {
         WorkGenerator gen;
-        if (CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT.equals(entryType) || CdmIndexService.ENTRY_TYPE_GROUPED_WORK.equals(entryType)) {
+        if (CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT.equals(entryType) ||
+                CdmIndexService.ENTRY_TYPE_GROUPED_WORK.equals(entryType)) {
             gen = new OrderedWorkGenerator();
             ((OrderedWorkGenerator) gen).setAggregateBottomMappings(aggregateBottomMappingService.loadMappings());
             ((OrderedWorkGenerator) gen).setAggregateTopMappings(aggregateTopMappingService.loadMappings());

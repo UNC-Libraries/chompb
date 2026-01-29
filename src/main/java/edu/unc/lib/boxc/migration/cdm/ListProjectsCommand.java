@@ -45,14 +45,15 @@ public class ListProjectsCommand implements Callable<Integer> {
         try {
             initialize();
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode listProjects = listProjectsService.listProjects(parentCommand.getWorkingDirectory(), includeArchived);
+            JsonNode listProjects = listProjectsService.listProjects(parentCommand.getWorkingDirectory(),
+                    includeArchived);
             String prettyPrintList = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(listProjects);
             outputLogger.info(prettyPrintList);
             return 0;
-        } catch(MigrationException | IllegalArgumentException e) {
+        } catch (MigrationException | IllegalArgumentException e) {
             outputLogger.info("List projects failed: {}", e.getMessage());
             return 1;
-        } catch(Exception e) {
+        } catch (Exception e) {
             log.error("Failed to list projects", e);
             outputLogger.info("List projects failed: {}", e.getMessage(), e);
             return 1;

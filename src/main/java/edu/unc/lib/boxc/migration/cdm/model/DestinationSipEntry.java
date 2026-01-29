@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import edu.unc.lib.boxc.deposit.impl.model.DepositDirectoryManager;
 import edu.unc.lib.boxc.deposit.impl.model.DepositModelManager;
 import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo.DestinationMapping;
-import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;

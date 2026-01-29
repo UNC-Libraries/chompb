@@ -129,7 +129,8 @@ public class ListProjectsService {
 
     /**
      * Tell other applications (boxc) what processes are supported by the project
-     * crop_color_bars: populated if source files are mapped and if project contains any images (based off source file extensions)
+     * crop_color_bars: populated if source files are mapped and if project contains any
+     * images (based off source file extensions)
      * @return allowed_actions
      */
     private List<String> allowedActions(MigrationProject project) throws Exception {

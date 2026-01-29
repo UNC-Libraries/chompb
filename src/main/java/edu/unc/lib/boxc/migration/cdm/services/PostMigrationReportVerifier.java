@@ -55,7 +55,9 @@ public class PostMigrationReportVerifier {
         ) {
             long currentNum = 0;
             updateProgressDisplay(currentNum, totalRecords);
-            var baseUrl = chompbConfig.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId()).getHttpBaseUrl();
+            var baseUrl = chompbConfig.getBxcEnvironments()
+                    .get(project.getProjectProperties().getBxcEnvironmentId())
+                    .getHttpBaseUrl();
 
             for (CSVRecord originalRecord : csvParser) {
                 var verified = originalRecord.get(PostMigrationReportConstants.VERIFIED_HEADER);
@@ -115,10 +117,13 @@ public class PostMigrationReportVerifier {
         }
     }
 
-    private Map<String, String> getParentCollectionInfo(String bxcUrl, VerificationOutcome outcome, String bxcApiBaseUrl) throws IOException, URISyntaxException {
+    private Map<String, String> getParentCollectionInfo(String bxcUrl,
+                                                        VerificationOutcome outcome,
+                                                        String bxcApiBaseUrl)
+            throws IOException, URISyntaxException {
         var map = new HashMap<String, String>();
         var id = getId(bxcUrl);
-        var getRequest = new HttpGet(URI.create(bxcApiBaseUrl + id+ "/json"));
+        var getRequest = new HttpGet(URI.create(bxcApiBaseUrl + id + "/json"));
         try (var resp = httpClient.execute(getRequest)) {
             if (resp.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
                 map.put("id", "");
