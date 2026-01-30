@@ -31,7 +31,8 @@ public class DestinationMappingOptions {
 
     @Option(names = {"-n", "--field-name"},
             description = {"Name of the field in CDM where archival collection numbers should be found.",
-                    "The default will be used during SIP generation for objects if they do not have explicit mappings.",})
+                    "The default will be used during SIP generation for objects " +
+                        "if they do not have explicit mappings.",})
     private String fieldName;
 
     @Option(names = {"-f", "--force"},

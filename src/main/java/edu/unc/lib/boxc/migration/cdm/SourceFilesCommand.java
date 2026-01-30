@@ -16,12 +16,10 @@ import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.analysis.function.Add;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
@@ -144,10 +142,11 @@ public class SourceFilesCommand {
     @Command(name = "add",
             description = {"Add files from the filesystem to the source mapping file for this project.",
                     "Mappings are produced by listing files from a directory using the --base-path option.",
-                    "The user provides a list of file extensions field to include, extensions set using the --extensions option.",
+                    "The user provides a list of file extensions field to include, extensions set using the " +
+                            "--extensions option.",
                     "The user can set an optional prefix for chompb ids using the --optional-prefix option.",
-                    "The resulting will be written to the source_files.csv for this project, unless "
-                            + "the --dry-run flag is provided."})
+                    "The resulting will be written to the source_files.csv for this project,"
+                            + " unless the --dry-run flag is provided."})
     public int add(@Mixin AddSourceFileMappingOptions options) throws Exception {
         try {
             long start = System.nanoTime();

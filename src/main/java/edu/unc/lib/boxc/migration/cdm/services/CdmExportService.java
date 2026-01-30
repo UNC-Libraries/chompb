@@ -114,7 +114,8 @@ public class CdmExportService {
      * This method calls the EAD to CDM API and transforms the JSON to a TSV for indexing
      */
     private void exportFromEadToCdm(String eadId) {
-        var bxcEnv = chompbConfig.getBxcEnvironments().get(project.getProjectProperties().getBxcEnvironmentId());
+        var bxcEnv = chompbConfig.getBxcEnvironments()
+                .get(project.getProjectProperties().getBxcEnvironmentId());
         var url = bxcEnv.getEadToCdmUrl() + eadId;
         var getMethod = new HttpGet(url);
         ObjectMapper mapper = new ObjectMapper();
@@ -154,13 +155,27 @@ public class CdmExportService {
             }
             for (JsonNode jsonNode : jsonArray) {
                 ObjectNode entryNode = (ObjectNode) jsonNode;
-                tsvPrinter.printRecord(getValue(STANDARDIZED_COLLECTION_NAME, entryNode), getValue(STANDARDIZED_COLLECTION_NUMBER, entryNode),
-                    getValue(STANDARDIZED_LOC_IN_COLLECTION, entryNode), getValue(STANDARDIZED_CITATION, entryNode),
-                    getValue(STANDARDIZED_FILENAME, entryNode), getValue(STANDARDIZED_OBJ_FILENAME, entryNode), getValue(STANDARDIZED_CONTAINER_TYPE, entryNode),
-                    getValue(STANDARDIZED_HOOK_ID, entryNode), getValue(STANDARDIZED_OBJECT, entryNode), getValue(STANDARDIZED_COLLECTION_URL, entryNode),
-                    getValue(STANDARDIZED_GENRE_FORM, entryNode), getValue(STANDARDIZED_EXTENT, entryNode), getValue(STANDARDIZED_UNIT_DATE, entryNode),
-                    getValue(STANDARDIZED_GEOGRAPHIC_NAME, entryNode), getValue(STANDARDIZED_REF_ID, entryNode), getValue(STANDARDIZED_PROCESS_INFO, entryNode),
-                    getValue(STANDARDIZED_SCOPE_CONTENT, entryNode), getValue(STANDARDIZED_UNIT_TITLE, entryNode), getValue(STANDARDIZED_CONTAINER, entryNode));
+                tsvPrinter.printRecord(
+                        getValue(STANDARDIZED_COLLECTION_NAME, entryNode),
+                        getValue(STANDARDIZED_COLLECTION_NUMBER, entryNode),
+                        getValue(STANDARDIZED_LOC_IN_COLLECTION, entryNode),
+                        getValue(STANDARDIZED_CITATION, entryNode),
+                        getValue(STANDARDIZED_FILENAME, entryNode),
+                        getValue(STANDARDIZED_OBJ_FILENAME, entryNode),
+                        getValue(STANDARDIZED_CONTAINER_TYPE, entryNode),
+                        getValue(STANDARDIZED_HOOK_ID, entryNode),
+                        getValue(STANDARDIZED_OBJECT, entryNode),
+                        getValue(STANDARDIZED_COLLECTION_URL, entryNode),
+                        getValue(STANDARDIZED_GENRE_FORM, entryNode),
+                        getValue(STANDARDIZED_EXTENT, entryNode),
+                        getValue(STANDARDIZED_UNIT_DATE, entryNode),
+                        getValue(STANDARDIZED_GEOGRAPHIC_NAME, entryNode),
+                        getValue(STANDARDIZED_REF_ID, entryNode),
+                        getValue(STANDARDIZED_PROCESS_INFO, entryNode),
+                        getValue(STANDARDIZED_SCOPE_CONTENT, entryNode),
+                        getValue(STANDARDIZED_UNIT_TITLE, entryNode),
+                        getValue(STANDARDIZED_CONTAINER, entryNode)
+                );
             }
         } catch (IOException e) {
             log.warn("Failed to retrieve response from EAD to CDM API {}: {}", url, e.getMessage());

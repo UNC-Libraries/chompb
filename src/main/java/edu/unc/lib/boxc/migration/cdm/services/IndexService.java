@@ -23,6 +23,10 @@ import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+/**
+ * Parent class for indexing services
+ * @author snluong
+ */
 public class IndexService {
     private static final Logger log = getLogger(IndexService.class);
     public static final String TB_NAME = "cdm_records";

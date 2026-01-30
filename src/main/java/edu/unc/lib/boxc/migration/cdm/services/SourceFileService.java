@@ -34,7 +34,6 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
@@ -193,7 +192,8 @@ public class SourceFileService {
         return Pattern.compile(options.getFieldMatchingPattern());
     }
 
-    private Map<String, List<String>> gatherCandidatePaths(GenerateSourceFileMappingOptions options) throws IOException {
+    private Map<String, List<String>> gatherCandidatePaths(GenerateSourceFileMappingOptions options)
+            throws IOException {
         if (options.isPopulateBlank()) {
             return Collections.emptyMap();
         }
@@ -438,8 +438,8 @@ public class SourceFileService {
         }
     }
 
-    private List<String> gatherFilesystemCandidatePaths(AddSourceFileMappingOptions options, List<String> origSourcePaths)
-            throws Exception {
+    private List<String> gatherFilesystemCandidatePaths(
+            AddSourceFileMappingOptions options, List<String> origSourcePaths) throws Exception {
         Path basePath = options.getBasePath();
         if (!Files.isDirectory(basePath)) {
             throw new IllegalArgumentException("Base path must be a directory");
@@ -449,9 +449,10 @@ public class SourceFileService {
         Files.walkFileTree(basePath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                if (!Files.isDirectory(file) && !origSourcePaths.contains(file.toString())
-                        && options.getExtensions().contains(FilenameUtils.getExtension(file.toString()).toLowerCase())) {
-                    fileList.add(file.toString());
+                var fileStr = file.toString();
+                if (!Files.isDirectory(file) && !origSourcePaths.contains(fileStr)
+                        && options.getExtensions().contains(FilenameUtils.getExtension(fileStr).toLowerCase())) {
+                    fileList.add(fileStr);
                 }
                 return FileVisitResult.CONTINUE;
             }

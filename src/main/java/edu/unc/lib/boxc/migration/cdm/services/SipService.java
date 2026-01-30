@@ -309,7 +309,8 @@ public class SipService {
                     if (entry.getNewCollectionPid() != null) {
                         Path descPath = descriptionsService.getNewCollectionDescriptionPath(k);
                         if (Files.exists(descPath)) {
-                            Path sipDescPath = entry.getDepositDirManager().getModsPath(entry.getNewCollectionPid(), true);
+                            Path sipDescPath = entry.getDepositDirManager()
+                                    .getModsPath(entry.getNewCollectionPid(), true);
                             try {
                                 Files.copy(descPath, sipDescPath);
                             } catch (IOException e) {
@@ -322,7 +323,8 @@ public class SipService {
                     return entry;
                 });
 
-                if (mapping.getId().contains(":") && !mapping.getId().startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
+                if (mapping.getId().contains(":") && !mapping.getId()
+                        .startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
                     for (String cdmId : listCdmIdsByArchivalCollectionId(mapping.getId())) {
                         cdmToDestMapper.put(cdmId, destEntry);
                     }
@@ -353,10 +355,11 @@ public class SipService {
         try {
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
-            // skip over values from children of compound objects, since they must go to the same destination as their parent work
+            // skip over values from children of compound objects, since they must
+            // go to the same destination as their parent work
             ResultSet rs = stmt.executeQuery("select " + CdmFieldInfo.CDM_ID
                     + " from " + CdmIndexService.TB_NAME
-                    + " where " + " ("+ CdmIndexService.ENTRY_TYPE_FIELD + " != '"
+                    + " where " + " (" + CdmIndexService.ENTRY_TYPE_FIELD + " != '"
                     + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'" +
                     " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'" +
                     " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " is null)" +

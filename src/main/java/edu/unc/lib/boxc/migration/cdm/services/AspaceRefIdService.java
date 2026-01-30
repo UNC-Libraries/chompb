@@ -234,7 +234,7 @@ public class AspaceRefIdService {
         }
         try (var csvParser = openMappingsParser(mappingPath)) {
             Map<String, String> mappings = info.getMappings();
-            for(CSVRecord csvRecord : csvParser) {
+            for (CSVRecord csvRecord : csvParser) {
                 // csv columns are record id, hook id, ref id
                 mappings.put(csvRecord.get(0), csvRecord.get(2));
             }

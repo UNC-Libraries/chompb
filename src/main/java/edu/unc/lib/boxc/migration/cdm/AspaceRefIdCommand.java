@@ -36,7 +36,7 @@ public class AspaceRefIdCommand {
     private CdmIndexService indexService;
     private AspaceRefIdService aspaceRefIdService;
 
-    @Command(name="generate",
+    @Command(name = "generate",
             description = {"Generate the optional aspace ref id mapping file for this project.",
                     "A blank ref_id_mapping.csv template will be created for this project, " +
                             "with only record ids populated."})
@@ -59,7 +59,7 @@ public class AspaceRefIdCommand {
         }
     }
 
-    @Command(name="generate_from_csv",
+    @Command(name = "generate_from_csv",
             description = {"Generate the optional aspace ref id mapping file for this project " +
                     "using hookid_to_refid_map.csv.",
                     "A ref_id_mapping.csv template will be created for this project, " +
@@ -83,7 +83,7 @@ public class AspaceRefIdCommand {
         }
     }
 
-    @Command(name="validate",
+    @Command(name = "validate",
             description = {"Validate the aspace ref id mappings for this project"})
     public int validate(@Option(names = { "-f", "--force"},
             description = "Ignore incomplete mappings") boolean force) throws Exception {

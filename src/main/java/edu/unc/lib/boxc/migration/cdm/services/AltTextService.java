@@ -74,9 +74,9 @@ public class AltTextService {
             ids = new ArrayList<>();
             // for all file objects in the project (exclude grouped objects, compound objects, pdf objects)
             String query = "select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'"
-                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
-                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null";
+                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD
+                + "' or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF
+                + "' or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null";
 
             getIndexService();
             try (Connection conn = indexService.openDbConnection()) {
@@ -118,7 +118,7 @@ public class AltTextService {
         }
         try (var csvParser = openMappingsParser(mappingPath)) {
             List<AltTextMapping> mappings = info.getMappings();
-            for(CSVRecord csvRecord : csvParser) {
+            for (CSVRecord csvRecord : csvParser) {
                 mappings.add(recordToMapping(csvRecord));
             }
             return info;

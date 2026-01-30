@@ -7,6 +7,7 @@ import static edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CDM_ID;
 
 /**
  * Helper methods and constants related to EAD to CDM indexing and exporting
+ * @author snluong
  */
 public class EadToCdmUtil {
     public static final String COLLECTION_NAME = "Collection name";

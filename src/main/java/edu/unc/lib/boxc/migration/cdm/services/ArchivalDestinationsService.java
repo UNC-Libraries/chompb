@@ -68,10 +68,11 @@ public class ArchivalDestinationsService {
         try {
             conn = indexService.openDbConnection();
             Statement stmt = conn.createStatement();
-            // skip over values from children of compound objects, since they must go to the same destination as their parent work
+            // skip over values from children of compound objects, since they must
+            // go to the same destination as their parent work
             ResultSet rs = stmt.executeQuery("select distinct " + options.getFieldName()
                     + " from " + CdmIndexService.TB_NAME
-                    + " where " + " ("+ CdmIndexService.ENTRY_TYPE_FIELD + " != '"
+                    + " where " + " (" + CdmIndexService.ENTRY_TYPE_FIELD + " != '"
                     + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'" +
                     " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'" +
                     " OR " + CdmIndexService.ENTRY_TYPE_FIELD + " is null)");
@@ -136,7 +137,8 @@ public class ArchivalDestinationsService {
                     BufferedWriter writer = Files.newBufferedWriter(destinationMappingsPath,
                             StandardOpenOption.APPEND,
                             StandardOpenOption.CREATE);
-                    CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().setHeader(DestinationsInfo.CSV_HEADERS).build());
+                    CSVPrinter csvPrinter = new CSVPrinter(writer,
+                            CSVFormat.Builder.create().setHeader(DestinationsInfo.CSV_HEADERS).build());
             ) {
                 Map<String, String> mapCollNumToPid = generateCollectionNumbersToPidMapping(options);
                 for (Map.Entry<String, String> entry : mapCollNumToPid.entrySet()) {
