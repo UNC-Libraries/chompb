@@ -78,7 +78,8 @@ public class PermissionsService {
 
         try (
                 BufferedWriter writer = Files.newBufferedWriter(permissionsPath);
-                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(PermissionsInfo.CSV_HEADERS));
+                CSVPrinter csvPrinter = new CSVPrinter(writer,
+                        CSVFormat.DEFAULT.withHeader(PermissionsInfo.CSV_HEADERS));
         ) {
             if (options.isWithDefault()) {
                 csvPrinter.printRecord(PermissionsInfo.DEFAULT_ID,
@@ -240,9 +241,9 @@ public class PermissionsService {
             // If the entry type is doc_pdf or null, the object is a individual cdm object
             String fileQuery = "select " + CdmFieldInfo.CDM_ID +
                     " from " + CdmIndexService.TB_NAME
-                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
-                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD
+                    + "' or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF
+                    + "' or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
                     + " and " + CdmIndexService.PARENT_ID_FIELD + " is not null";
             mappedIds = getIds(fileQuery);
             for (String id : mappedIds) {
@@ -301,8 +302,9 @@ public class PermissionsService {
 
         // addedAndUpdatedIds: list of all ids that need to be added and updated
         if (options.getCdmId() != null) {
-            workAndFileRecords.add(new AbstractMap.SimpleEntry<>(options.getCdmId(), getObjectType(options.getCdmId())));
-            addedAndUpdatedIds.add(options.getCdmId());
+            var cdmId = options.getCdmId();
+            workAndFileRecords.add(new AbstractMap.SimpleEntry<>(cdmId, getObjectType(cdmId)));
+            addedAndUpdatedIds.add(cdmId);
         }
         if (options.isWithWorks() || options.isWithFiles()) {
             workAndFileRecords.addAll(queryForMappedIds(options));

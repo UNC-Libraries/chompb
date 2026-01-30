@@ -54,7 +54,8 @@ public class CdmIndexCommand implements Callable<Integer> {
             initialize();
 
             if (options.getCsvFile() != null && options.getEadTsvFile() != null) {
-                throw new IllegalArgumentException("CSVs and EAD to CDM TSVs may not be used in the same indexing command");
+                throw new IllegalArgumentException("CSVs and EAD to CDM TSVs may not be used " +
+                        "in the same indexing command");
             }
 
             // if user provides a file, check that it exists

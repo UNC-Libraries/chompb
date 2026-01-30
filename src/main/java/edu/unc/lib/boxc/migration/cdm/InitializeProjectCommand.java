@@ -110,7 +110,8 @@ public class InitializeProjectCommand implements Callable<Integer> {
         return integer;
     }
 
-    private Integer initCdmProject(ChompbConfig config, Path currentPath, String projDisplayName, long start) throws Exception {
+    private Integer initCdmProject(ChompbConfig config, Path currentPath, String projDisplayName, long start)
+            throws Exception {
         var cdmEnvConfig = config.getCdmEnvironments().get(cdmEnvId);
         String collId = cdmCollectionId == null ? projDisplayName : cdmCollectionId;
         String username = System.getProperty("user.name");

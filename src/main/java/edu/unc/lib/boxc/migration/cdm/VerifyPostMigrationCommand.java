@@ -48,7 +48,8 @@ public class VerifyPostMigrationCommand implements Callable<Integer> {
             outputLogger.info("Checked {} out of {} objects in the report",
                     outcome.verifiedCount, outcome.totalRecords);
             if (outcome.hasErrors()) {
-                outputLogger.info("Boxc URL Errors encountered for {} objects, see report for details:", outcome.urlErrorCount);
+                outputLogger.info("Boxc URL Errors encountered for {} objects, see report for details:",
+                        outcome.urlErrorCount);
                 outputLogger.info("Parent Collection Errors encountered for {} objects:", outcome.parentCollErrorCount);
                 outputLogger.info(project.getPostMigrationReportPath().toString());
                 return 1;

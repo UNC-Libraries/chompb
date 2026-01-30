@@ -6,7 +6,6 @@ import edu.unc.lib.boxc.migration.cdm.options.IndexFilteringOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.IndexFilteringService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
@@ -17,6 +16,8 @@ import java.util.concurrent.Callable;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -83,25 +84,25 @@ public class FilterIndexCommand implements Callable<Integer> {
             throw new IllegalArgumentException("Cannot provide both --include and --exclude at the same time");
         }
         if (isEmpty(options.getExcludeValues()) && isEmpty(options.getIncludeValues()) &&
-                StringUtils.isBlank(options.getIncludeRangeStart()) && StringUtils.isBlank(options.getIncludeRangeEnd())
-                && StringUtils.isBlank(options.getExcludeRangeStart()) && StringUtils.isBlank(options.getExcludeRangeEnd())) {
+                isBlank(options.getIncludeRangeStart()) && isBlank(options.getIncludeRangeEnd())
+                && isBlank(options.getExcludeRangeStart()) && isBlank(options.getExcludeRangeEnd())) {
             throw new IllegalArgumentException("Must provide an --include, --exclude, --include-range-start and " +
                     "--include-range-end, or --exclude-range-start and --exclude range-end value(s) (but not all)");
         }
-        if ((StringUtils.isNotBlank(options.getIncludeRangeStart()) || StringUtils.isNotBlank(options.getIncludeRangeEnd())) &&
-                (StringUtils.isNotBlank(options.getExcludeRangeStart()) || StringUtils.isNotBlank(options.getExcludeRangeEnd()))) {
+        if ((isNotBlank(options.getIncludeRangeStart()) || isNotBlank(options.getIncludeRangeEnd())) &&
+                (isNotBlank(options.getExcludeRangeStart()) || isNotBlank(options.getExcludeRangeEnd()))) {
             throw new IllegalArgumentException("Cannot provide both --include-range and" +
                     " --exclude-range values at the same time");
         }
-        if ((!StringUtils.isBlank(options.getIncludeRangeStart()) && StringUtils.isBlank(options.getIncludeRangeEnd())) ||
-                (StringUtils.isBlank(options.getIncludeRangeStart()) && !StringUtils.isBlank(options.getIncludeRangeEnd()))) {
+        if ((!isBlank(options.getIncludeRangeStart()) && isBlank(options.getIncludeRangeEnd())) ||
+                (isBlank(options.getIncludeRangeStart()) && !isBlank(options.getIncludeRangeEnd()))) {
             throw new IllegalArgumentException("Must provide both --include-range-start and --include-range-end");
         }
-        if ((!StringUtils.isBlank(options.getExcludeRangeStart()) && StringUtils.isBlank(options.getExcludeRangeEnd())) ||
-                (StringUtils.isBlank(options.getExcludeRangeStart()) && !StringUtils.isBlank(options.getExcludeRangeEnd()))) {
+        if ((!isBlank(options.getExcludeRangeStart()) && isBlank(options.getExcludeRangeEnd())) ||
+                (isBlank(options.getExcludeRangeStart()) && !isBlank(options.getExcludeRangeEnd()))) {
             throw new IllegalArgumentException("Must provide both --exclude-range-start and --exclude-range-end");
         }
-        if (StringUtils.isBlank(options.getFieldName())) {
+        if (isBlank(options.getFieldName())) {
             throw new IllegalArgumentException("Must provide a --field-name value");
         }
     }

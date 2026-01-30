@@ -2,12 +2,10 @@ package edu.unc.lib.boxc.migration.cdm.status;
 
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
-import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProjectProperties;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;

@@ -1,7 +1,6 @@
 package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 
@@ -12,6 +11,7 @@ import java.util.stream.Stream;
 
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
 import static edu.unc.lib.boxc.migration.cdm.services.IndexService.PARENT_ID_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 
 /**
  * Service which allows mapping of aggregate files like PDFs or TXTs to multi-file works
@@ -44,15 +44,15 @@ public class AggregateFileMappingService extends SourceFileService {
         }
         return selectStatement
                 + " from " + CdmIndexService.TB_NAME + " where " +
-                ENTRY_TYPE_FIELD + " = '" +CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
                 + " or " + ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
                 + " or (" + PARENT_ID_FIELD + " is NULL and " +  ENTRY_TYPE_FIELD + " is NULL)";
     }
 
     @Override
-    protected SourceFilesInfo.SourceFileMapping resolveSourcePathConflict(GenerateFileMappingOptions options,
-                                                                          SourceFilesInfo.SourceFileMapping origMapping,
-                                                                          SourceFilesInfo.SourceFileMapping updateMapping) {
+    protected SourceFileMapping resolveSourcePathConflict(GenerateFileMappingOptions options,
+                                                                          SourceFileMapping origMapping,
+                                                                          SourceFileMapping updateMapping) {
         if (options.isForce() || origMapping.getSourcePaths() == null) {
             return updateMapping;
         }

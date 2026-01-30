@@ -79,7 +79,7 @@ public class PermissionsValidator {
                 // authenticated
                 if (!StringUtils.isBlank(authenticated)) {
                     List<String> patronRoles = getPatronRoles();
-                    if(!patronRoles.contains(authenticated)) {
+                    if (!patronRoles.contains(authenticated)) {
                         errors.add("Invalid 'authenticated' permission at line " + i + ", " + authenticated +
                                 " is not a valid patron permission");
                     }

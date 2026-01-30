@@ -4,7 +4,6 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.IndexFilteringOptions;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -19,6 +18,7 @@ import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.PARENT_ID_FIELD;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -86,22 +86,23 @@ public class IndexFilteringService {
     private String buildQueryFilters(boolean invertQuery, IndexFilteringOptions options) {
         var fieldName = options.getFieldName();
         String finalQuery = null;
-        if (!CollectionUtils.isEmpty(options.getIncludeValues()) || !CollectionUtils.isEmpty(options.getExcludeValues())) {
+        if (!CollectionUtils.isEmpty(options.getIncludeValues()) ||
+                !CollectionUtils.isEmpty(options.getExcludeValues())) {
             var includeFilter = !CollectionUtils.isEmpty(options.getIncludeValues());
             var filterValues = includeFilter ? options.getIncludeValues() : options.getExcludeValues();
             var query = filterValues.stream()
                     .map(v -> fieldName + " = '" + v.replace("'", "\\'") + "'")
                     .collect(Collectors.joining(" OR "));
-            // Negate the filter if we are doing an exclude filter, or if we are inverting the query and it is an include
+            // Negate the filter if it's an exclude filter, or if we are inverting the query with an include filter
             var negation = (invertQuery ^ includeFilter ? "" : " NOT ");
             finalQuery = negation + '(' + query + ')';
-        } else if ((!StringUtils.isBlank(options.getIncludeRangeStart()) && !StringUtils.isBlank(options.getIncludeRangeEnd())) ||
-                (!StringUtils.isBlank(options.getExcludeRangeStart()) && !StringUtils.isBlank(options.getExcludeRangeEnd()))) {
-            var includeFilter = !StringUtils.isBlank(options.getIncludeRangeStart());
+        } else if ((!isBlank(options.getIncludeRangeStart()) && !isBlank(options.getIncludeRangeEnd())) ||
+                (!isBlank(options.getExcludeRangeStart()) && !isBlank(options.getExcludeRangeEnd()))) {
+            var includeFilter = !isBlank(options.getIncludeRangeStart());
             var startRange = includeFilter ? options.getIncludeRangeStart() : options.getExcludeRangeStart();
             var endRange = includeFilter ? options.getIncludeRangeEnd() : options.getExcludeRangeEnd();
             var query = fieldName + " BETWEEN '" + startRange + "' AND '" + endRange + "'";
-            // Negate the filter if we are doing an exclude filter, or if we are inverting the query and it is an include
+            // Negate the filter if it's an exclude filter, or if we are inverting the query with an include filter
             var negation = (invertQuery ^ includeFilter ? "" : " NOT ");
             finalQuery = negation + query;
         }
