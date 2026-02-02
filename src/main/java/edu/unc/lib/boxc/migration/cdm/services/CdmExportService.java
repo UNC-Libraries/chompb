@@ -14,9 +14,14 @@ import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -109,9 +114,9 @@ public class CdmExportService {
      * This method calls the EAD to CDM API and transforms the JSON to a TSV for indexing
      */
     private void exportFromEadToCdm(String eadId) {
-        var url = chompbConfig.getBxcEnvironments()
-                .get(project.getProjectProperties().getBxcEnvironmentId())
-                .getEadToCdmUrl() + eadId;
+        var bxcEnv = chompbConfig.getBxcEnvironments()
+                .get(project.getProjectProperties().getBxcEnvironmentId());
+        var url = bxcEnv.getEadToCdmUrl() + eadId;
         var getMethod = new HttpGet(url);
         ObjectMapper mapper = new ObjectMapper();
         var csvPrinterFormat = CSVFormat.TDF.builder()
@@ -119,9 +124,19 @@ public class CdmExportService {
                 .setHeader(TSV_STANDARDIZED_HEADERS)
                 .get();
         var eadToCdmTsvPath = project.getEadToCdmExportPath();
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        var eadToCdmUsername = bxcEnv.getEadToCdmUsername();
+        var eadToCdmPassword = bxcEnv.getEadToCdmPassword();
+        credsProvider.setCredentials(
+                AuthScope.ANY,
+                new UsernamePasswordCredentials(eadToCdmUsername, eadToCdmPassword)
+        );
 
         try (
-            var httpClient = HttpClientBuilder.create().disableRedirectHandling().build();
+            var httpClient = HttpClientBuilder.create()
+                    .disableRedirectHandling()
+                    .setDefaultCredentialsProvider(credsProvider)
+                    .build();
             CloseableHttpResponse resp = httpClient.execute(getMethod);
             var writer = Files.newBufferedWriter(eadToCdmTsvPath);
             CSVPrinter tsvPrinter = new CSVPrinter(writer, csvPrinterFormat);
