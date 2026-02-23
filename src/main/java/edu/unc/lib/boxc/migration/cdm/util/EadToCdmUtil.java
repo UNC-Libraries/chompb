@@ -25,6 +25,7 @@ public class EadToCdmUtil {
     public static final String UNIT_DATE = "Unit Date";
     public static final String GEOGRAPHIC_NAME = "Geographic Name";
     public static final String REF_ID = "Ref ID";
+    public static final String MULTI_TITLE_COUNT = "Multititle Count";
     public static final String PROCESS_INFO = "processinfo";
     public static final String SCOPE_CONTENT = "scopecontent";
     public static final String UNIT_TITLE = "unitTitle";
@@ -45,13 +46,33 @@ public class EadToCdmUtil {
     public static final String STANDARDIZED_UNIT_DATE = standardizeHeader(UNIT_DATE);
     public static final String STANDARDIZED_GEOGRAPHIC_NAME = standardizeHeader(GEOGRAPHIC_NAME);
     public static final String STANDARDIZED_REF_ID = standardizeHeader(REF_ID);
+    public static final String STANDARDIZED_MULTI_TITLE_COUNT = standardizeHeader(MULTI_TITLE_COUNT);
     public static final String STANDARDIZED_PROCESS_INFO = standardizeHeader(PROCESS_INFO);
     public static final String STANDARDIZED_SCOPE_CONTENT = standardizeHeader(SCOPE_CONTENT);
     public static final String STANDARDIZED_UNIT_TITLE = standardizeHeader(UNIT_TITLE);
     public static final String STANDARDIZED_CONTAINER = standardizeHeader(CONTAINER);
-    public static String[] TSV_HEADERS = new String[] { COLLECTION_NAME, COLLECTION_NUMBER, LOC_IN_COLLECTION, CITATION,
-            FILENAME, OBJ_FILENAME, CONTAINER_TYPE, HOOK_ID, OBJECT, COLLECTION_URL, GENRE_FORM, EXTENT, UNIT_DATE,
-            GEOGRAPHIC_NAME, REF_ID, PROCESS_INFO, SCOPE_CONTENT, UNIT_TITLE, CONTAINER };
+    public static String[] TSV_HEADERS = new String[] {
+            COLLECTION_NAME,
+            COLLECTION_NUMBER,
+            LOC_IN_COLLECTION,
+            CITATION,
+            FILENAME,
+            OBJ_FILENAME,
+            CONTAINER_TYPE,
+            HOOK_ID,
+            OBJECT,
+            COLLECTION_URL,
+            GENRE_FORM,
+            EXTENT,
+            UNIT_DATE,
+            GEOGRAPHIC_NAME,
+            REF_ID,
+            MULTI_TITLE_COUNT,
+            PROCESS_INFO,
+            SCOPE_CONTENT,
+            UNIT_TITLE,
+            CONTAINER
+    };
 
     public static String[] TSV_STANDARDIZED_HEADERS = new String[] {
             STANDARDIZED_COLLECTION_NAME,
@@ -69,6 +90,7 @@ public class EadToCdmUtil {
             STANDARDIZED_UNIT_DATE,
             STANDARDIZED_GEOGRAPHIC_NAME,
             STANDARDIZED_REF_ID,
+            STANDARDIZED_MULTI_TITLE_COUNT,
             STANDARDIZED_PROCESS_INFO,
             STANDARDIZED_SCOPE_CONTENT,
             STANDARDIZED_UNIT_TITLE,

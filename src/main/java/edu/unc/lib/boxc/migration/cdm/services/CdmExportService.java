@@ -21,7 +21,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -42,6 +41,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_GENR
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_GEOGRAPHIC_NAME;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_HOOK_ID;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_LOC_IN_COLLECTION;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_MULTI_TITLE_COUNT;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_OBJECT;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_OBJ_FILENAME;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_PROCESS_INFO;
@@ -171,6 +171,7 @@ public class CdmExportService {
                         getValue(STANDARDIZED_UNIT_DATE, entryNode),
                         getValue(STANDARDIZED_GEOGRAPHIC_NAME, entryNode),
                         getValue(STANDARDIZED_REF_ID, entryNode),
+                        getValue(STANDARDIZED_MULTI_TITLE_COUNT, entryNode),
                         getValue(STANDARDIZED_PROCESS_INFO, entryNode),
                         getValue(STANDARDIZED_SCOPE_CONTENT, entryNode),
                         getValue(STANDARDIZED_UNIT_TITLE, entryNode),

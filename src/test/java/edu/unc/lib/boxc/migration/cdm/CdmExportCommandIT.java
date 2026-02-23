@@ -30,6 +30,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_COLLECTION_NAME;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_CONTAINER_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_FILENAME;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_GEOGRAPHIC_NAME;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.TSV_STANDARDIZED_HEADERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -197,14 +198,49 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void exportEadToCdmTest() throws Exception {
+    public void exportEadToCdmWithFilesIncludedTest() throws Exception {
         eadToCdmApiResponse("04428", "{\"04428\":[{\"collection_name\":\"Joyner Family Papers, ; 4428\",\"collection_number\":\"04428\"," +
                 "\"location_in_collection\":\"Series 1. Correspondence, 1836-1881.\",\"citation\":\"[Identification of item], " +
                 "in the Joyner Family Papers #4428, Southern Historical Collection, Wilson Special Collections Library, University " +
-                "of North Carolina at Chapel Hill.\",\"container_type\":\"Folder\",\"hook_id\":\"folder_1\",\"object\":\"Folder 1: " +
+                "of North Carolina at Chapel Hill.\",\"filename\":\"02096-z_0001_0001.tif\",\"object_filename\":\"02096-z_0001_0001.tif\"," +
+                "\"container_type\":\"Folder\",\"hook_id\":\"folder_1\",\"object\":\"Folder 1: " +
                 "April 1836-15 October 1858, (17 items): Scan 1\",\"collection_url\":\"https:\\/\\/finding-aids.lib.unc.edu\\/catalog\\/04428\"," +
                 "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"processinfo\":\"\",\"scopecontent\":\"\"," +
-                "\"unit_title\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
+                "\"unittitle\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
+        Path projPath = createProject("ead");
+        String[] args = exportArgs(projPath, "-ead", "-id", "04428", "-files", "02096-z_0001_0001.tif");
+        executeExpectSuccess(args);
+
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
+        assertTrue(Files.exists(project.getEadToCdmExportPath()), "EAD to CDM export file not created");
+        var format = CSVFormat.TDF.builder()
+                .setTrim(true)
+                .setSkipHeaderRecord(true)
+                .setHeader(TSV_STANDARDIZED_HEADERS)
+                .get();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getEadToCdmExportPath());
+                var tsvParser = CSVParser.parse(reader, format);
+        ) {
+            var tsvRecord = tsvParser.getRecords().getFirst();
+            assertEquals("Joyner Family Papers, ; 4428", tsvRecord.get(STANDARDIZED_COLLECTION_NAME));
+            assertEquals("Folder", tsvRecord.get(STANDARDIZED_CONTAINER_TYPE));
+            assertEquals("", tsvRecord.get(STANDARDIZED_GEOGRAPHIC_NAME));
+            assertEquals("02096-z_0001_0001.tif", tsvRecord.get(STANDARDIZED_FILENAME));
+        }
+    }
+
+    @Test
+    public void exportEadToCdmNoFilesIncludedTest() throws Exception {
+        eadToCdmApiResponse("04428", "{\"04428\":[{\"collection_name\":\"Joyner Family Papers, ; 4428\",\"collection_number\":\"04428\"," +
+                "\"location_in_collection\":\"Series 1. Correspondence, 1836-1881.\",\"citation\":\"[Identification of item], " +
+                "in the Joyner Family Papers #4428, Southern Historical Collection, Wilson Special Collections Library, University " +
+                "of North Carolina at Chapel Hill.\",\"filename\":\"no-files-included\",\"object_filename\":\"no-files-included\"," +
+                "\"container_type\":\"Folder\",\"hook_id\":\"folder_1\",\"object\":\"Folder 1: " +
+                "April 1836-15 October 1858, (17 items): Scan 1\",\"collection_url\":\"https:\\/\\/finding-aids.lib.unc.edu\\/catalog\\/04428\"," +
+                "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"processinfo\":\"\",\"scopecontent\":\"\"," +
+                "\"unittitle\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
         Path projPath = createProject("ead");
         String[] args = exportArgs(projPath, "-ead", "-id", "04428");
         executeExpectSuccess(args);
@@ -225,6 +261,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
             assertEquals("Joyner Family Papers, ; 4428", tsvRecord.get(STANDARDIZED_COLLECTION_NAME));
             assertEquals("Folder", tsvRecord.get(STANDARDIZED_CONTAINER_TYPE));
             assertEquals("", tsvRecord.get(STANDARDIZED_GEOGRAPHIC_NAME));
+            assertEquals("no-files-included", tsvRecord.get(STANDARDIZED_FILENAME));
         }
     }
 

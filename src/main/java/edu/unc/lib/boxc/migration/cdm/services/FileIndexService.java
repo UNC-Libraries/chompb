@@ -45,6 +45,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.SCOPE_CONTENT;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.TSV_HEADERS;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.TSV_WITH_ID_HEADERS;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.UNIT_DATE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.MULTI_TITLE_COUNT;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.UNIT_TITLE;
 
 /**
@@ -145,8 +146,8 @@ public class FileIndexService extends IndexService {
                         tsvRecord.get(OBJ_FILENAME), tsvRecord.get(CONTAINER_TYPE), tsvRecord.get(HOOK_ID),
                         tsvRecord.get(OBJECT), tsvRecord.get(COLLECTION_URL), tsvRecord.get(GENRE_FORM),
                         tsvRecord.get(EXTENT), tsvRecord.get(UNIT_DATE), tsvRecord.get(GEOGRAPHIC_NAME),
-                        tsvRecord.get(REF_ID), tsvRecord.get(PROCESS_INFO), tsvRecord.get(SCOPE_CONTENT),
-                        tsvRecord.get(UNIT_TITLE), tsvRecord.get(CONTAINER), cdmId);
+                        tsvRecord.get(REF_ID), tsvRecord.get(MULTI_TITLE_COUNT), tsvRecord.get(PROCESS_INFO),
+                        tsvRecord.get(SCOPE_CONTENT), tsvRecord.get(UNIT_TITLE), tsvRecord.get(CONTAINER), cdmId);
             }
             return eadToCdmWithIdPath;
         } catch (IOException e) {
