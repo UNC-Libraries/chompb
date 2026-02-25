@@ -1,9 +1,22 @@
 package edu.unc.lib.boxc.migration.cdm.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+
 import static edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CDM_ID;
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.ID_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SOURCE_FILE_FIELD;
 
 /**
  * Helper methods and constants related to EAD to CDM indexing and exporting
@@ -116,6 +129,47 @@ public class EadToCdmUtil {
 
     public static String standardizeHeader(String header) {
         return header.replaceAll(" ", "_").replaceAll("\"", "").toLowerCase();
+    }
+
+    public static Map<String, String> getInfoFromSourceFile(MigrationProject project) {
+        Map<String, String> filenameToId = new HashMap<>();
+        var sourceFilesPath = project.getSourceFilesMappingPath();
+        var format = CSVFormat.DEFAULT.builder()
+                .setTrim(true)
+                .setSkipHeaderRecord(true)
+                .setHeader(SourceFilesInfo.CSV_HEADERS)
+                .get();
+        try (
+                var reader = Files.newBufferedReader(sourceFilesPath);
+                var csvRecords = CSVParser.parse(reader, format);
+        ) {
+            for (var record : csvRecords) {
+                var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
+                var filename = basePath.getFileName().toString();
+                filenameToId.put(filename, record.get(ID_FIELD));
+            }
+        } catch (IOException e) {
+            throw new MigrationException("Failed to get source files info", e);
+        }
+
+        return filenameToId;
+    }
+
+    /**
+     * get filenames from source files
+     * @param project
+     * @return comma-delimited list of filenames
+     */
+    public static String getFilenames(MigrationProject project) {
+        var filenameToIdMap = getInfoFromSourceFile(project);
+        StringBuilder filenameString = new StringBuilder();
+        var filenames = filenameToIdMap.keySet();
+        for (var filename : filenames) {
+            if (!filename.isBlank()) {
+                filenameString.append(filename).append(",");
+            }
+        }
+        return filenameString.toString();
     }
 
     private EadToCdmUtil() {

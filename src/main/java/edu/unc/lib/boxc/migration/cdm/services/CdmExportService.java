@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.BxcEnvironment;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.CdmExportOptions;
 import edu.unc.lib.boxc.migration.cdm.services.export.ExportStateService;
@@ -18,12 +19,14 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -50,6 +53,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_SCOP
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_UNIT_DATE;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_UNIT_TITLE;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.TSV_STANDARDIZED_HEADERS;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.getFilenames;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.getValue;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -113,73 +117,44 @@ public class CdmExportService {
     /**
      * This method calls the EAD to CDM API and transforms the JSON to a TSV for indexing
      */
-    private void exportFromEadToCdm(String eadId) {
+    private void exportFromEadToCdm(String eadId) throws UnsupportedEncodingException {
         var bxcEnv = chompbConfig.getBxcEnvironments()
                 .get(project.getProjectProperties().getBxcEnvironmentId());
-        var url = bxcEnv.getEadToCdmUrl() + eadId;
-        var getMethod = new HttpGet(url);
+        var httpPost = getHttpPost(bxcEnv.getEadToCdmUrl(), project, eadId);
         ObjectMapper mapper = new ObjectMapper();
         var csvPrinterFormat = CSVFormat.TDF.builder()
                 .setTrim(true)
                 .setHeader(TSV_STANDARDIZED_HEADERS)
                 .get();
         var eadToCdmTsvPath = project.getEadToCdmExportPath();
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        var eadToCdmUsername = bxcEnv.getEadToCdmUsername();
-        var eadToCdmPassword = bxcEnv.getEadToCdmPassword();
-        credsProvider.setCredentials(
-                AuthScope.ANY,
-                new UsernamePasswordCredentials(eadToCdmUsername, eadToCdmPassword)
-        );
 
         try (
             var httpClient = HttpClientBuilder.create()
                     .disableRedirectHandling()
-                    .setDefaultCredentialsProvider(credsProvider)
+                    .setDefaultCredentialsProvider(getCredentials(bxcEnv))
                     .build();
-            CloseableHttpResponse resp = httpClient.execute(getMethod);
+            CloseableHttpResponse resp = httpClient.execute(httpPost);
             var writer = Files.newBufferedWriter(eadToCdmTsvPath);
             CSVPrinter tsvPrinter = new CSVPrinter(writer, csvPrinterFormat);
         ) {
             var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.UTF_8);
             JsonParser parser = mapper.getFactory().createParser(body);
             if (parser.nextToken() != JsonToken.START_OBJECT) {
-                throw new MigrationException("Unexpected response from URL " + url
-                        + "\nIt must be a JSON object, please check the response.");
+                throw new MigrationException("Unexpected response from EAD to CDM API for EAD ID " + eadId +
+                        "\nIt must be a JSON object, please check the response.");
             }
             ObjectNode rootNode = mapper.readTree(parser);
             var jsonArray = rootNode.get(eadId);
             if (!jsonArray.isArray()) {
-                throw new MigrationException("Unexpected response from URL " + url
-                        + "\nJSON value must be a JSON array, please check the response.");
+                throw new MigrationException("Unexpected response from EAD to CDM API for EAD ID " + eadId +
+                        "\nJSON value must be a JSON array, please check the response.");
             }
             for (JsonNode jsonNode : jsonArray) {
                 ObjectNode entryNode = (ObjectNode) jsonNode;
-                tsvPrinter.printRecord(
-                        getValue(STANDARDIZED_COLLECTION_NAME, entryNode),
-                        getValue(STANDARDIZED_COLLECTION_NUMBER, entryNode),
-                        getValue(STANDARDIZED_LOC_IN_COLLECTION, entryNode),
-                        getValue(STANDARDIZED_CITATION, entryNode),
-                        getValue(STANDARDIZED_FILENAME, entryNode),
-                        getValue(STANDARDIZED_OBJ_FILENAME, entryNode),
-                        getValue(STANDARDIZED_CONTAINER_TYPE, entryNode),
-                        getValue(STANDARDIZED_HOOK_ID, entryNode),
-                        getValue(STANDARDIZED_OBJECT, entryNode),
-                        getValue(STANDARDIZED_COLLECTION_URL, entryNode),
-                        getValue(STANDARDIZED_GENRE_FORM, entryNode),
-                        getValue(STANDARDIZED_EXTENT, entryNode),
-                        getValue(STANDARDIZED_UNIT_DATE, entryNode),
-                        getValue(STANDARDIZED_GEOGRAPHIC_NAME, entryNode),
-                        getValue(STANDARDIZED_REF_ID, entryNode),
-                        getValue(STANDARDIZED_MULTI_TITLE_COUNT, entryNode),
-                        getValue(STANDARDIZED_PROCESS_INFO, entryNode),
-                        getValue(STANDARDIZED_SCOPE_CONTENT, entryNode),
-                        getValue(STANDARDIZED_UNIT_TITLE, entryNode),
-                        getValue(STANDARDIZED_CONTAINER, entryNode)
-                );
+                printRow(tsvPrinter, entryNode);
             }
         } catch (IOException e) {
-            log.warn("Failed to retrieve response from EAD to CDM API {}: {}", url, e.getMessage());
+            log.warn("Failed to retrieve response from EAD to CDM API for {}: {}", eadId, e.getMessage());
             log.debug("Full error", e);
             throw new MigrationException("Unable to export from EAD to CDM", e);
         }
@@ -198,6 +173,55 @@ public class CdmExportService {
 
     private void initializeExportDir(MigrationProject project) throws IOException {
         Files.createDirectories(project.getExportPath());
+    }
+
+    private CredentialsProvider getCredentials(BxcEnvironment bxcEnv) {
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        var eadToCdmUsername = bxcEnv.getEadToCdmUsername();
+        var eadToCdmPassword = bxcEnv.getEadToCdmPassword();
+        credsProvider.setCredentials(
+                AuthScope.ANY,
+                new UsernamePasswordCredentials(eadToCdmUsername, eadToCdmPassword)
+        );
+        return credsProvider;
+    }
+
+    private HttpPost getHttpPost(String url, MigrationProject project, String eadId) throws UnsupportedEncodingException {
+        var httpPost = new HttpPost(url);
+        httpPost.setHeader("Content-type", "application/json");
+        httpPost.setEntity(new StringEntity(getBody(project, eadId)));
+        return httpPost;
+    }
+
+    private String getBody(MigrationProject project, String eadId) {
+        var body = "{'ead_id':" + eadId + ", 'files':";
+        var filenames = getFilenames(project);
+        return body + filenames + "}";
+    }
+
+    private void printRow(CSVPrinter tsvPrinter, ObjectNode entryNode) throws IOException {
+        tsvPrinter.printRecord(
+                getValue(STANDARDIZED_COLLECTION_NAME, entryNode),
+                getValue(STANDARDIZED_COLLECTION_NUMBER, entryNode),
+                getValue(STANDARDIZED_LOC_IN_COLLECTION, entryNode),
+                getValue(STANDARDIZED_CITATION, entryNode),
+                getValue(STANDARDIZED_FILENAME, entryNode),
+                getValue(STANDARDIZED_OBJ_FILENAME, entryNode),
+                getValue(STANDARDIZED_CONTAINER_TYPE, entryNode),
+                getValue(STANDARDIZED_HOOK_ID, entryNode),
+                getValue(STANDARDIZED_OBJECT, entryNode),
+                getValue(STANDARDIZED_COLLECTION_URL, entryNode),
+                getValue(STANDARDIZED_GENRE_FORM, entryNode),
+                getValue(STANDARDIZED_EXTENT, entryNode),
+                getValue(STANDARDIZED_UNIT_DATE, entryNode),
+                getValue(STANDARDIZED_GEOGRAPHIC_NAME, entryNode),
+                getValue(STANDARDIZED_REF_ID, entryNode),
+                getValue(STANDARDIZED_MULTI_TITLE_COUNT, entryNode),
+                getValue(STANDARDIZED_PROCESS_INFO, entryNode),
+                getValue(STANDARDIZED_SCOPE_CONTENT, entryNode),
+                getValue(STANDARDIZED_UNIT_TITLE, entryNode),
+                getValue(STANDARDIZED_CONTAINER, entryNode)
+        );
     }
 
     public void setCdmFieldService(CdmFieldService cdmFieldService) {

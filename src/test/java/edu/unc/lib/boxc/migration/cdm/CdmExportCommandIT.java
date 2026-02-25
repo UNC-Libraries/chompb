@@ -26,8 +26,11 @@ import java.nio.file.Path;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.mappingBody;
+import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.writeCsv;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_COLLECTION_NAME;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_CONTAINER_TYPE;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_FILENAME;
@@ -205,13 +208,14 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 "of North Carolina at Chapel Hill.\",\"filename\":\"02096-z_0001_0001.tif\",\"object_filename\":\"02096-z_0001_0001.tif\"," +
                 "\"container_type\":\"Folder\",\"hook_id\":\"folder_1\",\"object\":\"Folder 1: " +
                 "April 1836-15 October 1858, (17 items): Scan 1\",\"collection_url\":\"https:\\/\\/finding-aids.lib.unc.edu\\/catalog\\/04428\"," +
-                "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"processinfo\":\"\",\"scopecontent\":\"\"," +
-                "\"unittitle\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
+                "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"multititle_count\":\"\",\"processinfo\":\"\"," +
+                "\"scopecontent\":\"\",\"unittitle\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
         Path projPath = createProject("ead");
-        String[] args = exportArgs(projPath, "-ead", "-id", "04428", "-files", "02096-z_0001_0001.tif");
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
+        String[] args = exportArgs(projPath, "-ead", "-id", "04428");
+        writeCsv(project, mappingBody("00001,," + project.getProjectPath() + "/02096-z_0001_0001.tif,"));
         executeExpectSuccess(args);
 
-        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         assertTrue(Files.exists(project.getEadToCdmExportPath()), "EAD to CDM export file not created");
         var format = CSVFormat.TDF.builder()
                 .setTrim(true)
@@ -242,10 +246,12 @@ public class CdmExportCommandIT extends AbstractCommandIT {
                 "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"processinfo\":\"\",\"scopecontent\":\"\"," +
                 "\"unittitle\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
         Path projPath = createProject("ead");
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         String[] args = exportArgs(projPath, "-ead", "-id", "04428");
+        writeCsv(project, mappingBody("00001,," + project.getProjectPath() + "/00011_0045_0001.tif,",
+                "00002,," + project.getProjectPath() + "/00011_0045_0002.tif,"));
         executeExpectSuccess(args);
 
-        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         assertTrue(Files.exists(project.getEadToCdmExportPath()), "EAD to CDM export file not created");
         var format = CSVFormat.TDF.builder()
                 .setTrim(true)
@@ -315,7 +321,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     }
 
     private void eadToCdmApiResponse(String eadId, String apiResponse) {
-        stubFor(get(urlEqualTo("/ead/" + eadId))
+        stubFor(post(urlEqualTo("/ead/"))
                 .willReturn(aResponse()
                         .withBody(apiResponse)
                         .withHeader("Content-Type", "text/json")));
