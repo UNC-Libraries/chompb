@@ -1,9 +1,12 @@
 package edu.unc.lib.boxc.migration.cdm.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.services.CdmExportService;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.ArrayUtils;
@@ -64,6 +67,12 @@ public class EadToCdmUtil {
     public static final String STANDARDIZED_SCOPE_CONTENT = standardizeHeader(SCOPE_CONTENT);
     public static final String STANDARDIZED_UNIT_TITLE = standardizeHeader(UNIT_TITLE);
     public static final String STANDARDIZED_CONTAINER = standardizeHeader(CONTAINER);
+    private static final ObjectWriter JSON_WRITER;
+
+    static {
+        ObjectMapper mapper = new ObjectMapper();
+        JSON_WRITER = mapper.writerFor(CdmExportService.EadToCdmInfo.class);
+    }
     public static String[] TSV_HEADERS = new String[] {
             COLLECTION_NAME,
             COLLECTION_NUMBER,
@@ -170,6 +179,10 @@ public class EadToCdmUtil {
             }
         }
         return filenameString.toString();
+    }
+
+    public static String toJson(CdmExportService.EadToCdmInfo info) throws IOException {
+        return JSON_WRITER.writeValueAsString(info);
     }
 
     private EadToCdmUtil() {

@@ -26,7 +26,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -55,6 +54,7 @@ import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_UNIT
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.TSV_STANDARDIZED_HEADERS;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.getFilenames;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.getValue;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.toJson;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -117,7 +117,7 @@ public class CdmExportService {
     /**
      * This method calls the EAD to CDM API and transforms the JSON to a TSV for indexing
      */
-    private void exportFromEadToCdm(String eadId) throws UnsupportedEncodingException {
+    private void exportFromEadToCdm(String eadId) throws IOException {
         var bxcEnv = chompbConfig.getBxcEnvironments()
                 .get(project.getProjectProperties().getBxcEnvironmentId());
         var httpPost = getHttpPost(bxcEnv.getEadToCdmUrl(), project, eadId);
@@ -186,17 +186,18 @@ public class CdmExportService {
         return credsProvider;
     }
 
-    private HttpPost getHttpPost(String url, MigrationProject project, String eadId) throws UnsupportedEncodingException {
+    private HttpPost getHttpPost(String url, MigrationProject project, String eadId) throws IOException {
         var httpPost = new HttpPost(url);
         httpPost.setHeader("Content-type", "application/json");
         httpPost.setEntity(new StringEntity(getBody(project, eadId)));
         return httpPost;
     }
 
-    private String getBody(MigrationProject project, String eadId) {
-        var body = "{'ead_id':" + eadId + ", 'files':";
-        var filenames = getFilenames(project);
-        return body + filenames + "}";
+    private String getBody(MigrationProject project, String eadId) throws IOException {
+        var body = new EadToCdmInfo();
+        body.setEadId(eadId);
+        body.setFiles(getFilenames(project));
+        return toJson(body);
     }
 
     private void printRow(CSVPrinter tsvPrinter, ObjectNode entryNode) throws IOException {
@@ -222,6 +223,27 @@ public class CdmExportService {
                 getValue(STANDARDIZED_UNIT_TITLE, entryNode),
                 getValue(STANDARDIZED_CONTAINER, entryNode)
         );
+    }
+
+    public static class EadToCdmInfo {
+        private String eadId;
+        private String files;
+
+        public String getEadId() {
+            return eadId;
+        }
+
+        public void setEadId(String eadId) {
+            this.eadId = eadId;
+        }
+
+        public String getFiles() {
+            return files;
+        }
+
+        public void setFiles(String files) {
+            this.files = files;
+        }
     }
 
     public void setCdmFieldService(CdmFieldService cdmFieldService) {
