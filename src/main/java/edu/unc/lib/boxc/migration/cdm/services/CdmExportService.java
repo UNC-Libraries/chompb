@@ -121,6 +121,7 @@ public class CdmExportService {
         var bxcEnv = chompbConfig.getBxcEnvironments()
                 .get(project.getProjectProperties().getBxcEnvironmentId());
         var httpPost = getHttpPost(bxcEnv.getEadToCdmUrl(), project, eadId);
+        var test = httpPost.getEntity();
         ObjectMapper mapper = new ObjectMapper();
         var csvPrinterFormat = CSVFormat.TDF.builder()
                 .setTrim(true)
