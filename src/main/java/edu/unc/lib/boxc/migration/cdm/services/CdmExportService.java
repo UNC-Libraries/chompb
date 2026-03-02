@@ -122,8 +122,8 @@ public class CdmExportService {
     private void exportFromEadToCdm(String eadId) throws IOException {
         var bxcEnv = chompbConfig.getBxcEnvironments()
                 .get(project.getProjectProperties().getBxcEnvironmentId());
-        var httpPost = getHttpPost(bxcEnv.getEadToCdmUrl(), project, eadId);
-        var test = httpPost.getEntity();
+        var httpPost = getEadToCdmHttpPost(bxcEnv.getEadToCdmUrl(), project, eadId);
+
         ObjectMapper mapper = new ObjectMapper();
         var csvPrinterFormat = CSVFormat.TDF.builder()
                 .setTrim(true)
@@ -134,7 +134,7 @@ public class CdmExportService {
         try (
             var httpClient = HttpClientBuilder.create()
                     .disableRedirectHandling()
-                    .setDefaultCredentialsProvider(getCredentials(bxcEnv))
+                    .setDefaultCredentialsProvider(getEadToCdmApiCreds(bxcEnv))
                     .build();
             CloseableHttpResponse resp = httpClient.execute(httpPost);
             var writer = Files.newBufferedWriter(eadToCdmTsvPath);
@@ -154,7 +154,7 @@ public class CdmExportService {
             }
             for (JsonNode jsonNode : jsonArray) {
                 ObjectNode entryNode = (ObjectNode) jsonNode;
-                printRow(tsvPrinter, entryNode);
+                printEadToCdmRow(tsvPrinter, entryNode);
             }
         } catch (IOException e) {
             log.warn("Failed to retrieve response from EAD to CDM API for {}: {}", eadId, e.getMessage());
@@ -178,7 +178,7 @@ public class CdmExportService {
         Files.createDirectories(project.getExportPath());
     }
 
-    private CredentialsProvider getCredentials(BxcEnvironment bxcEnv) {
+    private CredentialsProvider getEadToCdmApiCreds(BxcEnvironment bxcEnv) {
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
         var eadToCdmUsername = bxcEnv.getEadToCdmUsername();
         var eadToCdmPassword = bxcEnv.getEadToCdmPassword();
@@ -189,21 +189,21 @@ public class CdmExportService {
         return credsProvider;
     }
 
-    private HttpPost getHttpPost(String url, MigrationProject project, String eadId) throws IOException {
+    private HttpPost getEadToCdmHttpPost(String url, MigrationProject project, String eadId) throws IOException {
         var httpPost = new HttpPost(url);
         httpPost.setHeader("Content-type", "application/json");
-        httpPost.setEntity(new StringEntity(getBody(project, eadId)));
+        httpPost.setEntity(new StringEntity(getEadToCdmBody(project, eadId)));
         return httpPost;
     }
 
-    private String getBody(MigrationProject project, String eadId) throws IOException {
+    private String getEadToCdmBody(MigrationProject project, String eadId) throws IOException {
         var body = new EadToCdmInfo();
         body.setEadId(eadId);
         body.setFiles(getFilenames(project));
         return toJson(body);
     }
 
-    private void printRow(CSVPrinter tsvPrinter, ObjectNode entryNode) throws IOException {
+    private void printEadToCdmRow(CSVPrinter tsvPrinter, ObjectNode entryNode) throws IOException {
         tsvPrinter.printRecord(
                 getValue(STANDARDIZED_COLLECTION_NAME, entryNode),
                 getValue(STANDARDIZED_COLLECTION_NUMBER, entryNode),

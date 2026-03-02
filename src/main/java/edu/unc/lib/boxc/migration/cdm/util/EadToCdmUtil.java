@@ -171,14 +171,9 @@ public class EadToCdmUtil {
      */
     public static String getFilenames(MigrationProject project) {
         var filenameToIdMap = getInfoFromSourceFile(project);
-        StringBuilder filenameString = new StringBuilder();
         var filenames = filenameToIdMap.keySet();
-        for (var filename : filenames) {
-            if (!filename.isBlank()) {
-                filenameString.append(filename).append(",");
-            }
-        }
-        return filenameString.toString();
+        filenames.removeIf(String::isBlank);
+        return String.join(",", filenames);
     }
 
     public static String toJson(CdmExportService.EadToCdmInfo info) throws IOException {

@@ -139,7 +139,7 @@ public class CdmExportServiceTest {
     }
 
     @Test
-    public void exportFromEadToCdmBodyTest() throws IOException {
+    public void exportFromEadToCdmBodyTest() throws Exception {
         CdmFieldInfo fieldInfo = populateFieldInfo();
         fieldService.persistFieldsToProject(project, fieldInfo);
         var options = makeExportOptions();
@@ -161,9 +161,7 @@ public class CdmExportServiceTest {
 
             var postArgument = getHttpPostArgument();
             var jsonString = IOUtils.toString(postArgument.getEntity().getContent(), StandardCharsets.UTF_8);
-            assertEquals( "{\"ead_id\":\"00001\",\"files\":\"02096-z_0001_0001.tif,\"}", jsonString);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            assertEquals( "{\"ead_id\":\"00001\",\"files\":\"02096-z_0001_0001.tif\"}", jsonString);
         }
     }
 
