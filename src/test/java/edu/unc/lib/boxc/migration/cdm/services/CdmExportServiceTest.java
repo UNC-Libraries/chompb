@@ -10,10 +10,8 @@ import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
 import edu.unc.lib.boxc.migration.cdm.test.CdmEnvironmentHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -23,28 +21,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.mappingBody;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.writeCsv;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -170,8 +161,8 @@ public class CdmExportServiceTest {
             when(resp.getEntity()).thenReturn(stringEntity);
             service.exportAll(options);
 
-            var post = getHttpPost();
-            var jsonString = IOUtils.toString(post.getEntity().getContent(), StandardCharsets.UTF_8);
+            var postArgument = getHttpPostArgument();
+            var jsonString = IOUtils.toString(postArgument.getEntity().getContent(), StandardCharsets.UTF_8);
             assertEquals( "{\"ead_id\":\"00001\",\"files\":\"02096-z_0001_0001.tif,\"}", jsonString);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -199,7 +190,7 @@ public class CdmExportServiceTest {
                 FileUtils.readFileToString(CdmFileRetrievalService.getDescAllPath(project).toFile(), StandardCharsets.UTF_8));
     }
 
-    private HttpPost getHttpPost() throws Exception {
+    private HttpPost getHttpPostArgument() throws Exception {
         ArgumentCaptor<HttpPost> httpPostCaptor = ArgumentCaptor.forClass(HttpPost.class);
         verify(httpClient).execute(httpPostCaptor.capture());
         return httpPostCaptor.getValue();
