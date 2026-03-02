@@ -182,6 +182,7 @@ public class EadToCdmUtil {
     }
 
     public static String toJson(CdmExportService.EadToCdmInfo info) throws IOException {
+        var json = JSON_WRITER.writeValueAsString(info);
         return JSON_WRITER.writeValueAsString(info);
     }
 

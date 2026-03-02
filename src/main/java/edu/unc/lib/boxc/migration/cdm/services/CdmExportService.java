@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.BxcEnvironment;
@@ -226,6 +228,7 @@ public class CdmExportService {
         );
     }
 
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class EadToCdmInfo {
         private String eadId;
         private String files;

@@ -160,7 +160,6 @@ public class CdmExportServiceTest {
         var builder = mock(HttpClientBuilder.class);
         StringEntity stringEntity = new StringEntity(getJsonContent(), ContentType.APPLICATION_JSON);
 
-
         try (MockedStatic<HttpClientBuilder> mockedStatic = mockStatic(HttpClientBuilder.class) ) {
             mockedStatic.when(HttpClientBuilder::create).thenReturn(builder);
             when(builder.disableRedirectHandling()).thenReturn(builder);
@@ -172,9 +171,8 @@ public class CdmExportServiceTest {
             service.exportAll(options);
 
             var post = getHttpPost();
-
-            var entity = post.getEntity().toString();
-            var headers = post.getAllHeaders();
+            var jsonString = IOUtils.toString(post.getEntity().getContent(), StandardCharsets.UTF_8);
+            assertEquals( "{\"ead_id\":\"00001\",\"files\":\"02096-z_0001_0001.tif,\"}", jsonString);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
