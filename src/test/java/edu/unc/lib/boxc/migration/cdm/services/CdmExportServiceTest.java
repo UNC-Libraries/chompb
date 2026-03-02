@@ -33,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.mappingBody;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.writeCsv;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +40,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
