@@ -148,7 +148,7 @@ public class CdmExportServiceTest {
         options.setEadId("00001");
         writeCsv(project, mappingBody("00001,," + project.getProjectPath() + "/02096-z_0001_0001.tif,"));
         var builder = mock(HttpClientBuilder.class);
-        StringEntity stringEntity = new StringEntity(getJsonContent(), ContentType.APPLICATION_JSON);
+        StringEntity stringEntity = new StringEntity(getJsonContent("02096-z_0001_0001.tif"), ContentType.APPLICATION_JSON);
 
         try (MockedStatic<HttpClientBuilder> mockedStatic = mockStatic(HttpClientBuilder.class) ) {
             mockedStatic.when(HttpClientBuilder::create).thenReturn(builder);

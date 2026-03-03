@@ -202,14 +202,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void exportEadToCdmWithFilesIncludedTest() throws Exception {
-        eadToCdmApiResponse("04428", "{\"04428\":[{\"collection_name\":\"Joyner Family Papers, ; 4428\",\"collection_number\":\"04428\"," +
-                "\"location_in_collection\":\"Series 1. Correspondence, 1836-1881.\",\"citation\":\"[Identification of item], " +
-                "in the Joyner Family Papers #4428, Southern Historical Collection, Wilson Special Collections Library, University " +
-                "of North Carolina at Chapel Hill.\",\"filename\":\"02096-z_0001_0001.tif\",\"object_filename\":\"02096-z_0001_0001.tif\"," +
-                "\"container_type\":\"Folder\",\"hook_id\":\"folder_1\",\"object\":\"Folder 1: " +
-                "April 1836-15 October 1858, (17 items): Scan 1\",\"collection_url\":\"https:\\/\\/finding-aids.lib.unc.edu\\/catalog\\/04428\"," +
-                "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"multititle_count\":\"\",\"processinfo\":\"\"," +
-                "\"scopecontent\":\"\",\"unittitle\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
+        eadToCdmApiResponse("04428", getJsonContent("02096-z_0001_0001.tif"));
         Path projPath = createProject("ead");
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         String[] args = exportArgs(projPath, "-ead", "-id", "04428");
@@ -237,7 +230,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void exportEadToCdmNoFilesIncludedTest() throws Exception {
-        eadToCdmApiResponse("04428", getJsonContent());
+        eadToCdmApiResponse("04428", getJsonContent(null));
         Path projPath = createProject("ead");
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         String[] args = exportArgs(projPath, "-ead", "-id", "04428");
