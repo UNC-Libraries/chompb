@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static edu.unc.lib.boxc.migration.cdm.test.EadToCdmHelper.getJsonContent;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.mappingBody;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.writeCsv;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -190,16 +191,5 @@ public class CdmExportServiceTest {
         ArgumentCaptor<HttpPost> httpPostCaptor = ArgumentCaptor.forClass(HttpPost.class);
         verify(httpClient).execute(httpPostCaptor.capture());
         return httpPostCaptor.getValue();
-    }
-
-    private String getJsonContent() {
-        return "{\"00001\":[{\"collection_name\":\"Joyner Family Papers, ; 4428\",\"collection_number\":\"00001\"," +
-                "\"location_in_collection\":\"Series 1. Correspondence, 1836-1881.\",\"citation\":\"[Identification of item], " +
-                "in the Joyner Family Papers #4428, Southern Historical Collection, Wilson Special Collections Library, University " +
-                "of North Carolina at Chapel Hill.\",\"filename\":\"no-files-included\",\"object_filename\":\"no-files-included\"," +
-                "\"container_type\":\"Folder\",\"hook_id\":\"folder_1\",\"object\":\"Folder 1: " +
-                "April 1836-15 October 1858, (17 items): Scan 1\",\"collection_url\":\"https:\\/\\/finding-aids.lib.unc.edu\\/catalog\\/04428\"," +
-                "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"processinfo\":\"\",\"scopecontent\":\"\"," +
-                "\"unittitle\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}";
     }
 }

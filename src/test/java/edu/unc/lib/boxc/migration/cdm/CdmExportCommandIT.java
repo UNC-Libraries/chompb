@@ -25,10 +25,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static edu.unc.lib.boxc.migration.cdm.test.EadToCdmHelper.getJsonContent;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.mappingBody;
 import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.writeCsv;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_COLLECTION_NAME;
@@ -237,14 +237,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void exportEadToCdmNoFilesIncludedTest() throws Exception {
-        eadToCdmApiResponse("04428", "{\"metadata\":[{\"collection_name\":\"Joyner Family Papers, ; 4428\",\"collection_number\":\"04428\"," +
-                "\"location_in_collection\":\"Series 1. Correspondence, 1836-1881.\",\"citation\":\"[Identification of item], " +
-                "in the Joyner Family Papers #4428, Southern Historical Collection, Wilson Special Collections Library, University " +
-                "of North Carolina at Chapel Hill.\",\"filename\":\"no-files-included\",\"object_filename\":\"no-files-included\"," +
-                "\"container_type\":\"Folder\",\"hook_id\":\"folder_1\",\"object\":\"Folder 1: " +
-                "April 1836-15 October 1858, (17 items): Scan 1\",\"collection_url\":\"https:\\/\\/finding-aids.lib.unc.edu\\/catalog\\/04428\"," +
-                "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"processinfo\":\"\",\"scopecontent\":\"\"," +
-                "\"unittitle\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
+        eadToCdmApiResponse("04428", getJsonContent());
         Path projPath = createProject("ead");
         MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         String[] args = exportArgs(projPath, "-ead", "-id", "04428");
