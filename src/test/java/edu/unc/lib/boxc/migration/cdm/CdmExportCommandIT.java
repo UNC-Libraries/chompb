@@ -237,7 +237,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
 
     @Test
     public void exportEadToCdmNoFilesIncludedTest() throws Exception {
-        eadToCdmApiResponse("04428", "{\"04428\":[{\"collection_name\":\"Joyner Family Papers, ; 4428\",\"collection_number\":\"04428\"," +
+        eadToCdmApiResponse("04428", "{\"metadata\":[{\"collection_name\":\"Joyner Family Papers, ; 4428\",\"collection_number\":\"04428\"," +
                 "\"location_in_collection\":\"Series 1. Correspondence, 1836-1881.\",\"citation\":\"[Identification of item], " +
                 "in the Joyner Family Papers #4428, Southern Historical Collection, Wilson Special Collections Library, University " +
                 "of North Carolina at Chapel Hill.\",\"filename\":\"no-files-included\",\"object_filename\":\"no-files-included\"," +

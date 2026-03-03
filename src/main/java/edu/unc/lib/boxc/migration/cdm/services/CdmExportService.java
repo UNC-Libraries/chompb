@@ -147,8 +147,8 @@ public class CdmExportService {
                         "\nIt must be a JSON object, please check the response.");
             }
             ObjectNode rootNode = mapper.readTree(parser);
-            var jsonArray = rootNode.get(eadId);
-            if (!jsonArray.isArray()) {
+            var jsonArray = rootNode.get("metadata");
+            if (jsonArray == null || !jsonArray.isArray()) {
                 throw new MigrationException("Unexpected response from EAD to CDM API for EAD ID " + eadId +
                         "\nJSON value must be a JSON array, please check the response.");
             }
