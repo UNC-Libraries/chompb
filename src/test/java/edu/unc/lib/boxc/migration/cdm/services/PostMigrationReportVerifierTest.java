@@ -28,11 +28,10 @@ import java.util.List;
 import java.util.Map;
 
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.JSON;
-import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.PARENT_COLL_ID;
+import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.JSON_NO_PARENT;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.PARENT_COLL_TITLE;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.PARENT_COLL_URL;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.parseReport;
-import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.API_PATH;
 import static edu.unc.lib.boxc.migration.cdm.util.PostMigrationReportConstants.SIP_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,6 +46,9 @@ import static org.mockito.MockitoAnnotations.openMocks;
 public class PostMigrationReportVerifierTest {
     private static final String BOXC_URL_1 = "http://example.com/bxc/bb3b83d7-2962-4604-a7d0-9afcb4ec99b1";
     private static final String BOXC_URL_2 = "http://example.com/bxc/91c08272-260f-40f1-bb7c-78854d504368";
+    private static final String BOXC_API_BASE = "http://localhost:46887/bxc/api/record/";
+    private static final String BOXC_API_1 = BOXC_API_BASE + "bb3b83d7-2962-4604-a7d0-9afcb4ec99b1/json";
+    private static final String BOXC_API_2 = BOXC_API_BASE + "91c08272-260f-40f1-bb7c-78854d504368/json";
     private static final String CDM_URL_1 = "http://localhost/cdm/singleitem/collection/proj/id/25";
     private static final String CDM_URL_2 = "http://localhost/cdm/singleitem/collection/proj/id/26";
     private AutoCloseable closeable;
@@ -91,8 +93,8 @@ public class PostMigrationReportVerifierTest {
 
     @Test
     public void reportVerifySuccessTest() throws Exception {
-        mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.OK,
-                BOXC_URL_2, HttpStatus.FORBIDDEN), false);
+        mockBxcResponses(Map.of(BOXC_API_1, HttpStatus.OK,
+                BOXC_API_2, HttpStatus.FORBIDDEN), false);
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
@@ -129,19 +131,19 @@ public class PostMigrationReportVerifierTest {
                 "A file",
                 "",
                 "",
-                HttpStatus.OK.name(),
+                HttpStatus.FORBIDDEN.name(),
                 BOXC_URL_1,
                 "Redoubt C",
                 "",
                 SIP_ID,
-                PARENT_COLL_URL,
-                PARENT_COLL_TITLE);
+                "",
+                "");
     }
 
     @Test
     public void reportVerifyErrorsTest() throws Exception {
-        mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.NOT_FOUND,
-                BOXC_URL_2, HttpStatus.NOT_FOUND), false);
+        mockBxcResponses(Map.of(BOXC_API_1, HttpStatus.NOT_FOUND,
+                BOXC_API_2, HttpStatus.NOT_FOUND), false);
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
@@ -169,8 +171,8 @@ public class PostMigrationReportVerifierTest {
                 "",
                 "1",
                 SIP_ID,
-                PARENT_COLL_URL,
-                PARENT_COLL_TITLE);
+                "",
+                "");
         assertRowContainsAllInfo(rows, "26",
                 CDM_URL_2,
                 "File",
@@ -183,13 +185,13 @@ public class PostMigrationReportVerifierTest {
                 "Redoubt C",
                 "",
                 SIP_ID,
-                PARENT_COLL_URL,
-                PARENT_COLL_TITLE);
+                "",
+                "");
     }
 
     @Test
     public void reportVerifyPartialTest() throws Exception {
-        mockBxcResponses(Map.of(BOXC_URL_2, HttpStatus.OK), false);
+        mockBxcResponses(Map.of(BOXC_API_2, HttpStatus.OK), false);
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
@@ -217,8 +219,8 @@ public class PostMigrationReportVerifierTest {
                 "",
                 "1",
                 SIP_ID,
-                PARENT_COLL_URL,
-                PARENT_COLL_TITLE);
+                "",
+                "");
         assertRowContainsAllInfo(rows, "26",
                 CDM_URL_2,
                 "File",
@@ -237,7 +239,7 @@ public class PostMigrationReportVerifierTest {
 
     @Test
     public void reportVerifyWithParentCollectionError() throws Exception {
-        mockBxcResponses(Map.of(BOXC_URL_1, HttpStatus.OK, BOXC_URL_2, HttpStatus.OK), true);
+        mockBxcResponses(Map.of(BOXC_API_1, HttpStatus.OK, BOXC_API_2, HttpStatus.OK), true);
 
         reportGenerator.init();
         reportGenerator.addRow("25", CDM_URL_1, "Work", BOXC_URL_1, "Redoubt C",
@@ -283,25 +285,24 @@ public class PostMigrationReportVerifierTest {
                 "");
     }
 
-    private void mockBxcResponses(Map<String, HttpStatus> urlToStatus, boolean apiFailure) throws IOException {
+    private void mockBxcResponses(Map<String, HttpStatus> urlToStatus, boolean noParent) throws IOException {
         when(httpClient.execute(any(HttpUriRequest.class))).thenAnswer(invocation -> {
             HttpGet httpGet = invocation.getArgument(0);
-            var requestUrl = httpGet.getURI().toString();
             var resp = mock(CloseableHttpResponse.class);
             when(resp.getEntity()).thenReturn(respEntity);
             var statusLine = mock(StatusLine.class);
             when(resp.getStatusLine()).thenReturn(statusLine);
 
-            if (requestUrl.contains(API_PATH)) {
-                if (apiFailure) {
-                    when(statusLine.getStatusCode()).thenReturn(HttpStatus.INTERNAL_SERVER_ERROR.value());
-                    return resp;
+            String requestUrl = httpGet.getURI().toString();
+            int status = urlToStatus.get(requestUrl).value();
+            if (status == HttpStatus.OK.value()) {
+                if (noParent) {
+                    when(respEntity.getContent()).thenReturn(new ByteArrayInputStream(JSON_NO_PARENT.getBytes(StandardCharsets.UTF_8)));
+                } else {
+                    when(respEntity.getContent()).thenReturn(new ByteArrayInputStream(JSON.getBytes(StandardCharsets.UTF_8)));
                 }
-                when(statusLine.getStatusCode()).thenReturn(HttpStatus.OK.value());
-                when(respEntity.getContent()).thenReturn(new ByteArrayInputStream(JSON.getBytes(StandardCharsets.UTF_8)));
-            } else {
-                when(statusLine.getStatusCode()).thenReturn(urlToStatus.get(httpGet.getURI().toString()).value());
             }
+            when(statusLine.getStatusCode()).thenReturn(status);
             return resp;
         });
     }

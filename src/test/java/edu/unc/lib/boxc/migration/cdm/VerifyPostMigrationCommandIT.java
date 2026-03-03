@@ -18,6 +18,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.JSON;
+import static edu.unc.lib.boxc.migration.cdm.test.PostMigrationReportTestHelper.JSON_NO_PARENT;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -54,9 +55,6 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
 
     @Test
     public void successTest() throws Exception {
-        stubFor(get(urlMatching("/bxc/record/.*"))
-                .willReturn(aResponse()
-                        .withStatus(HttpStatus.OK.value())));
         stubFor(get(urlMatching("/bxc/api/.*"))
                 .willReturn(aResponse()
                         .withBody(JSON)
@@ -76,13 +74,10 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
 
     @Test
     public void errorsTest() throws Exception {
-        stubFor(get(urlMatching("/bxc/record/.*"))
-                .willReturn(aResponse()
-                        .withStatus(HttpStatus.NOT_FOUND.value())));
         stubFor(get(urlMatching("/bxc/api/.*"))
                 .willReturn(aResponse()
                         .withBody(JSON)
-                        .withStatus(HttpStatus.OK.value())));
+                        .withStatus(HttpStatus.NOT_FOUND.value())));
 
         generateSip();
 
@@ -97,13 +92,10 @@ public class VerifyPostMigrationCommandIT extends AbstractCommandIT {
 
     @Test
     public void parentCollectionErrorsTest() {
-        stubFor(get(urlMatching("/bxc/record/.*"))
-                .willReturn(aResponse()
-                        .withStatus(HttpStatus.OK.value())));
         stubFor(get(urlMatching("/bxc/api/.*"))
                 .willReturn(aResponse()
-                        .withBody(JSON)
-                        .withStatus(HttpStatus.NOT_FOUND.value())));
+                        .withBody(JSON_NO_PARENT)
+                        .withStatus(HttpStatus.OK.value())));
 
         generateSip();
 
