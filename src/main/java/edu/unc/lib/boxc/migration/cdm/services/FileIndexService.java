@@ -3,7 +3,6 @@ package edu.unc.lib.boxc.migration.cdm.services;
 import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
-import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.CdmIndexOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
@@ -14,16 +13,11 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
-import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.ID_FIELD;
-import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SOURCE_FILE_FIELD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmFieldService.EAD_TO_CDM;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.CITATION;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.COLLECTION_NAME;
@@ -45,7 +39,9 @@ import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.SCOPE_CONTENT;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.TSV_HEADERS;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.TSV_WITH_ID_HEADERS;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.UNIT_DATE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.MULTI_TITLE_COUNT;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.UNIT_TITLE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.getInfoFromSourceFile;
 
 /**
  * Service for populating the index of a CDM project via a file (CSV or EAD to CDM TSV)
@@ -115,7 +111,7 @@ public class FileIndexService extends IndexService {
 
     public Path addIdsToEadToCdmTsv(Path eadToCdmTsvPath) {
         var eadToCdmWithIdPath = project.getProjectPath().resolve("ead_to_cdm_with_ids.tsv");
-        var filenameToIdMap = getIdsFromSourceFile();
+        var filenameToIdMap = getInfoFromSourceFile(project);
         var format = CSVFormat.TDF.builder()
                 .setTrim(true)
                 .setSkipHeaderRecord(true)
@@ -145,37 +141,13 @@ public class FileIndexService extends IndexService {
                         tsvRecord.get(OBJ_FILENAME), tsvRecord.get(CONTAINER_TYPE), tsvRecord.get(HOOK_ID),
                         tsvRecord.get(OBJECT), tsvRecord.get(COLLECTION_URL), tsvRecord.get(GENRE_FORM),
                         tsvRecord.get(EXTENT), tsvRecord.get(UNIT_DATE), tsvRecord.get(GEOGRAPHIC_NAME),
-                        tsvRecord.get(REF_ID), tsvRecord.get(PROCESS_INFO), tsvRecord.get(SCOPE_CONTENT),
-                        tsvRecord.get(UNIT_TITLE), tsvRecord.get(CONTAINER), cdmId);
+                        tsvRecord.get(REF_ID), tsvRecord.get(MULTI_TITLE_COUNT), tsvRecord.get(PROCESS_INFO),
+                        tsvRecord.get(SCOPE_CONTENT), tsvRecord.get(UNIT_TITLE), tsvRecord.get(CONTAINER), cdmId);
             }
             return eadToCdmWithIdPath;
         } catch (IOException e) {
             throw new MigrationException("Unable to format new TSV", e);
         }
-    }
-
-    private Map<String, String> getIdsFromSourceFile() {
-        Map<String, String> filenameToId = new HashMap<>();
-        var sourceFilesPath = project.getSourceFilesMappingPath();
-        var format = CSVFormat.DEFAULT.builder()
-                .setTrim(true)
-                .setSkipHeaderRecord(true)
-                .setHeader(SourceFilesInfo.CSV_HEADERS)
-                .get();
-        try (
-                var reader = Files.newBufferedReader(sourceFilesPath);
-                var csvRecords = CSVParser.parse(reader, format);
-        ) {
-            for (var record : csvRecords) {
-                var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
-                var filename = basePath.getFileName().toString();
-                filenameToId.put(filename, record.get(ID_FIELD));
-            }
-        } catch (IOException e) {
-            throw new MigrationException("Failed to get source files info", e);
-        }
-
-        return filenameToId;
     }
 
     private Path getPath(CdmIndexOptions options) {

@@ -1,9 +1,25 @@
 package edu.unc.lib.boxc.migration.cdm.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
+import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
+import edu.unc.lib.boxc.migration.cdm.services.CdmExportService;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+
 import static edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo.CDM_ID;
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.ID_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SOURCE_FILE_FIELD;
 
 /**
  * Helper methods and constants related to EAD to CDM indexing and exporting
@@ -25,6 +41,7 @@ public class EadToCdmUtil {
     public static final String UNIT_DATE = "Unit Date";
     public static final String GEOGRAPHIC_NAME = "Geographic Name";
     public static final String REF_ID = "Ref ID";
+    public static final String MULTI_TITLE_COUNT = "Multititle Count";
     public static final String PROCESS_INFO = "processinfo";
     public static final String SCOPE_CONTENT = "scopecontent";
     public static final String UNIT_TITLE = "unitTitle";
@@ -45,13 +62,39 @@ public class EadToCdmUtil {
     public static final String STANDARDIZED_UNIT_DATE = standardizeHeader(UNIT_DATE);
     public static final String STANDARDIZED_GEOGRAPHIC_NAME = standardizeHeader(GEOGRAPHIC_NAME);
     public static final String STANDARDIZED_REF_ID = standardizeHeader(REF_ID);
+    public static final String STANDARDIZED_MULTI_TITLE_COUNT = standardizeHeader(MULTI_TITLE_COUNT);
     public static final String STANDARDIZED_PROCESS_INFO = standardizeHeader(PROCESS_INFO);
     public static final String STANDARDIZED_SCOPE_CONTENT = standardizeHeader(SCOPE_CONTENT);
     public static final String STANDARDIZED_UNIT_TITLE = standardizeHeader(UNIT_TITLE);
     public static final String STANDARDIZED_CONTAINER = standardizeHeader(CONTAINER);
-    public static String[] TSV_HEADERS = new String[] { COLLECTION_NAME, COLLECTION_NUMBER, LOC_IN_COLLECTION, CITATION,
-            FILENAME, OBJ_FILENAME, CONTAINER_TYPE, HOOK_ID, OBJECT, COLLECTION_URL, GENRE_FORM, EXTENT, UNIT_DATE,
-            GEOGRAPHIC_NAME, REF_ID, PROCESS_INFO, SCOPE_CONTENT, UNIT_TITLE, CONTAINER };
+    private static final ObjectWriter JSON_WRITER;
+
+    static {
+        ObjectMapper mapper = new ObjectMapper();
+        JSON_WRITER = mapper.writerFor(CdmExportService.EadToCdmInfo.class);
+    }
+    public static String[] TSV_HEADERS = new String[] {
+            COLLECTION_NAME,
+            COLLECTION_NUMBER,
+            LOC_IN_COLLECTION,
+            CITATION,
+            FILENAME,
+            OBJ_FILENAME,
+            CONTAINER_TYPE,
+            HOOK_ID,
+            OBJECT,
+            COLLECTION_URL,
+            GENRE_FORM,
+            EXTENT,
+            UNIT_DATE,
+            GEOGRAPHIC_NAME,
+            REF_ID,
+            MULTI_TITLE_COUNT,
+            PROCESS_INFO,
+            SCOPE_CONTENT,
+            UNIT_TITLE,
+            CONTAINER
+    };
 
     public static String[] TSV_STANDARDIZED_HEADERS = new String[] {
             STANDARDIZED_COLLECTION_NAME,
@@ -69,6 +112,7 @@ public class EadToCdmUtil {
             STANDARDIZED_UNIT_DATE,
             STANDARDIZED_GEOGRAPHIC_NAME,
             STANDARDIZED_REF_ID,
+            STANDARDIZED_MULTI_TITLE_COUNT,
             STANDARDIZED_PROCESS_INFO,
             STANDARDIZED_SCOPE_CONTENT,
             STANDARDIZED_UNIT_TITLE,
@@ -94,6 +138,47 @@ public class EadToCdmUtil {
 
     public static String standardizeHeader(String header) {
         return header.replaceAll(" ", "_").replaceAll("\"", "").toLowerCase();
+    }
+
+    public static Map<String, String> getInfoFromSourceFile(MigrationProject project) {
+        Map<String, String> filenameToId = new HashMap<>();
+        var sourceFilesPath = project.getSourceFilesMappingPath();
+        var format = CSVFormat.DEFAULT.builder()
+                .setTrim(true)
+                .setSkipHeaderRecord(true)
+                .setHeader(SourceFilesInfo.CSV_HEADERS)
+                .get();
+        try (
+                var reader = Files.newBufferedReader(sourceFilesPath);
+                var csvRecords = CSVParser.parse(reader, format);
+        ) {
+            for (var record : csvRecords) {
+                var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
+                var filename = basePath.getFileName().toString();
+                filenameToId.put(filename, record.get(ID_FIELD));
+            }
+        } catch (IOException e) {
+            throw new MigrationException("Failed to get source files info", e);
+        }
+
+        return filenameToId;
+    }
+
+    /**
+     * get filenames from source files
+     * @param project
+     * @return comma-delimited list of filenames
+     */
+    public static String getFilenames(MigrationProject project) {
+        var filenameToIdMap = getInfoFromSourceFile(project);
+        var filenames = filenameToIdMap.keySet();
+        filenames.removeIf(String::isBlank);
+        return String.join(",", filenames);
+    }
+
+    public static String toJson(CdmExportService.EadToCdmInfo info) throws IOException {
+        var json = JSON_WRITER.writeValueAsString(info);
+        return JSON_WRITER.writeValueAsString(info);
     }
 
     private EadToCdmUtil() {

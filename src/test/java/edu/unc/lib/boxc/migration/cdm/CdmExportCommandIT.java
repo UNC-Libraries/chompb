@@ -25,11 +25,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static edu.unc.lib.boxc.migration.cdm.test.EadToCdmHelper.getJsonContent;
+import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.mappingBody;
+import static edu.unc.lib.boxc.migration.cdm.test.IndexServiceHelper.writeCsv;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_COLLECTION_NAME;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_CONTAINER_TYPE;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_FILENAME;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.STANDARDIZED_GEOGRAPHIC_NAME;
 import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.TSV_STANDARDIZED_HEADERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -197,19 +201,14 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void exportEadToCdmTest() throws Exception {
-        eadToCdmApiResponse("04428", "{\"04428\":[{\"collection_name\":\"Joyner Family Papers, ; 4428\",\"collection_number\":\"04428\"," +
-                "\"location_in_collection\":\"Series 1. Correspondence, 1836-1881.\",\"citation\":\"[Identification of item], " +
-                "in the Joyner Family Papers #4428, Southern Historical Collection, Wilson Special Collections Library, University " +
-                "of North Carolina at Chapel Hill.\",\"container_type\":\"Folder\",\"hook_id\":\"folder_1\",\"object\":\"Folder 1: " +
-                "April 1836-15 October 1858, (17 items): Scan 1\",\"collection_url\":\"https:\\/\\/finding-aids.lib.unc.edu\\/catalog\\/04428\"," +
-                "\"genre_form\":\"\",\"extent\":\"\",\"unit_date\":\"\",\"geographic_name\":\"\",\"processinfo\":\"\",\"scopecontent\":\"\"," +
-                "\"unit_title\":\"April 1836-15 October 1858, (17 items)\",\"container\":\"1\"}]}");
+    public void exportEadToCdmWithFilesIncludedTest() throws Exception {
+        eadToCdmApiResponse("04428", getJsonContent("02096-z_0001_0001.tif"));
         Path projPath = createProject("ead");
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         String[] args = exportArgs(projPath, "-ead", "-id", "04428");
+        writeCsv(project, mappingBody("00001,," + project.getProjectPath() + "/02096-z_0001_0001.tif,"));
         executeExpectSuccess(args);
 
-        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
         assertTrue(Files.exists(project.getEadToCdmExportPath()), "EAD to CDM export file not created");
         var format = CSVFormat.TDF.builder()
                 .setTrim(true)
@@ -225,6 +224,36 @@ public class CdmExportCommandIT extends AbstractCommandIT {
             assertEquals("Joyner Family Papers, ; 4428", tsvRecord.get(STANDARDIZED_COLLECTION_NAME));
             assertEquals("Folder", tsvRecord.get(STANDARDIZED_CONTAINER_TYPE));
             assertEquals("", tsvRecord.get(STANDARDIZED_GEOGRAPHIC_NAME));
+            assertEquals("02096-z_0001_0001.tif", tsvRecord.get(STANDARDIZED_FILENAME));
+        }
+    }
+
+    @Test
+    public void exportEadToCdmNoFilesIncludedTest() throws Exception {
+        eadToCdmApiResponse("04428", getJsonContent(null));
+        Path projPath = createProject("ead");
+        MigrationProject project = MigrationProjectFactory.loadMigrationProject(projPath);
+        String[] args = exportArgs(projPath, "-ead", "-id", "04428");
+        writeCsv(project, mappingBody("00001,," + project.getProjectPath() + "/00011_0045_0001.tif,",
+                "00002,," + project.getProjectPath() + "/00011_0045_0002.tif,"));
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getEadToCdmExportPath()), "EAD to CDM export file not created");
+        var format = CSVFormat.TDF.builder()
+                .setTrim(true)
+                .setSkipHeaderRecord(true)
+                .setHeader(TSV_STANDARDIZED_HEADERS)
+                .get();
+
+        try (
+                Reader reader = Files.newBufferedReader(project.getEadToCdmExportPath());
+                var tsvParser = CSVParser.parse(reader, format);
+        ) {
+            var tsvRecord = tsvParser.getRecords().getFirst();
+            assertEquals("Joyner Family Papers, ; 4428", tsvRecord.get(STANDARDIZED_COLLECTION_NAME));
+            assertEquals("Folder", tsvRecord.get(STANDARDIZED_CONTAINER_TYPE));
+            assertEquals("", tsvRecord.get(STANDARDIZED_GEOGRAPHIC_NAME));
+            assertEquals("no-files-included", tsvRecord.get(STANDARDIZED_FILENAME));
         }
     }
 
@@ -278,7 +307,7 @@ public class CdmExportCommandIT extends AbstractCommandIT {
     }
 
     private void eadToCdmApiResponse(String eadId, String apiResponse) {
-        stubFor(get(urlEqualTo("/ead/" + eadId))
+        stubFor(post(urlEqualTo("/ead/"))
                 .willReturn(aResponse()
                         .withBody(apiResponse)
                         .withHeader("Content-Type", "text/json")));
