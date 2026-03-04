@@ -41,6 +41,8 @@ public class PostMigrationReportVerifier {
     private CloseableHttpClient httpClient;
     private ChompbConfigService.ChompbConfig chompbConfig;
     private boolean showProgress;
+    private static final String PARENT_ID_KEY = "id";
+    private static final String PARENT_NAME_KEY = "name";
 
     public VerificationOutcome verify() throws IOException, URISyntaxException {
         validateReport();
@@ -64,19 +66,27 @@ public class PostMigrationReportVerifier {
 
                 var rowValuesMap = originalRecord.toMap();
                 var boxcUrl = originalRecord.get(PostMigrationReportConstants.BXC_URL_HEADER);
+                String parentCollId = "";
+                String parentCollName = "";
+                String result = verified;
                 // 'verified' field is empty or was not previously successful, so request the boxc url
                 if (!isStatusAcceptable(verified)) {
-                    var result = requestHttpResult(boxcUrl);
+                    var objectInfo = getObjectInfo(boxcUrl, baseUrl + API_PATH);
+                    result = objectInfo.get("status");
                     outcome.recordResult(result);
-                    rowValuesMap.put(PostMigrationReportConstants.VERIFIED_HEADER, result);
+                    parentCollId = objectInfo.get(PARENT_ID_KEY);
+                    parentCollName = objectInfo.get(PARENT_NAME_KEY);
+                    if (parentCollId.isBlank() && HttpStatus.OK.name().equals(result)) {
+                        outcome.recordParentCollError();
+                    }
                 }
 
+                rowValuesMap.put(PostMigrationReportConstants.VERIFIED_HEADER, result);
+
                 // add parent collection information
-                var parentCollInfo = getParentCollectionInfo(boxcUrl, outcome, baseUrl + API_PATH);
-                var parentCollId = parentCollInfo.get("id");
                 rowValuesMap.put(PostMigrationReportConstants.PARENT_COLL_URL_HEADER,
                         formatParentCollUrl(parentCollId, baseUrl + RECORD_PATH));
-                rowValuesMap.put(PostMigrationReportConstants.PARENT_COLL_TITLE_HEADER, parentCollInfo.get("name"));
+                rowValuesMap.put(PostMigrationReportConstants.PARENT_COLL_TITLE_HEADER, parentCollName);
 
 
                 // Write the row out into the new version of the report
@@ -100,42 +110,34 @@ public class PostMigrationReportVerifier {
     }
 
     /**
-     * Checks the given boxc url and returns OK if the URL was OK or FORBIDDEN, otherwise it returns
-     * the text representation of the http status.
+     * Checks the given boxc url and returns a map with keys 'status', 'id', and 'name'. Status is the http
+     * status of the request, id is the id of the parent collection of the object, and name is the title of
+     * the parent collection. If the request was not successful, id and name will be empty strings.
+     *
      * @param bxcUrl
+     * @param bxcApiBaseUrl
      * @return
      * @throws IOException
+     * @throws URISyntaxException
      */
-    private String requestHttpResult(String bxcUrl) throws IOException {
-        var getRequest = new HttpGet(URI.create(bxcUrl));
-        try (var resp = httpClient.execute(getRequest)) {
-            var status = resp.getStatusLine().getStatusCode();
-            if (status == HttpStatus.OK.value() || status == HttpStatus.FORBIDDEN.value()) {
-                return HttpStatus.OK.name();
-            }
-            return HttpStatus.valueOf(status).name();
-        }
-    }
-
-    private Map<String, String> getParentCollectionInfo(String bxcUrl,
-                                                        VerificationOutcome outcome,
-                                                        String bxcApiBaseUrl)
+    private Map<String, String> getObjectInfo(String bxcUrl, String bxcApiBaseUrl)
             throws IOException, URISyntaxException {
         var map = new HashMap<String, String>();
         var id = getId(bxcUrl);
         var getRequest = new HttpGet(URI.create(bxcApiBaseUrl + id + "/json"));
         try (var resp = httpClient.execute(getRequest)) {
+            var status = resp.getStatusLine().getStatusCode();
+            map.put("status", HttpStatus.valueOf(status).name());
             if (resp.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
-                map.put("id", "");
-                map.put("name", "");
-                outcome.recordParentCollError();
+                map.put(PARENT_ID_KEY, "");
+                map.put(PARENT_NAME_KEY, "");
                 return map;
             }
             var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.UTF_8);
             var mapper = new ObjectMapper();
             var jsonNode = mapper.readTree(body);
-            map.put("id", jsonNode.get("briefObject").get("parentCollectionId").asText());
-            map.put("name", jsonNode.get("briefObject").get("parentCollectionName").asText());
+            map.put(PARENT_ID_KEY, jsonNode.get("briefObject").get("parentCollectionId").asText());
+            map.put(PARENT_NAME_KEY, jsonNode.get("briefObject").get("parentCollectionName").asText());
         }
         return map;
     }

@@ -34,6 +34,14 @@ public class PostMigrationReportTestHelper {
             "\"parentCollectionId\":\"" + PARENT_COLL_ID + "\",\"id\":\"1a1e9c1a-cdd2-4874-b6cb-8da783919460\"," +
             "\"updated\":\"2018-05-25T13:37:01.864Z\",\"fileType\":[\"image/jpeg\"],\"status\":[\"Public Access\"],\"timestamp\":1751312648385}," +
             "\"collectionId\":\"40489\",\"resourceType\":\"Work\"}";
+    public static final String JSON_NO_PARENT = "{\"findingAidUrl\":\"https://finding-aids.lib.unc.edu/catalog/40489\"," +
+            "\"viewerType\":\"clover\",\"canBulkDownload\":false,\"dataFileUrl\":\"content/6f4b5e38-754f-49ca-a4a0-6441fea95d76\"," +
+            "\"markedForDeletion\":false,\"pageSubtitle\":\"TEST.jpg\",\"briefObject\":{\"added\":\"2018-05-24T20:39:18.165Z\"," +
+            "\"counts\":{\"child\":1},\"created\":\"2018-05-24T20:39:18.165Z\",\"format\":[\"Image\"],\"parentCollectionName\":\"\"," +
+            "\"contentStatus\":[\"Not Described\",\"Has Primary Object\"],\"rollup\":\"1a1e9c1a-cdd2-4874-b6cb-8da783919460\"," +
+            "\"parentCollectionId\":\"\",\"id\":\"1a1e9c1a-cdd2-4874-b6cb-8da783919460\"," +
+            "\"updated\":\"2018-05-25T13:37:01.864Z\",\"fileType\":[\"image/jpeg\"],\"status\":[\"Public Access\"],\"timestamp\":1751312648385}," +
+            "\"collectionId\":\"40489\",\"resourceType\":\"Work\"}";
 
     public static List<List<String>> parseReport(MigrationProject project) throws Exception {
         try (
