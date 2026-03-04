@@ -41,6 +41,8 @@ public class PostMigrationReportVerifier {
     private CloseableHttpClient httpClient;
     private ChompbConfigService.ChompbConfig chompbConfig;
     private boolean showProgress;
+    private static final String PARENT_ID_KEY = "id";
+    private static final String PARENT_NAME_KEY = "name";
 
     public VerificationOutcome verify() throws IOException, URISyntaxException {
         validateReport();
@@ -72,8 +74,8 @@ public class PostMigrationReportVerifier {
                     var objectInfo = getObjectInfo(boxcUrl, baseUrl + API_PATH);
                     result = objectInfo.get("status");
                     outcome.recordResult(result);
-                    parentCollId = objectInfo.get("id");
-                    parentCollName = objectInfo.get("name");
+                    parentCollId = objectInfo.get(PARENT_ID_KEY);
+                    parentCollName = objectInfo.get(PARENT_NAME_KEY);
                     if (parentCollId.isBlank() && HttpStatus.OK.name().equals(result)) {
                         outcome.recordParentCollError();
                     }
@@ -127,15 +129,15 @@ public class PostMigrationReportVerifier {
             var status = resp.getStatusLine().getStatusCode();
             map.put("status", HttpStatus.valueOf(status).name());
             if (resp.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
-                map.put("id", "");
-                map.put("name", "");
+                map.put(PARENT_ID_KEY, "");
+                map.put(PARENT_NAME_KEY, "");
                 return map;
             }
             var body = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.UTF_8);
             var mapper = new ObjectMapper();
             var jsonNode = mapper.readTree(body);
-            map.put("id", jsonNode.get("briefObject").get("parentCollectionId").asText());
-            map.put("name", jsonNode.get("briefObject").get("parentCollectionName").asText());
+            map.put(PARENT_ID_KEY, jsonNode.get("briefObject").get("parentCollectionId").asText());
+            map.put(PARENT_NAME_KEY, jsonNode.get("briefObject").get("parentCollectionName").asText());
         }
         return map;
     }
