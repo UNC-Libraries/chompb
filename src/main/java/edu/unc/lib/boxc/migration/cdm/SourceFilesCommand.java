@@ -165,6 +165,19 @@ public class SourceFilesCommand {
         }
     }
 
+    @Command(name = "disk_usage",
+            description = "Calculate the disk usage of all of the source files mapped in a migration " +
+                    "project’s source_files.csv")
+    public int calculateDiskUsage() {
+        try {
+            return 0;
+        } catch (Exception e) {
+            log.error("Disk usage calculation failed", e);
+            outputLogger.info("Disk usage calculation failed: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
     private void validateOptions(GenerateSourceFileMappingOptions options) {
         // If populating a blank mapping then other arguments not needed.
         if (options.isPopulateBlank()) {
