@@ -170,6 +170,8 @@ public class SourceFilesCommand {
                     "project’s source_files.csv")
     public int calculateDiskUsage() {
         try {
+            var diskUsage = sourceService.calculateStorage();
+            outputLogger.info("Source files total " + diskUsage + "MB in storage");
             return 0;
         } catch (Exception e) {
             log.error("Disk usage calculation failed", e);

@@ -49,9 +49,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SOURCE_FILE_FIELD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
+import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.getSourceFileCSVRecords;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -556,6 +558,24 @@ public class SourceFileService {
         BufferedWriter writer = Files.newBufferedWriter(mappingPath);
         return new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(SourceFilesInfo.CSV_HEADERS));
     }
+
+    /**
+     * Gets the length of every file in the source files mapping and totals them together
+     * @return total length in MB
+     */
+    public long calculateStorage() {
+        long totalBytes = 0;
+        var csvRecords = getSourceFileCSVRecords(project);
+        for (var record : csvRecords) {
+            var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
+            var file = basePath.toFile();
+            var length = file.length();
+            totalBytes += file.length();
+        }
+        // return amount in MB
+        return totalBytes / (1024 * 1024);
+    }
+
 
     public void setProject(MigrationProject project) {
         this.project = project;
