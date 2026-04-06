@@ -563,14 +563,15 @@ public class SourceFileService {
      * Gets the length of every file in the source files mapping and totals them together
      * @return total length in MB
      */
-    public long calculateStorage() {
+    public long calculateStorage() throws IOException {
         long totalBytes = 0;
-        var csvRecords = getSourceFileCSVRecords(project);
-        for (var record : csvRecords) {
-            var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
-            var file = basePath.toFile();
-            var length = file.length();
-            totalBytes += file.length();
+        try (var csvParser = openMappingsParser(project.getSourceFilesMappingPath())) {
+            for (CSVRecord record : csvParser) {
+                var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
+                var file = basePath.toFile();
+                var length = file.length();
+                totalBytes += file.length();
+            }
         }
         // return amount in MB
         return totalBytes / (1024 * 1024);
