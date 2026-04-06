@@ -142,31 +142,26 @@ public class EadToCdmUtil {
 
     public static Map<String, String> getInfoFromSourceFile(MigrationProject project) {
         Map<String, String> filenameToId = new HashMap<>();
-        var csvRecords = getSourceFileCSVRecords(project);
-        for (var record : csvRecords) {
-            var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
-            var filename = basePath.getFileName().toString();
-            filenameToId.put(filename, record.get(ID_FIELD));
-        }
-
-        return filenameToId;
-    }
-
-
-    public static CSVParser getSourceFileCSVRecords(MigrationProject project) {
         var sourceFilesPath = project.getSourceFilesMappingPath();
         var format = CSVFormat.DEFAULT.builder()
                 .setTrim(true)
                 .setSkipHeaderRecord(true)
+                .setHeader(SourceFilesInfo.CSV_HEADERS)
                 .get();
         try (
                 var reader = Files.newBufferedReader(sourceFilesPath);
                 var csvRecords = CSVParser.parse(reader, format);
         ) {
-            return csvRecords;
-        }  catch (IOException e) {
-            throw new MigrationException("Failed to get source files CSV info", e);
+            for (var record : csvRecords) {
+                var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
+                var filename = basePath.getFileName().toString();
+                filenameToId.put(filename, record.get(ID_FIELD));
+            }
+        } catch (IOException e) {
+            throw new MigrationException("Failed to get source files info", e);
         }
+
+        return filenameToId;
     }
 
     /**

@@ -53,7 +53,6 @@ import static edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SOURCE_FILE_F
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_COMPOUND_CHILD;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF;
 import static edu.unc.lib.boxc.migration.cdm.services.CdmIndexService.ENTRY_TYPE_FIELD;
-import static edu.unc.lib.boxc.migration.cdm.util.EadToCdmUtil.getSourceFileCSVRecords;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
