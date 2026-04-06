@@ -750,6 +750,23 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertMappingCount(project.getSourceFilesMappingPath(), 2);
     }
 
+    @Test
+    public void calculateDiskUsageTest() throws Exception {
+        indexExportSamples();
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "generate",
+                "-b", basePath.toString(),
+                "-n", "file"};
+        executeExpectSuccess(args);
+
+        String[] diskUsageArgs = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "disk_usage"};
+        executeExpectSuccess(diskUsageArgs);
+        assertOutputContains("Source files total 0MB in storage");
+    }
+
     private void indexExportSamples() throws Exception {
         testHelper.indexExportData("mini_gilmer");
     }
