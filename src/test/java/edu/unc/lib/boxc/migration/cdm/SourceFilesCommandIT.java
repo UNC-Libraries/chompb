@@ -764,7 +764,7 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 "-w", project.getProjectPath().toString(),
                 "source_files", "disk_usage"};
         executeExpectSuccess(diskUsageArgs);
-        assertOutputContains("Source files total 0MB in storage");
+        assertOutputContains("Source files total 0 MB in storage");
     }
 
     private void indexExportSamples() throws Exception {
