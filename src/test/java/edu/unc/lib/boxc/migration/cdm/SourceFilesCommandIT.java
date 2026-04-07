@@ -767,6 +767,16 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
         assertOutputContains("Source files total 0 MB in storage");
     }
 
+    @Test
+    public void calculateDiskUsageNoSourceFilesTest() {
+        String[] diskUsageArgs = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "source_files", "disk_usage"};
+        executeExpectFailure(diskUsageArgs);
+        assertOutputContains("Disk usage calculation failed: " +
+                "Source files must be generated before disk usage calculation");
+    }
+
     private void indexExportSamples() throws Exception {
         testHelper.indexExportData("mini_gilmer");
     }

@@ -4,9 +4,11 @@ import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.options.AddSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.ExportUnmappedSourceFilesOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
@@ -171,6 +173,9 @@ public class SourceFilesCommand {
     public int calculateDiskUsage() {
         try {
             initialize(false);
+            if (!Files.exists(project.getSourceFilesMappingPath())) {
+                throw new InvalidProjectStateException("Source files must be generated before disk usage calculation");
+            }
             var diskUsage = sourceService.calculateStorage();
             outputLogger.info("Source files total {} MB in storage", diskUsage);
             return 0;
