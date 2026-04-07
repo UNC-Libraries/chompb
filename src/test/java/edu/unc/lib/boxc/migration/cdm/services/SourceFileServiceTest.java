@@ -763,6 +763,28 @@ public class SourceFileServiceTest {
         assertEquals(2, info.getMappings().size());
     }
 
+    @Test
+    public void calculateDiskStorageTest() throws IOException {
+        writeCsv(
+                mappingBody(
+                "testid,," + filesystemSourceFile("IMG_2377.jpeg") + ",",
+                       "testid2,," + filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif") + ","
+                )
+        );
+        assertEquals(26L, service.calculateStorage());
+    }
+
+    @Test
+    public void calculateDiskStorageBlankSourceFileTest() throws IOException {
+        writeCsv(
+                mappingBody(
+                        "testid,,,",
+                        "testid2,," + filesystemSourceFile("D2_035_Varners_DrugStore_interior.tif") + ","
+                )
+        );
+        assertEquals(24L, service.calculateStorage());
+    }
+
     private void assertMappingPresent(SourceFilesInfo info, String cdmid, String matchingVal, Path sourcePath,
                                       Path... potentialPaths) {
         List<SourceFileMapping> mappings = info.getMappings();
