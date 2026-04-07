@@ -566,10 +566,11 @@ public class SourceFileService {
         long totalBytes = 0;
         try (var csvParser = openMappingsParser(project.getSourceFilesMappingPath())) {
             for (CSVRecord record : csvParser) {
-                var basePath = Paths.get(record.get(SOURCE_FILE_FIELD));
-                var file = basePath.toFile();
-                var length = file.length();
-                totalBytes += file.length();
+                var field = record.get(SOURCE_FILE_FIELD);
+                if (!field.isBlank()) {
+                    var basePath = Paths.get(field);
+                    totalBytes += Files.size(basePath);
+                }
             }
         }
         // return amount in MB

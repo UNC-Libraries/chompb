@@ -172,11 +172,11 @@ public class SourceFilesCommand {
         try {
             initialize(false);
             var diskUsage = sourceService.calculateStorage();
-            outputLogger.info("Source files total " + diskUsage + "MB in storage");
+            outputLogger.info("Source files total {} MB in storage", diskUsage);
             return 0;
         } catch (Exception e) {
             log.error("Disk usage calculation failed", e);
-            outputLogger.info("Disk usage calculation failed: {}", e.getMessage(), e);
+            outputLogger.info("Disk usage calculation failed: {}", e.getMessage());
             return 1;
         }
     }
