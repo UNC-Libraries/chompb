@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.ProcessSourceFilesOptions;
+import edu.unc.lib.boxc.migration.cdm.services.EmailService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFilesToRemoteService;
 import edu.unc.lib.boxc.migration.cdm.test.BxcEnvironmentHelper;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -45,6 +47,8 @@ public class VelocicroptorRemoteJobTest {
     private MigrationProject project;
     @Mock
     private SourceFilesToRemoteService sourceFilesToRemoteService;
+    @Mock
+    private EmailService emailService;
     private Path remoteProjectsPath;
     private Path remoteJobScriptsPath;
     private Path projectPath;
@@ -77,6 +81,7 @@ public class VelocicroptorRemoteJobTest {
         job.setAdminEmail(ADMIN_EMAIL);
         job.setOutputServer(OUTPUT_SERVER);
         job.setOutputPath(outputPath);
+        job.setEmailService(emailService);
     }
 
     @AfterEach
@@ -128,5 +133,11 @@ public class VelocicroptorRemoteJobTest {
         doThrow(new IOException("Failed to transfer files")).when(sourceFilesToRemoteService).transferFiles(any());
 
         assertThrows(MigrationException.class, () -> job.run(options));
+        verify(emailService).sendEmail(
+                eq("Velocicroptor job submission failure for project proj"),
+                anyString(),
+                eq(ADMIN_EMAIL),
+                eq(ADMIN_EMAIL),
+                eq(USER_EMAIL));
     }
 }
