@@ -22,8 +22,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class EmailService {
     private static final Logger log = getLogger(EmailService.class);
 
+    private static final int DEFAULT_TIMEOUT_MS = 10000;
+
     private String smtpHost;
     private int smtpPort = 25;
+    private int timeoutMs = DEFAULT_TIMEOUT_MS;
 
     /**
      * Send a plain-text email to one or more recipients.
@@ -36,6 +39,9 @@ public class EmailService {
         Properties props = new Properties();
         props.put("mail.smtp.host", smtpHost);
         props.put("mail.smtp.port", String.valueOf(smtpPort));
+        props.put("mail.smtp.connectiontimeout", String.valueOf(timeoutMs));
+        props.put("mail.smtp.timeout", String.valueOf(timeoutMs));
+        props.put("mail.smtp.writetimeout", String.valueOf(timeoutMs));
 
         Session session = Session.getInstance(props);
         try {
@@ -70,6 +76,10 @@ public class EmailService {
 
     public void setSmtpPort(int smtpPort) {
         this.smtpPort = smtpPort;
+    }
+
+    public void setTimeoutMs(int timeoutMs) {
+        this.timeoutMs = timeoutMs;
     }
 }
 

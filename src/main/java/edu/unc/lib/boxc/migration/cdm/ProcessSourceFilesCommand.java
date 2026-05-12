@@ -107,6 +107,7 @@ public class ProcessSourceFilesCommand implements Callable<Integer> {
         sourceFilesToRemoteService.setSourceFileService(sourceFileService);
         sourceFilesToRemoteService.setSshClientService(sshClientTransferService);
         var emailService = new EmailService();
+        emailService.setSmtpHost("localhost");
         velocicroptorRemoteJob = new VelocicroptorRemoteJob();
         velocicroptorRemoteJob.setProject(project);
         velocicroptorRemoteJob.setSshClientService(sshClientScriptService);
