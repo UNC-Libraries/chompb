@@ -6,6 +6,7 @@ import edu.unc.lib.boxc.migration.cdm.model.BxcEnvironment;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.ProcessSourceFilesOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
+import edu.unc.lib.boxc.migration.cdm.services.EmailService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFilesToRemoteService;
@@ -105,6 +106,8 @@ public class ProcessSourceFilesCommand implements Callable<Integer> {
         var sourceFilesToRemoteService = new SourceFilesToRemoteService();
         sourceFilesToRemoteService.setSourceFileService(sourceFileService);
         sourceFilesToRemoteService.setSshClientService(sshClientTransferService);
+        var emailService = new EmailService();
+        emailService.setSmtpHost("localhost");
         velocicroptorRemoteJob = new VelocicroptorRemoteJob();
         velocicroptorRemoteJob.setProject(project);
         velocicroptorRemoteJob.setSshClientService(sshClientScriptService);
@@ -114,5 +117,6 @@ public class ProcessSourceFilesCommand implements Callable<Integer> {
         velocicroptorRemoteJob.setAdminEmail(boxcEnv.getBoxctronAdminEmail());
         velocicroptorRemoteJob.setRemoteJobScriptsPath(boxcEnv.getBoxctronRemoteJobScriptsPath());
         velocicroptorRemoteJob.setSourceFilesToRemoteService(sourceFilesToRemoteService);
+        velocicroptorRemoteJob.setEmailService(emailService);
     }
 }

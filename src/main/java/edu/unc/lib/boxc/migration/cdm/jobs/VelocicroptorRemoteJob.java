@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.ProcessSourceFilesOptions;
+import edu.unc.lib.boxc.migration.cdm.services.EmailService;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFilesToRemoteService;
 import edu.unc.lib.boxc.migration.cdm.util.SshClientService;
 import org.slf4j.Logger;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -36,6 +36,7 @@ public class VelocicroptorRemoteJob {
     private SshClientService sshClientService;
     private MigrationProject project;
     private SourceFilesToRemoteService sourceFilesToRemoteService;
+    private EmailService emailService;
     private Path remoteProjectsPath;
     private Path remoteJobScriptsPath;
     private String adminEmail;
@@ -73,7 +74,13 @@ public class VelocicroptorRemoteJob {
             log.info("Executing remote job with command: {}", sbatchCommand);
             var response = sshClientService.executeRemoteCommand("sbatch " + scriptPath + " '" + configJson + "'");
             log.info("Job submitted with response: {}", response);
-        } catch (IOException e) {
+        } catch (Exception e) {
+            log.error("Failed to submit velocicroptor job for project {}", project.getProjectName(), e);
+            var subject = "Velocicroptor job submission failure for project " + project.getProjectName();
+            var body = "A failure occurred while submitting a velocicroptor job for project '"
+                    + project.getProjectName() + "'.\n\n"
+                    + EmailService.formatException(e);
+            emailService.sendEmail(subject, body, adminEmail, adminEmail, options.getEmailAddress());
             throw new MigrationException(e);
         }
         return jobId;
@@ -106,6 +113,10 @@ public class VelocicroptorRemoteJob {
 
     public void setSourceFilesToRemoteService(SourceFilesToRemoteService sourceFilesToRemoteService) {
         this.sourceFilesToRemoteService = sourceFilesToRemoteService;
+    }
+
+    public void setEmailService(EmailService emailService) {
+        this.emailService = emailService;
     }
 
     public void setRemoteProjectsPath(Path remoteProjectsPath) {
