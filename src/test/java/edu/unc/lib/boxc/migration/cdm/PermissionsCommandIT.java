@@ -320,6 +320,48 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void setPermissionsFilenameMatchingNewEntry() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-wd",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals"};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-fp", "*.tif",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args2);
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(1, "25", "canViewMetadata", "canViewMetadata");
+        assertMapping(2, "26", "canViewMetadata", "canViewMetadata");
+        assertMapping(3, "27", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
+    public void setPermissionsFilenameMatchingExistingEntry() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "25,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-fp", "*.tif",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args);
+        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
     public void validateValidDefaultPermissions() throws Exception {
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
