@@ -587,7 +587,7 @@ public class PermissionsServiceTest {
     }
 
     @Test
-    public void setPermissionFilenameMatchingExtensionExistingIds() throws Exception {
+    public void setPermissionFilenameMatchingExtension() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
@@ -608,13 +608,13 @@ public class PermissionsServiceTest {
     }
 
     @Test
-    public void setPermissionFilenameMatchingFilenameExistingIds() throws Exception {
+    public void setPermissionFilenameMatchingPrefix() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
-        options.setFilenamePattern("276_*");
+        options.setFilenamePattern("276_1*");
         options.setEveryone(UserRole.canViewMetadata);
         options.setAuthenticated(UserRole.canViewMetadata);
 
@@ -625,7 +625,6 @@ public class PermissionsServiceTest {
         assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
         assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
         assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
-        assertIterableEquals(Arrays.asList("27", "work", "canViewMetadata", "canViewMetadata"), rows.get(3));
     }
 
     @Test
@@ -654,7 +653,7 @@ public class PermissionsServiceTest {
         writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
-        options.setFilenamePattern("276_*E.tif");
+        options.setFilenamePattern("276_1*E.tif");
         options.setEveryone(UserRole.canViewMetadata);
         options.setAuthenticated(UserRole.canViewMetadata);
 
@@ -665,7 +664,6 @@ public class PermissionsServiceTest {
         assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
         assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
         assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
-        assertIterableEquals(Arrays.asList("27", "work", "canViewMetadata", "canViewMetadata"), rows.get(3));
     }
 
     @Test
@@ -695,7 +693,7 @@ public class PermissionsServiceTest {
         writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
         Path permissionsMappingPath = project.getPermissionsPath();
         var options = new PermissionMappingOptions();
-        options.setFilenamePattern("*_?.tif");
+        options.setFilenamePattern("276_??3_E.tif");
         options.setEveryone(UserRole.canViewMetadata);
         options.setAuthenticated(UserRole.canViewMetadata);
 
@@ -704,9 +702,8 @@ public class PermissionsServiceTest {
 
         List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
         assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
-        assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
-        assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
-        assertIterableEquals(Arrays.asList("27", "work", "canViewMetadata", "canViewMetadata"), rows.get(3));
+        assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("27", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
     }
 
     @Test

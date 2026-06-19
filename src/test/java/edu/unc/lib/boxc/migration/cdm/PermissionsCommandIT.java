@@ -370,16 +370,25 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     public void setPermissionsFilenameMatchingNoMatches() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
-        FileUtils.write(project.getPermissionsPath().toFile(),
-                "25,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
-        String[] args = new String[] {
+        String[] args1 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-wd",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals",
+                "--force"};
+        executeExpectSuccess(args1);
+
+        String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "set",
                 "-fp", "*.png",
                 "-e", "canViewMetadata",
                 "-a", "canViewMetadata"};
-        executeExpectSuccess(args);
+        executeExpectSuccess(args2);
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMappingCount(1);
     }
 
     @Test
