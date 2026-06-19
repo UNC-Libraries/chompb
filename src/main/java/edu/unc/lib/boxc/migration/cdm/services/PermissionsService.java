@@ -14,6 +14,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
@@ -307,7 +308,7 @@ public class PermissionsService {
         return sourceFiles.getMappings().stream()
                 .filter(entry -> entry.getSourcePaths() != null &&
                     entry.getSourcePaths().stream().map(Object::toString)
-                        .anyMatch(sourcePath -> regex.matcher(sourcePath).matches()))
+                        .anyMatch(sourcePath -> regex.matcher(FilenameUtils.getName(sourcePath)).matches()))
                 .map(entry -> entry.getCdmId())
                 .collect(Collectors.toSet());
     }
