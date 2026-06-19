@@ -566,7 +566,7 @@ public class PermissionsServiceTest {
     }
 
     @Test
-    public void setPermissionsFilenameMatchingExtensionNewIds() throws Exception{
+    public void setPermissionsFilenameMatchingExtension() throws Exception{
         testHelper.indexExportData("mini_gilmer");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata"));
@@ -625,6 +625,7 @@ public class PermissionsServiceTest {
         assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
         assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
         assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertEquals(3, rows.size());
     }
 
     @Test
@@ -644,6 +645,7 @@ public class PermissionsServiceTest {
         List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
         assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
         assertIterableEquals(Arrays.asList("26", "work", "none", "none"), rows.get(1));
+        assertEquals(2, rows.size());
     }
 
     @Test
@@ -664,6 +666,7 @@ public class PermissionsServiceTest {
         assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
         assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
         assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertEquals(3, rows.size());
     }
 
     @Test
@@ -684,6 +687,7 @@ public class PermissionsServiceTest {
         assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
         assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
         assertIterableEquals(Arrays.asList("26", "work", "none", "none"), rows.get(2));
+        assertEquals(3, rows.size());
     }
 
     @Test
@@ -704,6 +708,7 @@ public class PermissionsServiceTest {
         assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
         assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
         assertIterableEquals(Arrays.asList("27", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertEquals(3, rows.size());
     }
 
     @Test

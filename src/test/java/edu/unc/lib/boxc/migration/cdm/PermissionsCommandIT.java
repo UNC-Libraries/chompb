@@ -407,6 +407,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
 
         executeExpectFailure(args);
         assertOutputContains("Must provide filename pattern");
+        assertMappingCount(0);
     }
 
     @Test
