@@ -25,6 +25,11 @@ public class PermissionMappingOptions {
             description = "Work or File to add or update, can be cdmId or group work identifier")
     private String cdmId;
 
+    @Option(names = {"-fp", "--file-name-pattern"},
+            description = "Generate file permission for all entries with filenames that match the pattern. " +
+                    "Case insensitive and supports wildcarding (e.g. *.pdf matches .pdf and .PDF extensions")
+    private String filenamePattern;
+
     @Option(names = {"-e", "--everyone"},
             description = "The patron access role assigned to the “everyone” group.")
     private UserRole everyone;
@@ -61,6 +66,10 @@ public class PermissionMappingOptions {
         return withFiles;
     }
 
+    public void setWithFiles(boolean withFiles) {
+        this.withFiles = withFiles;
+    }
+
     public String getCdmId() {
         return cdmId;
     }
@@ -69,8 +78,12 @@ public class PermissionMappingOptions {
         this.cdmId = cdmId;
     }
 
-    public void setWithFiles(boolean withFiles) {
-        this.withFiles = withFiles;
+    public String getFilenamePattern() {
+        return filenamePattern;
+    }
+
+    public void setFilenamePattern(String filenamePattern) {
+        this.filenamePattern = filenamePattern;
     }
 
     public UserRole getEveryone() {

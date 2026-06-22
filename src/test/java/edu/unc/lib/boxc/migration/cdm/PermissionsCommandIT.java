@@ -1,8 +1,10 @@
 package edu.unc.lib.boxc.migration.cdm;
 
+import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
+import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PermissionsCommandIT extends AbstractCommandIT {
     @BeforeEach
@@ -317,6 +320,94 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         assertMapping(4, "605", "canViewMetadata", "canViewMetadata");
         assertMapping(5, "606", "canViewMetadata", "canViewMetadata");
         assertMapping(6, "607", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
+    public void setPermissionsFilenameMatchingNewEntry() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-wd",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals"};
+        executeExpectSuccess(args);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-fp", "*.tif",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args2);
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(1, "25", "canViewMetadata", "canViewMetadata");
+        assertMapping(2, "26", "canViewMetadata", "canViewMetadata");
+        assertMapping(3, "27", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
+    public void setPermissionsFilenameMatchingExistingEntry() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "25,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-fp", "*.tif",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args);
+        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
+        assertMapping(1, "26", "canViewMetadata", "canViewMetadata");
+        assertMapping(2, "27", "canViewMetadata", "canViewMetadata");
+    }
+
+    @Test
+    public void setPermissionsFilenameMatchingNoMatches() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        String[] args1 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "generate",
+                "-wd",
+                "--everyone", "canViewOriginals",
+                "--authenticated", "canViewOriginals",
+                "--force"};
+        executeExpectSuccess(args1);
+
+        String[] args2 = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-fp", "*.png",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+        executeExpectSuccess(args2);
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMappingCount(1);
+    }
+
+    @Test
+    public void setPermissionFilenameMatchingNoPattern() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        FileUtils.write(project.getPermissionsPath().toFile(),
+                "25,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "permissions", "set",
+                "-fp", "",
+                "-e", "canViewMetadata",
+                "-a", "canViewMetadata"};
+
+        executeExpectFailure(args);
+        assertOutputContains("Must provide filename pattern");
+        assertMappingCount(0);
     }
 
     @Test

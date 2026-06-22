@@ -7,12 +7,14 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.StateAlreadyExistsException;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
+import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
@@ -31,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -53,6 +56,7 @@ public class PermissionsService {
 
     private MigrationProject project;
     private CdmIndexService indexService;
+    private SourceFileService sourceFileService;
     private List<String> patronRoles;
 
     /**
@@ -292,7 +296,51 @@ public class PermissionsService {
         }
     }
 
-    private List<List<String>> updateCsvRecords(PermissionMappingOptions options) {
+    private Set<String> getFilenamePatternIds(PermissionMappingOptions options) throws IOException {
+        String wildcardPattern = options.getFilenamePattern();
+        if (wildcardPattern == null || wildcardPattern.isBlank()) {
+            throw new IllegalArgumentException("Must provide filename pattern");
+        }
+        Pattern regex = Pattern.compile(wildcardToRegex(wildcardPattern), Pattern.CASE_INSENSITIVE);
+
+        SourceFilesInfo sourceFiles = sourceFileService.loadMappings();
+
+        return sourceFiles.getMappings().stream()
+                .filter(entry -> entry.getSourcePaths() != null &&
+                    entry.getSourcePaths().stream().map(Object::toString)
+                        .anyMatch(sourcePath -> regex.matcher(FilenameUtils.getName(sourcePath)).matches()))
+                .map(entry -> entry.getCdmId())
+                .collect(Collectors.toSet());
+    }
+
+    private String wildcardToRegex(String wildcardPattern) {
+        StringBuilder regex = new StringBuilder();
+        regex.append("^");
+
+        for (int i = 0; i < wildcardPattern.length(); i++) {
+            char c = wildcardPattern.charAt(i);
+
+            switch (c) {
+                case '*':
+                    regex.append(".*");
+                    break;
+                case '?':
+                    regex.append(".");
+                    break;
+                default:
+                    if ("\\.[]{}()+-^$|".indexOf(c) >= 0) {
+                        regex.append("\\");
+                    }
+                    regex.append(c);
+                    break;
+            }
+        }
+
+        regex.append("$");
+        return regex.toString();
+    }
+
+    private List<List<String>> updateCsvRecords(PermissionMappingOptions options) throws IOException {
         List<CSVRecord> previousRecords = getPermissions();
         List<Map.Entry<String, String>> workAndFileRecords = new ArrayList<>();
         List<List<String>> updatedRecords = new ArrayList<>();
@@ -310,6 +358,13 @@ public class PermissionsService {
             workAndFileRecords.addAll(queryForMappedIds(options));
             Set<String> workFileIds = workAndFileRecords.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
             addedAndUpdatedIds.addAll(workFileIds);
+        }
+        if (options.getFilenamePattern() != null) {
+            var cdmIds = getFilenamePatternIds(options);
+            for (String cdmId : cdmIds) {
+                workAndFileRecords.add(new AbstractMap.SimpleEntry<>(cdmId, getObjectType(cdmId)));
+            }
+            addedAndUpdatedIds.addAll(cdmIds);
         }
 
         // update existing entries and add unchanged entries to updatedRecords, then remove updated ids from updateIds
@@ -331,9 +386,9 @@ public class PermissionsService {
             }
         }
 
-        updatedRecords.sort(Comparator.comparing(entry -> entry.get(0)));
+        updatedRecords.sort(Comparator.comparing(entry -> entry.getFirst()));
         // move default entry to top if it exists
-        List<String> updatedIds = updatedRecords.stream().map(entry -> entry.get(0)).collect(Collectors.toList());
+        List<String> updatedIds = updatedRecords.stream().map(entry -> entry.getFirst()).toList();
         if (updatedIds.contains(PermissionsInfo.DEFAULT_ID)) {
             List<String> defaultEntry = updatedRecords.remove(updatedIds.indexOf(PermissionsInfo.DEFAULT_ID));
             updatedRecords.add(0, defaultEntry);
@@ -373,5 +428,9 @@ public class PermissionsService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
+    }
+
+    public void setSourceFileService(SourceFileService sourceFileService) {
+        this.sourceFileService = sourceFileService;
     }
 }

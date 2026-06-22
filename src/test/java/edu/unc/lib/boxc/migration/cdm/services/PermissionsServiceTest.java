@@ -57,6 +57,7 @@ public class PermissionsServiceTest {
         testHelper = new SipServiceHelper(project, tmpFolder);
         service = new PermissionsService();
         service.setProject(project);
+        service.setSourceFileService(testHelper.getSourceFileService());
     }
 
     @AfterEach
@@ -562,6 +563,171 @@ public class PermissionsServiceTest {
         assertIterableEquals(Arrays.asList("605", "file", "canViewMetadata", "canViewMetadata"), rows.get(5));
         assertIterableEquals(Arrays.asList("606", "file", "canViewMetadata", "canViewMetadata"), rows.get(6));
         assertIterableEquals(Arrays.asList("607", "work", "canViewMetadata", "canViewMetadata"), rows.get(7));
+    }
+
+    @Test
+    public void setPermissionsFilenameMatchingExtension() throws Exception{
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata"));
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setFilenamePattern("*.tif");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertIterableEquals(Arrays.asList("27", "work", "canViewMetadata", "canViewMetadata"), rows.get(3));
+    }
+
+    @Test
+    public void setPermissionFilenameMatchingExtension() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setFilenamePattern("*.tif");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertIterableEquals(Arrays.asList("27", "work", "canViewMetadata", "canViewMetadata"), rows.get(3));
+    }
+
+    @Test
+    public void setPermissionFilenameMatchingPrefix() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setFilenamePattern("276_1*");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertEquals(3, rows.size());
+    }
+
+    @Test
+    public void setPermissionFilenameMatchingNoMatches() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setFilenamePattern("*.pdf");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("26", "work", "none", "none"), rows.get(1));
+        assertEquals(2, rows.size());
+    }
+
+    @Test
+    public void setPermissionFilenameMatchingWildcareInMiddleofMatcher() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setFilenamePattern("276_1*E.tif");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertEquals(3, rows.size());
+    }
+
+    @Test
+    public void setPermissionFilenameMatchingPartialMatches() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setFilenamePattern("*182_E*");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("25", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("26", "work", "none", "none"), rows.get(2));
+        assertEquals(3, rows.size());
+    }
+
+    @Test
+    public void setPermissionFilenameMatchingQuestionMarkInMatcher() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
+        Path permissionsMappingPath = project.getPermissionsPath();
+        var options = new PermissionMappingOptions();
+        options.setFilenamePattern("276_??3_E.tif");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        service.setPermissions(options);
+        assertTrue(Files.exists(permissionsMappingPath));
+
+        List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata"), rows.get(0));
+        assertIterableEquals(Arrays.asList("26", "work", "canViewMetadata", "canViewMetadata"), rows.get(1));
+        assertIterableEquals(Arrays.asList("27", "work", "canViewMetadata", "canViewMetadata"), rows.get(2));
+        assertEquals(3, rows.size());
+    }
+
+    @Test
+    public void setPermissionFilenameMatchingNoPattern() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        writeCsv(mappingBody("default,,canViewMetadata,canViewMetadata", "26,work,none,none"));
+        var options = new PermissionMappingOptions();
+        options.setFilenamePattern("");
+        options.setEveryone(UserRole.canViewMetadata);
+        options.setAuthenticated(UserRole.canViewMetadata);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.setPermissions(options);
+        });
+
+        String expectedMessage = "Must provide filename pattern";
+        String actualMessage = exception.getMessage();
+        assertEquals(expectedMessage, actualMessage);
     }
 
     private String mappingBody(String... rows) {

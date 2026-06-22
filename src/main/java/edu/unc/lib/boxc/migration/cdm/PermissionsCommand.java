@@ -4,8 +4,10 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.Verbosity;
+import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
+import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
 import edu.unc.lib.boxc.migration.cdm.validators.PermissionsValidator;
 import org.slf4j.Logger;
 import picocli.CommandLine.Mixin;
@@ -31,6 +33,7 @@ public class PermissionsCommand {
 
     private MigrationProject project;
     private PermissionsService permissionsService;
+    private SourceFileService sourceFileService;
 
     @Command(name = "generate",
             description = { "Generate the permissions mapping file for this project. " +
@@ -108,7 +111,13 @@ public class PermissionsCommand {
     private void initialize() throws IOException {
         Path currentPath = parentCommand.getWorkingDirectory();
         project = MigrationProjectFactory.loadMigrationProject(currentPath);
+        CdmIndexService indexService = new CdmIndexService();
+        indexService.setProject(project);
+        sourceFileService = new SourceFileService();
+        sourceFileService.setIndexService(indexService);
+        sourceFileService.setProject(project);
         permissionsService = new PermissionsService();
         permissionsService.setProject(project);
+        permissionsService.setSourceFileService(sourceFileService);
     }
 }

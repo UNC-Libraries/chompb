@@ -38,7 +38,6 @@ import edu.unc.lib.boxc.migration.cdm.services.FindingAidReportService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
-import jakarta.ws.rs.HEAD;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -166,6 +165,7 @@ public class SipServiceHelper {
         findingAidReportService.setIndexService(cdmIndexService);
         permissionsService = new PermissionsService();
         permissionsService.setProject(project);
+        permissionsService.setSourceFileService(sourceFileService);
 
         Files.createDirectories(project.getExportPath());
     }
