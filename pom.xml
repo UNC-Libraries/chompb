@@ -27,6 +27,8 @@
         <junit.jupiter.version>5.12.1</junit.jupiter.version>
         <solr.solrj.version>9.8.1</solr.solrj.version>
         <apache-sshd.version>2.15.0</apache-sshd.version>
+        <jakarta.mail-api.version>2.1.5</jakarta.mail-api.version>
+        <mail.version>2.0.5</mail.version>
     </properties>
 
     <build>
@@ -206,8 +208,15 @@
         </dependency>
         <!-- email -->
         <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>jakarta.mail</artifactId>
+            <groupId>jakarta.mail</groupId>
+            <artifactId>jakarta.mail-api</artifactId>
+            <version>${jakarta.mail-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
+            <version>${mail.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <!-- Testing -->
         <dependency>
