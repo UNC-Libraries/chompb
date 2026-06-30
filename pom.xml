@@ -106,6 +106,13 @@
         <dependency>
             <groupId>edu.unc.lib.cdr</groupId>
             <artifactId>operations</artifactId>
+            <!-- Exclude jakarta.mail from operations. This can be removed after the operations package is updated -->
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.mail</groupId>
+                    <artifactId>jakarta.mail</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- CLI -->
         <dependency>
