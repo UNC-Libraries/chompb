@@ -42,7 +42,7 @@ public class AspaceRefIdService {
     private Boolean projectHasContriAndDescri = null;
     private Boolean projectHasContriDescriAspaceRefId = null;
 
-    public static final String REF_ID_FIELD = "refid";
+    public static final String REF_ID_FIELD = "ref_id";
     public static final String[] HOOKID_REFID_CSV_HEADERS = {"cache_hookid", "normalized_cache_hookid", "collid",
             "ref_id", "ao_title", "tc_type", "tc_indicator", "sc_type", "sc_indicator", "gc_type", "gc_indicator",
             "aspace_hookid", "cdm_alias"};
@@ -275,7 +275,7 @@ public class AspaceRefIdService {
     private boolean hasProjectContriDescriAspaceRefIdFields() {
         if (projectHasContriDescriAspaceRefId == null) {
             // check if project has contri field named hook id, descri field named collection number,
-            // and refid field named aspace ref id
+            // and ref_id field named aspace ref id
             boolean hasContri = false;
             boolean hasDescri = false;
             boolean hasAspaceRefId = false;

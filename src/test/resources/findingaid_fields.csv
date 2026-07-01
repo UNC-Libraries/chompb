@@ -60,4 +60,4 @@ dmmodified,dmmodified,Date modified,false,y,n,y,n,
 dmrecord,dmrecord,CONTENTdm number,false,y,n,y,n,
 find,find,CONTENTdm file name,false,y,n,y,n,
 groupa,groupa,Group A,false,n,y,n,n,descri
-refid,refid,Aspace Ref Id,false,n,y,n,n,
+ref_id,ref_id,Aspace Ref Id,false,n,y,n,n,
