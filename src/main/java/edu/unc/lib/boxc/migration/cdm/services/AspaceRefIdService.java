@@ -40,7 +40,9 @@ public class AspaceRefIdService {
     private CdmIndexService indexService;
     private Path hookIdRefIdMapPath;
     private Boolean projectHasContriAndDescri = null;
+    private Boolean projectHasContriDescriAspaceRefId = null;
 
+    public static final String REF_ID_FIELD = "refid";
     public static final String[] HOOKID_REFID_CSV_HEADERS = {"cache_hookid", "normalized_cache_hookid", "collid",
             "ref_id", "ao_title", "tc_type", "tc_indicator", "sc_type", "sc_indicator", "gc_type", "gc_indicator",
             "aspace_hookid", "cdm_alias"};
@@ -92,6 +94,57 @@ public class AspaceRefIdService {
                 } else {
                     csvPrinter.printRecord(recordId, hookId, null);
                 }
+            }
+        }
+
+        setUpdatedDate(Instant.now());
+    }
+
+    /**
+     * Generate the aspace ref id mapping using the indexed ead to cdm metadata file (cdm_index.db)
+     * Record ids, hook ids, and ref ids populated
+     * @throws Exception
+     */
+    public void generateAspaceRefIdMappingFromCdmIndexDb() throws IOException {
+        assertProjectStateValid();
+
+        if (!hasProjectContriDescriAspaceRefIdFields()) {
+            throw new InvalidProjectStateException("Project has no contri field named hook id, " +
+                    "and/or descri field named collection number, and/or refid field named aspace ref id");
+        }
+
+        try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
+             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
+            String query = "select " + CdmFieldInfo.CDM_ID + "," + FindingAidService.DESCRI_FIELD + ","
+                    + FindingAidService.CONTRI_FIELD + "," + REF_ID_FIELD
+                    + " from " + CdmIndexService.TB_NAME
+                    + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                    + " and " + CdmIndexService.PARENT_ID_FIELD + " is null"
+                    + " and " + FindingAidService.DESCRI_FIELD + " is not null"
+                    + " and " + FindingAidService.CONTRI_FIELD + " is not null";
+
+            getIndexService();
+            try (Connection conn = indexService.openDbConnection()) {
+                var stmt = conn.createStatement();
+                var rs = stmt.executeQuery(query);
+                while (rs.next()) {
+                    // if dmrecord, descri, contri, and ref_id fields are not blank,
+                    // add dmrecord, descri_contri (hook id when combined), and ref_id to aspace ref id mapping
+                    var dmrecord = rs.getString(1);
+                    var descri = rs.getString(2);
+                    var contri = rs.getString(3);
+                    var refId = rs.getString(4);
+                    if (!dmrecord.isBlank() && !descri.isBlank() && !contri.isBlank() & !refId.isBlank()) {
+                        // remove -v from descri for matching purposes
+                        csvPrinter.printRecord(dmrecord,
+                            descri.replace("-z", "") + "_" + contri, refId);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new MigrationException("Error interacting with export index", e);
             }
         }
 
@@ -217,6 +270,40 @@ public class AspaceRefIdService {
             projectHasContriAndDescri = hasContri && hasDescri;
         }
         return projectHasContriAndDescri;
+    }
+
+    private boolean hasProjectContriDescriAspaceRefIdFields() {
+        if (projectHasContriDescriAspaceRefId == null) {
+            // check if project has contri field named hook id, descri field named collection number,
+            // and refid field named aspace ref id
+            boolean hasContri = false;
+            boolean hasDescri = false;
+            boolean hasAspaceRefId = false;
+            fieldService.validateFieldsFile(project);
+            CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+            Map<String, String> fields = fieldInfo.getFields().stream()
+                    .filter(f -> !f.getSkipExport())
+                    .collect(Collectors.toMap(CdmFieldInfo.CdmFieldEntry::getNickName,
+                            CdmFieldInfo.CdmFieldEntry::getDescription));
+
+            for (Map.Entry<String, String> entry : fields.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (key.equalsIgnoreCase(FindingAidService.CONTRI_FIELD)
+                        && value.equalsIgnoreCase(FindingAidService.HOOK_ID_FIELD_DESC)) {
+                    hasContri = true;
+                } else if (key.equalsIgnoreCase(FindingAidService.DESCRI_FIELD)
+                        && value.equalsIgnoreCase(FindingAidService.COLLECTION_NUMBER_FIELD_DESC)) {
+                    hasDescri = true;
+                } else if (key.equalsIgnoreCase(REF_ID_FIELD)
+                    && value.equalsIgnoreCase("aspace ref id")) {
+                    hasAspaceRefId = true;
+                }
+            }
+
+            projectHasContriDescriAspaceRefId = hasContri && hasDescri && hasAspaceRefId;
+        }
+        return projectHasContriDescriAspaceRefId;
     }
 
     /**

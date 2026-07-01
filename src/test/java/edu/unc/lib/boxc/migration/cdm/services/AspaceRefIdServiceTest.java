@@ -194,6 +194,41 @@ public class AspaceRefIdServiceTest {
         assertTrue(actualMessage.contains(expectedMessage));
     }
 
+    @Test
+    public void generateFromCdmIndexDbTest() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/findingaid_fields.csv"), "03883");
+        service.generateAspaceRefIdMappingFromCdmIndexDb();
+
+        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
+        try (CSVParser csvParser = parser()) {
+            List<CSVRecord> rows = csvParser.getRecords();
+            assertEquals("0", rows.get(0).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_5", rows.get(0).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("8578708eda77e378b3a844a2166b815b", rows.get(0).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("548", rows.get(1).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(1).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(1).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals("549", rows.get(2).get(AspaceRefIdInfo.RECORD_ID_FIELD));
+            assertEquals("03883_folder_9", rows.get(2).get(AspaceRefIdInfo.HOOK_ID_FIELD));
+            assertEquals("4c1196b46a06b21b1184fba0de1e84bd", rows.get(2).get(AspaceRefIdInfo.REF_ID_FIELD));
+            assertEquals(3, rows.size());
+        }
+    }
+
+    @Test
+    public void generateFromCdmIndexDbNoAspaceRefIdTest() throws Exception {
+        testHelper.indexExportData(Paths.get("src/test/resources/monograph_fields.csv"), "monograph");
+
+        Exception exception = assertThrows(InvalidProjectStateException.class, () -> {
+            service.generateAspaceRefIdMappingFromCdmIndexDb();
+        });
+        String expectedMessage = "Project has no contri field named hook id, " +
+            "and/or descri field named collection number, and/or refid field named aspace ref id";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
+    }
+
     private CSVParser parser() throws IOException {
         Reader reader = Files.newBufferedReader(project.getAspaceRefIdMappingPath());
         CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
