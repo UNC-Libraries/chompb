@@ -123,8 +123,8 @@ public class AspaceRefIdService {
                     + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
                     + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null )"
                     + " and " + CdmIndexService.PARENT_ID_FIELD + " is null"
-                    + " and " + FindingAidService.DESCRI_FIELD + " is not null"
-                    + " and " + FindingAidService.CONTRI_FIELD + " is not null";
+                    + " and " + HOOK_ID_FIELD + " is not null"
+                    + " and " + REF_ID_FIELD + " is not null";
 
             getIndexService();
             try (Connection conn = indexService.openDbConnection()) {
