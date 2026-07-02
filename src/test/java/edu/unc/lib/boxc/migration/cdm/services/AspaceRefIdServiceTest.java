@@ -223,7 +223,7 @@ public class AspaceRefIdServiceTest {
             service.generateAspaceRefIdMappingFromCdmIndexDb();
         });
         String expectedMessage = "Project has no contri field named hook id, " +
-            "and/or descri field named collection number, and/or refid field named aspace ref id";
+            "and/or descri field named collection number, and/or ref_id field named ref_id";
         String actualMessage = exception.getMessage();
 
         assertTrue(actualMessage.contains(expectedMessage));

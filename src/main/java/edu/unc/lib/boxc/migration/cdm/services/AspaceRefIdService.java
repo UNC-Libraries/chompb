@@ -110,7 +110,7 @@ public class AspaceRefIdService {
 
         if (!hasProjectContriDescriAspaceRefIdFields()) {
             throw new InvalidProjectStateException("Project has no contri field named hook id, " +
-                    "and/or descri field named collection number, and/or refid field named aspace ref id");
+                    "and/or descri field named collection number, and/or ref_id field named ref_id");
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
@@ -296,7 +296,7 @@ public class AspaceRefIdService {
                         && value.equalsIgnoreCase(FindingAidService.COLLECTION_NUMBER_FIELD_DESC)) {
                     hasDescri = true;
                 } else if (key.equalsIgnoreCase(REF_ID_FIELD)
-                    && value.equalsIgnoreCase("aspace ref id")) {
+                    && value.equalsIgnoreCase("ref_id")) {
                     hasAspaceRefId = true;
                 }
             }
