@@ -98,6 +98,21 @@ public class AspaceRefIdCommandIT extends AbstractCommandIT {
     }
 
     @Test
+    public void generateFromIndexAspaceRefIdMappingSucceedsTest() throws Exception {
+        indexExportSamples();
+
+        String[] args = new String[] {
+                "-w", project.getProjectPath().toString(),
+                "--env-config", chompbConfigPath,
+                "aspace_ref_id", "generate_from_index"};
+        executeExpectSuccess(args);
+
+        assertTrue(Files.exists(project.getAspaceRefIdMappingPath()));
+
+        assertUpdatedDatePresent();
+    }
+
+    @Test
     public void validateValidTest() throws Exception {
         indexExportSamples();
         writeCsv(mappingBody("25,03883_folder_9,fcee5fc2bb61effc8836498a8117b05d"));

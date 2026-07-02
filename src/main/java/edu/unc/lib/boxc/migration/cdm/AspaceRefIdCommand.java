@@ -83,6 +83,30 @@ public class AspaceRefIdCommand {
         }
     }
 
+    @Command(name = "generate_from_index",
+            description = {"Generate the optional aspace ref id mapping file for this project " +
+                    "using the indexed ead to cdm metadata file, cdm_index.db.",
+                    "A ref_id_mapping.csv template will be created for this project, " +
+                            "with record ids, hook ids, and aspace ref ids populated."})
+    public int generateFromIndex() throws Exception {
+        long start = System.nanoTime();
+
+        try {
+            initialize();
+            aspaceRefIdService.generateAspaceRefIdMappingFromCdmIndexDb();
+            outputLogger.info("Aspace ref id mapping generated for {} in {}s", project.getProjectName(),
+                    (System.nanoTime() - start) / 1e9);
+            return 0;
+        } catch (MigrationException | IllegalArgumentException e) {
+            outputLogger.info("Cannot generate aspace ref id mapping: {}", e.getMessage());
+            return 1;
+        } catch (Exception e) {
+            log.error("Failed to generate aspace ref id template", e);
+            outputLogger.info("Failed to generate aspace ref id template: {}", e.getMessage(), e);
+            return 1;
+        }
+    }
+
     @Command(name = "validate",
             description = {"Validate the aspace ref id mappings for this project"})
     public int validate(@Option(names = { "-f", "--force"},

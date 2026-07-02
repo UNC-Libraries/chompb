@@ -40,7 +40,10 @@ public class AspaceRefIdService {
     private CdmIndexService indexService;
     private Path hookIdRefIdMapPath;
     private Boolean projectHasContriAndDescri = null;
+    private Boolean projectHasHookIdRefId = null;
 
+    public static final String HOOK_ID_FIELD = "hook_id";
+    public static final String REF_ID_FIELD = "ref_id";
     public static final String[] HOOKID_REFID_CSV_HEADERS = {"cache_hookid", "normalized_cache_hookid", "collid",
             "ref_id", "ao_title", "tc_type", "tc_indicator", "sc_type", "sc_indicator", "gc_type", "gc_indicator",
             "aspace_hookid", "cdm_alias"};
@@ -98,6 +101,53 @@ public class AspaceRefIdService {
         setUpdatedDate(Instant.now());
     }
 
+    /**
+     * Generate the aspace ref id mapping using the indexed ead to cdm metadata file (cdm_index.db)
+     * Record ids, hook ids, and ref ids populated
+     * @throws Exception
+     */
+    public void generateAspaceRefIdMappingFromCdmIndexDb() throws IOException {
+        assertProjectStateValid();
+
+        if (!hasProjectHookIdRefIdFields()) {
+            throw new InvalidProjectStateException("Project has no hook_id field named hook_id " +
+                    "and/or ref_id field named ref_id");
+        }
+
+        try (BufferedWriter writer = Files.newBufferedWriter(getMappingPath());
+             var csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(AspaceRefIdInfo.CSV_HEADERS))) {
+            String query = "select " + CdmFieldInfo.CDM_ID + "," + HOOK_ID_FIELD + "," + REF_ID_FIELD
+                    + " from " + CdmIndexService.TB_NAME
+                    + " where (" + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
+                    + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null )"
+                    + " and " + CdmIndexService.PARENT_ID_FIELD + " is null"
+                    + " and " + HOOK_ID_FIELD + " is not null"
+                    + " and " + REF_ID_FIELD + " is not null";
+
+            getIndexService();
+            try (Connection conn = indexService.openDbConnection()) {
+                var stmt = conn.createStatement();
+                var rs = stmt.executeQuery(query);
+                while (rs.next()) {
+                    // if dmrecord, hook_id, and ref_id fields are not blank,
+                    // add dmrecord, hook_id, and ref_id to aspace ref id mapping
+                    var dmrecord = rs.getString(1);
+                    var hookId = rs.getString(2);
+                    var refId = rs.getString(3);
+                    if (!dmrecord.isBlank() && !hookId.isBlank() & !refId.isBlank()) {
+                        csvPrinter.printRecord(dmrecord, hookId, refId);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new MigrationException("Error interacting with export index", e);
+            }
+        }
+
+        setUpdatedDate(Instant.now());
+    }
+
     protected void setUpdatedDate(Instant timestamp) throws IOException {
         project.getProjectProperties().setAspaceRefIdMappingsUpdatedDate(timestamp);
         ProjectPropertiesSerialization.write(project);
@@ -111,10 +161,10 @@ public class AspaceRefIdService {
         List<String> ids = new ArrayList<>();
         // for all work objects in the project (grouped works, compound objects, and single file works)
         String query = "select " + CdmFieldInfo.CDM_ID + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                + " where (" + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
                 + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
                 + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
-                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null )"
                 + " and " + CdmIndexService.PARENT_ID_FIELD + " is null";
 
         getIndexService();
@@ -140,10 +190,10 @@ public class AspaceRefIdService {
         String query = "select " + CdmFieldInfo.CDM_ID + "," + FindingAidService.DESCRI_FIELD + ","
                 + FindingAidService.CONTRI_FIELD
                 + " from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
+                + " where (" + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_GROUPED_WORK + "'"
                 + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_COMPOUND_OBJECT + "'"
                 + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " = '" + CdmIndexService.ENTRY_TYPE_DOCUMENT_PDF + "'"
-                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null"
+                + " or " + CdmIndexService.ENTRY_TYPE_FIELD + " is null )"
                 + " and " + CdmIndexService.PARENT_ID_FIELD + " is null"
                 + " and " + FindingAidService.DESCRI_FIELD + " is not null"
                 + " and " + FindingAidService.CONTRI_FIELD + " is not null";
@@ -217,6 +267,35 @@ public class AspaceRefIdService {
             projectHasContriAndDescri = hasContri && hasDescri;
         }
         return projectHasContriAndDescri;
+    }
+
+    private boolean hasProjectHookIdRefIdFields() {
+        if (projectHasHookIdRefId == null) {
+            // check if project has hook_id field named hook_id and ref_id field named ref_id
+            boolean hasHookId = false;
+            boolean hasRefId = false;
+            fieldService.validateFieldsFile(project);
+            CdmFieldInfo fieldInfo = fieldService.loadFieldsFromProject(project);
+            Map<String, String> fields = fieldInfo.getFields().stream()
+                    .filter(f -> !f.getSkipExport())
+                    .collect(Collectors.toMap(CdmFieldInfo.CdmFieldEntry::getNickName,
+                            CdmFieldInfo.CdmFieldEntry::getDescription));
+
+            for (Map.Entry<String, String> entry : fields.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (key.equalsIgnoreCase(HOOK_ID_FIELD)
+                        && value.equalsIgnoreCase(HOOK_ID_FIELD)) {
+                    hasHookId = true;
+                } else if (key.equalsIgnoreCase(REF_ID_FIELD)
+                    && value.equalsIgnoreCase("ref_id")) {
+                    hasRefId = true;
+                }
+            }
+
+            projectHasHookIdRefId = hasHookId && hasRefId;
+        }
+        return projectHasHookIdRefId;
     }
 
     /**
