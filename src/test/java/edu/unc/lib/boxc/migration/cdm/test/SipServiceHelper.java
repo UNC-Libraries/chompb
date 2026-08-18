@@ -361,7 +361,8 @@ public class SipServiceHelper {
         destinationsService.generateMapping(options);
     }
 
-    public void generateArchivalCollectionDestinationMapping(String defDest, String defColl, String fieldName) throws Exception {
+    public void generateArchivalCollectionDestinationMapping(String defDest, String defColl, String fieldName)
+            throws Exception {
         DestinationMappingOptions options = new DestinationMappingOptions();
         options.setDefaultDestination(defDest);
         options.setDefaultCollection(defColl);
@@ -369,36 +370,44 @@ public class SipServiceHelper {
         archivalDestinationsService.addArchivalCollectionMappings(options);
     }
 
-    public void generateDefaultPermissionsMapping(UserRole everyone, UserRole authenticated) throws Exception {
+    public void generateDefaultPermissionsMapping(UserRole everyone, UserRole authenticated, UserRole onCampus)
+            throws Exception {
         PermissionMappingOptions options = new PermissionMappingOptions();
         options.setWithDefault(true);
         options.setEveryone(everyone);
         options.setAuthenticated(authenticated);
+        options.setOnCampus(onCampus);
         permissionsService.generatePermissions(options);
     }
 
-    public void generateAllPermissionsMapping(UserRole everyone, UserRole authenticated) throws Exception {
+    public void generateAllPermissionsMapping(UserRole everyone, UserRole authenticated, UserRole onCampus)
+            throws Exception {
         PermissionMappingOptions options = new PermissionMappingOptions();
         options.setWithFiles(true);
         options.setWithWorks(true);
         options.setEveryone(everyone);
         options.setAuthenticated(authenticated);
+        options.setOnCampus(onCampus);
         permissionsService.generatePermissions(options);
     }
 
-    public void generateFilePermissionsMapping(UserRole everyone, UserRole authenticated) throws Exception {
+    public void generateFilePermissionsMapping(UserRole everyone, UserRole authenticated, UserRole onCampus)
+            throws Exception {
         PermissionMappingOptions options = new PermissionMappingOptions();
         options.setWithFiles(true);
         options.setEveryone(everyone);
         options.setAuthenticated(authenticated);
+        options.setOnCampus(onCampus);
         permissionsService.generatePermissions(options);
     }
 
-    public void generateWorkPermissionsMapping(UserRole everyone, UserRole authenticated) throws Exception {
+    public void generateWorkPermissionsMapping(UserRole everyone, UserRole authenticated, UserRole onCampus)
+            throws Exception {
         PermissionMappingOptions options = new PermissionMappingOptions();
         options.setWithWorks(true);
         options.setEveryone(everyone);
         options.setAuthenticated(authenticated);
+        options.setOnCampus(onCampus);
         permissionsService.generatePermissions(options);
     }
 

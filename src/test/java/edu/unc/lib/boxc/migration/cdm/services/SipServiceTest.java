@@ -1088,8 +1088,10 @@ public class SipServiceTest {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.generateDefaultPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        testHelper.generateDefaultPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
+        List<Path> stagingLocs =
+                testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1130,8 +1132,10 @@ public class SipServiceTest {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.generateFilePermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        testHelper.generateFilePermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
+        List<Path> stagingLocs =
+                testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1172,8 +1176,10 @@ public class SipServiceTest {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
-        testHelper.generateWorkPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+        testHelper.generateWorkPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
+        List<Path> stagingLocs =
+                testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1213,12 +1219,13 @@ public class SipServiceTest {
     public void generateSipWithCompoundObjectsPermissions() throws Exception {
         testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.generateAllPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
+        testHelper.generateAllPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
         setupDescriptions();
         var sourceOptions = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         sourceOptions.setExportField("filena");
-        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
-                "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif",
+                "nccg_ck_1042-22_v1.tif", "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1268,7 +1275,8 @@ public class SipServiceTest {
                 "276_241_E.tif", "276_245a_E.tif");
         setupGroupIndex();
         // permissions must be set after the grouping
-        testHelper.generateAllPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
+        testHelper.generateAllPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1307,12 +1315,13 @@ public class SipServiceTest {
     public void generateSipWithCompoundObjectsFilePermissions() throws Exception {
         testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.generateFilePermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
+        testHelper.generateFilePermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
         setupDescriptions();
         var sourceOptions = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         sourceOptions.setExportField("filena");
-        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
-                "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif",
+                "nccg_ck_1042-22_v1.tif", "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1358,11 +1367,12 @@ public class SipServiceTest {
         testHelper.indexExportData("grouped_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("grouped_mods.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif",
-                "276_241_E.tif", "276_245a_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif",
+                "276_203_E.tif", "276_241_E.tif", "276_245a_E.tif");
         setupGroupIndex();
         // permissions must be set after the grouping
-        testHelper.generateFilePermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
+        testHelper.generateFilePermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1403,12 +1413,13 @@ public class SipServiceTest {
     public void generateSipWithCompoundObjectsWorkPermissions() throws Exception {
         testHelper.indexExportData(Paths.get("src/test/resources/keepsakes_fields.csv"), "mini_keepsakes");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
-        testHelper.generateWorkPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
+        testHelper.generateWorkPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
         setupDescriptions();
         var sourceOptions = testHelper.makeSourceFileOptions(testHelper.getSourceFilesBasePath());
         sourceOptions.setExportField("filena");
-        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif", "nccg_ck_1042-22_v1.tif",
-                "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles(sourceOptions, "nccg_ck_09.tif",
+                "nccg_ck_1042-22_v1.tif", "nccg_ck_1042-22_v2.tif", "nccg_ck_549-4_v1.tif", "nccg_ck_549-4_v2.tif");
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());
@@ -1456,11 +1467,12 @@ public class SipServiceTest {
         testHelper.indexExportData("grouped_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("grouped_mods.xml");
-        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif",
-                "276_241_E.tif", "276_245a_E.tif");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif",
+                "276_203_E.tif", "276_241_E.tif", "276_245a_E.tif");
         setupGroupIndex();
         // permissions must be set after the grouping
-        testHelper.generateWorkPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata);
+        testHelper.generateWorkPermissionsMapping(UserRole.canViewMetadata, UserRole.canViewMetadata,
+                UserRole.canViewMetadata);
 
         List<MigrationSip> sips = service.generateSips(makeOptions());
         assertEquals(1, sips.size());

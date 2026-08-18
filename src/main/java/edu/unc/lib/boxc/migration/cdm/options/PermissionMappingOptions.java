@@ -38,12 +38,17 @@ public class PermissionMappingOptions {
             description = "The patron access role assigned to the “authenticated” group (anyone that is logged in).")
     private UserRole authenticated;
 
+    @Option(names = {"-oc", "--on-campus"},
+            description = "The patron access role assigned to the “on campus” group.")
+    private UserRole onCampus;
+
     @Option(names = {"-f", "--force"},
             description = "Overwrite permission mapping if one already exists")
     private boolean force;
 
     @Option(names = {"-so", "--staff-only"},
-            description = "Staff only permissions, 'everyone' field and 'authenticated' field set to 'none'")
+            description = "Staff only permissions, 'everyone' field, 'authenticated' field, and " +
+                    "'on_campus' field set to 'none'")
     private boolean staffOnly;
 
     public boolean isWithDefault() {
@@ -100,6 +105,14 @@ public class PermissionMappingOptions {
 
     public void setAuthenticated(UserRole authenticated) {
         this.authenticated = authenticated;
+    }
+
+    public UserRole getOnCampus() {
+        return onCampus;
+    }
+
+    public void setOnCampus(UserRole onCampus) {
+        this.onCampus = onCampus;
     }
 
     public boolean isForce() {
