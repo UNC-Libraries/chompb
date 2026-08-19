@@ -37,11 +37,10 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-wd",
                 "--everyone", "canViewMetadata",
-                "--authenticated", "canViewMetadata",
-                "--on-campus", "canViewMetadata"};
+                "--authenticated", "canViewMetadata"};
         executeExpectSuccess(args);
         assertMapping(0, "default", "canViewMetadata", "canViewMetadata",
-                "canViewMetadata");
+                "");
     }
 
     @Test
@@ -52,7 +51,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-wd"};
         executeExpectSuccess(args);
         assertMapping(0, "default", "canViewOriginals", "canViewOriginals",
-                "canViewOriginals");
+                "");
     }
 
     @Test
@@ -63,7 +62,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-wd",
                 "-so"};
         executeExpectSuccess(args);
-        assertMapping(0, "default", "none", "none", "none");
+        assertMapping(0, "default", "none", "none", "");
     }
 
     @Test

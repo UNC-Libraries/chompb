@@ -69,19 +69,20 @@ public class PermissionsService {
 
         String everyoneField;
         String authenticatedField;
-        String onCampusField;
+        String onCampusField = "";
 
         // Permissions
-        if (options.isStaffOnly() || options.getEveryone() != null || options.getAuthenticated() != null
-                || options.getOnCampus() != null) {
+        if (options.isStaffOnly() || options.getEveryone() != null || options.getAuthenticated() != null) {
             everyoneField = getAssignedRoleValue(options.isStaffOnly(), options.getEveryone());
             authenticatedField = getAssignedRoleValue(options.isStaffOnly(), options.getAuthenticated());
-            onCampusField = getAssignedRoleValue(options.isStaffOnly(), options.getOnCampus());
+            if (options.getOnCampus() != null) {
+                onCampusField = getAssignedRoleValue(options.isStaffOnly(), options.getOnCampus());
+
+            }
         } else {
-            // if no permissions/roles are specified, default to canViewOriginals
+            // if no permissions/roles are specified, default to canViewOriginals for everyone and authenticated
             everyoneField = UserRole.canViewOriginals.getPredicate();
             authenticatedField = UserRole.canViewOriginals.getPredicate();
-            onCampusField = UserRole.canViewOriginals.getPredicate();
         }
 
         try (

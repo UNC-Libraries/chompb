@@ -110,8 +110,7 @@ public class PermissionsValidatorTest {
     public void blankOnCampusTest() throws Exception {
         writeCsv(mappingBody("default,,none,none,"));
         List<String> errors = validator.validateMappings();
-        assertHasError(errors, "No 'on_campus' permission mapped at line 2");
-        assertNumberErrors(errors, 1);
+        assertNumberErrors(errors, 0);
     }
 
     @Test

@@ -95,8 +95,6 @@ public class PermissionsValidator {
                         errors.add("Invalid 'on_campus' permission at line " + i + ", " + onCampus +
                                 " is not a valid patron permission");
                     }
-                } else {
-                    errors.add("No 'on_campus' permission mapped at line " + i);
                 }
 
                 i++;

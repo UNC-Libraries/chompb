@@ -111,7 +111,7 @@ public class PermissionsServiceTest {
         assertTrue(Files.exists(permissionsMappingPath));
 
         List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
-        assertIterableEquals(Arrays.asList("default", "", "canViewOriginals", "canViewOriginals", "canViewOriginals"),
+        assertIterableEquals(Arrays.asList("default", "", "canViewOriginals", "canViewOriginals", ""),
                 rows.get(0));
     }
 
@@ -126,7 +126,7 @@ public class PermissionsServiceTest {
         assertTrue(Files.exists(permissionsMappingPath));
 
         List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
-        assertIterableEquals(Arrays.asList("default", "", "none", "none", "none"), rows.get(0));
+        assertIterableEquals(Arrays.asList("default", "", "none", "none", ""), rows.get(0));
     }
 
     @Test
@@ -149,13 +149,12 @@ public class PermissionsServiceTest {
 
     @Test
     public void generateDefaultPermissionsWithoutForceFlagTest() throws Exception {
-        writeCsv(mappingBody("default,,none,none"));
+        writeCsv(mappingBody("default,,none,none,"));
 
         var options = new PermissionMappingOptions();
         options.setWithDefault(true);
         options.setEveryone(UserRole.canViewMetadata);
         options.setAuthenticated(UserRole.canViewMetadata);
-        options.setOnCampus(UserRole.canViewMetadata);
 
         Exception exception = assertThrows(StateAlreadyExistsException.class, () -> {
             service.generatePermissions(options);
@@ -169,21 +168,19 @@ public class PermissionsServiceTest {
     @Test
     public void generateDefaultPermissionsWithForceFlagTest() throws Exception {
         Path permissionsMappingPath = project.getPermissionsPath();
-        writeCsv(mappingBody("default,,none,none,none"));
+        writeCsv(mappingBody("default,,none,none,"));
 
         var options = new PermissionMappingOptions();
         options.setWithDefault(true);
         options.setEveryone(UserRole.canViewMetadata);
         options.setAuthenticated(UserRole.canViewMetadata);
-        options.setOnCampus(UserRole.canViewMetadata);
         options.setForce(true);
 
         service.generatePermissions(options);
         assertTrue(Files.exists(permissionsMappingPath));
 
         List<CSVRecord> rows = listCsvRecords(permissionsMappingPath);
-        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata", "canViewMetadata"),
-                rows.get(0));
+        assertIterableEquals(Arrays.asList("default", "", "canViewMetadata", "canViewMetadata", ""), rows.get(0));
     }
 
     @Test
