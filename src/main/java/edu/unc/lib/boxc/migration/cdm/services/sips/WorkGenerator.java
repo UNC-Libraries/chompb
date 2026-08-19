@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.ON_CAMPUS_PRINC;
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
@@ -259,6 +260,11 @@ public class WorkGenerator {
                 Property authenticatedValue = UserRole.valueOf(permissionMapping.getAuthenticated()).getProperty();
                 resource.addLiteral(everyoneValue, PUBLIC_PRINC);
                 resource.addLiteral(authenticatedValue, AUTHENTICATED_PRINC);
+                if (!permissionMapping.getOnCampus().isBlank()) {
+                    Property onCampusValue = UserRole.valueOf(permissionMapping.getOnCampus()).getProperty();
+                    resource.addLiteral(onCampusValue, ON_CAMPUS_PRINC);
+
+                }
             }
         }
     }

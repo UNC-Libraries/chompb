@@ -370,13 +370,12 @@ public class SipServiceHelper {
         archivalDestinationsService.addArchivalCollectionMappings(options);
     }
 
-    public void generateDefaultPermissionsMapping(UserRole everyone, UserRole authenticated, UserRole onCampus)
+    public void generateDefaultPermissionsMapping(UserRole everyone, UserRole authenticated)
             throws Exception {
         PermissionMappingOptions options = new PermissionMappingOptions();
         options.setWithDefault(true);
         options.setEveryone(everyone);
         options.setAuthenticated(authenticated);
-        options.setOnCampus(onCampus);
         permissionsService.generatePermissions(options);
     }
 
