@@ -3,7 +3,9 @@ package edu.unc.lib.boxc.migration.cdm.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.*;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.ON_CAMPUS_PRINC;
 
 /**
  * Permission mapping information for a project

@@ -39,7 +39,7 @@ public class PermissionMappingOptions {
     private UserRole authenticated;
 
     @Option(names = {"-oc", "--on-campus"},
-            description = "The patron access role assigned to the “on campus” group.")
+            description = "The patron access role assigned to the “on_campus” group.")
     private UserRole onCampus;
 
     @Option(names = {"-f", "--force"},
