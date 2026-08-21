@@ -1,10 +1,11 @@
 package edu.unc.lib.boxc.migration.cdm.model;
 
-import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
-import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.AUTHENTICATED_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
+import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.ON_CAMPUS_PRINC;
 
 /**
  * Permission mapping information for a project
@@ -15,7 +16,7 @@ public class PermissionsInfo {
     public static final String ID_FIELD = "id";
     public static final String OBJECT_TYPE = "object_type";
     public static final String[] CSV_HEADERS = new String[] {
-            ID_FIELD, OBJECT_TYPE, PUBLIC_PRINC, AUTHENTICATED_PRINC };
+            ID_FIELD, OBJECT_TYPE, PUBLIC_PRINC, AUTHENTICATED_PRINC, ON_CAMPUS_PRINC };
 
     private List<PermissionMapping> mappings;
 
@@ -54,14 +55,16 @@ public class PermissionsInfo {
         private String id;
         private String everyone;
         private String authenticated;
+        private String onCampus;
 
         public PermissionMapping() {
         }
 
-        public PermissionMapping(String id, String everyone, String authenticated) {
+        public PermissionMapping(String id, String everyone, String authenticated, String onCampus) {
             this.id = id;
             this.everyone = everyone;
             this.authenticated = authenticated;
+            this.onCampus = onCampus;
         }
 
         public String getId() {
@@ -86,6 +89,14 @@ public class PermissionsInfo {
 
         public void setAuthenticated(String authenticated) {
             this.authenticated = authenticated;
+        }
+
+        public String getOnCampus() {
+            return onCampus;
+        }
+
+        public void setOnCampus(String onCampus) {
+            this.onCampus = onCampus;
         }
     }
 }

@@ -1,10 +1,8 @@
 package edu.unc.lib.boxc.migration.cdm;
 
-import edu.unc.lib.boxc.auth.api.UserRole;
 import edu.unc.lib.boxc.migration.cdm.model.PermissionsInfo;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.GroupMappingSyncOptions;
-import edu.unc.lib.boxc.migration.cdm.options.PermissionMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +14,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PermissionsCommandIT extends AbstractCommandIT {
     @BeforeEach
@@ -42,7 +39,8 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "--everyone", "canViewMetadata",
                 "--authenticated", "canViewMetadata"};
         executeExpectSuccess(args);
-        assertMapping(0, "default", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "default", "canViewMetadata", "canViewMetadata",
+                "");
     }
 
     @Test
@@ -52,7 +50,8 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-wd"};
         executeExpectSuccess(args);
-        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals",
+                "");
     }
 
     @Test
@@ -63,7 +62,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-wd",
                 "-so"};
         executeExpectSuccess(args);
-        assertMapping(0, "default", "none", "none");
+        assertMapping(0, "default", "none", "none", "");
     }
 
     @Test
@@ -73,7 +72,8 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-wd",
                 "--everyone", "canViewMetadata",
-                "--authenticated", "canManage"};
+                "--authenticated", "canManage",
+                "--on-campus", "canViewMetadata"};
         executeExpectFailure(args);
         assertOutputContains("Assigned role value is invalid. Must be one of the following patron roles: " +
                 "[none, canDiscover, canViewMetadata, canViewAccessCopies, canViewReducedQuality, canViewOriginals]");
@@ -82,14 +82,15 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     @Test
     public void generateDefaultPermissionsWithoutForceFlag() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "default,,canViewMetadata,canViewMetadata", StandardCharsets.UTF_8, true);
+                "default,,canViewMetadata,canViewMetadata,canViewMetadata", StandardCharsets.UTF_8, true);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "generate",
                 "-wd",
                 "--everyone", "canViewMetadata",
-                "--authenticated", "canViewMetadata"};
+                "--authenticated", "canViewMetadata",
+                "--on-campus", "canViewMetadata"};
         executeExpectFailure(args);
         assertOutputContains("Cannot create permissions, a file already exists. " +
                 "Use the force flag to overwrite.");
@@ -98,7 +99,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     @Test
     public void generateDefaultPermissionsWithForceFlag() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "default,,canViewMetadata,canViewMetadata", StandardCharsets.UTF_8, true);
+                "default,,canViewMetadata,canViewMetadata,canViewMetadata", StandardCharsets.UTF_8, true);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -106,9 +107,11 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-wd",
                 "--everyone", "canViewOriginals",
                 "--authenticated", "canViewOriginals",
+                "--on-campus", "canViewOriginals",
                 "--force"};
         executeExpectSuccess(args);
-        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals",
+                "canViewOriginals");
     }
 
     @Test
@@ -119,11 +122,15 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-ww",
                 "--everyone", "canViewOriginals",
-                "--authenticated", "canViewOriginals"};
+                "--authenticated", "canViewOriginals",
+                "--on-campus", "canViewOriginals"};
         executeExpectSuccess(args);
-        assertMapping(0, "25", "canViewOriginals", "canViewOriginals");
-        assertMapping(1, "26", "canViewOriginals", "canViewOriginals");
-        assertMapping(2, "27", "canViewOriginals", "canViewOriginals");
+        assertMapping(0, "25", "canViewOriginals", "canViewOriginals",
+                "canViewOriginals");
+        assertMapping(1, "26", "canViewOriginals", "canViewOriginals",
+                "canViewOriginals");
+        assertMapping(2, "27", "canViewOriginals", "canViewOriginals",
+                "canViewOriginals");
     }
 
     @Test
@@ -135,12 +142,17 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-wd",
                 "-ww",
                 "--everyone", "canViewMetadata",
-                "--authenticated", "canViewMetadata"};
+                "--authenticated", "canViewMetadata",
+                "--on-campus", "canViewMetadata"};
         executeExpectSuccess(args);
-        assertMapping(0, "default", "canViewMetadata", "canViewMetadata");
-        assertMapping(1, "25", "canViewMetadata", "canViewMetadata");
-        assertMapping(2, "26", "canViewMetadata", "canViewMetadata");
-        assertMapping(3, "27", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "default", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(1, "25", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(2, "26", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(3, "27", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
@@ -152,15 +164,17 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-wd",
                 "-wf",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args);
-        assertMapping(0, "default", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "default", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
     public void generateWorkAndFilePermissionsWithForce() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "default,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+                "default,,canViewOriginals,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
         testHelper.indexExportData("mini_gilmer");
         String[] args = new String[] {
@@ -170,11 +184,15 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-wf",
                 "-e", "canViewMetadata",
                 "-a", "canViewMetadata",
+                "-oc", "canViewMetadata",
                 "-f"};
         executeExpectSuccess(args);
-        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
-        assertMapping(1, "26", "canViewMetadata", "canViewMetadata");
-        assertMapping(2, "27", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "25", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(1, "26", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(2, "27", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
@@ -187,18 +205,23 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-ww",
                 "-wf",
                 "--everyone", "canViewMetadata",
-                "--authenticated", "canViewMetadata"};
+                "--authenticated", "canViewMetadata",
+                "--on-campus", "canViewMetadata"};
         executeExpectSuccess(args);
-        assertMapping(0, "default", "canViewMetadata", "canViewMetadata");
-        assertMapping(1, "25", "canViewMetadata", "canViewMetadata");
-        assertMapping(2, "26", "canViewMetadata", "canViewMetadata");
-        assertMapping(3, "27", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "default", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(1, "25", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(2, "26", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(3, "27", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
     public void setPermissionExistingEntry() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "25,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+                "25,,canViewOriginals,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
         testHelper.indexExportData("mini_gilmer");
         String[] args = new String[] {
@@ -206,9 +229,11 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "set",
                 "-id", "25",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args);
-        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "25", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
@@ -218,7 +243,8 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-wd",
                 "--everyone", "canViewOriginals",
-                "--authenticated", "canViewOriginals"};
+                "--authenticated", "canViewOriginals",
+                "--on-campus", "canViewOriginals"};
         executeExpectSuccess(args);
 
         testHelper.indexExportData("mini_gilmer");
@@ -227,10 +253,13 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "set",
                 "-id", "26",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args2);
-        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
-        assertMapping(1, "26", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals",
+                "canViewOriginals");
+        assertMapping(1, "26", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
@@ -240,7 +269,8 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-wd",
                 "--everyone", "canViewOriginals",
-                "--authenticated", "canViewOriginals"};
+                "--authenticated", "canViewOriginals",
+                "--on-campus", "canViewOriginals"};
         executeExpectSuccess(args);
 
         testHelper.indexExportData("grouped_gilmer");
@@ -250,17 +280,20 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "set",
                 "-id", "grp:groupa:group1",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args2);
-        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
-        assertMapping(1, "grp:groupa:group1", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals",
+                "canViewOriginals");
+        assertMapping(1, "grp:groupa:group1", "canViewMetadata",
+                "canViewMetadata", "canViewMetadata");
         assertMappingCount(2);
     }
 
     @Test
     public void setPermissionsWithWorks() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "25,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+                "25,,canViewOriginals,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
         testHelper.indexExportData("mini_gilmer");
         String[] args = new String[] {
@@ -268,11 +301,15 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "set",
                 "-ww",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args);
-        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
-        assertMapping(1, "26", "canViewMetadata", "canViewMetadata");
-        assertMapping(2, "27", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "25", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(1, "26", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(2, "27", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
@@ -282,7 +319,8 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-wd",
                 "--everyone", "canViewOriginals",
-                "--authenticated", "canViewOriginals"};
+                "--authenticated", "canViewOriginals",
+                "--on-campus", "canViewOriginals"};
         executeExpectSuccess(args);
 
         testHelper.indexExportData("grouped_gilmer");
@@ -292,17 +330,21 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "set",
                 "-wf",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args2);
-        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
-        assertMapping(1, "25", "canViewMetadata", "canViewMetadata");
-        assertMapping(2, "26", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals",
+                "canViewOriginals");
+        assertMapping(1, "25", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(2, "26", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
     public void setPermissionsWithWorksAndFiles() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "603,file,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+                "603,file,canViewOriginals,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
         testHelper.indexExportData("mini_keepsakes");
         String[] args = new String[] {
@@ -311,15 +353,23 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-ww",
                 "-wf",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args);
-        assertMapping(0, "216", "canViewMetadata", "canViewMetadata");
-        assertMapping(1, "602", "canViewMetadata", "canViewMetadata");
-        assertMapping(2, "603", "canViewMetadata", "canViewMetadata");
-        assertMapping(3, "604", "canViewMetadata", "canViewMetadata");
-        assertMapping(4, "605", "canViewMetadata", "canViewMetadata");
-        assertMapping(5, "606", "canViewMetadata", "canViewMetadata");
-        assertMapping(6, "607", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "216", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(1, "602", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(2, "603", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(3, "604", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(4, "605", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(5, "606", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(6, "607", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
@@ -331,7 +381,8 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-wd",
                 "--everyone", "canViewOriginals",
-                "--authenticated", "canViewOriginals"};
+                "--authenticated", "canViewOriginals",
+                "--on-campus", "canViewOriginals"};
         executeExpectSuccess(args);
 
         String[] args2 = new String[] {
@@ -339,12 +390,17 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "set",
                 "-fp", "*.tif",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args2);
-        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
-        assertMapping(1, "25", "canViewMetadata", "canViewMetadata");
-        assertMapping(2, "26", "canViewMetadata", "canViewMetadata");
-        assertMapping(3, "27", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals",
+                "canViewOriginals");
+        assertMapping(1, "25", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(2, "26", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(3, "27", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
@@ -359,11 +415,15 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "set",
                 "-fp", "*.tif",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args);
-        assertMapping(0, "25", "canViewMetadata", "canViewMetadata");
-        assertMapping(1, "26", "canViewMetadata", "canViewMetadata");
-        assertMapping(2, "27", "canViewMetadata", "canViewMetadata");
+        assertMapping(0, "25", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(1, "26", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
+        assertMapping(2, "27", "canViewMetadata", "canViewMetadata",
+                "canViewMetadata");
     }
 
     @Test
@@ -377,6 +437,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "-wd",
                 "--everyone", "canViewOriginals",
                 "--authenticated", "canViewOriginals",
+                "--on-campus", "canViewOriginals",
                 "--force"};
         executeExpectSuccess(args1);
 
@@ -385,9 +446,11 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "set",
                 "-fp", "*.png",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
         executeExpectSuccess(args2);
-        assertMapping(0, "default", "canViewOriginals", "canViewOriginals");
+        assertMapping(0, "default", "canViewOriginals", "canViewOriginals",
+                "canViewOriginals");
         assertMappingCount(1);
     }
 
@@ -396,14 +459,15 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         testHelper.indexExportData("mini_gilmer");
         testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "25,,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+                "25,,canViewOriginals,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
         String[] args = new String[] {
                 "-w", project.getProjectPath().toString(),
                 "permissions", "set",
                 "-fp", "",
                 "-e", "canViewMetadata",
-                "-a", "canViewMetadata"};
+                "-a", "canViewMetadata",
+                "-oc", "canViewMetadata"};
 
         executeExpectFailure(args);
         assertOutputContains("Must provide filename pattern");
@@ -417,7 +481,8 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-wd",
                 "--everyone", "canViewMetadata",
-                "--authenticated", "canViewMetadata"};
+                "--authenticated", "canViewMetadata",
+                "--on-campus", "canViewMetadata"};
         executeExpectSuccess(args);
 
         String[] args2 = new String[] {
@@ -435,12 +500,13 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "generate",
                 "-wd",
                 "--everyone", "canViewMetadata",
-                "--authenticated", "canViewMetadata"};
+                "--authenticated", "canViewMetadata",
+                "--on-campus", "canViewMetadata"};
         executeExpectSuccess(args);
 
         // Add a duplicate default permissions mapping
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "default,,none,none", StandardCharsets.UTF_8, true);
+                "default,,none,none,none", StandardCharsets.UTF_8, true);
 
         String[] args2 = new String[] {
                 "-w", project.getProjectPath().toString(),
@@ -456,7 +522,7 @@ public class PermissionsCommandIT extends AbstractCommandIT {
     @Test
     public void validateValidSetPermissions() throws Exception {
         FileUtils.write(project.getPermissionsPath().toFile(),
-                "25,work,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
+                "25,work,canViewOriginals,canViewOriginals,canViewOriginals", StandardCharsets.UTF_8, true);
 
         testHelper.indexExportData("mini_gilmer");
         String[] args = new String[] {
@@ -464,7 +530,8 @@ public class PermissionsCommandIT extends AbstractCommandIT {
                 "permissions", "set",
                 "-id", "25",
                 "--everyone", "canViewMetadata",
-                "--authenticated", "canViewMetadata"};
+                "--authenticated", "canViewMetadata",
+                "--on-campus", "canViewMetadata"};
         executeExpectSuccess(args);
 
         String[] args2 = new String[] {
@@ -475,13 +542,15 @@ public class PermissionsCommandIT extends AbstractCommandIT {
         assertOutputContains("PASS: Permissions mapping at path " + project.getPermissionsPath() + " is valid");
     }
 
-    private void assertMapping(int index, String id, String expectedEveryone, String expectedAuthenticated)
+    private void assertMapping(int index, String id, String expectedEveryone, String expectedAuthenticated,
+                               String expectedOnCampus)
             throws IOException {
         var mappings = getMappings();
         PermissionsInfo.PermissionMapping mapping = mappings.get(index);
         assertEquals(id, mapping.getId());
         assertEquals(expectedEveryone, mapping.getEveryone());
         assertEquals(expectedAuthenticated, mapping.getAuthenticated());
+        assertEquals(expectedOnCampus, mapping.getOnCampus());
     }
 
     private List<PermissionsInfo.PermissionMapping> getMappings() throws IOException {

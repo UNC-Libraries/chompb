@@ -42,14 +42,15 @@ public class PermissionsValidator {
         ) {
             int i = 2;
             for (CSVRecord csvRecord : csvParser) {
-                if (csvRecord.size() != 4) {
-                    errors.add("Invalid entry at line " + i + ", must be 4 columns but were " + csvRecord.size());
+                if (csvRecord.size() != 5) {
+                    errors.add("Invalid entry at line " + i + ", must be 5 columns but were " + csvRecord.size());
                     i++;
                     continue;
                 }
                 String id = csvRecord.get(0);
                 String everyone = csvRecord.get(2);
                 String authenticated = csvRecord.get(3);
+                String onCampus = csvRecord.get(4);
 
                 // default values
                 if (PermissionsInfo.DEFAULT_ID.equals(id)) {
@@ -85,6 +86,15 @@ public class PermissionsValidator {
                     }
                 } else {
                     errors.add("No 'authenticated' permission mapped at line " + i);
+                }
+
+                // on_campus
+                if (!StringUtils.isBlank(onCampus)) {
+                    List<String> patronRoles = getPatronRoles();
+                    if (!patronRoles.contains(onCampus)) {
+                        errors.add("Invalid 'on_campus' permission at line " + i + ", " + onCampus +
+                                " is not a valid patron permission");
+                    }
                 }
 
                 i++;

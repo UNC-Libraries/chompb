@@ -69,13 +69,18 @@ public class PermissionsService {
 
         String everyoneField;
         String authenticatedField;
+        String onCampusField = "";
 
         // Permissions
         if (options.isStaffOnly() || options.getEveryone() != null || options.getAuthenticated() != null) {
             everyoneField = getAssignedRoleValue(options.isStaffOnly(), options.getEveryone());
             authenticatedField = getAssignedRoleValue(options.isStaffOnly(), options.getAuthenticated());
+            if (options.getOnCampus() != null) {
+                onCampusField = getAssignedRoleValue(options.isStaffOnly(), options.getOnCampus());
+
+            }
         } else {
-            // if no permissions/roles are specified, default to canViewOriginals
+            // if no permissions/roles are specified, default to canViewOriginals for everyone and authenticated
             everyoneField = UserRole.canViewOriginals.getPredicate();
             authenticatedField = UserRole.canViewOriginals.getPredicate();
         }
@@ -89,7 +94,8 @@ public class PermissionsService {
                 csvPrinter.printRecord(PermissionsInfo.DEFAULT_ID,
                         "",
                         everyoneField,
-                        authenticatedField);
+                        authenticatedField,
+                        onCampusField);
             }
 
             List<Map.Entry<String, String>> mappedIdsAndObjectType = queryForMappedIds(options);
@@ -97,7 +103,8 @@ public class PermissionsService {
                 csvPrinter.printRecord(entry.getKey(),
                         entry.getValue(),
                         everyoneField,
-                        authenticatedField);
+                        authenticatedField,
+                        onCampusField);
             }
         }
 
@@ -126,7 +133,7 @@ public class PermissionsService {
             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(PermissionsInfo.CSV_HEADERS));
         ) {
             for (List<String> record : records) {
-                csvPrinter.printRecord(record.get(0), record.get(1), record.get(2), record.get(3));
+                csvPrinter.printRecord(record.get(0), record.get(1), record.get(2), record.get(3), record.get(4));
             }
         }
     }
@@ -152,6 +159,7 @@ public class PermissionsService {
                 mapping.setId(csvRecord.get(0));
                 mapping.setEveryone(csvRecord.get(2));
                 mapping.setAuthenticated(csvRecord.get(3));
+                mapping.setOnCampus(csvRecord.get(4));
                 mappings.add(mapping);
             }
             return info;
@@ -347,6 +355,7 @@ public class PermissionsService {
         Set<String> addedAndUpdatedIds = new HashSet<>();
         String everyoneField = getAssignedRoleValue(options.isStaffOnly(), options.getEveryone());
         String authenticatedField = getAssignedRoleValue(options.isStaffOnly(), options.getAuthenticated());
+        String onCampusField = getAssignedRoleValue(options.isStaffOnly(), options.getOnCampus());
 
         // addedAndUpdatedIds: list of all ids that need to be added and updated
         if (options.getCdmId() != null) {
@@ -370,10 +379,12 @@ public class PermissionsService {
         // update existing entries and add unchanged entries to updatedRecords, then remove updated ids from updateIds
         for (CSVRecord record : previousRecords) {
             if (addedAndUpdatedIds.contains(record.get(0))) {
-                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), everyoneField, authenticatedField));
+                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), everyoneField, authenticatedField,
+                        onCampusField));
                 addedAndUpdatedIds.remove(record.get(0));
             } else {
-                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3)));
+                updatedRecords.add(Arrays.asList(record.get(0), record.get(1), record.get(2), record.get(3),
+                        record.get(4)));
                 addedAndUpdatedIds.remove(record.get(0));
             }
         }
@@ -382,7 +393,7 @@ public class PermissionsService {
         for (Map.Entry<String, String> workAndFileRecord : workAndFileRecords) {
             if (addedAndUpdatedIds.contains(workAndFileRecord.getKey())) {
                 updatedRecords.add(Arrays.asList(workAndFileRecord.getKey(), workAndFileRecord.getValue(),
-                        everyoneField, authenticatedField));
+                        everyoneField, authenticatedField, onCampusField));
             }
         }
 
