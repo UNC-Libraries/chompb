@@ -194,7 +194,8 @@ public class SourceFileServiceTest {
     public void generateBasePathMatchesTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         GenerateSourceFileMappingOptions options = makeDefaultOptions();
-        options.setPathPattern("*.tif");
+        // test source files are in the source subdirectory of the base path
+        options.setPathPattern("source/*.tif");
         // add nested path
         testHelper.addSourceFile("nested/path/276_182_E.tif");
         Path basePath = testHelper.addSourceFile("276_183_E.tif");
