@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.FileSystems;
@@ -222,13 +223,14 @@ public class SourceFileService {
         Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-                if (pathPattern == null || pathMatcher.matches(path)) {
+                var relativePath = basePath.relativize(path);
+                if (pathPattern == null || pathMatcher.matches(relativePath)) {
                     String filename = path.getFileName().toString();
                     if (options.isLowercaseTemplate()) {
                         filename = filename.toLowerCase();
                     }
                     List<String> paths = candidatePaths.computeIfAbsent(filename, f -> new ArrayList<>());
-                    paths.add(basePath.relativize(path).toString());
+                    paths.add(relativePath.toString());
                 }
                 return FileVisitResult.CONTINUE;
             }

@@ -191,6 +191,26 @@ public class SourceFileServiceTest {
     }
 
     @Test
+    public void generateBasePathMatchesTest() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        GenerateSourceFileMappingOptions options = makeDefaultOptions();
+        // test source files are in the source subdirectory of the base path
+        options.setPathPattern("source/*.tif");
+        // add nested path
+        testHelper.addSourceFile("nested/path/276_182_E.tif");
+        Path basePath = testHelper.addSourceFile("276_183_E.tif");
+
+        service.generateMapping(options);
+
+        SourceFilesInfo info = service.loadMappings();
+        assertMappingPresent(info, "25", "276_182_E.tif", null);
+        assertMappingPresent(info, "26", "276_183_E.tif", basePath);
+        assertMappingPresent(info, "27", "276_203_E.tif", null);
+
+        assertMappedDatePresent();
+    }
+
+    @Test
     public void generateTransformedNestedMatchTest() throws Exception {
         testHelper.indexExportData("mini_gilmer");
         GenerateSourceFileMappingOptions options = makeDefaultOptions();
@@ -820,11 +840,6 @@ public class SourceFileServiceTest {
     private void assertExceptionContains(String expected, Exception e) {
         assertTrue(e.getMessage().contains(expected),
                 "Expected message exception to contain '" + expected + "', but was: " + e.getMessage());
-    }
-
-    private void setIndexedDate() throws Exception {
-        project.getProjectProperties().setIndexedDate(Instant.now());
-        ProjectPropertiesSerialization.write(project);
     }
 
     private void assertMappedDatePresent() throws Exception {
