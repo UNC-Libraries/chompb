@@ -2,7 +2,6 @@ package edu.unc.lib.boxc.migration.cdm;
 
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.options.SipGenerationOptions;
-import edu.unc.lib.boxc.migration.cdm.options.SourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
 import edu.unc.lib.boxc.migration.cdm.util.ProjectPropertiesSerialization;
@@ -55,7 +54,7 @@ public class StatusCommandIT extends AbstractCommandIT {
 
         assertOutputContains("CDM Collection Fields");
         assertOutputMatches(".*Mapping File Valid: +Yes.*");
-        assertOutputMatches(".*Fields: +63\n.*");
+        assertOutputMatches(".*Fields: +61\n.*");
         assertOutputMatches(".*Skipped: +1\n.*");
 
         assertOutputContains("CDM Collection Exports");

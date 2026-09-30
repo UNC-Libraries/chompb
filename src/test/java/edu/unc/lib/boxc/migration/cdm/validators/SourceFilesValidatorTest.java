@@ -45,7 +45,6 @@ public class SourceFilesValidatorTest {
         testHelper = new SipServiceHelper(project, tmpFolder);
         validator = new SourceFilesValidator();
         validator.setProject(project);
-        validator.setStreamingMetadataService(testHelper.getStreamingMetadataService());
     }
 
     @Test
@@ -212,27 +211,6 @@ public class SourceFilesValidatorTest {
                              "26,," + path2 + ","));
         List<String> errors = validator.validateMappings(true);
         assertNumberErrors(errors, 0);
-    }
-
-    @Test
-    public void streamingMetadataTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer_duracloud");
-        Path path2 = testHelper.addSourceFile("26.txt");
-        writeCsv(mappingBody("26,," + path2 + ",", "27,,,"));
-        List<String> errors = validator.validateMappings(false);
-        assertNumberErrors(errors, 0);
-    }
-
-    @Test
-    public void streamingMetadataAndInvalidSourcePathTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer");
-        Path path = testHelper.addSourceFile("25.txt");
-        Path path2 = testHelper.addSourceFile("27.txt");
-        Files.delete(path2);
-        writeCsv(mappingBody("25,," + path + ",", "27,," + path2 + ","));
-        List<String> errors = validator.validateMappings(false);
-        assertHasError(errors, "Invalid path at line 3, file does not exist");
-        assertNumberErrors(errors, 1);
     }
 
     private void assertHasError(List<String> errors, String expected) {

@@ -61,8 +61,6 @@
 <search></search>
 <pagina></pagina>
 <sort></sort>
-<stream></stream>
-<duracl></duracl>
 <fullrs>Volume1/03883_0005_0025.tif</fullrs>
 <find>231.jp2</find>
 <hook_id>03883_folder_5</hook_id>
@@ -138,8 +136,6 @@
 <search></search>
 <pagina></pagina>
 <sort></sort>
-<stream></stream>
-<duracl></duracl>
 <fullrs>Volume1/03883_0009_0051.tif</fullrs>
 <find>711.jp2</find>
 <hook_id>03883_folder_9</hook_id>
@@ -215,8 +211,6 @@
 <search></search>
 <pagina></pagina>
 <sort></sort>
-<stream></stream>
-<duracl></duracl>
 <fullrs>Volume1/03883_0009_0051.tif</fullrs>
 <find>711.jp2</find>
 <hook_id>03883_folder_9</hook_id>

@@ -12,7 +12,6 @@ import java.util.Set;
 
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo.SourceFileMapping;
 import edu.unc.lib.boxc.migration.cdm.services.SourceFileService;
-import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -30,7 +29,6 @@ import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
  */
 public class SourceFilesValidator {
     protected MigrationProject project;
-    protected StreamingMetadataService streamingMetadataService;
     protected Set<String> previousIds = new HashSet<>();
     protected Set<String> previousPaths = new HashSet<>();
     protected List<String> errors = new ArrayList<>();
@@ -77,7 +75,7 @@ public class SourceFilesValidator {
 
     protected void validateSourcePath(int i, String id, SourceFileMapping mapping, boolean force) {
         if (mapping.getSourcePaths() == null || mapping.getSourcePaths().isEmpty()) {
-            if (!force && !allowUnmapped() && !streamingMetadataService.verifyRecordHasStreamingMetadata(id)) {
+            if (!force && !allowUnmapped()) {
                 errors.add("No path mapped at line " + i);
             }
             return;
@@ -110,10 +108,6 @@ public class SourceFilesValidator {
 
     public void setProject(MigrationProject project) {
         this.project = project;
-    }
-
-    public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
-        this.streamingMetadataService = streamingMetadataService;
     }
 
     protected boolean allowUnmapped() {

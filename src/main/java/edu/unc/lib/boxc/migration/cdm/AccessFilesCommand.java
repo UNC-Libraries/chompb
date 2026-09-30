@@ -9,7 +9,6 @@ import java.util.List;
 
 import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -39,7 +38,6 @@ public class AccessFilesCommand {
     private CLIMain parentCommand;
 
     private MigrationProject project;
-    private StreamingMetadataService streamingMetadataService;
     private SourceFilesSummaryService summaryService;
     private AccessFileService accessService;
 
@@ -137,13 +135,8 @@ public class AccessFilesCommand {
         CdmFieldService fieldService = new CdmFieldService();
         CdmIndexService indexService = new CdmIndexService();
         indexService.setProject(project);
-        streamingMetadataService = new StreamingMetadataService();
-        streamingMetadataService.setProject(project);
-        streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(indexService);
         accessService = new AccessFileService();
         accessService.setIndexService(indexService);
-        accessService.setStreamingMetadataService(streamingMetadataService);
         accessService.setProject(project);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);

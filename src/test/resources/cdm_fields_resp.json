@@ -780,36 +780,6 @@
     "readonly": 0
   },
   {
-    "name": "StreamingFile",
-    "nick": "stream",
-    "type": "TEXT",
-    "size": 0,
-    "find": "BLANK",
-    "req": 0,
-    "search": 0,
-    "hide": 1,
-    "vocdb": "",
-    "vocab": 1,
-    "dc": "BLANK",
-    "admin": 0,
-    "readonly": 0
-  },
-  {
-    "name": "duracloudSpace",
-    "nick": "duracl",
-    "type": "TEXT",
-    "size": 0,
-    "find": "e6",
-    "req": 0,
-    "search": 1,
-    "hide": 0,
-    "vocdb": "",
-    "vocab": 0,
-    "dc": "identi",
-    "admin": 0,
-    "readonly": 0
-  },
-  {
     "name": "path",
     "nick": "full",
     "type": "TEXT",

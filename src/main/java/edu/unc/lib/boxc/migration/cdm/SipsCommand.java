@@ -11,7 +11,6 @@ import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.AltTextService;
 import edu.unc.lib.boxc.migration.cdm.services.AspaceRefIdService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
-import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import org.slf4j.Logger;
 
 import edu.unc.lib.boxc.migration.cdm.exceptions.MigrationException;
@@ -53,7 +52,6 @@ public class SipsCommand {
     private AggregateFileMappingService aggregateTopMappingService;
     private AggregateFileMappingService aggregateBottomMappingService;
     private CdmFieldService fieldService;
-    private StreamingMetadataService streamingMetadataService;
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
     private SipService sipService;
@@ -155,10 +153,6 @@ public class SipsCommand {
         aggregateBottomMappingService.setIndexService(indexService);
         aggregateBottomMappingService.setProject(project);
         fieldService = new CdmFieldService();
-        streamingMetadataService = new StreamingMetadataService();
-        streamingMetadataService.setProject(project);
-        streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(indexService);
 
         sipService = new SipService();
         sipService.setIndexService(indexService);
@@ -173,6 +167,5 @@ public class SipsCommand {
         sipService.setChompbConfig(parentCommand.getChompbConfig());
         sipService.setAggregateTopMappingService(aggregateTopMappingService);
         sipService.setAggregateBottomMappingService(aggregateBottomMappingService);
-        sipService.setStreamingMetadataService(streamingMetadataService);
     }
 }

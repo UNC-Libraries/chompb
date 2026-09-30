@@ -117,8 +117,6 @@
 <fila>TIFF</fila>
 <filb>TIFF</filb>
 <groupa>group1</groupa>
-<stream>gilmer_video.mp4</stream>
-<duracl>sfc20009-open</duracl>
 <full>/shc/gilmer_maps/</full>
 <fullrs>276_183_E.tif</fullrs>
 <find>27.JP2</find>
@@ -184,8 +182,6 @@
 <fila>TIFF</fila>
 <filb>TIFF</filb>
 <groupa>group2</groupa>
-<stream>gilmer_recording.mp3</stream>
-<duracl>sfc20009-open</duracl>
 <full>/shc/gilmer_maps/</full>
 <fullrs>276_203_E.tif</fullrs>
 <find>50.jp2</find>
