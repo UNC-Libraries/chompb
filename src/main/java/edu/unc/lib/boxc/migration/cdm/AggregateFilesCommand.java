@@ -8,7 +8,6 @@ import edu.unc.lib.boxc.migration.cdm.services.AggregateFileMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.MigrationProjectFactory;
-import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import edu.unc.lib.boxc.migration.cdm.validators.AggregateFilesValidator;
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +39,6 @@ public class AggregateFilesCommand {
     private CdmFieldService fieldService;
     private CdmIndexService indexService;
     private SourceFilesSummaryService summaryService;
-    private StreamingMetadataService streamingMetadataService;
 
     @CommandLine.Command(name = "generate",
             description = {
@@ -139,14 +137,9 @@ public class AggregateFilesCommand {
         fieldService = new CdmFieldService();
         indexService = new CdmIndexService();
         indexService.setProject(project);
-        streamingMetadataService = new StreamingMetadataService();
-        streamingMetadataService.setProject(project);
-        streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(indexService);
         aggregateService = new AggregateFileMappingService(sortBottom);
         aggregateService.setIndexService(indexService);
         aggregateService.setProject(project);
-        aggregateService.setStreamingMetadataService(streamingMetadataService);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);
         summaryService.setDryRun(dryRun);

@@ -76,7 +76,6 @@ public class SipService {
     private MigrationProject project;
     private ChompbConfigService.ChompbConfig chompbConfig;
     private PermissionsService permissionsService;
-    private StreamingMetadataService streamingMetadataService;
     private PIDMinter pidMinter;
     private CdmToDestMapper cdmToDestMapper = new CdmToDestMapper();
     private WorkGeneratorFactory workGeneratorFactory;
@@ -113,7 +112,6 @@ public class SipService {
         workGeneratorFactory.setPostMigrationReportService(postMigrationReportService);
         workGeneratorFactory.setAggregateTopMappingService(aggregateTopMappingService);
         workGeneratorFactory.setAggregateBottomMappingService(aggregateBottomMappingService);
-        workGeneratorFactory.setStreamingMetadataService(streamingMetadataService);
         try {
             workGeneratorFactory.setPermissionsInfo(permissionsService.loadMappings(project));
         } catch (NoSuchFileException e) {
@@ -443,10 +441,6 @@ public class SipService {
 
     public void setPermissionsService(PermissionsService permissionsService) {
         this.permissionsService = permissionsService;
-    }
-
-    public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
-        this.streamingMetadataService = streamingMetadataService;
     }
 
     public void setPidMinter(PIDMinter pidMinter) {

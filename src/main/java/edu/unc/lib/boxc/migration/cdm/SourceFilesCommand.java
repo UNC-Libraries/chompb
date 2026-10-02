@@ -15,7 +15,6 @@ import edu.unc.lib.boxc.migration.cdm.options.GenerateSourceFileMappingOptions;
 import edu.unc.lib.boxc.migration.cdm.services.CdmExportFilesService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFieldService;
 import edu.unc.lib.boxc.migration.cdm.services.CdmFileRetrievalService;
-import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.migration.cdm.status.SourceFilesSummaryService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -50,7 +49,6 @@ public class SourceFilesCommand {
     private CdmExportFilesService exportFilesService;
     private CdmFieldService fieldService;
     private SourceFilesSummaryService summaryService;
-    private StreamingMetadataService streamingMetadataService;
 
     @Command(name = "generate",
             description = {
@@ -95,7 +93,6 @@ public class SourceFilesCommand {
             initialize(false);
             SourceFilesValidator validator = new SourceFilesValidator();
             validator.setProject(project);
-            validator.setStreamingMetadataService(streamingMetadataService);
             List<String> errors = validator.validateMappings(force);
             if (errors.isEmpty()) {
                 outputLogger.info("PASS: Source file mapping at path {} is valid",
@@ -127,7 +124,6 @@ public class SourceFilesCommand {
             initialize(false);
             SourceFilesStatusService statusService = new SourceFilesStatusService();
             statusService.setProject(project);
-            statusService.setStreamingMetadataService(streamingMetadataService);
             statusService.report(parentCommand.getVerbosity());
 
             return 0;
@@ -205,13 +201,8 @@ public class SourceFilesCommand {
         fieldService = new CdmFieldService();
         indexService = new CdmIndexService();
         indexService.setProject(project);
-        streamingMetadataService = new StreamingMetadataService();
-        streamingMetadataService.setProject(project);
-        streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(indexService);
         sourceService = new SourceFileService();
         sourceService.setIndexService(indexService);
-        sourceService.setStreamingMetadataService(streamingMetadataService);
         sourceService.setProject(project);
         summaryService = new SourceFilesSummaryService();
         summaryService.setProject(project);

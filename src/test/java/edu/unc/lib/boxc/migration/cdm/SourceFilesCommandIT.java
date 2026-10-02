@@ -460,21 +460,6 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
     }
 
     @Test
-    public void generateBlankStreamingMetadataSucceedsTest() throws Exception {
-        testHelper.indexExportData("mini_gilmer_duracloud");
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "source_files", "generate",
-                "-B"};
-        executeExpectSuccess(args);
-
-        assertTrue(Files.exists(project.getSourceFilesMappingPath()));
-        assertOutputMatches(".*New Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files Mapped: +0.*");
-        assertOutputMatches(".*Total Files in Project: +3.*");
-    }
-
-    @Test
     public void validateValidTest() throws Exception {
         indexExportSamples();
         addSourceFile("276_182_E.tif");
@@ -516,28 +501,6 @@ public class SourceFilesCommandIT extends AbstractCommandIT {
                 + " is invalid");
         assertOutputContains("- No path mapped at line 2");
         assertEquals(2, output.split("    - ").length, "Must only be two errors: " + output);
-    }
-
-
-    @Test
-    public void validateStreamingMetadataTest() throws Exception {
-        indexExportSamples();
-        addSourceFile("276_182_E.tif");
-        addSourceFile("276_183_E.tif");
-        addSourceFile("276_203_E.tif");
-
-        String[] args = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "source_files", "generate",
-                "-b", basePath.toString()};
-        executeExpectSuccess(args);
-
-        String[] args2 = new String[] {
-                "-w", project.getProjectPath().toString(),
-                "source_files", "validate" };
-        executeExpectSuccess(args2);
-
-        assertOutputContains("PASS: Source file mapping at path " + project.getSourceFilesMappingPath() + " is valid");
     }
 
     @Test

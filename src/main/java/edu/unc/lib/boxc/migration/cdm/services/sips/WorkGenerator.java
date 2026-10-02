@@ -17,14 +17,12 @@ import edu.unc.lib.boxc.migration.cdm.services.DescriptionsService;
 import edu.unc.lib.boxc.migration.cdm.services.PostMigrationReportService;
 import edu.unc.lib.boxc.migration.cdm.services.RedirectMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.SipService;
-import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import edu.unc.lib.boxc.model.api.DatastreamType;
 import edu.unc.lib.boxc.model.api.ids.PID;
 import edu.unc.lib.boxc.model.api.ids.PIDMinter;
 import edu.unc.lib.boxc.model.api.rdf.Cdr;
 import edu.unc.lib.boxc.model.api.rdf.CdrAspace;
 import edu.unc.lib.boxc.model.api.rdf.CdrDeposit;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -46,7 +44,6 @@ import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.ON_CAMPUS_PRINC
 import static edu.unc.lib.boxc.auth.api.AccessPrincipalConstants.PUBLIC_PRINC;
 import static edu.unc.lib.boxc.migration.cdm.util.CLIConstants.outputLogger;
 import static edu.unc.lib.boxc.model.api.DatastreamType.ORIGINAL_FILE;
-import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -56,11 +53,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class WorkGenerator {
     private static final Logger log = getLogger(WorkGenerator.class);
-    // use local streamingUrl property for now because Cdr.streamingUrl only exists in a feature branch
-    public static final Property STREAMING_URL = createProperty(
-            "http://cdr.unc.edu/definitions/model#streamingUrl");
-    public static final Property STREAMING_TYPE = createProperty(
-            "http://cdr.unc.edu/definitions/model#streamingType");
     protected PIDMinter pidMinter;
     protected RedirectMappingService redirectMappingService;
     protected SourceFilesInfo sourceFilesInfo;
@@ -78,7 +70,6 @@ public class WorkGenerator {
     protected AspaceRefIdService aspaceRefIdService;
     protected PostMigrationReportService postMigrationReportService;
     protected PermissionsInfo permissionsInfo;
-    protected StreamingMetadataService streamingMetadataService;
     protected MigrationProject project;
 
     protected String cdmId;
@@ -165,14 +156,12 @@ public class WorkGenerator {
     protected SourceFilesInfo.SourceFileMapping getSourceFileMapping(String cdmId) {
         SourceFilesInfo.SourceFileMapping sourceMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
         if (sourceMapping == null || sourceMapping.getSourcePaths() == null) {
-            if (!streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
-                String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
-                if (options.isForce()) {
-                    outputLogger.info(message);
-                    throw new SipService.SkipObjectException();
-                } else {
-                    throw new InvalidProjectStateException(message);
-                }
+            String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
+            if (options.isForce()) {
+                outputLogger.info(message);
+                throw new SipService.SkipObjectException();
+            } else {
+                throw new InvalidProjectStateException(message);
             }
         }
         return sourceMapping;
@@ -185,11 +174,10 @@ public class WorkGenerator {
         workBag.add(fileObjResc);
 
         // Link source file
-        if (sourcePath != null) {
-            Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
-            origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
-            origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
-        }
+        Resource origResc = DepositModelHelpers.addDatastream(fileObjResc, ORIGINAL_FILE);
+        origResc.addLiteral(CdrDeposit.stagingLocation, sourcePath.toUri().toString());
+        origResc.addLiteral(CdrDeposit.label, sourcePath.getFileName().toString());
+
         return fileObjResc;
     }
 
@@ -202,9 +190,6 @@ public class WorkGenerator {
 
         // Add permission to source file
         addFilePermission(cdmId, fileObjResc);
-
-        // Add streamingUrl
-        addStreamingMetadata(cdmId, fileObjResc);
 
         // Link access file
         if (accessFilesInfo != null) {
@@ -265,24 +250,6 @@ public class WorkGenerator {
                     resource.addLiteral(onCampusValue, ON_CAMPUS_PRINC);
 
                 }
-            }
-        }
-    }
-
-    protected void addStreamingMetadata(String cdmId, Resource resource) {
-        if (streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
-            String[] streamingMetadata = streamingMetadataService.getStreamingMetadata(cdmId);
-            String duracloudSpace = streamingMetadata[1];
-            String streamingFile = streamingMetadata[0];
-            String streamingFileOriginalExtension = streamingMetadata[3];
-            String streamingUrlValue = "https://durastream.lib.unc.edu/player?spaceId=" + duracloudSpace
-                    + "&filename=" + streamingFile;
-            resource.addProperty(STREAMING_URL, streamingUrlValue);
-            // set streamingType to sound if mp3 and video if mp4 or anything else (for now)
-            if (FilenameUtils.getExtension(streamingFileOriginalExtension).equalsIgnoreCase("mp3")) {
-                resource.addProperty(STREAMING_TYPE, "sound");
-            } else {
-                resource.addProperty(STREAMING_TYPE, "video");
             }
         }
     }

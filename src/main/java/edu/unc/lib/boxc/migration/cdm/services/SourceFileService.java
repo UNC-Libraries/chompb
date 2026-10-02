@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.FileSystems;
@@ -66,7 +65,6 @@ public class SourceFileService {
 
     protected MigrationProject project;
     protected CdmIndexService indexService;
-    protected StreamingMetadataService streamingMetadataService;
 
     public SourceFileService() {
     }
@@ -108,11 +106,8 @@ public class SourceFileService {
             // Generate source file mapping entry for each returned object
             while (rs.next()) {
                 String cdmId = rs.getString(1);
-                // when creating a blank source files csv, filter out source files for duracloud content
                 if (options.isPopulateBlank()) {
-                    if (!streamingMetadataService.verifyRecordHasStreamingMetadata(cdmId)) {
-                        csvPrinter.printRecord(cdmId, null, null, null);
-                    }
+                    csvPrinter.printRecord(cdmId, null, null, null);
                     continue;
                 }
 
@@ -586,9 +581,5 @@ public class SourceFileService {
 
     public void setIndexService(CdmIndexService indexService) {
         this.indexService = indexService;
-    }
-
-    public void setStreamingMetadataService(StreamingMetadataService streamingMetadataService) {
-        this.streamingMetadataService = streamingMetadataService;
     }
 }

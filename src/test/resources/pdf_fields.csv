@@ -61,8 +61,6 @@ creatc,creatc,Creator Identifier,false,n,y,n,n,identi
 search,search,Search by Decade,false,n,y,y,n,coverab
 pagina,pagina,Pagination,false,n,n,n,n,descri
 sort,sort,Sort Me,false,n,y,y,n,BLANK
-stream,stream,StreamingFile,false,n,n,n,y,BLANK
-duracl,duracl,duracloudSpace,false,n,n,n,y,identi
 datea,datea,Date of Recording,false,n,y,n,n,BLANK
 streaa,streaa,Streaming Host,false,n,y,n,y,BLANK
 record,record,Recording Location,false,n,y,n,y,subjec

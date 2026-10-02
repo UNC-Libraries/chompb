@@ -37,7 +37,6 @@ import edu.unc.lib.boxc.migration.cdm.services.FileIndexService;
 import edu.unc.lib.boxc.migration.cdm.services.FindingAidReportService;
 import edu.unc.lib.boxc.migration.cdm.services.GroupMappingService;
 import edu.unc.lib.boxc.migration.cdm.services.PermissionsService;
-import edu.unc.lib.boxc.migration.cdm.services.StreamingMetadataService;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Bag;
 import org.apache.jena.rdf.model.Model;
@@ -105,7 +104,6 @@ public class SipServiceHelper {
     private FindingAidReportService findingAidReportService;
     private GroupMappingService groupMappingService;
     private PermissionsService permissionsService;
-    private StreamingMetadataService streamingMetadataService;
     private PIDMinter pidMinter;
     private PremisLoggerFactoryImpl premisLoggerFactory;
     private ChompbConfigService.ChompbConfig chompbConfig;
@@ -130,18 +128,12 @@ public class SipServiceHelper {
         fileIndexService = new FileIndexService();
         fileIndexService.setProject(project);
         fileIndexService.setFieldService(fieldService);
-        streamingMetadataService = new StreamingMetadataService();
-        streamingMetadataService.setProject(project);
-        streamingMetadataService.setFieldService(fieldService);
-        streamingMetadataService.setIndexService(cdmIndexService);
         sourceFileService = new SourceFileService();
         sourceFileService.setIndexService(cdmIndexService);
-        sourceFileService.setStreamingMetadataService(streamingMetadataService);
         sourceFileService.setProject(project);
         accessFileService = new AccessFileService();
         accessFileService.setIndexService(cdmIndexService);
         accessFileService.setProject(project);
-        accessFileService.setStreamingMetadataService(streamingMetadataService);
         altTextService = new AltTextService();
         altTextService.setIndexService(cdmIndexService);
         altTextService.setProject(project);
@@ -159,7 +151,6 @@ public class SipServiceHelper {
         boxctronFileService = new BoxctronFileService();
         boxctronFileService.setProject(project);
         boxctronFileService.setIndexService(cdmIndexService);
-        boxctronFileService.setStreamingMetadataService(streamingMetadataService);
         findingAidReportService = new FindingAidReportService();
         findingAidReportService.setProject(project);
         findingAidReportService.setIndexService(cdmIndexService);
@@ -185,7 +176,6 @@ public class SipServiceHelper {
         service.setAggregateTopMappingService(getAggregateFileMappingService());
         service.setAggregateBottomMappingService(getAggregateBottomMappingService());
         service.setPermissionsService(permissionsService);
-        service.setStreamingMetadataService(streamingMetadataService);
         return service;
     }
 
@@ -606,7 +596,6 @@ public class SipServiceHelper {
             this.aggregateFileMappingService = new AggregateFileMappingService(false);
             this.aggregateFileMappingService.setProject(project);
             this.aggregateFileMappingService.setIndexService(cdmIndexService);
-            this.aggregateFileMappingService.setStreamingMetadataService(streamingMetadataService);
         }
         return this.aggregateFileMappingService;
     }
@@ -616,7 +605,6 @@ public class SipServiceHelper {
             this.aggregateBottomMappingService = new AggregateFileMappingService(true);
             this.aggregateBottomMappingService.setProject(project);
             this.aggregateBottomMappingService.setIndexService(cdmIndexService);
-            this.aggregateBottomMappingService.setStreamingMetadataService(streamingMetadataService);
         }
         return this.aggregateBottomMappingService;
     }
@@ -662,10 +650,6 @@ public class SipServiceHelper {
 
     public FileIndexService getFileIndexService() {
         return fileIndexService;
-    }
-
-    public StreamingMetadataService getStreamingMetadataService() {
-        return streamingMetadataService;
     }
 
     public PIDMinter getPidMinter() {
