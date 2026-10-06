@@ -574,7 +574,6 @@ public class SourceFileService {
         return totalBytes / (1024 * 1024);
     }
 
-
     public void setProject(MigrationProject project) {
         this.project = project;
     }

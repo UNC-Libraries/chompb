@@ -96,6 +96,30 @@ public class SourceFilesToRemoteServiceTest {
     }
 
     @Test
+    public void testTransferOnlyImageFiles() throws Exception {
+        var filePath1 = createTestFile("sources/file1.jpg", "file1");
+        var filePath2 = createTestFile("sources/nest/path/file2.m4a", "file2");
+        var filePath3 = createTestFile("sources/nest/path/file3.mp4", "file3");
+        var filePath4 = createTestFile("sources/nest/file4.jpg", "file4");
+        var filePath5 = createTestFile("sources/another/file5.jpg", "file5");
+        AddSourceFileMappingOptions options = new AddSourceFileMappingOptions();
+        options.setBasePath(tmpFolder.resolve("sources"));
+        options.setExtensions(List.of("jpg"));
+        sourceFileService.addToMapping(options);
+
+        service.transferFiles(remotePath);
+
+        // Verify that the files were transferred
+        assertTransferred(filePath1);
+        assertTransferred(filePath4);
+        assertTransferred(filePath5);
+
+        // Verify that the files were not transferred
+        assertNotTransferred(filePath2);
+        assertNotTransferred(filePath3);
+    }
+
+    @Test
     public void testTransferFilesReservedCharacters() throws Exception {
         var filePath1 = createTestFile("sources/fil e1.jpg", "file1");
         var filePath2 = createTestFile("sources/space path/file2.jpg", "file2");
@@ -148,5 +172,10 @@ public class SourceFilesToRemoteServiceTest {
         Path remoteFile = remotePath.resolve(sourcePath.toString().substring(1));
         assertTrue(Files.exists(remoteFile));
         assertEquals(Files.readString(remoteFile), Files.readString(sourcePath));
+    }
+
+    private void assertNotTransferred(Path sourcePath) {
+        Path remoteFile = remotePath.resolve(sourcePath.toString().substring(1));
+        assertTrue(Files.notExists(remoteFile));
     }
 }
