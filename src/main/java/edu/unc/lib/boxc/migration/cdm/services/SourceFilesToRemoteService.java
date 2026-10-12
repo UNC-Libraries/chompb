@@ -2,6 +2,7 @@ package edu.unc.lib.boxc.migration.cdm.services;
 
 import edu.unc.lib.boxc.migration.cdm.model.SourceFilesInfo;
 import edu.unc.lib.boxc.migration.cdm.util.SshClientService;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.util.IOUtils;
 import org.apache.sshd.sftp.client.SftpClient;
 import org.apache.sshd.sftp.client.SftpClientFactory;
@@ -13,8 +14,10 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -34,6 +37,9 @@ public class SourceFilesToRemoteService {
     private SshClientService sshClientService;
     private int concurrentTransfers = 5;
     private ExecutorService executor;
+    private static final Set<String> IMAGE_FORMATS = new HashSet<>(Arrays.asList("bmp", "crw", "cr2", "dng", "gif",
+            "heic", "jpeg", "jpf", "jpg", "jp2", "nef", "nrw", "pcd", "pict", "png", "psd", "raf", "rw2",
+            "tif", "tiff"));
 
     /**
      * Transfer files from the source CDM server to the remote destination.
@@ -47,8 +53,12 @@ public class SourceFilesToRemoteService {
         try {
             var sourceMappings = sourceFileService.loadMappings();
             final Path destinationBasePath = destinationPath.toAbsolutePath();
+            // only transfer image files for cropping
             var pathsList = sourceMappings.getMappings().stream()
                     .map(SourceFilesInfo.SourceFileMapping::getFirstSourcePath)
+                    .filter(firstSourcePath -> IMAGE_FORMATS.contains(
+                            FilenameUtils.getExtension(firstSourcePath.toString().toLowerCase())
+                    ))
                     .collect(Collectors.toList());
             var pathsDeque = new ConcurrentLinkedDeque<>(pathsList);
             // Create the parent path structure before we start transfers

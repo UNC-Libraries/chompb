@@ -42,8 +42,9 @@ public class ListProjectsService {
     public static final String PROCESSING_JOBS = "processingJobs";
     public static final String PENDING = "pending";
     public static final String COMPLETED = "completed";
-    private static final Set<String> IMAGE_FORMATS = new HashSet<>(Arrays.asList("tif", "tiff", "jpeg", "jpg", "png",
-            "gif", "pict", "bmp", "psd", "jp2", "nef", "crw", "cr2", "dng", "raf"));
+    private static final Set<String> IMAGE_FORMATS = new HashSet<>(Arrays.asList("bmp", "crw", "cr2", "dng", "gif",
+            "heic", "jpeg", "jpf", "jpg", "jp2", "nef", "nrw", "pcd", "pict", "png", "psd", "raf", "rw2",
+            "tif", "tiff"));
 
     /**
      * List projects in given directory
