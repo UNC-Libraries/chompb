@@ -80,6 +80,12 @@ public class WorkGenerator {
     protected List<PID> fileObjPids;
 
     public void generate() throws IOException, SQLException {
+        if (destEntry == null) {
+            throw new InvalidProjectStateException(
+                    "Cannot transform CDM object " + cdmId + " because it does not have a destination mapping. "
+                            + "Regenerate or update the destination mappings and try again.");
+        }
+
         workPid = pidMinter.mintContentPid();
         workBag = null;
 

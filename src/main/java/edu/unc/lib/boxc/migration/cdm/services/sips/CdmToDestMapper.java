@@ -26,4 +26,19 @@ public class CdmToDestMapper {
             return entry;
         }
     }
+
+    /**
+     * @param cdmId ID of a work in the current index
+     * @return true if the work has either an explicit or default destination
+     */
+    public boolean hasDestinationEntry(String cdmId) {
+        return getDestinationEntry(cdmId) != null;
+    }
+
+    /**
+     * Clears previously resolved destination mappings.
+     */
+    public void clear() {
+        cdmId2DestMap.clear();
+    }
 }
