@@ -150,6 +150,9 @@ public class SipService {
 
             Statement stmt = conn.createStatement();
 
+            // validate destinations before creating sips
+            validateDestinationCoverage(stmt);
+
             // set up work generator progress bar
             long workCount = 0;
             var total = calculateTotalWorks(stmt);
@@ -279,6 +282,9 @@ public class SipService {
 
     private void initializeDestinations(SipGenerationOptions options) {
         try {
+            cdmToDestMapper.clear();
+            destEntries.clear();
+
             DestinationsValidator validator = new DestinationsValidator();
             validator.setProject(project);
             List<String> errors = validator.validateMappings(options.isForce());
@@ -332,6 +338,42 @@ public class SipService {
             }
         } catch (IOException e) {
             throw new MigrationException("Failed to load destination mappings", e);
+        }
+    }
+    /**
+     * Validate works in the current index resolves to an explicit destination or the default destination
+     *
+     * This validation is intentionally separate from DestinationsValidator:
+     * DestinationsValidator checks the destination mappings file.
+     * This method checks the mappings against the index.
+     *
+     * @param statement statement connected to the current project index
+     * @throws SQLException if the index cannot be queried
+     * @throws InvalidProjectStateException if one or more works are unmapped
+     */
+    private void validateDestinationCoverage(Statement statement) throws SQLException {
+        List<String> unmappedIds = new ArrayList<>();
+        int unmappedCount = 0;
+
+        String query = "select " + CdmFieldInfo.CDM_ID
+                + " from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.PARENT_ID_FIELD + " is null";
+
+        try (ResultSet rs = statement.executeQuery(query)) {
+            while (rs.next()) {
+                String cdmId = rs.getString(1);
+                if (!cdmToDestMapper.hasDestinationEntry(cdmId)) {
+                    unmappedCount++;
+                    unmappedIds.add(cdmId);
+                }
+            }
+        }
+
+        if (unmappedCount > 0) {
+            throw new InvalidProjectStateException("Cannot generate SIPs: "
+                    + unmappedCount + " work(s) do not have destinations mapped. " +
+                    "Regenerate or update the destination mappings before generating SIPs. " +
+                    "The following works do not have destinations: " + String.join(", ", unmappedIds));
         }
     }
 
@@ -406,9 +448,15 @@ public class SipService {
      * @throws SQLException
      */
     private long calculateTotalWorks(Statement statement) throws SQLException {
-        var count = statement.executeQuery("select COUNT(*) from " + CdmIndexService.TB_NAME
-                + " where " + CdmIndexService.PARENT_ID_FIELD + " is null");
-        return count.getInt(1);
+        var query = "select COUNT(*) from " + CdmIndexService.TB_NAME
+                + " where " + CdmIndexService.PARENT_ID_FIELD + " is null";
+
+        try (ResultSet rs = statement.executeQuery(query)) {
+            if (!rs.next()) {
+                return 0;
+            }
+            return rs.getLong(1);
+        }
     }
 
     public void setIndexService(CdmIndexService indexService) {
