@@ -7,6 +7,7 @@ import edu.unc.lib.boxc.migration.cdm.exceptions.InvalidProjectStateException;
 import edu.unc.lib.boxc.migration.cdm.model.AltTextInfo;
 import edu.unc.lib.boxc.migration.cdm.model.AspaceRefIdInfo;
 import edu.unc.lib.boxc.migration.cdm.model.CdmFieldInfo;
+import edu.unc.lib.boxc.migration.cdm.model.DestinationsInfo;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationProject;
 import edu.unc.lib.boxc.migration.cdm.model.MigrationSip;
 import edu.unc.lib.boxc.migration.cdm.options.AggregateFileMappingOptions;
@@ -76,6 +77,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -1630,6 +1632,116 @@ public class SipServiceTest {
         assertPersistedSipInfoMatches(sip);
     }
 
+    @Test
+    public void generateSipsFailsWhenWorksDoNotHaveDestinations() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+
+        // Generate the mapping first so project state records that destinations
+        // have been generated, then replace it with an incomplete mapping.
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        writeDestinationMappings("25," + DEST_UUID + ",");
+
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        InvalidProjectStateException exception = assertThrows(
+                InvalidProjectStateException.class,
+                () -> service.generateSips(makeOptions())
+        );
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("2 work(s) do not have destinations mapped"));
+        assertTrue(message.contains("26"), "Expected missing work 26 in message: " + message);
+        assertTrue(message.contains("27"), "Expected missing work 27 in message: " + message);
+    }
+
+    @Test
+    public void generateSipsDestinationCoverageFailureIsNotBypassedByForce() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        writeDestinationMappings("25," + DEST_UUID + ",");
+
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        InvalidProjectStateException exception = assertThrows(
+                InvalidProjectStateException.class,
+                () -> service.generateSips(makeOptions(true))
+        );
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("2 work(s) do not have destinations mapped"));
+        assertTrue(message.contains("26"), "Expected missing work 26 in message: " + message);
+        assertTrue(message.contains("27"), "Expected missing work 27 in message: " + message);
+    }
+
+    @Test
+    public void generateSipsWithCompleteExplicitMappingsAndNoDefault() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        writeDestinationMappings("25," + DEST_UUID + ",", "26," + DEST_UUID + ",", "27," + DEST_UUID + ",");
+
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles(
+                "276_182_E.tif",
+                "276_183_E.tif",
+                "276_203_E.tif"
+        );
+
+        List<MigrationSip> sips = service.generateSips(makeOptions());
+
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depositBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> children = depositBag.iterator().toList();
+        assertEquals(3, children.size());
+
+        Resource work1 = testHelper.getResourceByCreateTime(children, "2005-11-23");
+        testHelper.assertObjectPopulatedInSip(work1, dirManager, model, stagingLocs.get(0), null, "25");
+
+        Resource work2 = testHelper.getResourceByCreateTime(children, "2005-11-24");
+        testHelper.assertObjectPopulatedInSip(work2, dirManager, model, stagingLocs.get(1), null, "26");
+
+        Resource work3 = testHelper.getResourceByCreateTime(children, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(work3, dirManager, model, stagingLocs.get(2), null, "27");
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
+    @Test
+    public void generateSipsClearsPreviouslyLoadedDestinationMappings() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        testHelper.populateSourceFiles("276_182_E.tif", "276_183_E.tif", "276_203_E.tif");
+
+        // First generation populates the mapper with a default destination.
+        List<MigrationSip> initialSips = service.generateSips(makeOptions());
+        assertEquals(1, initialSips.size());
+
+        // Replace the default mapping with an incomplete explicit mapping.
+        // If CdmToDestMapper is not cleared, the stale default would cause
+        // destination coverage validation to incorrectly pass.
+        writeDestinationMappings("25," + DEST_UUID + ",");
+
+        InvalidProjectStateException exception = assertThrows(
+                InvalidProjectStateException.class,
+                () -> service.generateSips(makeOptions())
+        );
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("2 work(s) do not have destinations mapped"));
+        assertTrue(message.contains("26"), "Expected missing work 26 in message: " + message);
+        assertTrue(message.contains("27"), "Expected missing work 27 in message: " + message);
+    }
+
     public void indexFromCsv(Path csvPath) throws Exception {
         var fieldService = testHelper.getFieldService();
         CdmFieldInfo csvExportFields = fieldService.retrieveFields(csvPath, CSV);
@@ -1703,6 +1815,19 @@ public class SipServiceTest {
         descriptionsService.setProject(project);
         descriptionsService.generateDocuments(false);
         descriptionsService.expandDescriptions();
+    }
+
+    private void writeDestinationMappings(String... rows) throws IOException {
+        String mappingBody = String.join(",", DestinationsInfo.CSV_HEADERS)
+                + System.lineSeparator()
+                + String.join(System.lineSeparator(), rows)
+                + System.lineSeparator();
+
+        Files.writeString(
+                project.getDestinationMappingsPath(),
+                mappingBody,
+                StandardCharsets.UTF_8
+        );
     }
 
     private void assertPersistedSipInfoMatches(MigrationSip expectedSip) {
