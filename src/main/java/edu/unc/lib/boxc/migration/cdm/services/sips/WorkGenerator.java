@@ -79,7 +79,7 @@ public class WorkGenerator {
     protected Bag workBag;
     protected List<PID> fileObjPids;
 
-    public void generate() throws IOException, SQLException {
+    public void generate(boolean hasEmptyWorks) throws IOException, SQLException {
         if (destEntry == null) {
             throw new InvalidProjectStateException(
                     "Cannot transform CDM object " + cdmId + " because it does not have a destination mapping. "
@@ -92,18 +92,21 @@ public class WorkGenerator {
         Bag destBag = destEntry.getDestinationBag();
         model = destBag.getModel();
 
-        generateWork();
+        generateWork(hasEmptyWorks);
 
         destBag.add(workBag);
 
         // Generate migration PREMIS event
         sipPremisLogger.addPremisEvent(destEntry, workPid, options);
-        for (PID fileObjPid : fileObjPids) {
-            sipPremisLogger.addPremisEvent(destEntry, fileObjPid, options);
+
+        if (!hasEmptyWorks) {
+            for (PID fileObjPid : fileObjPids) {
+                sipPremisLogger.addPremisEvent(destEntry, fileObjPid, options);
+            }
         }
     }
 
-    protected void generateWork() throws IOException {
+    protected void generateWork(boolean hasEmptyWorks) throws IOException {
         Path expDescPath = getDescriptionPath(cdmId, false);
 
         log.info("Transforming CDM object {} to box-c work {}", cdmId, workPid.getId());
@@ -119,8 +122,16 @@ public class WorkGenerator {
         copyDescriptionToSip(workPid, expDescPath);
         sipId = destEntry.getDepositPid().getId();
 
-        fileObjPids = addChildObjects();
-        postMigrationReportService.addWorkRow(cdmId, workPid.getId(), fileObjPids.size(), isSingleItem(), sipId);
+        // don't add file objects to empty works
+        if (!hasEmptyWorks) {
+            fileObjPids = addChildObjects();
+            postMigrationReportService.addWorkRow(cdmId, workPid.getId(), fileObjPids.size(), isSingleItem(),
+                    hasEmptyWorks, sipId);
+        } else {
+            postMigrationReportService.addWorkRow(cdmId, workPid.getId(), 0, isSingleItem(),
+                    hasEmptyWorks, sipId);
+        }
+
     }
 
     protected List<PID> addChildObjects() throws IOException {

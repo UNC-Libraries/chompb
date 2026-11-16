@@ -23,8 +23,8 @@ import java.util.List;
  */
 public class MultiFileWorkGenerator extends WorkGenerator {
     @Override
-    protected void generateWork() throws IOException {
-        super.generateWork();
+    protected void generateWork(boolean hasEmptyWorks) throws IOException {
+        super.generateWork(hasEmptyWorks);
         // Add redirect mapping for compound object, but not group object
         if (!cdmId.startsWith(GroupMappingInfo.GROUPED_WORK_PREFIX)) {
             redirectMappingService.addRow(cdmId, workPid.getId(), null);
