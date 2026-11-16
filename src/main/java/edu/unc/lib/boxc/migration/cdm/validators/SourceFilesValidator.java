@@ -49,7 +49,6 @@ public class SourceFilesValidator {
                 }
                 var mapping = SourceFileService.recordToMapping(csvRecord);
                 String id = mapping.getCdmId();
-                String pathVal = csvRecord.get(2);
                 if (StringUtils.isBlank(id)) {
                     if (!force) {
                         errors.add("Invalid blank id at line " + i);
