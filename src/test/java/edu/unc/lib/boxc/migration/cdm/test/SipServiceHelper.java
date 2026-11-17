@@ -287,6 +287,18 @@ public class SipServiceHelper {
         assertModsPresentWithCdmId(dirManager, workPid, cdmId);
     }
 
+    public void assertEmptyWorkPopulatedInSip(Resource objResc, DepositDirectoryManager dirManager, Model depModel, String cdmId) throws Exception {
+        assertTrue(objResc.hasProperty(RDF.type, Cdr.Work));
+        Bag workBag = depModel.getBag(objResc);
+        List<RDFNode> workChildren = workBag.iterator().toList();
+        assertEquals(0, workChildren.size());
+
+        PID workPid = PIDs.get(objResc.getURI());
+        assertMigrationEventPresent(dirManager, workPid);
+
+        assertModsPresentWithCdmId(dirManager, workPid, cdmId);
+    }
+
     public Resource findChildByStagingLocation(Bag workBag, Path stagingPath) {
         return findChildByStagingLocation(workBag.iterator().toList(), stagingPath);
     }

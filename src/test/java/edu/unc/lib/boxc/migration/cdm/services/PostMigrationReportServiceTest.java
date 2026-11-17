@@ -290,6 +290,33 @@ public class PostMigrationReportServiceTest {
         assertFalse(Files.exists(project.getPostMigrationReportPath()));
     }
 
+    @Test
+    public void addEmptyWorkTest() throws Exception {
+        setup(CdmEnvironmentHelper.DEFAULT_ENV_ID, MigrationProject.PROJECT_SOURCE_CDM);
+        testHelper.indexExportData("mini_gilmer");
+        writeSourceFileCsv(mappingBody("25,,,"));
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+
+        service.addWorkRow("25", BOXC_ID_1, 0, true, SIP_ID);
+        service.closeCsv();
+
+        var rows = parseReport(project);
+        assertContainsRow(rows, "25",
+                "http://localhost/cdm/singleitem/collection/proj/id/25",
+                "Work",
+                BOXC_URL_1,
+                "Redoubt C",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "0",
+                SIP_ID,
+                "",
+                "");
+    }
+
     private String mappingBody(String... rows) {
         return String.join(",", SourceFilesInfo.CSV_HEADERS) + "\n"
                 + String.join("\n", rows);

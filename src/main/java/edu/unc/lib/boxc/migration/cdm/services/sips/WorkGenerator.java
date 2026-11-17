@@ -98,6 +98,7 @@ public class WorkGenerator {
 
         // Generate migration PREMIS event
         sipPremisLogger.addPremisEvent(destEntry, workPid, options);
+
         for (PID fileObjPid : fileObjPids) {
             sipPremisLogger.addPremisEvent(destEntry, fileObjPid, options);
         }
@@ -125,12 +126,15 @@ public class WorkGenerator {
 
     protected List<PID> addChildObjects() throws IOException {
         SourceFilesInfo.SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-        var fileObjectPid = addFileObject(cdmId, cdmCreated, sourceMapping);
-        // in a single file object, the cdm id refers to the new work, so add suffix to reference the child file
-        addChildDescription(cdmId + "/original_file", fileObjectPid);
-        postMigrationReportService.addFileRow(cdmId + "/original_file", cdmId, workPid.getId(),
-                fileObjectPid.getId(), isSingleItem(), sipId);
-        return Collections.singletonList(fileObjectPid);
+        if (sourceMapping != null) {
+            var fileObjectPid = addFileObject(cdmId, cdmCreated, sourceMapping);
+            // in a single file object, the cdm id refers to the new work, so add suffix to reference the child file
+            addChildDescription(cdmId + "/original_file", fileObjectPid);
+            postMigrationReportService.addFileRow(cdmId + "/original_file", cdmId, workPid.getId(),
+                    fileObjectPid.getId(), isSingleItem(), sipId);
+            return Collections.singletonList(fileObjectPid);
+        }
+        return Collections.emptyList();
     }
 
     protected void copyDescriptionToSip(PID pid, Path descPath) throws IOException {
@@ -163,7 +167,9 @@ public class WorkGenerator {
         SourceFilesInfo.SourceFileMapping sourceMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
         if (sourceMapping == null || sourceMapping.getSourcePaths() == null) {
             String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
-            if (options.isForce()) {
+            if (options.areEmptyWorksAllowed()) {
+                return null;
+            } else if (options.isForce()) {
                 outputLogger.info(message);
                 throw new SipService.SkipObjectException();
             } else {

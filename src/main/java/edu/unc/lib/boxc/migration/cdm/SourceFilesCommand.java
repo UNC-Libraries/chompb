@@ -88,7 +88,7 @@ public class SourceFilesCommand {
     @Command(name = "validate",
             description = "Validate the source file mappings for this project")
     public int validate(@Option(names = { "-f", "--force"},
-            description = "Ignore incomplete mappings") boolean force) throws Exception {
+            description = "Ignore incomplete mappings and allow empty works") boolean force) throws Exception {
         try {
             initialize(false);
             SourceFilesValidator validator = new SourceFilesValidator();

@@ -20,6 +20,11 @@ public class SipGenerationOptions {
             defaultValue = "${sys:user.name}")
     private String username;
 
+    @Option(names = { "-ew", "--allow-empty-works"},
+            description = {"Allow empty works during SIP generation.",
+                    "Permits empty works in the source file mapping."})
+    private boolean emptyWorksAllowed;
+
     @Option(names = {"-sc", "--suppress-collection-redirect"},
             description = {"Suppress collection level redirects produced during SIP generation."})
     private boolean suppressCollectionRedirect;
@@ -38,6 +43,14 @@ public class SipGenerationOptions {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public boolean areEmptyWorksAllowed() {
+        return emptyWorksAllowed;
+    }
+
+    public void setEmptyWorksAllowed(boolean emptyWorksAllowed) {
+        this.emptyWorksAllowed = emptyWorksAllowed;
     }
 
     public boolean isSuppressCollectionRedirect() {

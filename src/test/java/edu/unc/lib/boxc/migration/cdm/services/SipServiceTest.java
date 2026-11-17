@@ -1742,6 +1742,78 @@ public class SipServiceTest {
         assertTrue(message.contains("27"), "Expected missing work 27 in message: " + message);
     }
 
+    @Test
+    public void generateSipsWithEmptyWorks() throws Exception {
+        testHelper.indexExportData("mini_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("gilmer_mods1.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_203_E.tif");
+
+        SipGenerationOptions options = makeOptions(true);
+        options.setEmptyWorksAllowed(true);
+
+        List<MigrationSip> sips = service.generateSips(options);
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(3, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertEmptyWorkPopulatedInSip(workResc1, dirManager, model, "25");
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
+        testHelper.assertEmptyWorkPopulatedInSip(workResc2, dirManager, model, "26");
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(0), null, "27");
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
+    @Test
+    public void generateSipsWithEmptyWorksMultiFileWork() throws Exception {
+        testHelper.indexExportData("grouped_gilmer");
+        testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
+        testHelper.populateDescriptions("grouped_mods.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_185_E.tif", "276_183_E.tif", "276_203_E.tif");
+        setupGroupIndex();
+
+        SipGenerationOptions options = makeOptions(true);
+        options.setEmptyWorksAllowed(true);
+
+        List<MigrationSip> sips = service.generateSips(options);
+        assertEquals(1, sips.size());
+        MigrationSip sip = sips.get(0);
+
+        assertTrue(Files.exists(sip.getSipPath()));
+
+        DepositDirectoryManager dirManager = testHelper.createDepositDirectoryManager(sip);
+
+        Model model = testHelper.getSipModel(sip);
+
+        Bag depBag = model.getBag(sip.getDepositPid().getRepositoryPath());
+        List<RDFNode> depBagChildren = depBag.iterator().toList();
+        assertEquals(4, depBagChildren.size());
+
+        Resource workResc1 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-23");
+        testHelper.assertGroupedWorkPopulatedInSip(workResc1, dirManager, model, "grp:groupa:group1",
+                false, stagingLocs.get(0), stagingLocs.get(1));
+        Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
+        testHelper.assertObjectPopulatedInSip(workResc2, dirManager, model, stagingLocs.get(2), null, "27");
+        Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-09");
+        testHelper.assertEmptyWorkPopulatedInSip(workResc3, dirManager, model, "28");
+        Resource workResc4 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-10");
+        testHelper.assertEmptyWorkPopulatedInSip(workResc4, dirManager, model, "29");
+
+        assertPersistedSipInfoMatches(sip);
+    }
+
     public void indexFromCsv(Path csvPath) throws Exception {
         var fieldService = testHelper.getFieldService();
         CdmFieldInfo csvExportFields = fieldService.retrieveFields(csvPath, CSV);

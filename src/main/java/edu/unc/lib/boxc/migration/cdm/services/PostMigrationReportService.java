@@ -221,14 +221,20 @@ public class PostMigrationReportService {
 
     private String getMatchingValue(String cdmId) throws IOException {
         var sourceFilesInfo = getSourceFilesInfo();
-        String matchingValue = sourceFilesInfo.getMappingByCdmId(cdmId).getMatchingValue();
-        return matchingValue;
+        var sourceFileMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
+        if (sourceFileMapping != null) {
+            return sourceFileMapping.getMatchingValue();
+        }
+        return null;
     }
 
     private String getSourceFile(String cdmId) throws IOException {
         var sourceFilesInfo = getSourceFilesInfo();
-        String sourceFile = sourceFilesInfo.getMappingByCdmId(cdmId).getSourcePathString();
-        return sourceFile;
+        var sourceFileMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
+        if (sourceFileMapping != null) {
+            return sourceFileMapping.getSourcePathString();
+        }
+        return null;
     }
 
     private SourceFilesInfo getSourceFilesInfo() throws IOException {
