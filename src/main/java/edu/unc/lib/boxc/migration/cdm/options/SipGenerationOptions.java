@@ -23,7 +23,7 @@ public class SipGenerationOptions {
     @Option(names = { "-ew", "--allow-empty-works"},
             description = {"Allow empty works during SIP generation.",
                     "Permits empty works in the source file mapping."})
-    private boolean emptyWorks;
+    private boolean emptyWorksAllowed;
 
     @Option(names = {"-sc", "--suppress-collection-redirect"},
             description = {"Suppress collection level redirects produced during SIP generation."})
@@ -45,12 +45,12 @@ public class SipGenerationOptions {
         this.username = username;
     }
 
-    public boolean hasEmptyWorks() {
-        return emptyWorks;
+    public boolean areEmptyWorksAllowed() {
+        return emptyWorksAllowed;
     }
 
-    public void setEmptyWorks(boolean emptyWorks) {
-        this.emptyWorks = emptyWorks;
+    public void setEmptyWorksAllowed(boolean emptyWorksAllowed) {
+        this.emptyWorksAllowed = emptyWorksAllowed;
     }
 
     public boolean isSuppressCollectionRedirect() {

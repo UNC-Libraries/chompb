@@ -107,11 +107,9 @@ public class PostMigrationReportService {
      * @param boxcWorkId boxc uuid of the work
      * @param childCount number of children for the work
      * @param isSingleItem whether this work is a CDM single item type
-     * @param hasEmptyWorks whether empty works are permitted
      * @throws IOException
      */
-    public void addWorkRow(String cdmObjectId, String boxcWorkId, int childCount, boolean isSingleItem,
-                           boolean hasEmptyWorks, String sipId)
+    public void addWorkRow(String cdmObjectId, String boxcWorkId, int childCount, boolean isSingleItem, String sipId)
             throws IOException {
         if (!enabled) {
             return;
@@ -125,19 +123,13 @@ public class PostMigrationReportService {
         String objType = ResourceType.Work.name();
         String sourceFile = null;
 
-        // don't check source file info for empty works
-        if (hasEmptyWorks) {
-            addRow(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle, null, null,
-                    null, parentUrl, parentTitle, childCount, sipId, null, null);
-        } else {
-            if (isSingleItem) {
-                matchingValue = getMatchingValue(cdmObjectId);
-                sourceFile = getSourceFile(cdmObjectId);
-            }
-
-            addRow(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
-                    null, parentUrl, parentTitle, childCount, sipId, null, null);
+        if (isSingleItem) {
+            matchingValue = getMatchingValue(cdmObjectId);
+            sourceFile = getSourceFile(cdmObjectId);
         }
+
+        addRow(cdmObjectId, cdmUrl, objType, boxcUrl, boxcTitle, matchingValue, sourceFile,
+                null, parentUrl, parentTitle, childCount, sipId, null, null);
     }
 
     /**
@@ -229,14 +221,18 @@ public class PostMigrationReportService {
 
     private String getMatchingValue(String cdmId) throws IOException {
         var sourceFilesInfo = getSourceFilesInfo();
-        String matchingValue = sourceFilesInfo.getMappingByCdmId(cdmId).getMatchingValue();
-        return matchingValue;
+        if (sourceFilesInfo.getMappingByCdmId(cdmId) != null) {
+            return sourceFilesInfo.getMappingByCdmId(cdmId).getMatchingValue();
+        }
+        return null;
     }
 
     private String getSourceFile(String cdmId) throws IOException {
         var sourceFilesInfo = getSourceFilesInfo();
-        String sourceFile = sourceFilesInfo.getMappingByCdmId(cdmId).getSourcePathString();
-        return sourceFile;
+        if (sourceFilesInfo.getMappingByCdmId(cdmId) != null) {
+            return sourceFilesInfo.getMappingByCdmId(cdmId).getSourcePathString();
+        }
+        return null;
     }
 
     private SourceFilesInfo getSourceFilesInfo() throws IOException {

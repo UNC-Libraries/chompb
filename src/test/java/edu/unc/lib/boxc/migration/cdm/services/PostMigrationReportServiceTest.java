@@ -73,7 +73,7 @@ public class PostMigrationReportServiceTest {
         writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
-        service.addWorkRow("25", BOXC_ID_1, 1, true, false, SIP_ID);
+        service.addWorkRow("25", BOXC_ID_1, 1, true, SIP_ID);
         service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true, SIP_ID);
         service.closeCsv();
 
@@ -116,7 +116,7 @@ public class PostMigrationReportServiceTest {
         writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
         testHelper.populateDescriptions("gilmer_mods1.xml", "gilmer_mods_children.xml");
 
-        service.addWorkRow("25", BOXC_ID_1, 1, true, false, SIP_ID);
+        service.addWorkRow("25", BOXC_ID_1, 1, true, SIP_ID);
         service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true, SIP_ID);
         service.closeCsv();
 
@@ -160,7 +160,7 @@ public class PostMigrationReportServiceTest {
         writeSourceFileCsv(mappingBody("26,," + srcPath1 +",", "27,," + srcPath2 +","));
         testHelper.populateDescriptions("grouped_mods.xml");
 
-        service.addWorkRow("grp:groupa:group1", BOXC_ID_1, 2, false, false, SIP_ID);
+        service.addWorkRow("grp:groupa:group1", BOXC_ID_1, 2, false, SIP_ID);
         service.addFileRow("26", "grp:groupa:group1", BOXC_ID_1, BOXC_ID_2, false, SIP_ID);
         service.addFileRow("27", "grp:groupa:group1", BOXC_ID_1, BOXC_ID_3, false, SIP_ID);
         service.closeCsv();
@@ -220,7 +220,7 @@ public class PostMigrationReportServiceTest {
         descriptionsService.generateDocuments(true);
         descriptionsService.expandDescriptions();
 
-        service.addWorkRow("605", BOXC_ID_1, 2, false, false, SIP_ID);
+        service.addWorkRow("605", BOXC_ID_1, 2, false, SIP_ID);
         service.addFileRow("602", "605", BOXC_ID_1, BOXC_ID_2, false, SIP_ID);
         service.addFileRow("603", "605", BOXC_ID_1, BOXC_ID_3, false, SIP_ID);
         service.closeCsv();
@@ -283,7 +283,7 @@ public class PostMigrationReportServiceTest {
         writeSourceFileCsv(mappingBody("25,," + srcPath1 +","));
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
-        service.addWorkRow("25", BOXC_ID_1, 1, true, false, SIP_ID);
+        service.addWorkRow("25", BOXC_ID_1, 1, true, SIP_ID);
         service.addFileRow("25/original_file", "25", BOXC_ID_1, BOXC_ID_2, true, SIP_ID);
         service.closeCsv();
 
@@ -297,7 +297,7 @@ public class PostMigrationReportServiceTest {
         writeSourceFileCsv(mappingBody("25,,,"));
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
-        service.addWorkRow("25", BOXC_ID_1, 0, true, true, SIP_ID);
+        service.addWorkRow("25", BOXC_ID_1, 0, true, SIP_ID);
         service.closeCsv();
 
         var rows = parseReport(project);

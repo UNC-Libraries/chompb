@@ -173,7 +173,7 @@ public class SipService {
                 workCount++;
                 DisplayProgressUtil.displayProgress(workCount, total);
                 try {
-                    workGen.generate(options.hasEmptyWorks());
+                    workGen.generate();
                 } catch (SkipObjectException e) {
                     // Skipping
                 }

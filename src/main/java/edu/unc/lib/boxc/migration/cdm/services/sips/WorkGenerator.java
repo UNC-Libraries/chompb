@@ -79,7 +79,7 @@ public class WorkGenerator {
     protected Bag workBag;
     protected List<PID> fileObjPids;
 
-    public void generate(boolean hasEmptyWorks) throws IOException, SQLException {
+    public void generate() throws IOException, SQLException {
         if (destEntry == null) {
             throw new InvalidProjectStateException(
                     "Cannot transform CDM object " + cdmId + " because it does not have a destination mapping. "
@@ -92,21 +92,19 @@ public class WorkGenerator {
         Bag destBag = destEntry.getDestinationBag();
         model = destBag.getModel();
 
-        generateWork(hasEmptyWorks);
+        generateWork();
 
         destBag.add(workBag);
 
         // Generate migration PREMIS event
         sipPremisLogger.addPremisEvent(destEntry, workPid, options);
 
-        if (!hasEmptyWorks) {
-            for (PID fileObjPid : fileObjPids) {
-                sipPremisLogger.addPremisEvent(destEntry, fileObjPid, options);
-            }
+        for (PID fileObjPid : fileObjPids) {
+            sipPremisLogger.addPremisEvent(destEntry, fileObjPid, options);
         }
     }
 
-    protected void generateWork(boolean hasEmptyWorks) throws IOException {
+    protected void generateWork() throws IOException {
         Path expDescPath = getDescriptionPath(cdmId, false);
 
         log.info("Transforming CDM object {} to box-c work {}", cdmId, workPid.getId());
@@ -122,26 +120,21 @@ public class WorkGenerator {
         copyDescriptionToSip(workPid, expDescPath);
         sipId = destEntry.getDepositPid().getId();
 
-        // don't add file objects to empty works
-        if (!hasEmptyWorks) {
-            fileObjPids = addChildObjects();
-            postMigrationReportService.addWorkRow(cdmId, workPid.getId(), fileObjPids.size(), isSingleItem(),
-                    hasEmptyWorks, sipId);
-        } else {
-            postMigrationReportService.addWorkRow(cdmId, workPid.getId(), 0, isSingleItem(),
-                    hasEmptyWorks, sipId);
-        }
-
+        fileObjPids = addChildObjects();
+        postMigrationReportService.addWorkRow(cdmId, workPid.getId(), fileObjPids.size(), isSingleItem(), sipId);
     }
 
     protected List<PID> addChildObjects() throws IOException {
         SourceFilesInfo.SourceFileMapping sourceMapping = getSourceFileMapping(cdmId);
-        var fileObjectPid = addFileObject(cdmId, cdmCreated, sourceMapping);
-        // in a single file object, the cdm id refers to the new work, so add suffix to reference the child file
-        addChildDescription(cdmId + "/original_file", fileObjectPid);
-        postMigrationReportService.addFileRow(cdmId + "/original_file", cdmId, workPid.getId(),
-                fileObjectPid.getId(), isSingleItem(), sipId);
-        return Collections.singletonList(fileObjectPid);
+        if (sourceMapping != null) {
+            var fileObjectPid = addFileObject(cdmId, cdmCreated, sourceMapping);
+            // in a single file object, the cdm id refers to the new work, so add suffix to reference the child file
+            addChildDescription(cdmId + "/original_file", fileObjectPid);
+            postMigrationReportService.addFileRow(cdmId + "/original_file", cdmId, workPid.getId(),
+                    fileObjectPid.getId(), isSingleItem(), sipId);
+            return Collections.singletonList(fileObjectPid);
+        }
+        return Collections.emptyList();
     }
 
     protected void copyDescriptionToSip(PID pid, Path descPath) throws IOException {
@@ -174,7 +167,9 @@ public class WorkGenerator {
         SourceFilesInfo.SourceFileMapping sourceMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
         if (sourceMapping == null || sourceMapping.getSourcePaths() == null) {
             String message = "Cannot transform object " + cdmId + ", no source file has been mapped";
-            if (options.isForce()) {
+            if (options.areEmptyWorksAllowed()) {
+                return null;
+            } else if (options.isForce()) {
                 outputLogger.info(message);
                 throw new SipService.SkipObjectException();
             } else {

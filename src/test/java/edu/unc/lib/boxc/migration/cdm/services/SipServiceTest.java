@@ -1749,7 +1749,7 @@ public class SipServiceTest {
         testHelper.populateDescriptions("gilmer_mods1.xml");
 
         SipGenerationOptions options = makeOptions(true);
-        options.setEmptyWorks(true);
+        options.setEmptyWorksAllowed(true);
 
         List<MigrationSip> sips = service.generateSips(options);
         assertEquals(1, sips.size());
