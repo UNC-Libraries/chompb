@@ -1747,6 +1747,7 @@ public class SipServiceTest {
         testHelper.indexExportData("mini_gilmer");
         testHelper.generateDefaultDestinationsMapping(DEST_UUID, null);
         testHelper.populateDescriptions("gilmer_mods1.xml");
+        List<Path> stagingLocs = testHelper.populateSourceFiles("276_203_E.tif");
 
         SipGenerationOptions options = makeOptions(true);
         options.setEmptyWorksAllowed(true);
@@ -1770,7 +1771,7 @@ public class SipServiceTest {
         Resource workResc2 = testHelper.getResourceByCreateTime(depBagChildren, "2005-11-24");
         testHelper.assertEmptyWorkPopulatedInSip(workResc2, dirManager, model, "26");
         Resource workResc3 = testHelper.getResourceByCreateTime(depBagChildren, "2005-12-08");
-        testHelper.assertEmptyWorkPopulatedInSip(workResc3, dirManager, model, "27");
+        testHelper.assertObjectPopulatedInSip(workResc3, dirManager, model, stagingLocs.get(0), null, "27");
 
         assertPersistedSipInfoMatches(sip);
     }

@@ -221,16 +221,18 @@ public class PostMigrationReportService {
 
     private String getMatchingValue(String cdmId) throws IOException {
         var sourceFilesInfo = getSourceFilesInfo();
-        if (sourceFilesInfo.getMappingByCdmId(cdmId) != null) {
-            return sourceFilesInfo.getMappingByCdmId(cdmId).getMatchingValue();
+        var sourceFileMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
+        if (sourceFileMapping != null) {
+            return sourceFileMapping.getMatchingValue();
         }
         return null;
     }
 
     private String getSourceFile(String cdmId) throws IOException {
         var sourceFilesInfo = getSourceFilesInfo();
-        if (sourceFilesInfo.getMappingByCdmId(cdmId) != null) {
-            return sourceFilesInfo.getMappingByCdmId(cdmId).getSourcePathString();
+        var sourceFileMapping = sourceFilesInfo.getMappingByCdmId(cdmId);
+        if (sourceFileMapping != null) {
+            return sourceFileMapping.getSourcePathString();
         }
         return null;
     }
